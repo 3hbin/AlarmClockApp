@@ -1,33 +1,67 @@
 package com.example.alarmclock
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.RingtoneManager
+import android.os.Build
 import android.os.Bundle
-import android.os.CountDownTimer
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.view.WindowManager
 import android.widget.NumberPicker
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.example.alarmclock.databinding.ActivityTimerBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class TimerActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityTimerBinding
-    private var countDownTimer: CountDownTimer? = null
     private var timeLeftInMillis: Long = 0
     private var isRunning = false
     private var mediaPlayer: MediaPlayer? = null
     private var vibrator: Vibrator? = null
     private var flashHelper: FlashHelper? = null
 
+    private val updateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                TimerService.ACTION_UPDATE -> {
+                    timeLeftInMillis = intent.getLongExtra(TimerService.EXTRA_MS, 0L)
+                    isRunning = intent.getBooleanExtra(TimerService.EXTRA_RUNNING, false)
+                    updateCountDownText()
+                    binding.btnStartPause.text = if (isRunning) "Pause" else "Start"
+                }
+                TimerService.ACTION_FINISHED -> {
+                    timeLeftInMillis = 0
+                    isRunning = false
+                    updateCountDownText()
+                    binding.btnStartPause.text = "Start"
+                    onTimerFinished()
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityTimerBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        AlarmNotificationHelper.ensureChannels(this)
+
+        // Đồng bộ nếu service đang chạy
+        if (TimerService.isActive && TimerService.remainingMs > 0) {
+            timeLeftInMillis = TimerService.remainingMs
+            isRunning = true
+            binding.btnStartPause.text = "Pause"
+            updateCountDownText()
+        }
 
         binding.btnStartPause.setOnClickListener {
             SoundHelper.animatePress(it)
@@ -65,6 +99,29 @@ class TimerActivity : AppCompatActivity() {
         }
 
         updateCountDownText()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val filter = IntentFilter().apply {
+            addAction(TimerService.ACTION_UPDATE)
+            addAction(TimerService.ACTION_FINISHED)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(updateReceiver, filter, RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            registerReceiver(updateReceiver, filter)
+        }
+    }
+
+    override fun onStop() {
+        try {
+            unregisterReceiver(updateReceiver)
+        } catch (_: Exception) {
+        }
+        super.onStop()
+        // Không hủy service — giữ chạy nền + thông báo
     }
 
     private fun showCustomTimeDialog() {
@@ -109,31 +166,30 @@ class TimerActivity : AppCompatActivity() {
             Toast.makeText(this, "Chọn thời gian trước", Toast.LENGTH_SHORT).show()
             return
         }
-        countDownTimer = object : CountDownTimer(timeLeftInMillis, 1000) {
-            override fun onTick(millisUntilFinished: Long) {
-                timeLeftInMillis = millisUntilFinished
-                updateCountDownText()
-            }
-            override fun onFinish() {
-                timeLeftInMillis = 0
-                updateCountDownText()
-                isRunning = false
-                binding.btnStartPause.text = "Start"
-                onTimerFinished()
-            }
-        }.start()
+        val intent = Intent(this, TimerService::class.java).apply {
+            action = TimerService.ACTION_START
+            putExtra(TimerService.EXTRA_MS, timeLeftInMillis)
+        }
+        ContextCompat.startForegroundService(this, intent)
         isRunning = true
         binding.btnStartPause.text = "Pause"
+        Toast.makeText(this, "Đếm ngược chạy nền — thoát app vẫn chạy (xem thông báo)", Toast.LENGTH_SHORT).show()
     }
 
     private fun pauseTimer() {
-        countDownTimer?.cancel()
+        val intent = Intent(this, TimerService::class.java).apply {
+            action = TimerService.ACTION_PAUSE
+        }
+        startService(intent)
         isRunning = false
         binding.btnStartPause.text = "Start"
     }
 
     private fun resetTimer() {
-        countDownTimer?.cancel()
+        val intent = Intent(this, TimerService::class.java).apply {
+            action = TimerService.ACTION_STOP
+        }
+        startService(intent)
         timeLeftInMillis = 0
         isRunning = false
         binding.btnStartPause.text = "Start"
@@ -179,9 +235,11 @@ class TimerActivity : AppCompatActivity() {
                 prepare()
                 start()
             }
-        } catch (e: Exception) { e.printStackTrace() }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
         vibrator = getSystemService(VIBRATOR_SERVICE) as Vibrator
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 500, 500), 0))
         } else {
             @Suppress("DEPRECATION")
@@ -198,8 +256,8 @@ class TimerActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        super.onDestroy()
-        countDownTimer?.cancel()
         stopRinging()
+        super.onDestroy()
+        // Service tiếp tục chạy nếu đang đếm
     }
 }

@@ -1,6 +1,9 @@
 package com.example.alarmclock
 
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -47,6 +50,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     private var mathAnswer: Int = 0
     private var sensorManager: SensorManager? = null
     private var accelerometer: Sensor? = null
+    private var currentLabel: String = ""
     private val faceChallengeLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -54,6 +58,21 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             dismissAlarm(AlarmRepository(this))
         } else {
             Toast.makeText(this, "Chưa xác minh khuôn mặt — báo thức vẫn kêu", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    /** Nhận lệnh Tắt từ nút trên thông báo (tránh lỡ tay full-screen). */
+    private val forceStopReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == AlarmActionReceiver.ACTION_FORCE_STOP_RING) {
+                // Chỉ chấp nhận khi không chống troll / không challenge
+                if (challengeType == Alarm.CHALLENGE_NONE &&
+                    !AppSettings.isAntiTroll(this@AlarmRingActivity) &&
+                    !isStrictAntiSnooze
+                ) {
+                    dismissAlarm(AlarmRepository(this@AlarmRingActivity))
+                }
+            }
         }
     }
 
@@ -66,6 +85,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
 
         alarmId = intent.getIntExtra("ALARM_ID", -1)
         val label = intent.getStringExtra("ALARM_LABEL") ?: getString(R.string.app_name)
+        currentLabel = label
         snoozeMinutes = intent.getIntExtra("SNOOZE_MINUTES", 5)
         repeatMode = intent.getIntExtra("REPEAT_MODE", Alarm.REPEAT_DAILY)
         ringtoneUri = intent.getStringExtra("RINGTONE_URI")
@@ -83,6 +103,22 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         if (isStrictAntiSnooze) {
             binding.btnSnooze.visibility = View.GONE
         }
+
+        // Đăng ký nhận Tắt từ notification
+        val filter = IntentFilter(AlarmActionReceiver.ACTION_FORCE_STOP_RING)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(forceStopReceiver, filter, RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("UnspecifiedRegisterReceiverFlag")
+            registerReceiver(forceStopReceiver, filter)
+        }
+
+        // Hiện thông báo có nút Tắt (tránh lỡ tay)
+        val allowDirectDismiss =
+            challengeType == Alarm.CHALLENGE_NONE &&
+                !AppSettings.isAntiTroll(this) &&
+                !isStrictAntiSnooze
+        AlarmNotificationHelper.showRingingNotification(this, alarmId, label, allowDirectDismiss)
 
         startRinging()
         enforceAntiTroll()
@@ -294,6 +330,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
 
     private fun dismissAlarm(repo: AlarmRepository) {
         stopRinging()
+        AlarmNotificationHelper.cancelRinging(this)
         if (repeatMode != Alarm.REPEAT_ONCE) {
             val alarms = repo.getAlarms()
             val alarm = alarms.find { it.id == alarmId }
@@ -306,6 +343,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
 
     private fun snoozeAlarm(label: String) {
         stopRinging()
+        AlarmNotificationHelper.cancelRinging(this)
         val cal = Calendar.getInstance()
         cal.add(Calendar.MINUTE, snoozeMinutes)
         val snoozeAlarm = Alarm(
@@ -395,8 +433,14 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     override fun onDestroy() {
+        try {
+            unregisterReceiver(forceStopReceiver)
+        } catch (_: Exception) {
+        }
         ttsHelper?.shutdown()
         super.onDestroy()
         stopRinging()
+        // Không cancel notification ở đây nếu activity bị destroy ngoài ý muốn;
+        // chỉ cancel khi dismiss/snooze thành công.
     }
 }

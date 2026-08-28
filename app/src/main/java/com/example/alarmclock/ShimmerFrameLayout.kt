@@ -47,7 +47,7 @@ class ShimmerFrameLayout @JvmOverloads constructor(
         if (w <= 0) return
         shader = LinearGradient(
             0f, 0f, w.toFloat(), 0f,
-            intArrayOf(0x00FFFFFF, 0x88FFFFFF, 0x00FFFFFF),
+            intArrayOf(0x00FFFFFF, 0x88FFFFFF.toInt(), 0x00FFFFFF),
             floatArrayOf(0f, 0.5f, 1f),
             Shader.TileMode.CLAMP
         )

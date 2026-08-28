@@ -17,6 +17,15 @@ class AlarmReceiver : BroadcastReceiver() {
         val voiceNote = intent.getStringExtra("VOICE_NOTE")
         val useCrescendo = intent.getBooleanExtra("USE_CRESCENDO", true)
 
+        // Thông báo có nút Tắt (chỉ khi không challenge / không chống troll)
+        val allowDirectDismiss =
+            challengeType == Alarm.CHALLENGE_NONE &&
+                !AppSettings.isAntiTroll(context) &&
+                !isStrict
+        AlarmNotificationHelper.showRingingNotification(
+            context, alarmId, label, allowDirectDismiss
+        )
+
         val ringIntent = Intent(context, AlarmRingActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("ALARM_ID", alarmId)
