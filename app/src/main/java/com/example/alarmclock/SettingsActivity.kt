@@ -158,7 +158,12 @@ class SettingsActivity : AppCompatActivity() {
         // Gallery password + recovery email
         binding.etRecoveryEmail.setText(AppSettings.getRecoveryEmail(this))
         binding.btnSaveRecovery.setOnClickListener {
-            AppSettings.setRecoveryEmail(this, binding.etRecoveryEmail.text?.toString() ?: "")
+            val email = binding.etRecoveryEmail.text?.toString()?.trim().orEmpty()
+            if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                Toast.makeText(this, "Nhập email hợp lệ (vd: you@gmail.com)", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            AppSettings.setRecoveryEmail(this, email)
             Toast.makeText(this, getString(R.string.recovery_email_saved), Toast.LENGTH_SHORT).show()
         }
         binding.btnSetGalleryPw.setOnClickListener {
@@ -167,9 +172,20 @@ class SettingsActivity : AppCompatActivity() {
                 Toast.makeText(this, getString(R.string.gallery_pw_short), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+            // Tự lưu email khôi phục nếu đang điền sẵn
+            val email = binding.etRecoveryEmail.text?.toString()?.trim().orEmpty()
+            if (email.isNotBlank() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                AppSettings.setRecoveryEmail(this, email)
+            }
             AppSettings.setGalleryPassword(this, pw)
             binding.etGalleryPw.text = null
-            Toast.makeText(this, getString(R.string.gallery_pw_saved), Toast.LENGTH_SHORT).show()
+            val hasEmail = AppSettings.getRecoveryEmail(this).isNotBlank()
+            Toast.makeText(
+                this,
+                if (hasEmail) getString(R.string.gallery_pw_saved) + " (+ email khôi phục)"
+                else getString(R.string.gallery_pw_saved) + " — nhớ Lưu email khôi phục!",
+                Toast.LENGTH_LONG
+            ).show()
         }
         binding.btnClearGalleryPw.setOnClickListener {
             AppSettings.clearGalleryPassword(this)

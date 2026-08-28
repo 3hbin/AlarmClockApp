@@ -308,41 +308,46 @@ class CurvedBottomNavView @JvmOverloads constructor(
         }
     }
 
-    /** Liquid Glass — thanh kính bo góc + pill chọn trượt (iOS 26 style). */
+    /**
+     * Liquid Glass Material 3 (Android) — full-width kính mờ, không capsule iOS lơ lửng.
+     */
     private fun drawLiquidGlass(canvas: Canvas) {
         val w = width.toFloat()
         val h = height.toFloat()
-        val margin = dp(10f)
         val top = h - flatBarH
-        val radius = dp(28f)
 
-        // Glass bar
-        rect.set(margin, top, w - margin, h - dp(4f))
-        glassPaint.color = 0xE6F4F7FF.toInt()
-        glassPaint.setShadowLayer(18f, 0f, 4f, 0x33000000)
-        canvas.drawRoundRect(rect, radius, radius, glassPaint)
+        // Full-width frosted bar
+        rect.set(0f, top, w, h + dp(8f))
+        glassPaint.color = 0xF2F5F7FF.toInt()
+        glassPaint.setShadowLayer(12f, 0f, -2f, 0x22000000)
+        canvas.drawRect(rect, glassPaint)
         glassPaint.clearShadowLayer()
 
-        // Sheen
-        canvas.drawRoundRect(rect, radius, radius, glassHighlight)
-        canvas.drawRoundRect(rect, radius, radius, glassStroke)
-
-        // Selected pill under icon
-        val cx = if (animX == 0f) centerX(selectedIndex) else animX
-        val pillW = dp(48f)
-        val pillH = dp(36f)
-        val pillTop = top + (flatBarH - pillH) / 2f - dp(4f)
-        rect.set(cx - pillW / 2f, pillTop, cx + pillW / 2f, pillTop + pillH)
-        pillPaint.color = 0x443F51B5
-        canvas.drawRoundRect(rect, dp(18f), dp(18f), pillPaint)
-
-        // Soft inner highlight on pill
-        val hi = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        // Top edge + sheen
+        val edge = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
             strokeWidth = dp(1f)
-            color = 0x55FFFFFF
+            color = 0x66FFFFFF
         }
-        canvas.drawRoundRect(rect, dp(18f), dp(18f), hi)
+        canvas.drawLine(0f, top + 0.5f, w, top + 0.5f, edge)
+        val sheen = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            shader = LinearGradient(
+                0f, top, 0f, top + dp(18f),
+                intArrayOf(0x33FFFFFF, 0x00FFFFFF),
+                null,
+                Shader.TileMode.CLAMP
+            )
+        }
+        canvas.drawRect(0f, top, w, top + dp(18f), sheen)
+
+        // M3 active indicator pill
+        val cx = if (animX == 0f) centerX(selectedIndex) else animX
+        val pillW = dp(56f)
+        val pillH = dp(28f)
+        val pillTop = top + dp(8f)
+        rect.set(cx - pillW / 2f, pillTop, cx + pillW / 2f, pillTop + pillH)
+        pillPaint.color = 0x333F51B5
+        canvas.drawRoundRect(rect, dp(14f), dp(14f), pillPaint)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

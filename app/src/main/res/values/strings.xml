@@ -93,6 +93,6 @@
     <string name="nav_style_title">Kiểu thanh dưới</string>
     <string name="nav_style_hint">Chọn giao diện thanh điều hướng dưới (áp dụng mọi màn).</string>
     <string name="nav_style_curved">Android cong (mặc định)</string>
-    <string name="nav_style_glass">Liquid Glass (kính mờ)</string>
+    <string name="nav_style_glass">Liquid Glass Material (kính mờ Android)</string>
     <string name="nav_style_changed">Đã đổi kiểu thanh dưới</string>
 </resources>

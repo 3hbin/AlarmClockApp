@@ -42,6 +42,13 @@ class GalleryActivity : AppCompatActivity() {
             if (saved.isNotBlank()) {
                 binding.tvRecoveryHint.text =
                     "Quên mật khẩu? Gõ đúng email đã lưu (${maskEmail(saved)}):"
+                // Gợi ý domain, không prefill full email (bảo mật)
+            } else {
+                binding.tvRecoveryHint.text =
+                    "Chưa lưu email khôi phục. Vào Cài đặt → nhập Email + bấm Lưu email, hoặc Xóa mật khẩu."
+                binding.etRecoveryEmail.isEnabled = false
+                binding.btnForgotEmail.isEnabled = false
+                binding.btnForgotEmail.alpha = 0.45f
             }
         }
 
@@ -72,13 +79,17 @@ class GalleryActivity : AppCompatActivity() {
         if (recovery.isBlank()) {
             Toast.makeText(
                 this,
-                "Chưa lưu email khôi phục. Vào Cài đặt → Xóa mật khẩu bộ sưu tập",
+                "Chưa lưu email khôi phục trong Cài đặt. Vào Cài đặt → Lưu email, hoặc Xóa mật khẩu bộ sưu tập.",
                 Toast.LENGTH_LONG
             ).show()
             return
         }
-        if (email.lowercase() != recovery) {
-            Toast.makeText(this, "Email không khớp email khôi phục đã lưu", Toast.LENGTH_LONG).show()
+        if (email.isBlank()) {
+            Toast.makeText(this, "Nhập email khôi phục đã lưu", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (email.trim().lowercase() != recovery) {
+            Toast.makeText(this, "Email không khớp (${maskEmail(recovery)})", Toast.LENGTH_LONG).show()
             return
         }
         AppSettings.clearGalleryPassword(this)
