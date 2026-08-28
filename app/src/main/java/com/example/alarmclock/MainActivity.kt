@@ -82,6 +82,9 @@ class MainActivity : AppCompatActivity() {
             },
             onDelete = { alarm ->
                 confirmDelete(alarm)
+            },
+            onEdit = { alarm ->
+                showEditDialog(alarm)
             }
         )
 
@@ -162,25 +165,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupCurvedNav() {
-        val items = listOf(
-            CurvedBottomNavView.Item(0, "⏰", "Báo"),
-            CurvedBottomNavView.Item(1, "🌍", "Thế giới"),
-            CurvedBottomNavView.Item(2, "⏱️", "Bấm"),
-            CurvedBottomNavView.Item(3, "⏳", "Đếm"),
-            CurvedBottomNavView.Item(4, "🖼️", "Ảnh"),
-            CurvedBottomNavView.Item(5, "⚙️", "Cài")
-        )
-        binding.curvedNav.setItems(items, 0)
-        binding.curvedNav.setOnItemSelectedListener { index, _ ->
-            when (index) {
-                0 -> { /* stay on MainActivity */ }
-                1 -> Motion.startSharedAxis(this, Intent(this, WorldClockActivity::class.java))
-                2 -> Motion.startSharedAxis(this, Intent(this, StopwatchActivity::class.java))
-                3 -> Motion.startSharedAxis(this, Intent(this, TimerActivity::class.java))
-                4 -> Motion.startSharedAxis(this, Intent(this, GalleryActivity::class.java))
-                5 -> Motion.startSharedAxis(this, Intent(this, SettingsActivity::class.java))
-            }
-        }
+        BottomNavHelper.bind(this, binding.curvedNav, 0)
     }
 
     
@@ -213,7 +198,12 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showAddDialog() {
+    private fun showAddDialog() = showAlarmEditor(null)
+
+    private fun showEditDialog(alarm: Alarm) = showAlarmEditor(alarm)
+
+    /** null = thêm mới; có alarm = sửa. */
+    private fun showAlarmEditor(existing: Alarm?) {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_alarm, null)
         val etLabel = dialogView.findViewById<EditText>(R.id.etLabel)
         val rgRepeat = dialogView.findViewById<RadioGroup>(R.id.rgRepeat)
@@ -222,7 +212,32 @@ class MainActivity : AppCompatActivity() {
         val btnChooseRingtone = dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.btnChooseRingtone)
         val tvRingtoneStatus = dialogView.findViewById<android.widget.TextView>(R.id.tvRingtoneStatus)
 
-        // Hiện trạng thái nhạc chuông hiện tại
+        if (existing != null) {
+            etLabel.setText(existing.label)
+            when (existing.repeatMode) {
+                Alarm.REPEAT_ONCE -> rgRepeat.check(R.id.rbOnce)
+                Alarm.REPEAT_WEEKDAYS -> rgRepeat.check(R.id.rbWeekdays)
+                else -> rgRepeat.check(R.id.rbDaily)
+            }
+            when (existing.snoozeMinutes) {
+                10 -> rgSnooze.check(R.id.rbSnooze10)
+                15 -> rgSnooze.check(R.id.rbSnooze15)
+                else -> rgSnooze.check(R.id.rbSnooze5)
+            }
+            when (existing.challengeType) {
+                Alarm.CHALLENGE_MATH -> rgChallenge.check(R.id.rbChallengeMath)
+                Alarm.CHALLENGE_SHAKE -> rgChallenge.check(R.id.rbChallengeShake)
+                Alarm.CHALLENGE_FACE -> rgChallenge.check(R.id.rbChallengeFace)
+                Alarm.CHALLENGE_BIOMETRIC -> dialogView.findViewById<RadioGroup>(R.id.rgChallenge2)?.check(R.id.rbChallengeBio)
+                else -> rgChallenge.check(R.id.rbChallengeNone)
+            }
+            dialogView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbSkipHolidays).isChecked = existing.skipHolidays
+            dialogView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbStrictAntiSnooze).isChecked = existing.isStrictAntiSnooze
+            dialogView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbCrescendo).isChecked = existing.useCrescendo
+            dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etVoiceNote)?.setText(existing.voiceNote.orEmpty())
+            selectedRingtoneUri = existing.ringtoneUri
+        }
+
         tvRingtoneStatus.text = if (selectedRingtoneUri != null) {
             getString(R.string.choose_ringtone) + " ✓"
         } else {
@@ -231,7 +246,6 @@ class MainActivity : AppCompatActivity() {
 
         btnChooseRingtone.setOnClickListener {
             pickRingtone()
-            // Cập nhật text sau khi chọn (sẽ hiện sau khi quay lại)
             tvRingtoneStatus.postDelayed({
                 tvRingtoneStatus.text = if (selectedRingtoneUri != null) {
                     getString(R.string.choose_ringtone) + " ✓"
@@ -242,7 +256,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         MaterialAlertDialogBuilder(this)
-            .setTitle(getString(R.string.add_alarm))
+            .setTitle(if (existing != null) "Sửa báo thức" else getString(R.string.add_alarm))
             .setView(dialogView)
             .setPositiveButton(getString(R.string.choose_time)) { _, _ ->
                 val label = etLabel.text.toString().ifBlank { getString(R.string.app_name) }
@@ -269,36 +283,58 @@ class MainActivity : AppCompatActivity() {
                 val useCrescendo = dialogView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbCrescendo).isChecked
                 val voiceNote = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etVoiceNote).text?.toString()?.takeIf { it.isNotBlank() }
 
+                val initH = existing?.hour ?: 7
+                val initM = existing?.minute ?: 0
                 TimePickerDialog(
                     this,
                     { _, hour, minute ->
-                        val newAlarm = Alarm(
-                            id = repo.getNextId(),
-                            hour = hour,
-                            minute = minute,
-                            isEnabled = true,
-                            label = label,
-                            repeatMode = repeatMode,
-                            snoozeMinutes = snoozeMinutes,
-                            ringtoneUri = selectedRingtoneUri,
-                            challengeType = challengeType,
-                            skipHolidays = skipHolidays,
-                            isStrictAntiSnooze = isStrict,
-                            voiceNote = voiceNote,
-                            useCrescendo = useCrescendo
-                        )
-                        alarms.add(newAlarm)
-                        repo.saveAlarms(alarms)
-                        AlarmScheduler.schedule(this, newAlarm)
-                        adapter.notifyDataSetChanged()
-                        updateOngoingNotification()
-                        Toast.makeText(
-                            this,
-                            getString(R.string.added, label, hour, minute),
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        if (existing != null) {
+                            AlarmScheduler.cancel(this, existing.id)
+                            existing.hour = hour
+                            existing.minute = minute
+                            existing.label = label
+                            existing.repeatMode = repeatMode
+                            existing.snoozeMinutes = snoozeMinutes
+                            existing.ringtoneUri = selectedRingtoneUri
+                            existing.challengeType = challengeType
+                            existing.skipHolidays = skipHolidays
+                            existing.isStrictAntiSnooze = isStrict
+                            existing.voiceNote = voiceNote
+                            existing.useCrescendo = useCrescendo
+                            if (existing.isEnabled) AlarmScheduler.schedule(this, existing)
+                            repo.saveAlarms(alarms)
+                            adapter.notifyDataSetChanged()
+                            updateOngoingNotification()
+                            Toast.makeText(this, "Đã cập nhật: $label $hour:%02d".format(minute), Toast.LENGTH_SHORT).show()
+                        } else {
+                            val newAlarm = Alarm(
+                                id = repo.getNextId(),
+                                hour = hour,
+                                minute = minute,
+                                isEnabled = true,
+                                label = label,
+                                repeatMode = repeatMode,
+                                snoozeMinutes = snoozeMinutes,
+                                ringtoneUri = selectedRingtoneUri,
+                                challengeType = challengeType,
+                                skipHolidays = skipHolidays,
+                                isStrictAntiSnooze = isStrict,
+                                voiceNote = voiceNote,
+                                useCrescendo = useCrescendo
+                            )
+                            alarms.add(newAlarm)
+                            repo.saveAlarms(alarms)
+                            AlarmScheduler.schedule(this, newAlarm)
+                            adapter.notifyDataSetChanged()
+                            updateOngoingNotification()
+                            Toast.makeText(
+                                this,
+                                getString(R.string.added, label, hour, minute),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     },
-                    7, 0, true
+                    initH, initM, true
                 ).show()
             }
             .setNegativeButton(getString(R.string.cancel), null)

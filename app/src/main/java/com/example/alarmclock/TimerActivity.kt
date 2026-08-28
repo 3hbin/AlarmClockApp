@@ -52,6 +52,7 @@ class TimerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityTimerBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        try { BottomNavHelper.bind(this, binding.curvedNav, 3) } catch (_: Exception) {}
 
         AlarmNotificationHelper.ensureChannels(this)
 

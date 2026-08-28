@@ -96,4 +96,14 @@ object AppSettings {
 
     fun getLanguage(context: Context): String =
         prefs(context).getString("app_language", LanguageCatalog.SYSTEM) ?: LanguageCatalog.SYSTEM
+
+    /** Bottom nav style: 0 = curved (Android mặc định), 1 = liquid glass */
+    const val NAV_CURVED = 0
+    const val NAV_LIQUID_GLASS = 1
+
+    fun setBottomNavStyle(context: Context, style: Int) =
+        prefs(context).edit().putInt("bottom_nav_style", style).apply()
+
+    fun getBottomNavStyle(context: Context): Int =
+        prefs(context).getInt("bottom_nav_style", NAV_CURVED)
 }

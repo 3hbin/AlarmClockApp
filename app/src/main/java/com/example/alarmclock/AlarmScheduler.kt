@@ -16,6 +16,8 @@ object AlarmScheduler {
         val intent = Intent(context, AlarmReceiver::class.java).apply {
             putExtra("ALARM_ID", alarm.id)
             putExtra("ALARM_LABEL", alarm.label)
+            putExtra("ALARM_HOUR", alarm.hour)
+            putExtra("ALARM_MINUTE", alarm.minute)
             putExtra("SNOOZE_MINUTES", alarm.snoozeMinutes)
             putExtra("REPEAT_MODE", alarm.repeatMode)
             putExtra("RINGTONE_URI", alarm.ringtoneUri)

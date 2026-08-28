@@ -60,4 +60,10 @@
         android:layout_weight="1"
         android:padding="12dp"
         android:clipToPadding="false" />
+    <com.example.alarmclock.CurvedBottomNavView
+        android:id="@+id/curvedNav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:elevation="16dp" />
 </LinearLayout>

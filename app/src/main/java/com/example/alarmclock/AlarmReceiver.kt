@@ -30,6 +30,8 @@ class AlarmReceiver : BroadcastReceiver() {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("ALARM_ID", alarmId)
             putExtra("ALARM_LABEL", label)
+            putExtra("ALARM_HOUR", intent.getIntExtra("ALARM_HOUR", -1))
+            putExtra("ALARM_MINUTE", intent.getIntExtra("ALARM_MINUTE", -1))
             putExtra("SNOOZE_MINUTES", snoozeMinutes)
             putExtra("REPEAT_MODE", repeatMode)
             putExtra("RINGTONE_URI", ringtoneUri)

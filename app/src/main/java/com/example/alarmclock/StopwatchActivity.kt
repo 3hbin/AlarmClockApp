@@ -63,6 +63,7 @@ class StopwatchActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityStopwatchBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        try { BottomNavHelper.bind(this, binding.curvedNav, 2) } catch (_: Exception) {}
 
         AlarmNotificationHelper.ensureChannels(this)
 

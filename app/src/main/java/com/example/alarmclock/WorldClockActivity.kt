@@ -56,6 +56,7 @@ class WorldClockActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityWorldClockBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        try { BottomNavHelper.bind(this, binding.curvedNav, 1) } catch (_: Exception) {}
 
         binding.toolbar.setNavigationOnClickListener { Motion.finishFade(this) }
 

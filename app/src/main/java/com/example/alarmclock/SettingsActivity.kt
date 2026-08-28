@@ -23,8 +23,9 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        try { BottomNavHelper.bind(this, binding.curvedNav, 5) } catch (_: Exception) {}
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        title = "Cài đặt"
+        title = getString(R.string.settings_title)
 
         // Ngôn ngữ (~195) + hiệu ứng
         refreshLanguageLabel()
@@ -83,7 +84,26 @@ class SettingsActivity : AppCompatActivity() {
                 else -> 0
             }
             AppSettings.setDarkMode(this, mode)
-            Toast.makeText(this, "Đã đổi chế độ tối", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.dark_mode_changed), Toast.LENGTH_SHORT).show()
+        }
+
+        // Kiểu thanh dưới: cong Android / Liquid Glass
+        when (AppSettings.getBottomNavStyle(this)) {
+            AppSettings.NAV_LIQUID_GLASS -> binding.rbNavGlass.isChecked = true
+            else -> binding.rbNavCurved.isChecked = true
+        }
+        binding.rgNavStyle.setOnCheckedChangeListener { _, id ->
+            val style = if (id == R.id.rbNavGlass) AppSettings.NAV_LIQUID_GLASS else AppSettings.NAV_CURVED
+            AppSettings.setBottomNavStyle(this, style)
+            // Áp dụng ngay trên màn Cài đặt
+            try {
+                binding.curvedNav.navStyle = if (style == AppSettings.NAV_LIQUID_GLASS)
+                    CurvedBottomNavView.Style.LIQUID_GLASS
+                else
+                    CurvedBottomNavView.Style.CURVED
+                binding.curvedNav.setItems(BottomNavHelper.items(), 5)
+            } catch (_: Exception) {}
+            Toast.makeText(this, getString(R.string.nav_style_changed), Toast.LENGTH_SHORT).show()
         }
 
         // 12/24h
@@ -109,7 +129,7 @@ class SettingsActivity : AppCompatActivity() {
         binding.switchAntiTroll.setCheckedSilent(AppSettings.isAntiTroll(this))
         binding.switchAntiTroll.setOnCheckedChangeListener { sw, on ->
             if (on && !AppSettings.hasAntiTrollPin(this)) {
-                Toast.makeText(this, "Hãy đặt PIN (≥4 số) trước khi bật", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, getString(R.string.anti_troll_pin_need), Toast.LENGTH_LONG).show()
                 sw.setChecked(false, animate = true, notify = false)
                 return@setOnCheckedChangeListener
             }
@@ -119,7 +139,7 @@ class SettingsActivity : AppCompatActivity() {
                 sw.setLoading(false)
                 Toast.makeText(
                     this,
-                    if (on) "Đã bật chống troll — báo thức khó tắt hơn" else "Đã tắt chống troll",
+                    getString(if (on) R.string.anti_troll_on else R.string.anti_troll_off),
                     Toast.LENGTH_SHORT
                 ).show()
             }, 320)
@@ -127,53 +147,58 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnSaveAntiTrollPin.setOnClickListener {
             val pin = binding.etAntiTrollPin.text?.toString().orEmpty()
             if (pin.length < 4) {
-                Toast.makeText(this, "PIN tối thiểu 4 số", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.anti_troll_pin_short), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             AppSettings.setAntiTrollPin(this, pin)
             binding.etAntiTrollPin.text = null
-            Toast.makeText(this, "Đã lưu PIN chống troll", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.anti_troll_pin_saved), Toast.LENGTH_SHORT).show()
         }
 
         // Gallery password + recovery email
         binding.etRecoveryEmail.setText(AppSettings.getRecoveryEmail(this))
         binding.btnSaveRecovery.setOnClickListener {
             AppSettings.setRecoveryEmail(this, binding.etRecoveryEmail.text?.toString() ?: "")
-            Toast.makeText(this, "Đã lưu email khôi phục", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.recovery_email_saved), Toast.LENGTH_SHORT).show()
         }
         binding.btnSetGalleryPw.setOnClickListener {
             val pw = binding.etGalleryPw.text?.toString() ?: ""
             if (pw.length < 4) {
-                Toast.makeText(this, "Mật khẩu ít nhất 4 ký tự", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.gallery_pw_short), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             AppSettings.setGalleryPassword(this, pw)
             binding.etGalleryPw.text = null
-            Toast.makeText(this, "Đã đặt mật khẩu bộ sưu tập", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.gallery_pw_saved), Toast.LENGTH_SHORT).show()
         }
         binding.btnClearGalleryPw.setOnClickListener {
             AppSettings.clearGalleryPassword(this)
-            Toast.makeText(this, "Đã xóa mật khẩu — Bộ sưu tập mở tự do", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.gallery_pw_cleared), Toast.LENGTH_LONG).show()
         }
     }
 
     private fun refreshLanguageLabel() {
         val code = AppSettings.getLanguage(this)
-        binding.tvLanguageValue.text = LanguageCatalog.displayName(code)
+        binding.tvLanguageValue.text = if (code == LanguageCatalog.SYSTEM || code.isBlank()) {
+            getString(R.string.lang_system)
+        } else {
+            LanguageCatalog.displayName(code)
+        }
     }
 
     private fun showLanguagePicker() {
+        val systemLabel = getString(R.string.lang_system)
         val container = android.widget.LinearLayout(this).apply {
             orientation = android.widget.LinearLayout.VERTICAL
             setPadding(24, 16, 24, 8)
         }
         val etSearch = EditText(this).apply {
-            hint = "🔍  Tìm ngôn ngữ / Search language…"
+            hint = getString(R.string.lang_search_hint)
             setSingleLine()
             setPadding(32, 24, 32, 24)
         }
         val tvCount = TextView(this).apply {
-            text = "${LanguageCatalog.languages.size} ngôn ngữ"
+            text = getString(R.string.lang_count, LanguageCatalog.languages.size)
             setPadding(8, 8, 8, 8)
             textSize = 12f
         }
@@ -196,26 +221,21 @@ class SettingsActivity : AppCompatActivity() {
 
         val current = AppSettings.getLanguage(this)
         val items = mutableListOf<LangRow>()
-        items.add(LangRow(LanguageCatalog.SYSTEM, "🌐  Theo hệ thống / System default", current == LanguageCatalog.SYSTEM))
+        items.add(LangRow(LanguageCatalog.SYSTEM, systemLabel, current == LanguageCatalog.SYSTEM))
         LanguageCatalog.languages.forEach {
             items.add(LangRow(it.code, it.displayLabel, it.code.equals(current, true)))
         }
 
         var dialog: androidx.appcompat.app.AlertDialog? = null
         val adapter = LangAdapter(items) { code, view ->
-            // Hiệu ứng bounce cờ / dòng đang chọn
             Motion.bounce(view) {
                 AppSettings.setLanguage(this, code)
                 LocaleHelper.applyLocale(code)
                 refreshLanguageLabel()
                 Motion.pulse(binding.cardLanguage)
-                Toast.makeText(
-                    this,
-                    "✓  ${LanguageCatalog.displayName(code)}",
-                    Toast.LENGTH_SHORT
-                ).show()
+                val label = if (code == LanguageCatalog.SYSTEM) systemLabel else LanguageCatalog.displayName(code)
+                Toast.makeText(this, getString(R.string.lang_selected, label), Toast.LENGTH_SHORT).show()
                 dialog?.dismiss()
-                // Delay nhẹ rồi recreate — animation kịp chạy
                 binding.root.postDelayed({ recreate() }, 220)
             }
         }
@@ -227,22 +247,21 @@ class SettingsActivity : AppCompatActivity() {
             override fun afterTextChanged(s: Editable?) {
                 val q = s?.toString().orEmpty()
                 val filtered = mutableListOf<LangRow>()
-                filtered.add(LangRow(LanguageCatalog.SYSTEM, "🌐  Theo hệ thống / System default", current == LanguageCatalog.SYSTEM))
+                filtered.add(LangRow(LanguageCatalog.SYSTEM, systemLabel, current == LanguageCatalog.SYSTEM))
                 LanguageCatalog.search(q).forEach {
                     filtered.add(LangRow(it.code, it.displayLabel, it.code.equals(current, true)))
                 }
-                tvCount.text = "${filtered.size - 1} ngôn ngữ"
+                tvCount.text = getString(R.string.lang_count, filtered.size - 1)
                 adapter.replace(filtered)
             }
         })
 
         dialog = MaterialAlertDialogBuilder(this)
-            .setTitle("🌍  Chọn ngôn ngữ (${LanguageCatalog.languages.size})")
+            .setTitle(getString(R.string.lang_pick_title, LanguageCatalog.languages.size))
             .setView(container)
-            .setNegativeButton("Đóng", null)
+            .setNegativeButton(getString(R.string.close), null)
             .create()
         dialog.show()
-        // Fade-scale toàn dialog content
         Motion.fadeScaleIn(container, delay = 30)
         Motion.slideFadeIn(etSearch, delay = 40)
     }

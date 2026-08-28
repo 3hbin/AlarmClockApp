@@ -4,8 +4,11 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.RectF
+import android.graphics.Shader
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
@@ -15,13 +18,16 @@ import android.widget.LinearLayout
 import android.widget.TextView
 
 /**
- * Curved bottom nav kiểu Flutter curved_labeled_navigation_bar.
- * Nút tròn trắng nổi + đường cong mượt + label ngắn.
+ * Bottom nav 2 kiểu (Cài đặt):
+ * - CURVED: Android mặc định — thanh trắng + lõm cong + nút tròn nổi
+ * - LIQUID_GLASS: kiểu iOS 26 liquid glass (adaptive_platform_ui) — thanh kính mờ, pill chọn
  */
 class CurvedBottomNavView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : FrameLayout(context, attrs) {
+
+    enum class Style { CURVED, LIQUID_GLASS }
 
     data class Item(val id: Int, val emoji: String, val label: String)
 
@@ -29,9 +35,16 @@ class CurvedBottomNavView @JvmOverloads constructor(
     private var selectedIndex = 0
     private var animX = 0f
     private var onItemSelected: ((Int, Item) -> Unit)? = null
+    var navStyle: Style = Style.CURVED
+        set(value) {
+            if (field == value) return
+            field = value
+            applyStyleChrome()
+            invalidate()
+            requestLayout()
+        }
 
     private val barColor = Color.WHITE
-    // Nền lộ qua đường cong — cùng màu content nhạt, không dải xanh dày
     private val gapColor = 0xFFF5F5FA.toInt()
     private val labelActive = 0xFF3F51B5.toInt()
     private val labelInactive = 0xFFB0BEC5.toInt()
@@ -51,13 +64,30 @@ class CurvedBottomNavView @JvmOverloads constructor(
         strokeWidth = 3f * resources.displayMetrics.density
         color = 0xFF3F51B5.toInt()
     }
+    private val glassPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = 0xE6F8FAFF.toInt()
+    }
+    private val glassStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 1.2f * resources.displayMetrics.density
+        color = 0x66FFFFFF
+    }
+    private val glassHighlight = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+    }
+    private val pillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = 0x553F51B5
+    }
     private val path = Path()
+    private val rect = RectF()
     private val iconViews = mutableListOf<TextView>()
     private val labelViews = mutableListOf<TextView>()
 
     private fun dp(v: Float) = v * resources.displayMetrics.density
 
-    private val flatBarH get() = dp(52f)
+    private val flatBarH get() = if (navStyle == Style.LIQUID_GLASS) dp(58f) else dp(52f)
     private val dip get() = dp(22f)
     private val btnR get() = dp(26f)
 
@@ -66,7 +96,21 @@ class CurvedBottomNavView @JvmOverloads constructor(
         setLayerType(LAYER_TYPE_SOFTWARE, null)
         clipChildren = false
         clipToPadding = false
-        setBackgroundColor(gapColor)
+        applyStyleChrome()
+    }
+
+    private fun applyStyleChrome() {
+        when (navStyle) {
+            Style.CURVED -> {
+                setBackgroundColor(gapColor)
+                barPaint.color = barColor
+                barPaint.setShadowLayer(16f, 0f, -2f, 0x28000000)
+            }
+            Style.LIQUID_GLASS -> {
+                setBackgroundColor(Color.TRANSPARENT)
+                barPaint.clearShadowLayer()
+            }
+        }
     }
 
     fun setItems(list: List<Item>, initial: Int = 0) {
@@ -91,7 +135,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
         val target = centerX(index)
         if (animate && width > 0) {
             ValueAnimator.ofFloat(animX, target).apply {
-                duration = 450
+                duration = if (navStyle == Style.LIQUID_GLASS) 320 else 450
                 interpolator = DecelerateInterpolator(1.6f)
                 addUpdateListener {
                     animX = it.animatedValue as Float
@@ -111,10 +155,11 @@ class CurvedBottomNavView @JvmOverloads constructor(
         iconViews.clear()
         labelViews.clear()
 
+        val topPad = if (navStyle == Style.LIQUID_GLASS) dp(10f).toInt() else (btnR * 0.85f).toInt()
         val row = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.BOTTOM
-            setPadding(0, (btnR * 0.85f).toInt(), 0, dp(4f).toInt())
+            setPadding(0, topPad, 0, dp(6f).toInt())
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         }
 
@@ -128,10 +173,9 @@ class CurvedBottomNavView @JvmOverloads constructor(
                 setOnClickListener {
                     val changed = selectedIndex != index
                     selectIndex(index, animate = true)
-                    // Gọi listener sau một nhịp để thấy nút nổi trượt
                     postDelayed({
                         onItemSelected?.invoke(index, item)
-                    }, if (changed) 280L else 0L)
+                    }, if (changed) 260L else 0L)
                 }
             }
 
@@ -173,10 +217,27 @@ class CurvedBottomNavView @JvmOverloads constructor(
         iconViews.forEachIndexed { i, tv ->
             val selected = i == selectedIndex
             tv.animate().cancel()
-            if (animated) {
-                tv.animate().alpha(if (selected) 0f else 1f).setDuration(180).start()
+            if (navStyle == Style.LIQUID_GLASS) {
+                // Liquid: icon luôn hiện; selected scale nhẹ
+                tv.alpha = 1f
+                if (animated) {
+                    tv.animate()
+                        .scaleX(if (selected) 1.12f else 1f)
+                        .scaleY(if (selected) 1.12f else 1f)
+                        .setDuration(200)
+                        .start()
+                } else {
+                    tv.scaleX = if (selected) 1.12f else 1f
+                    tv.scaleY = if (selected) 1.12f else 1f
+                }
             } else {
-                tv.alpha = if (selected) 0f else 1f
+                tv.scaleX = 1f
+                tv.scaleY = 1f
+                if (animated) {
+                    tv.animate().alpha(if (selected) 0f else 1f).setDuration(180).start()
+                } else {
+                    tv.alpha = if (selected) 0f else 1f
+                }
             }
             labelViews.getOrNull(i)?.apply {
                 setTextColor(if (selected) labelActive else labelInactive)
@@ -188,19 +249,31 @@ class CurvedBottomNavView @JvmOverloads constructor(
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         animX = centerX(selectedIndex)
+        // glass highlight gradient
+        glassHighlight.shader = LinearGradient(
+            0f, 0f, 0f, h.toFloat(),
+            intArrayOf(0x55FFFFFF, 0x11FFFFFF, 0x00FFFFFF),
+            floatArrayOf(0f, 0.35f, 1f),
+            Shader.TileMode.CLAMP
+        )
     }
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (items.isEmpty() || width == 0) return
+        when (navStyle) {
+            Style.CURVED -> drawCurved(canvas)
+            Style.LIQUID_GLASS -> drawLiquidGlass(canvas)
+        }
+    }
 
+    private fun drawCurved(canvas: Canvas) {
         val w = width.toFloat()
         val h = height.toFloat()
         val top = h - flatBarH
         val cx = if (animX == 0f) centerX(selectedIndex) else animX
         val half = btnR * 1.2f
 
-        // Thanh trắng + lõm cong mượt
         path.reset()
         path.moveTo(0f, top)
         path.lineTo((cx - half * 2.1f).coerceAtLeast(0f), top)
@@ -220,7 +293,6 @@ class CurvedBottomNavView @JvmOverloads constructor(
         path.close()
         canvas.drawPath(path, barPaint)
 
-        // Nút tròn nổi
         val cy = top
         canvas.drawCircle(cx, cy, btnR, buttonPaint)
         canvas.drawCircle(cx, cy, btnR - dp(1.5f), accentRing)
@@ -236,8 +308,49 @@ class CurvedBottomNavView @JvmOverloads constructor(
         }
     }
 
+    /** Liquid Glass — thanh kính bo góc + pill chọn trượt (iOS 26 style). */
+    private fun drawLiquidGlass(canvas: Canvas) {
+        val w = width.toFloat()
+        val h = height.toFloat()
+        val margin = dp(10f)
+        val top = h - flatBarH
+        val radius = dp(28f)
+
+        // Glass bar
+        rect.set(margin, top, w - margin, h - dp(4f))
+        glassPaint.color = 0xE6F4F7FF.toInt()
+        glassPaint.setShadowLayer(18f, 0f, 4f, 0x33000000)
+        canvas.drawRoundRect(rect, radius, radius, glassPaint)
+        glassPaint.clearShadowLayer()
+
+        // Sheen
+        canvas.drawRoundRect(rect, radius, radius, glassHighlight)
+        canvas.drawRoundRect(rect, radius, radius, glassStroke)
+
+        // Selected pill under icon
+        val cx = if (animX == 0f) centerX(selectedIndex) else animX
+        val pillW = dp(48f)
+        val pillH = dp(36f)
+        val pillTop = top + (flatBarH - pillH) / 2f - dp(4f)
+        rect.set(cx - pillW / 2f, pillTop, cx + pillW / 2f, pillTop + pillH)
+        pillPaint.color = 0x443F51B5
+        canvas.drawRoundRect(rect, dp(18f), dp(18f), pillPaint)
+
+        // Soft inner highlight on pill
+        val hi = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = dp(1f)
+            color = 0x55FFFFFF
+        }
+        canvas.drawRoundRect(rect, dp(18f), dp(18f), hi)
+    }
+
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val total = (flatBarH + btnR + dp(6f)).toInt()
+        val total = if (navStyle == Style.LIQUID_GLASS) {
+            (flatBarH + dp(8f)).toInt()
+        } else {
+            (flatBarH + btnR + dp(6f)).toInt()
+        }
         super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(total, MeasureSpec.EXACTLY))
     }
 }

@@ -99,6 +99,18 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         shakeTargetCount = intent.getIntExtra("SHAKE_TARGET_COUNT", 10)
 
         binding.tvLabel.text = label
+        val h = intent.getIntExtra("ALARM_HOUR", -1)
+        val m = intent.getIntExtra("ALARM_MINUTE", -1)
+        if (h in 0..23 && m in 0..59) {
+            binding.tvRingTime.text = String.format("%02d:%02d", h, m)
+        } else {
+            val now = java.util.Calendar.getInstance()
+            binding.tvRingTime.text = String.format(
+                "%02d:%02d",
+                now.get(java.util.Calendar.HOUR_OF_DAY),
+                now.get(java.util.Calendar.MINUTE)
+            )
+        }
         binding.btnSnooze.text = "${getString(R.string.snooze)} ($snoozeMinutes phút)"
         if (isStrictAntiSnooze) {
             binding.btnSnooze.visibility = View.GONE

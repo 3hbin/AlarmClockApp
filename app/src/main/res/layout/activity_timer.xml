@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fillViewport="true"
+    android:orientation="vertical"
     android:background="?android:attr/colorBackground">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -133,3 +138,10 @@
         </LinearLayout>
     </LinearLayout>
 </ScrollView>
+    <com.example.alarmclock.CurvedBottomNavView
+        android:id="@+id/curvedNav"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:elevation="16dp" />
+</LinearLayout>

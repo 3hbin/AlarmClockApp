@@ -9,7 +9,8 @@ import java.util.Locale
 class AlarmAdapter(
     private val alarms: MutableList<Alarm>,
     private val onToggle: (Alarm) -> Unit,
-    private val onDelete: (Alarm) -> Unit
+    private val onDelete: (Alarm) -> Unit,
+    private val onEdit: (Alarm) -> Unit
 ) : RecyclerView.Adapter<AlarmAdapter.ViewHolder>() {
 
     class ViewHolder(val binding: ItemAlarmBinding) : RecyclerView.ViewHolder(binding.root)
@@ -26,13 +27,11 @@ class AlarmAdapter(
         holder.binding.tvLabel.text = alarm.label
         holder.binding.tvRepeat.text = alarm.getRepeatText()
 
-        // Silent bind — tránh fire listener khi recycle
         holder.binding.switchEnabled.setOnCheckedChangeListener(null)
         holder.binding.switchEnabled.setCheckedSilent(alarm.isEnabled)
         holder.binding.switchEnabled.setLoading(false)
 
         holder.binding.switchEnabled.setOnCheckedChangeListener { switch, isChecked ->
-            // Loading ngắn + animation đẹp (giống load_switch)
             switch.setLoading(true)
             switch.postDelayed({
                 alarm.isEnabled = isChecked
@@ -41,11 +40,13 @@ class AlarmAdapter(
             }, 350)
         }
 
+        holder.binding.btnEdit.setOnClickListener {
+            Motion.press(it) { onEdit(alarm) }
+        }
         holder.binding.btnDelete.setOnClickListener {
             Motion.press(it) { onDelete(alarm) }
         }
 
-        // Card entrance subtle
         Motion.fadeScaleIn(holder.binding.root, delay = (position % 6) * 30L)
     }
 
