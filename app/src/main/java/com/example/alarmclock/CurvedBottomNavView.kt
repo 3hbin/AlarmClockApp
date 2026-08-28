@@ -15,12 +15,8 @@ import android.widget.LinearLayout
 import android.widget.TextView
 
 /**
- * Giống Flutter [curved_labeled_navigation_bar]:
- * - Thanh trắng
- * - Đường cong lõm mượt tại mục chọn
- * - Nút tròn nổi trong khoảng lõm
- * - Label dưới mỗi icon
- * - Animation ~600ms easeOut
+ * Curved bottom nav kiểu Flutter curved_labeled_navigation_bar.
+ * Nút tròn trắng nổi + đường cong mượt + label ngắn.
  */
 class CurvedBottomNavView @JvmOverloads constructor(
     context: Context,
@@ -34,22 +30,26 @@ class CurvedBottomNavView @JvmOverloads constructor(
     private var animX = 0f
     private var onItemSelected: ((Int, Item) -> Unit)? = null
 
-    // Màu giống package: bar trắng, nền sau (lộ qua đường cong) = primary
-    private var barColor = Color.WHITE
-    private var navBackgroundColor = 0xFF3F51B5.toInt()
-    private var buttonColor = Color.WHITE
-    private var labelActive = 0xFF3F51B5.toInt()
-    private var labelInactive = 0xFF9E9E9E.toInt()
+    private val barColor = Color.WHITE
+    // Nền lộ qua đường cong — cùng màu content nhạt, không dải xanh dày
+    private val gapColor = 0xFFF5F5FA.toInt()
+    private val labelActive = 0xFF3F51B5.toInt()
+    private val labelInactive = 0xFFB0BEC5.toInt()
 
     private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
         color = barColor
-        setShadowLayer(18f, 0f, -3f, 0x33000000)
+        setShadowLayer(16f, 0f, -2f, 0x28000000)
     }
     private val buttonPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
-        color = buttonColor
-        setShadowLayer(14f, 0f, 6f, 0x44000000)
+        color = Color.WHITE
+        setShadowLayer(12f, 0f, 4f, 0x40000000)
+    }
+    private val accentRing = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 3f * resources.displayMetrics.density
+        color = 0xFF3F51B5.toInt()
     }
     private val path = Path()
     private val iconViews = mutableListOf<TextView>()
@@ -57,19 +57,16 @@ class CurvedBottomNavView @JvmOverloads constructor(
 
     private fun dp(v: Float) = v * resources.displayMetrics.density
 
-    /** Chiều cao phần thanh phẳng (không tính nút nổi) */
-    private val flatBarH get() = dp(56f)
-    /** Độ sâu đường cong */
-    private val dip get() = dp(26f)
-    /** Bán kính nút nổi */
-    private val btnR get() = dp(28f)
+    private val flatBarH get() = dp(52f)
+    private val dip get() = dp(22f)
+    private val btnR get() = dp(26f)
 
     init {
         setWillNotDraw(false)
         setLayerType(LAYER_TYPE_SOFTWARE, null)
         clipChildren = false
         clipToPadding = false
-        setBackgroundColor(navBackgroundColor)
+        setBackgroundColor(gapColor)
     }
 
     fun setItems(list: List<Item>, initial: Int = 0) {
@@ -94,8 +91,8 @@ class CurvedBottomNavView @JvmOverloads constructor(
         val target = centerX(index)
         if (animate && width > 0) {
             ValueAnimator.ofFloat(animX, target).apply {
-                duration = 600 // giống package default
-                interpolator = DecelerateInterpolator(1.5f)
+                duration = 450
+                interpolator = DecelerateInterpolator(1.6f)
                 addUpdateListener {
                     animX = it.animatedValue as Float
                     invalidate()
@@ -114,12 +111,10 @@ class CurvedBottomNavView @JvmOverloads constructor(
         iconViews.clear()
         labelViews.clear()
 
-        // Hàng icon + label nằm trên phần thanh phẳng
         val row = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.BOTTOM
-            // chừa chỗ phía trên cho nút nổi + đường cong
-            setPadding(0, (dip + btnR * 0.35f).toInt(), 0, dp(6f).toInt())
+            setPadding(0, (btnR * 0.85f).toInt(), 0, dp(4f).toInt())
             layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         }
 
@@ -131,21 +126,26 @@ class CurvedBottomNavView @JvmOverloads constructor(
                 isClickable = true
                 isFocusable = true
                 setOnClickListener {
-                    if (selectedIndex != index) selectIndex(index, true)
-                    onItemSelected?.invoke(index, item)
+                    val changed = selectedIndex != index
+                    selectIndex(index, animate = true)
+                    // Gọi listener sau một nhịp để thấy nút nổi trượt
+                    postDelayed({
+                        onItemSelected?.invoke(index, item)
+                    }, if (changed) 280L else 0L)
                 }
             }
 
             val icon = TextView(context).apply {
                 text = item.emoji
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
                 gravity = Gravity.CENTER
-                // chiều cao cố định để label luôn cùng baseline
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(32f).toInt())
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, dp(28f).toInt()
+                )
             }
             val label = TextView(context).apply {
                 text = item.label
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 10f)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 9f)
                 gravity = Gravity.CENTER
                 maxLines = 1
                 setTextColor(labelInactive)
@@ -173,12 +173,8 @@ class CurvedBottomNavView @JvmOverloads constructor(
         iconViews.forEachIndexed { i, tv ->
             val selected = i == selectedIndex
             tv.animate().cancel()
-            // Icon mục chọn ẩn (vẽ trong nút nổi); mục khác hiện trên thanh
             if (animated) {
-                tv.animate()
-                    .alpha(if (selected) 0f else 1f)
-                    .setDuration(200)
-                    .start()
+                tv.animate().alpha(if (selected) 0f else 1f).setDuration(180).start()
             } else {
                 tv.alpha = if (selected) 0f else 1f
             }
@@ -200,58 +196,48 @@ class CurvedBottomNavView @JvmOverloads constructor(
 
         val w = width.toFloat()
         val h = height.toFloat()
-        // Đỉnh thanh phẳng
         val top = h - flatBarH
         val cx = if (animX == 0f) centerX(selectedIndex) else animX
+        val half = btnR * 1.2f
 
-        // --- Path thanh trắng + lõm cong (kiểu curved_navigation_bar) ---
-        // Lõm rộng ~ 2.2 * btnR, sâu ~ dip
-        val half = btnR * 1.15f
+        // Thanh trắng + lõm cong mượt
         path.reset()
         path.moveTo(0f, top)
-        path.lineTo((cx - half * 2f).coerceAtLeast(0f), top)
-
-        // Cubic mượt vào đáy lõm rồi lên lại (đối xứng)
+        path.lineTo((cx - half * 2.1f).coerceAtLeast(0f), top)
         path.cubicTo(
-            cx - half * 1.35f, top,
-            cx - half * 0.95f, top + dip,
+            cx - half * 1.4f, top,
+            cx - half * 0.9f, top + dip,
             cx, top + dip
         )
         path.cubicTo(
-            cx + half * 0.95f, top + dip,
-            cx + half * 1.35f, top,
-            (cx + half * 2f).coerceAtMost(w), top
+            cx + half * 0.9f, top + dip,
+            cx + half * 1.4f, top,
+            (cx + half * 2.1f).coerceAtMost(w), top
         )
-
         path.lineTo(w, top)
-        path.lineTo(w, h)
-        path.lineTo(0f, h)
+        path.lineTo(w, h + 20f)
+        path.lineTo(0f, h + 20f)
         path.close()
-
-        barPaint.color = barColor
         canvas.drawPath(path, barPaint)
 
-        // --- Nút tròn nổi (tâm nằm trên đường top, hơi nhô lên) ---
+        // Nút tròn nổi
         val cy = top
-        buttonPaint.color = buttonColor
         canvas.drawCircle(cx, cy, btnR, buttonPaint)
+        canvas.drawCircle(cx, cy, btnR - dp(1.5f), accentRing)
 
-        // Icon trong nút
         if (selectedIndex in items.indices) {
             val tp = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 textAlign = Paint.Align.CENTER
-                textSize = dp(22f)
+                textSize = dp(20f)
             }
             val emoji = items[selectedIndex].emoji
             val fm = tp.fontMetrics
-            val textY = cy - (fm.ascent + fm.descent) / 2f
-            canvas.drawText(emoji, cx, textY, tp)
+            canvas.drawText(emoji, cx, cy - (fm.ascent + fm.descent) / 2f, tp)
         }
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        // Tổng cao = phần nhô nút + thanh phẳng
-        val total = (flatBarH + btnR + dp(8f)).toInt()
+        val total = (flatBarH + btnR + dp(6f)).toInt()
         super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(total, MeasureSpec.EXACTLY))
     }
 }

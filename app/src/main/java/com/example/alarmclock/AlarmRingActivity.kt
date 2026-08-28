@@ -270,13 +270,9 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                         dismissAlarm(repo)
                     } else {
                         Toast.makeText(this, "Sai PIN! Báo thức vẫn kêu.", Toast.LENGTH_LONG).show()
-                        // Chụp mặt nếu bật
+                        // Chụp nhanh ~0.1s → lưu Bộ sưu tập (chống troll)
                         if (AppSettings.isFaceCaptureOnFail(this)) {
-                            try {
-                                faceChallengeLauncher.launch(
-                                    android.content.Intent(this, FaceChallengeActivity::class.java)
-                                )
-                            } catch (_: Exception) {}
+                            QuickIntruderCapture.snap(this, this)
                         }
                     }
                 }

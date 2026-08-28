@@ -143,12 +143,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupCurvedNav() {
         val items = listOf(
-            CurvedBottomNavView.Item(0, "⏰", "Báo thức"),
+            CurvedBottomNavView.Item(0, "⏰", "Báo"),
             CurvedBottomNavView.Item(1, "🌍", "Thế giới"),
-            CurvedBottomNavView.Item(2, "⏱️", "Bấm giờ"),
-            CurvedBottomNavView.Item(3, "⏳", "Đếm ngược"),
-            CurvedBottomNavView.Item(4, "🖼️", "Bộ sưu tập"),
-            CurvedBottomNavView.Item(5, "⚙️", "Cài đặt")
+            CurvedBottomNavView.Item(2, "⏱️", "Bấm"),
+            CurvedBottomNavView.Item(3, "⏳", "Đếm"),
+            CurvedBottomNavView.Item(4, "🖼️", "Ảnh"),
+            CurvedBottomNavView.Item(5, "⚙️", "Cài")
         )
         binding.curvedNav.setItems(items, 0)
         binding.curvedNav.setOnItemSelectedListener { index, _ ->
