@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Alarm Clock</string>
+    <string name="add_alarm">Add Alarm</string>
+    <string name="alarm_label">Alarm name</string>
+    <string name="repeat">Repeat</string>
+    <string name="once">Once</string>
+    <string name="daily">Daily</string>
+    <string name="weekdays">Mon → Fri</string>
+    <string name="snooze_time">Snooze time</string>
+    <string name="min_5">5 min</string>
+    <string name="min_10">10 min</string>
+    <string name="min_15">15 min</string>
+    <string name="cancel">Cancel</string>
+    <string name="choose_time">Choose time</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="snooze">Snooze</string>
+    <string name="delete_title">Delete alarm?</string>
+    <string name="delete_message">Are you sure you want to delete \"%1$s\" at %2$02d:%3$02d?</string>
+    <string name="deleted">Deleted</string>
+    <string name="added">Added: %1$s at %2$02d:%3$02d</string>
+    <string name="challenge_title">Solve to dismiss alarm</string>
+    <string name="challenge_hint">Enter the answer</string>
+    <string name="wrong_answer">Wrong! Try again</string>
+    <string name="notification_title">Alarms are active</string>
+    <string name="notification_text">You have %1$d active alarm(s)</string>
+    <string name="choose_ringtone">Choose ringtone</string>
+    <string name="default_ringtone">Default ringtone</string>
+    <string name="permission_needed">Please enable Notification and Exact Alarm permissions for the app to work properly</string>
+</resources>

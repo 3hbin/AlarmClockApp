@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/alarm_label">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/repeat"
+            android:textStyle="bold"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="4dp" />
+
+        <RadioGroup
+            android:id="@+id/rgRepeat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <RadioButton
+                android:id="@+id/rbOnce"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/once" />
+            <RadioButton
+                android:id="@+id/rbDaily"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/daily"
+                android:checked="true" />
+            <RadioButton
+                android:id="@+id/rbWeekdays"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/weekdays" />
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/snooze_time"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="4dp" />
+
+        <RadioGroup
+            android:id="@+id/rgSnooze"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <RadioButton
+                android:id="@+id/rbSnooze5"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/min_5"
+                android:checked="true" />
+            <RadioButton
+                android:id="@+id/rbSnooze10"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/min_10" />
+            <RadioButton
+                android:id="@+id/rbSnooze15"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/min_15" />
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/challenge_setting_title"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="4dp" />
+
+        <RadioGroup
+            android:id="@+id/rgChallenge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <RadioButton
+                android:id="@+id/rbChallengeNone"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/challenge_none"
+                android:checked="true" />
+            <RadioButton
+                android:id="@+id/rbChallengeMath"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/challenge_math" />
+            <RadioButton
+                android:id="@+id/rbChallengeShake"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/challenge_shake" />
+            <RadioButton
+                android:id="@+id/rbChallengeFace"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Quét mặt" />
+        </RadioGroup>
+        <RadioGroup
+            android:id="@+id/rgChallenge2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <RadioButton
+                android:id="@+id/rbChallengeBio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Vân tay / Face hệ thống" />
+        </RadioGroup>
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/cbSkipHolidays"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/skip_holidays"
+            android:layout_marginTop="12dp" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/cbStrictAntiSnooze"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/strict_anti_snooze"
+            android:layout_marginTop="4dp" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/cbCrescendo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/use_crescendo"
+            android:checked="true"
+            android:layout_marginTop="4dp" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/voice_note_hint"
+            android:layout_marginTop="12dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etVoiceNote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:maxLines="2" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnChooseRingtone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/choose_ringtone"
+            android:layout_marginTop="16dp"
+            style="@style/Widget.Material3.Button.TonalButton" />
+
+        <TextView
+            android:id="@+id/tvRingtoneStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/default_ringtone"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:layout_marginTop="4dp"
+            android:gravity="center" />
+    </LinearLayout>
+</ScrollView>

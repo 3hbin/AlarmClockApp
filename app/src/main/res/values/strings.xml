@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Đồng hồ báo thức</string>
+    <string name="add_alarm">Thêm báo thức</string>
+    <string name="alarm_label">Tên báo thức</string>
+    <string name="repeat">Lặp lại</string>
+    <string name="once">Chỉ 1 lần</string>
+    <string name="daily">Hàng ngày</string>
+    <string name="weekdays">Thứ 2 → Thứ 6</string>
+    <string name="snooze_time">Thời gian Báo lại (Snooze)</string>
+    <string name="min_5">5 phút</string>
+    <string name="min_10">10 phút</string>
+    <string name="min_15">15 phút</string>
+    <string name="cancel">Hủy</string>
+    <string name="choose_time">Chọn giờ</string>
+    <string name="dismiss">Tắt</string>
+    <string name="snooze">Báo lại</string>
+    <string name="delete_title">Xóa báo thức?</string>
+    <string name="delete_message">Bạn có chắc muốn xóa báo thức \"%1$s\" lúc %2$02d:%3$02d?</string>
+    <string name="deleted">Đã xóa</string>
+    <string name="added">Đã thêm: %1$s lúc %2$02d:%3$02d</string>
+    <string name="challenge_title">Giải toán để tắt báo thức</string>
+    <string name="challenge_hint">Nhập kết quả</string>
+    <string name="wrong_answer">Sai rồi! Thử lại</string>
+    <string name="math_question">%1$d + %2$d = ?</string>
+    <string name="confirm">Xác nhận</string>
+    <string name="shake_instruction">Lắc điện thoại để tắt báo thức</string>
+    <string name="shake_progress">Đã lắc: %1$d / %2$d</string>
+    <string name="no_accelerometer">Thiết bị không có cảm biến lắc, dùng nút Tắt bên dưới</string>
+    <string name="challenge_none">Không có</string>
+    <string name="challenge_math">Giải toán</string>
+    <string name="challenge_shake">Lắc máy</string>
+    <string name="challenge_face">Quét mặt</string>
+    <string name="pure_alarm_only">Chỉ chuông thuần (tắt TTS / Spotify khi báo thức)</string>
+    <string name="challenge_setting_title">Thử thách khi báo thức</string>
+    <string name="notification_title">Báo thức đang bật</string>
+    <string name="notification_text">Bạn có %1$d báo thức đang hoạt động</string>
+    <string name="choose_ringtone">Chọn nhạc chuông</string>
+    <string name="default_ringtone">Nhạc chuông mặc định</string>
+    <string name="permission_needed">Cần bật đầy đủ quyền Thông báo và Báo thức chính xác để app hoạt động tốt</string>
+    <string name="skip_holidays">Bỏ qua ngày lễ Việt Nam</string>
+    <string name="strict_anti_snooze">Chế độ chống ngủ lại (Strict)</string>
+    <string name="use_crescendo">Chuông tăng dần (Crescendo)</string>
+    <string name="voice_note_hint">Ghi chú TTS (đọc khi báo thức)</string>
+    <string name="sleep_cycle_title">Chu kỳ ngủ</string>
+    <string name="sleep_cycle_hint">Nhập giờ thức dậy để gợi ý giờ đi ngủ</string>
+    <string name="dream_journal">Nhật ký giấc mơ</string>
+    <string name="start_record">Bắt đầu ghi</string>
+    <string name="stop_record">Dừng &amp; Lưu</string>
+    <string name="features_menu">Tính năng nâng cao</string>
+</resources>

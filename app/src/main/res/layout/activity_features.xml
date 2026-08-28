@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cài đặt"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGallery"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Bộ sưu tập ảnh quét mặt"
+            android:layout_marginBottom="8dp"
+            style="@style/Widget.Material3.Button.TonalButton" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPureAlarm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Chuông thuần: TẮT (bấm để đổi)"
+            android:layout_marginBottom="8dp"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSleepCycle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/sleep_cycle_title"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDreamJournal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/start_record"
+            android:layout_marginBottom="8dp"
+            style="@style/Widget.Material3.Button.TonalButton" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSleepStats"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Thống kê ngủ"
+            android:layout_marginBottom="8dp"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnWeather"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Thời tiết (TTS)"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSpotify"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Phát Spotify"
+            android:layout_marginBottom="8dp"
+            style="@style/Widget.Material3.Button.TonalButton" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnYoutube"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Phát YouTube Music"
+            android:layout_marginBottom="8dp"
+            style="@style/Widget.Material3.Button.TonalButton" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCloudPush"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cloud Sync → Đẩy lên"
+            android:layout_marginBottom="8dp"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCloudPull"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cloud Sync ← Kéo về"
+            android:layout_marginBottom="16dp"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Emergency SMS &amp; GPS"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnEmergencySetup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Đặt số cứu viện"
+            android:layout_marginBottom="8dp"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnEmergencySend"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Gửi SMS cứu viện + GPS"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveGpsHome"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Lưu vị trí hiện tại (nhà/cơ quan)"
+            android:layout_marginBottom="8dp"
+            style="@style/Widget.Material3.Button.TonalButton" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCheckGps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Kiểm tra gần vị trí đã lưu"
+            android:layout_marginBottom="16dp"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Lưu ý: SMS cần quyền SEND_SMS (Google Play hạn chế). GPS cần bật định vị. Smart Home chưa cấu hình."
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary" />
+    </LinearLayout>
+</ScrollView>

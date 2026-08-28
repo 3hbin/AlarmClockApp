@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/previewView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:background="#99000000">
+
+        <TextView
+            android:id="@+id/tvFaceStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Đưa mặt vào khung — đang quét…"
+            android:textColor="@android:color/white"
+            android:textSize="16sp"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnConfirmFace"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Xác nhận tắt báo thức"
+            android:enabled="false"
+            android:layout_marginBottom="8dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnCancelFace"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Hủy"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+</FrameLayout>
