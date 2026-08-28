@@ -118,10 +118,14 @@ class SettingsActivity : AppCompatActivity() {
             binding.etGalleryPw.text = null
             Toast.makeText(this, "Đã đặt mật khẩu bộ sưu tập", Toast.LENGTH_SHORT).show()
         }
+        binding.btnClearGalleryPw.setOnClickListener {
+            AppSettings.clearGalleryPassword(this)
+            Toast.makeText(this, "Đã xóa mật khẩu — Bộ sưu tập mở tự do", Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        finish()
+        Motion.finishFade(this)
         return true
     }
 }

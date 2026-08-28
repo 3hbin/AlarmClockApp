@@ -87,9 +87,26 @@ class MainActivity : AppCompatActivity() {
 
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
+        binding.recyclerView.setHasFixedSize(true)
+        binding.recyclerView.itemAnimator?.apply {
+            addDuration = 180
+            removeDuration = 160
+            moveDuration = 180
+            changeDuration = 120
+        }
+
+        binding.swipeRefresh.setColorSchemeColors(0xFF3F51B5.toInt(), 0xFF7E57C2.toInt())
+        binding.swipeRefresh.setOnRefreshListener {
+            alarms.clear()
+            alarms.addAll(repo.getAlarms())
+            adapter.notifyDataSetChanged()
+            binding.swipeRefresh.isRefreshing = false
+        }
+
+        binding.shimmer.hide()
 
         binding.fabAdd.setOnClickListener {
-            showAddDialog()
+            Motion.press(it) { showAddDialog() }
         }
 
         binding.fabAdd.setOnLongClickListener {
@@ -102,6 +119,7 @@ class MainActivity : AppCompatActivity() {
         updateCurrentTime()
         handler.post(timeUpdater)
         updateOngoingNotification()
+        Motion.fadeScaleIn(binding.tvCurrentTime)
 
         // Tap time → analog clock
         binding.tvCurrentTime.setOnClickListener { showAnalogClock() }
@@ -154,11 +172,11 @@ class MainActivity : AppCompatActivity() {
         binding.curvedNav.setOnItemSelectedListener { index, _ ->
             when (index) {
                 0 -> { /* stay on MainActivity */ }
-                1 -> startActivity(Intent(this, WorldClockActivity::class.java))
-                2 -> startActivity(Intent(this, StopwatchActivity::class.java))
-                3 -> startActivity(Intent(this, TimerActivity::class.java))
-                4 -> startActivity(Intent(this, GalleryActivity::class.java))
-                5 -> startActivity(Intent(this, SettingsActivity::class.java))
+                1 -> Motion.startSharedAxis(this, Intent(this, WorldClockActivity::class.java))
+                2 -> Motion.startSharedAxis(this, Intent(this, StopwatchActivity::class.java))
+                3 -> Motion.startSharedAxis(this, Intent(this, TimerActivity::class.java))
+                4 -> Motion.startSharedAxis(this, Intent(this, GalleryActivity::class.java))
+                5 -> Motion.startSharedAxis(this, Intent(this, SettingsActivity::class.java))
             }
         }
     }

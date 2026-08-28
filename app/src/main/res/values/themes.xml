@@ -5,6 +5,14 @@
         <item name="colorPrimaryVariant">#303F9F</item>
         <item name="colorOnPrimary">@android:color/white</item>
         <item name="colorSecondary">#FF4081</item>
+        <item name="android:windowAnimationStyle">@style/WindowFadeThrough</item>
+    </style>
+
+    <style name="WindowFadeThrough">
+        <item name="android:activityOpenEnterAnimation">@anim/fade_through_enter</item>
+        <item name="android:activityOpenExitAnimation">@anim/fade_through_exit</item>
+        <item name="android:activityCloseEnterAnimation">@anim/fade_through_enter</item>
+        <item name="android:activityCloseExitAnimation">@anim/fade_through_exit</item>
     </style>
 
     <style name="Theme.AlarmClock.FullScreen" parent="Theme.Material3.DayNight.NoActionBar">

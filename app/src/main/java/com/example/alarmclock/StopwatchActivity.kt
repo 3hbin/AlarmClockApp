@@ -38,7 +38,7 @@ class StopwatchActivity : AppCompatActivity() {
         binding = ActivityStopwatchBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.toolbar.setNavigationOnClickListener { finish() }
+        binding.toolbar.setNavigationOnClickListener { Motion.finishFade(this) }
 
         lapAdapter = LapAdapter(laps)
         binding.recyclerLaps.layoutManager = LinearLayoutManager(this)

@@ -93,7 +93,12 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSetGalleryPw" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:text="Đặt / Đổi mật khẩu"
-            android:layout_marginTop="8dp" android:layout_marginBottom="12dp"/>
+            android:layout_marginTop="8dp" android:layout_marginBottom="8dp"/>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnClearGalleryPw" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="Xóa mật khẩu bộ sưu tập"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_marginBottom="12dp"/>
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent" android:layout_height="wrap_content"

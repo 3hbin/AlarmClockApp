@@ -29,6 +29,10 @@ data class CityTime(
 
 class WorldClockActivity : AppCompatActivity() {
 
+    companion object {
+        const val PAYLOAD_TIME = "time"
+    }
+
     private lateinit var binding: ActivityWorldClockBinding
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var adapter: WorldClockAdapter
@@ -36,7 +40,14 @@ class WorldClockActivity : AppCompatActivity() {
 
     private val updateRunnable = object : Runnable {
         override fun run() {
-            adapter.notifyDataSetChanged()
+            val lm = binding.recyclerView.layoutManager as? LinearLayoutManager
+            if (lm != null) {
+                val first = lm.findFirstVisibleItemPosition()
+                val last = lm.findLastVisibleItemPosition()
+                if (first >= 0 && last >= first) {
+                    adapter.notifyItemRangeChanged(first, last - first + 1, PAYLOAD_TIME)
+                }
+            }
             handler.postDelayed(this, 1000)
         }
     }
@@ -46,15 +57,34 @@ class WorldClockActivity : AppCompatActivity() {
         binding = ActivityWorldClockBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.toolbar.setNavigationOnClickListener { finish() }
+        binding.toolbar.setNavigationOnClickListener { Motion.finishFade(this) }
 
-        allCities.addAll(buildWorldCities())
-        allCities.sortBy { it.cityName.lowercase(Locale.getDefault()) }
-
-        adapter = WorldClockAdapter(allCities.toMutableList())
+        binding.shimmer.show()
+        adapter = WorldClockAdapter(mutableListOf())
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
-        binding.tvCount.text = "${allCities.size} múi giờ / thành phố"
+        binding.recyclerView.setHasFixedSize(true)
+        binding.recyclerView.setItemViewCacheSize(12)
+        (binding.recyclerView.itemAnimator as? androidx.recyclerview.widget.SimpleItemAnimator)
+            ?.supportsChangeAnimations = false
+
+        binding.swipeRefresh.setColorSchemeColors(0xFF3F51B5.toInt(), 0xFF7E57C2.toInt())
+        binding.swipeRefresh.setOnRefreshListener {
+            adapter.notifyItemRangeChanged(0, adapter.itemCount, PAYLOAD_TIME)
+            binding.swipeRefresh.isRefreshing = false
+        }
+
+        Thread {
+            val cities = buildWorldCities().sortedBy { it.cityName.lowercase(Locale.getDefault()) }
+            runOnUiThread {
+                allCities.clear()
+                allCities.addAll(cities)
+                adapter.update(allCities)
+                binding.tvCount.text = "${allCities.size} múi giờ / thành phố"
+                binding.shimmer.hide()
+                binding.recyclerView.scheduleLayoutAnimation()
+            }
+        }.start()
 
         binding.etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -371,8 +401,21 @@ class WorldClockAdapter(private var cities: MutableList<CityTime>) :
 
     override fun getItemCount() = cities.size
 
+    override fun onBindViewHolder(holder: VH, position: Int, payloads: MutableList<Any>) {
+        if (payloads.contains(WorldClockActivity.PAYLOAD_TIME)) {
+            bindTime(holder, cities[position])
+            return
+        }
+        super.onBindViewHolder(holder, position, payloads)
+    }
+
     override fun onBindViewHolder(holder: VH, position: Int) {
         val item = cities[position]
+        holder.tvCity.text = "${item.cityName} · ${item.country}"
+        bindTime(holder, item)
+    }
+
+    private fun bindTime(holder: VH, item: CityTime) {
         val tz = TimeZone.getTimeZone(item.timeZoneId)
         val now = Date()
         val use24 = try {
@@ -388,8 +431,6 @@ class WorldClockAdapter(private var cities: MutableList<CityTime>) :
         val offsetH = offsetMs / 3_600_000
         val offsetM = kotlin.math.abs((offsetMs / 60_000) % 60)
         val gmt = if (offsetM == 0) "GMT%+d".format(offsetH) else "GMT%+d:%02d".format(offsetH, offsetM)
-
-        holder.tvCity.text = "${item.cityName} · ${item.country}"
         holder.tvDate.text = "${dateFmt.format(now)} · $gmt"
         holder.tvTime.text = timeFmt.format(now)
     }

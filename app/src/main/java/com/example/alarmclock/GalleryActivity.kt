@@ -1,11 +1,11 @@
 package com.example.alarmclock
 
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
@@ -13,45 +13,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.alarmclock.databinding.ActivityGalleryBinding
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.io.File
 
 /**
  * Bộ sưu tập ảnh khi nhập PIN sai / quét mặt thất bại.
- * Bảo vệ bằng mật khẩu. Quên MK → nhập đúng email khôi phục (hoặc Google nếu cấu hình SHA-1).
+ * Mở khóa bằng mật khẩu HOẶC email khôi phục (không dùng Google Sign-In — lỗi 10).
  */
 class GalleryActivity : AppCompatActivity() {
     private lateinit var binding: ActivityGalleryBinding
     private var unlocked = false
-
-    private val googleLauncher = registerForActivityResult(
-        androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode != RESULT_OK || result.data == null) {
-            // 12501 = user cancelled
-            Toast.makeText(this, "Đã hủy đăng nhập Google", Toast.LENGTH_SHORT).show()
-            return@registerForActivityResult
-        }
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        try {
-            val account = task.getResult(ApiException::class.java)
-            val email = account.email?.lowercase().orEmpty()
-            unlockByEmail(email, source = "Google")
-        } catch (e: ApiException) {
-            val msg = when (e.statusCode) {
-                10 -> "Lỗi 10 (DEVELOPER_ERROR): thiếu SHA-1 trên Firebase. Dùng \"Nhập email khôi phục\" bên dưới."
-                12500 -> "Lỗi Google Sign-In. Thử \"Nhập email khôi phục\"."
-                12501 -> "Đã hủy đăng nhập Google"
-                else -> "Google thất bại (${e.statusCode}). Dùng nhập email khôi phục."
-            }
-            Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
-        } catch (e: Exception) {
-            Toast.makeText(this, "Google lỗi: ${e.message}. Dùng nhập email khôi phục.", Toast.LENGTH_LONG).show()
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,13 +31,17 @@ class GalleryActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         title = "Bộ sưu tập"
 
-        val hasPass = AppSettings.hasGalleryPassword(this)
-        if (!hasPass) {
+        if (!AppSettings.hasGalleryPassword(this)) {
             unlocked = true
             showGallery()
         } else {
             binding.lockLayout.visibility = View.VISIBLE
             binding.galleryContent.visibility = View.GONE
+            val saved = AppSettings.getRecoveryEmail(this)
+            if (saved.isNotBlank()) {
+                binding.tvRecoveryHint.text =
+                    "Quên mật khẩu? Gõ đúng email đã lưu (${maskEmail(saved)}):"
+            }
         }
 
         binding.btnUnlock.setOnClickListener {
@@ -79,85 +54,42 @@ class GalleryActivity : AppCompatActivity() {
             }
         }
 
-        binding.btnForgotGoogle.setOnClickListener { recoverWithGoogle() }
-        binding.btnForgotEmail.setOnClickListener { recoverWithEmailInput() }
+        binding.btnForgotEmail.setOnClickListener {
+            val typed = binding.etRecoveryEmail.text?.toString()?.trim().orEmpty()
+            unlockByEmail(typed)
+        }
+
         binding.btnRefresh.setOnClickListener { if (unlocked) loadPhotos() }
+        binding.swipeRefresh.setColorSchemeColors(0xFF3F51B5.toInt(), 0xFF7E57C2.toInt())
+        binding.swipeRefresh.setOnRefreshListener {
+            if (unlocked) loadPhotos() else binding.swipeRefresh.isRefreshing = false
+        }
     }
 
-    private fun unlockByEmail(email: String, source: String) {
-        val recovery = AppSettings.getRecoveryEmail(this).lowercase()
+    private fun unlockByEmail(email: String) {
+        val recovery = AppSettings.getRecoveryEmail(this).trim().lowercase()
         if (recovery.isBlank()) {
-            Toast.makeText(this, "Chưa đặt email khôi phục trong Cài đặt", Toast.LENGTH_LONG).show()
-            return
-        }
-        if (email.lowercase() != recovery) {
             Toast.makeText(
                 this,
-                "Email ($email) không khớp email khôi phục đã lưu",
+                "Chưa lưu email khôi phục. Vào Cài đặt → Xóa mật khẩu bộ sưu tập",
                 Toast.LENGTH_LONG
             ).show()
             return
         }
-        AppSettings.clearGalleryPassword(this)
-        unlocked = true
-        Toast.makeText(
-            this,
-            "Đã xác minh bằng $source — mật khẩu đã xóa. Vào Cài đặt đặt lại nếu cần.",
-            Toast.LENGTH_LONG
-        ).show()
-        showGallery()
-    }
-
-    /** Khôi phục không cần Google API: gõ đúng email đã lưu trong Cài đặt */
-    private fun recoverWithEmailInput() {
-        val recovery = AppSettings.getRecoveryEmail(this)
-        if (recovery.isBlank()) {
-            Toast.makeText(this, "Vào Cài đặt → lưu Email Google khôi phục trước", Toast.LENGTH_LONG).show()
+        if (email.lowercase() != recovery) {
+            Toast.makeText(this, "Email không khớp email khôi phục đã lưu", Toast.LENGTH_LONG).show()
             return
         }
-        val input = EditText(this).apply {
-            hint = "Nhập đúng email khôi phục"
-            setText("")
-            setPadding(48, 32, 48, 32)
-            inputType = android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
-        }
-        MaterialAlertDialogBuilder(this)
-            .setTitle("Khôi phục bằng email")
-            .setMessage("Nhập đúng email đã lưu trong Cài đặt:\n${maskEmail(recovery)}")
-            .setView(input)
-            .setPositiveButton("Xác nhận") { _, _ ->
-                val typed = input.text?.toString()?.trim().orEmpty()
-                unlockByEmail(typed, source = "email")
-            }
-            .setNegativeButton("Hủy", null)
-            .show()
+        AppSettings.clearGalleryPassword(this)
+        unlocked = true
+        Toast.makeText(this, "Đã xác minh email — mật khẩu đã xóa", Toast.LENGTH_LONG).show()
+        showGallery()
     }
 
     private fun maskEmail(email: String): String {
         val at = email.indexOf('@')
         if (at <= 1) return "***"
         return email.take(2) + "***" + email.substring(at)
-    }
-
-    private fun recoverWithGoogle() {
-        val recovery = AppSettings.getRecoveryEmail(this)
-        if (recovery.isBlank()) {
-            Toast.makeText(this, "Vào Cài đặt → lưu Email Google khôi phục trước", Toast.LENGTH_LONG).show()
-            return
-        }
-        try {
-            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .build()
-            val client = GoogleSignIn.getClient(this, gso)
-            // Đăng xuất trước để hiện lại picker
-            client.signOut().addOnCompleteListener {
-                googleLauncher.launch(client.signInIntent)
-            }
-        } catch (e: Exception) {
-            Toast.makeText(this, "Không mở được Google. Dùng nhập email.", Toast.LENGTH_LONG).show()
-            recoverWithEmailInput()
-        }
     }
 
     private fun showGallery() {
@@ -167,26 +99,34 @@ class GalleryActivity : AppCompatActivity() {
     }
 
     private fun loadPhotos() {
-        val dir = File(filesDir, "intruder_photos")
-        val files = dir.listFiles()?.filter { it.extension.lowercase() in listOf("jpg", "jpeg", "png") }
-            ?.sortedByDescending { it.lastModified() } ?: emptyList()
-        binding.tvEmpty.visibility = if (files.isEmpty()) View.VISIBLE else View.GONE
-        binding.recycler.layoutManager = GridLayoutManager(this, 2)
-        binding.recycler.adapter = PhotoAdapter(files) { file ->
-            MaterialAlertDialogBuilder(this)
-                .setTitle(file.name)
-                .setItems(arrayOf("Xóa ảnh")) { _, _ ->
-                    if (!unlocked) return@setItems
-                    file.delete()
-                    loadPhotos()
+        binding.shimmer.show()
+        Thread {
+            val dir = File(filesDir, "intruder_photos")
+            val files = dir.listFiles()?.filter { it.extension.lowercase() in listOf("jpg", "jpeg", "png") }
+                ?.sortedByDescending { it.lastModified() } ?: emptyList()
+            runOnUiThread {
+                binding.shimmer.hide()
+                binding.swipeRefresh.isRefreshing = false
+                binding.tvEmpty.visibility = if (files.isEmpty()) View.VISIBLE else View.GONE
+                binding.recycler.layoutManager = GridLayoutManager(this, 2)
+                binding.recycler.setHasFixedSize(true)
+                binding.recycler.adapter = PhotoAdapter(files) { file ->
+                    MaterialAlertDialogBuilder(this)
+                        .setTitle(file.name)
+                        .setItems(arrayOf("Xóa ảnh")) { _, _ ->
+                            if (!unlocked) return@setItems
+                            file.delete()
+                            loadPhotos()
+                        }
+                        .setNegativeButton("Đóng", null)
+                        .show()
                 }
-                .setNegativeButton("Đóng", null)
-                .show()
-        }
+            }
+        }.start()
     }
 
     override fun onSupportNavigateUp(): Boolean {
-        finish()
+        Motion.finishFade(this)
         return true
     }
 
@@ -207,8 +147,22 @@ class GalleryActivity : AppCompatActivity() {
         override fun onBindViewHolder(holder: VH, position: Int) {
             val f = files[position]
             holder.name.text = f.name
-            holder.img.setImageBitmap(BitmapFactory.decodeFile(f.absolutePath))
+            holder.img.setImageBitmap(decodeSampled(f.absolutePath, 360, 360))
             holder.itemView.setOnClickListener { onClick(f) }
+        }
+
+        private fun decodeSampled(path: String, reqW: Int, reqH: Int): Bitmap? {
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeFile(path, bounds)
+            var sample = 1
+            val h = bounds.outHeight
+            val w = bounds.outWidth
+            while (h / sample > reqH && w / sample > reqW) sample *= 2
+            val opts = BitmapFactory.Options().apply {
+                inSampleSize = sample
+                inPreferredConfig = Bitmap.Config.RGB_565
+            }
+            return BitmapFactory.decodeFile(path, opts)
         }
     }
 }
