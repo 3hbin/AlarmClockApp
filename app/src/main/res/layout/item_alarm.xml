@@ -48,10 +48,10 @@
                 android:layout_marginTop="2dp" />
         </LinearLayout>
 
-        <com.google.android.material.switchmaterial.SwitchMaterial
+        <com.example.alarmclock.LoadSwitchView
             android:id="@+id/switchEnabled"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="52dp"
+            android:layout_height="32dp"
             android:layout_marginEnd="8dp" />
 
         <ImageButton

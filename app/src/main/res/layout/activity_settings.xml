@@ -8,6 +8,56 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- Ngôn ngữ (~195) -->
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Ngôn ngữ / Language" android:textStyle="bold" android:layout_marginBottom="4dp"/>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Chọn trong gần 200 ngôn ngữ. Giao diện đầy đủ hiện có Tiếng Việt &amp; English; ngôn ngữ khác áp dụng định dạng ngày/giờ và fallback hệ thống."
+            android:textSize="12sp" android:textColor="?android:attr/textColorSecondary"
+            android:layout_marginBottom="6dp"/>
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardLanguage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="14dp"
+                android:gravity="center_vertical">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/tvLanguageTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Ngôn ngữ ứng dụng"
+                        android:textSize="16sp"/>
+                    <TextView
+                        android:id="@+id/tvLanguageValue"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Theo hệ thống"
+                        android:textSize="13sp"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:layout_marginTop="2dp"/>
+                </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="›"
+                    android:textSize="22sp"
+                    android:textColor="?android:attr/textColorSecondary"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="Âm lượng báo thức" android:textStyle="bold" android:layout_marginBottom="4dp"/>
         <TextView android:id="@+id/tvVolumeValue" android:layout_width="match_parent"
@@ -15,10 +65,15 @@
         <SeekBar android:id="@+id/seekVolume" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:max="100" android:layout_marginBottom="16dp"/>
 
-        <com.google.android.material.materialswitch.MaterialSwitch
-            android:id="@+id/switchVibrate"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="Chế độ rung" android:layout_marginBottom="12dp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Chế độ rung" android:textSize="16sp"/>
+            <com.example.alarmclock.LoadSwitchView
+                android:id="@+id/switchVibrate"
+                android:layout_width="52dp" android:layout_height="32dp"/>
+        </LinearLayout>
 
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="Thời gian hoãn (Snooze) mặc định" android:textStyle="bold"
@@ -47,15 +102,25 @@
                 android:layout_height="wrap_content" android:text="Tắt"/>
         </RadioGroup>
 
-        <com.google.android.material.materialswitch.MaterialSwitch
-            android:id="@+id/switch24h"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="Định dạng 24 giờ" android:layout_marginBottom="12dp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Định dạng 24 giờ" android:textSize="16sp"/>
+            <com.example.alarmclock.LoadSwitchView
+                android:id="@+id/switch24h"
+                android:layout_width="52dp" android:layout_height="32dp"/>
+        </LinearLayout>
 
-        <com.google.android.material.materialswitch.MaterialSwitch
-            android:id="@+id/switchPure"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="Chuông thuần (tắt TTS khi báo thức)" android:layout_marginBottom="12dp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Chuông thuần (tắt TTS khi báo thức)" android:textSize="16sp"/>
+            <com.example.alarmclock.LoadSwitchView
+                android:id="@+id/switchPure"
+                android:layout_width="52dp" android:layout_height="32dp"/>
+        </LinearLayout>
 
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="Chống troll tắt báo thức" android:textStyle="bold"
@@ -64,10 +129,15 @@
             android:text="Khi bật: ép âm lượng tối đa, khóa nút Back, ẩn Snooze, bắt buộc PIN để tắt. Nên kèm thử thách Toán / Lắc / Quét mặt."
             android:textSize="12sp" android:textColor="?android:attr/textColorSecondary"
             android:layout_marginBottom="8dp"/>
-        <com.google.android.material.materialswitch.MaterialSwitch
-            android:id="@+id/switchAntiTroll"
-            android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="Bật chống troll" android:layout_marginBottom="8dp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Bật chống troll" android:textSize="16sp"/>
+            <com.example.alarmclock.LoadSwitchView
+                android:id="@+id/switchAntiTroll"
+                android:layout_width="52dp" android:layout_height="32dp"/>
+        </LinearLayout>
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent" android:layout_height="wrap_content"
             android:hint="Mã PIN tắt báo thức (≥4 số)">

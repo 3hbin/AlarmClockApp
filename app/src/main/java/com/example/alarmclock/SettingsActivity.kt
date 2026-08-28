@@ -1,10 +1,20 @@
 package com.example.alarmclock
 
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.SeekBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.alarmclock.databinding.ActivitySettingsBinding
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class SettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySettingsBinding
@@ -15,6 +25,13 @@ class SettingsActivity : AppCompatActivity() {
         setContentView(binding.root)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         title = "Cài đặt"
+
+        // Ngôn ngữ (~195) + hiệu ứng
+        refreshLanguageLabel()
+        binding.cardLanguage.setOnClickListener { v ->
+            Motion.press(v) { showLanguagePicker() }
+        }
+        Motion.fadeScaleIn(binding.cardLanguage, delay = 40)
 
         // Volume
         binding.seekVolume.progress = AppSettings.getAlarmVolume(this)
@@ -28,10 +45,14 @@ class SettingsActivity : AppCompatActivity() {
             override fun onStopTrackingTouch(sb: SeekBar?) {}
         })
 
-        // Vibrate
-        binding.switchVibrate.isChecked = AppSettings.isVibrate(this)
-        binding.switchVibrate.setOnCheckedChangeListener { _, on ->
-            AppSettings.setVibrate(this, on)
+        // Vibrate — LoadSwitch (animation đẹp, giống nhau mọi hãng)
+        binding.switchVibrate.setCheckedSilent(AppSettings.isVibrate(this))
+        binding.switchVibrate.setOnCheckedChangeListener { sw, on ->
+            sw.setLoading(true)
+            sw.postDelayed({
+                AppSettings.setVibrate(this, on)
+                sw.setLoading(false)
+            }, 280)
         }
 
         // Snooze
@@ -66,30 +87,42 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         // 12/24h
-        binding.switch24h.isChecked = AppSettings.isUse24h(this)
-        binding.switch24h.setOnCheckedChangeListener { _, on ->
-            AppSettings.setUse24h(this, on)
+        binding.switch24h.setCheckedSilent(AppSettings.isUse24h(this))
+        binding.switch24h.setOnCheckedChangeListener { sw, on ->
+            sw.setLoading(true)
+            sw.postDelayed({
+                AppSettings.setUse24h(this, on)
+                sw.setLoading(false)
+            }, 280)
         }
 
         // Pure alarm
-        binding.switchPure.isChecked = AppSettings.isPureAlarmOnly(this)
-        binding.switchPure.setOnCheckedChangeListener { _, on ->
-            AppSettings.setPureAlarmOnly(this, on)
+        binding.switchPure.setCheckedSilent(AppSettings.isPureAlarmOnly(this))
+        binding.switchPure.setOnCheckedChangeListener { sw, on ->
+            sw.setLoading(true)
+            sw.postDelayed({
+                AppSettings.setPureAlarmOnly(this, on)
+                sw.setLoading(false)
+            }, 280)
         }
 
-        binding.switchAntiTroll.isChecked = AppSettings.isAntiTroll(this)
-        binding.switchAntiTroll.setOnCheckedChangeListener { _, on ->
+        binding.switchAntiTroll.setCheckedSilent(AppSettings.isAntiTroll(this))
+        binding.switchAntiTroll.setOnCheckedChangeListener { sw, on ->
             if (on && !AppSettings.hasAntiTrollPin(this)) {
                 Toast.makeText(this, "Hãy đặt PIN (≥4 số) trước khi bật", Toast.LENGTH_LONG).show()
-                binding.switchAntiTroll.isChecked = false
+                sw.setChecked(false, animate = true, notify = false)
                 return@setOnCheckedChangeListener
             }
-            AppSettings.setAntiTroll(this, on)
-            Toast.makeText(
-                this,
-                if (on) "Đã bật chống troll — báo thức khó tắt hơn" else "Đã tắt chống troll",
-                Toast.LENGTH_SHORT
-            ).show()
+            sw.setLoading(true)
+            sw.postDelayed({
+                AppSettings.setAntiTroll(this, on)
+                sw.setLoading(false)
+                Toast.makeText(
+                    this,
+                    if (on) "Đã bật chống troll — báo thức khó tắt hơn" else "Đã tắt chống troll",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }, 320)
         }
         binding.btnSaveAntiTrollPin.setOnClickListener {
             val pin = binding.etAntiTrollPin.text?.toString().orEmpty()
@@ -121,6 +154,132 @@ class SettingsActivity : AppCompatActivity() {
         binding.btnClearGalleryPw.setOnClickListener {
             AppSettings.clearGalleryPassword(this)
             Toast.makeText(this, "Đã xóa mật khẩu — Bộ sưu tập mở tự do", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun refreshLanguageLabel() {
+        val code = AppSettings.getLanguage(this)
+        binding.tvLanguageValue.text = LanguageCatalog.displayName(code)
+    }
+
+    private fun showLanguagePicker() {
+        val container = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            setPadding(24, 16, 24, 8)
+        }
+        val etSearch = EditText(this).apply {
+            hint = "🔍  Tìm ngôn ngữ / Search language…"
+            setSingleLine()
+            setPadding(32, 24, 32, 24)
+        }
+        val tvCount = TextView(this).apply {
+            text = "${LanguageCatalog.languages.size} ngôn ngữ"
+            setPadding(8, 8, 8, 8)
+            textSize = 12f
+        }
+        val recycler = RecyclerView(this).apply {
+            layoutManager = LinearLayoutManager(this@SettingsActivity)
+            layoutParams = android.widget.LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                (resources.displayMetrics.density * 420).toInt()
+            )
+            itemAnimator = androidx.recyclerview.widget.DefaultItemAnimator().apply {
+                addDuration = 180
+                removeDuration = 120
+                changeDuration = 120
+                moveDuration = 160
+            }
+        }
+        container.addView(etSearch)
+        container.addView(tvCount)
+        container.addView(recycler)
+
+        val current = AppSettings.getLanguage(this)
+        val items = mutableListOf<LangRow>()
+        items.add(LangRow(LanguageCatalog.SYSTEM, "🌐  Theo hệ thống / System default", current == LanguageCatalog.SYSTEM))
+        LanguageCatalog.languages.forEach {
+            items.add(LangRow(it.code, it.displayLabel, it.code.equals(current, true)))
+        }
+
+        var dialog: androidx.appcompat.app.AlertDialog? = null
+        val adapter = LangAdapter(items) { code, view ->
+            // Hiệu ứng bounce cờ / dòng đang chọn
+            Motion.bounce(view) {
+                AppSettings.setLanguage(this, code)
+                LocaleHelper.applyLocale(code)
+                refreshLanguageLabel()
+                Motion.pulse(binding.cardLanguage)
+                Toast.makeText(
+                    this,
+                    "✓  ${LanguageCatalog.displayName(code)}",
+                    Toast.LENGTH_SHORT
+                ).show()
+                dialog?.dismiss()
+                // Delay nhẹ rồi recreate — animation kịp chạy
+                binding.root.postDelayed({ recreate() }, 220)
+            }
+        }
+        recycler.adapter = adapter
+
+        etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                val q = s?.toString().orEmpty()
+                val filtered = mutableListOf<LangRow>()
+                filtered.add(LangRow(LanguageCatalog.SYSTEM, "🌐  Theo hệ thống / System default", current == LanguageCatalog.SYSTEM))
+                LanguageCatalog.search(q).forEach {
+                    filtered.add(LangRow(it.code, it.displayLabel, it.code.equals(current, true)))
+                }
+                tvCount.text = "${filtered.size - 1} ngôn ngữ"
+                adapter.replace(filtered)
+            }
+        })
+
+        dialog = MaterialAlertDialogBuilder(this)
+            .setTitle("🌍  Chọn ngôn ngữ (${LanguageCatalog.languages.size})")
+            .setView(container)
+            .setNegativeButton("Đóng", null)
+            .create()
+        dialog.show()
+        // Fade-scale toàn dialog content
+        Motion.fadeScaleIn(container, delay = 30)
+        Motion.slideFadeIn(etSearch, delay = 40)
+    }
+
+    private data class LangRow(val code: String, val label: String, val selected: Boolean)
+
+    private class LangAdapter(
+        private var rows: MutableList<LangRow>,
+        private val onPick: (String, View) -> Unit
+    ) : RecyclerView.Adapter<LangAdapter.VH>() {
+        class VH(v: View) : RecyclerView.ViewHolder(v) {
+            val tv: TextView = v.findViewById(android.R.id.text1)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+            val v = LayoutInflater.from(parent.context)
+                .inflate(android.R.layout.simple_list_item_1, parent, false)
+            return VH(v)
+        }
+
+        override fun onBindViewHolder(holder: VH, position: Int) {
+            val row = rows[position]
+            holder.tv.text = if (row.selected) "✓  ${row.label}" else row.label
+            holder.tv.setOnClickListener { v ->
+                Motion.press(v) { onPick(row.code, v) }
+            }
+            // Stagger entrance — chỉ vài item đầu để tránh lag
+            if (position < 12) {
+                Motion.slideFadeIn(holder.itemView, delay = position * 28L)
+            }
+        }
+
+        override fun getItemCount() = rows.size
+
+        fun replace(newRows: List<LangRow>) {
+            rows = newRows.toMutableList()
+            notifyDataSetChanged()
         }
     }
 

@@ -58,4 +58,51 @@ object Motion {
             }
             .start()
     }
+
+    /** Flag / emoji bounce khi chọn ngôn ngữ. */
+    fun bounce(view: View, then: (() -> Unit)? = null) {
+        view.animate().cancel()
+        view.animate()
+            .scaleX(1.18f).scaleY(1.18f)
+            .setDuration(120)
+            .setInterpolator(ease)
+            .withEndAction {
+                view.animate()
+                    .scaleX(1f).scaleY(1f)
+                    .setDuration(160)
+                    .setInterpolator(decel)
+                    .withEndAction { then?.invoke() }
+                    .start()
+            }
+            .start()
+    }
+
+    /** Slide-fade khi mở danh sách / filter ngôn ngữ. */
+    fun slideFadeIn(view: View, delay: Long = 0) {
+        view.alpha = 0f
+        view.translationY = 18f
+        view.animate()
+            .alpha(1f).translationY(0f)
+            .setStartDelay(delay)
+            .setDuration(160)
+            .setInterpolator(decel)
+            .start()
+    }
+
+    /** Pulse nhẹ cho card đang chọn. */
+    fun pulse(view: View) {
+        view.animate().cancel()
+        view.animate()
+            .scaleX(1.03f).scaleY(1.03f)
+            .setDuration(140)
+            .setInterpolator(ease)
+            .withEndAction {
+                view.animate()
+                    .scaleX(1f).scaleY(1f)
+                    .setDuration(160)
+                    .setInterpolator(decel)
+                    .start()
+            }
+            .start()
+    }
 }

@@ -12,28 +12,24 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 
 /**
- * Bấm giờ chạy nền — thoát app vẫn chạy, hiện thông báo (tránh nóng máy / bị kill).
+ * Bấm giờ chạy nền. Activity tự vẽ mượt 10ms; service chỉ cập nhật notification ~1s (đỡ nóng máy).
  */
 class StopwatchService : Service() {
 
     private val handler = Handler(Looper.getMainLooper())
     private var startElapsed = 0L
     private var accumulated = 0L
-    private var isRunning = false
+    private var running = false
 
-    private val tick = object : Runnable {
+    /** Cập nhật notification thưa (1s) — không gửi broadcast mỗi frame. */
+    private val notifTick = object : Runnable {
         override fun run() {
-            if (!isRunning) return
+            if (!running) return
             val now = SystemClock.elapsedRealtime() - startElapsed
             elapsedMs = now
+            baseStartElapsed = startElapsed
             updateNotification(now, true)
-            sendBroadcast(Intent(ACTION_UPDATE).apply {
-                setPackage(packageName)
-                putExtra(EXTRA_MS, now)
-                putExtra(EXTRA_RUNNING, true)
-            })
-            // 200ms đủ mượt, nhẹ hơn 10ms → giảm nóng máy
-            handler.postDelayed(this, 200)
+            handler.postDelayed(this, 1000)
         }
     }
 
@@ -45,59 +41,76 @@ class StopwatchService : Service() {
             ACTION_START -> {
                 accumulated = intent.getLongExtra(EXTRA_MS, 0L)
                 startElapsed = SystemClock.elapsedRealtime() - accumulated
-                isRunning = true
+                running = true
                 isActive = true
+                isRunningFlag = true
+                baseStartElapsed = startElapsed
                 elapsedMs = accumulated
-                startForeground(AlarmNotificationHelper.NOTIF_ID_STOPWATCH, buildNotification(accumulated, true))
-                handler.removeCallbacks(tick)
-                handler.post(tick)
+                startForeground(
+                    AlarmNotificationHelper.NOTIF_ID_STOPWATCH,
+                    buildNotification(accumulated, true)
+                )
+                handler.removeCallbacks(notifTick)
+                handler.post(notifTick)
+                broadcastState(accumulated, true)
             }
             ACTION_PAUSE -> {
-                if (isRunning) {
+                if (running) {
                     accumulated = SystemClock.elapsedRealtime() - startElapsed
-                    isRunning = false
+                    running = false
+                    isRunningFlag = false
                     elapsedMs = accumulated
-                    handler.removeCallbacks(tick)
+                    handler.removeCallbacks(notifTick)
                     updateNotification(accumulated, false)
-                    sendBroadcast(Intent(ACTION_UPDATE).apply {
-                        setPackage(packageName)
-                        putExtra(EXTRA_MS, accumulated)
-                        putExtra(EXTRA_RUNNING, false)
-                    })
                     startForeground(
                         AlarmNotificationHelper.NOTIF_ID_STOPWATCH,
                         buildNotification(accumulated, false)
                     )
+                    broadcastState(accumulated, false)
                 }
             }
             ACTION_RESUME -> {
                 accumulated = intent.getLongExtra(EXTRA_MS, accumulated)
                 startElapsed = SystemClock.elapsedRealtime() - accumulated
-                isRunning = true
+                running = true
                 isActive = true
+                isRunningFlag = true
+                baseStartElapsed = startElapsed
                 elapsedMs = accumulated
-                startForeground(AlarmNotificationHelper.NOTIF_ID_STOPWATCH, buildNotification(accumulated, true))
-                handler.removeCallbacks(tick)
-                handler.post(tick)
+                startForeground(
+                    AlarmNotificationHelper.NOTIF_ID_STOPWATCH,
+                    buildNotification(accumulated, true)
+                )
+                handler.removeCallbacks(notifTick)
+                handler.post(notifTick)
+                broadcastState(accumulated, true)
             }
             ACTION_STOP, ACTION_RESET -> {
-                handler.removeCallbacks(tick)
-                isRunning = false
+                handler.removeCallbacks(notifTick)
+                running = false
                 isActive = false
+                isRunningFlag = false
                 accumulated = 0L
                 elapsedMs = 0L
+                baseStartElapsed = 0L
                 stopForeground(STOP_FOREGROUND_REMOVE)
-                NotificationManagerCompat.from(this).cancel(AlarmNotificationHelper.NOTIF_ID_STOPWATCH)
-                sendBroadcast(Intent(ACTION_UPDATE).apply {
-                    setPackage(packageName)
-                    putExtra(EXTRA_MS, 0L)
-                    putExtra(EXTRA_RUNNING, false)
-                    putExtra(EXTRA_RESET, true)
-                })
+                NotificationManagerCompat.from(this)
+                    .cancel(AlarmNotificationHelper.NOTIF_ID_STOPWATCH)
+                broadcastState(0L, false, reset = true)
                 stopSelf()
             }
         }
         return START_STICKY
+    }
+
+    private fun broadcastState(ms: Long, running: Boolean, reset: Boolean = false) {
+        sendBroadcast(Intent(ACTION_UPDATE).apply {
+            setPackage(packageName)
+            putExtra(EXTRA_MS, ms)
+            putExtra(EXTRA_RUNNING, running)
+            putExtra(EXTRA_RESET, reset)
+            putExtra(EXTRA_BASE_START, baseStartElapsed)
+        })
     }
 
     private fun buildNotification(ms: Long, running: Boolean): Notification {
@@ -156,8 +169,9 @@ class StopwatchService : Service() {
     }
 
     override fun onDestroy() {
-        handler.removeCallbacks(tick)
+        handler.removeCallbacks(notifTick)
         isActive = false
+        isRunningFlag = false
         super.onDestroy()
     }
 
@@ -171,8 +185,22 @@ class StopwatchService : Service() {
         const val EXTRA_MS = "ms"
         const val EXTRA_RUNNING = "running"
         const val EXTRA_RESET = "reset"
+        const val EXTRA_BASE_START = "baseStart"
 
         @Volatile var isActive = false
+        /** true khi đang chạy (chưa pause) */
+        @Volatile var isRunningFlag = false
+        /** SystemClock.elapsedRealtime() lúc start − accumulated */
+        @Volatile var baseStartElapsed = 0L
         @Volatile var elapsedMs = 0L
+
+        /** Thời gian hiện tại chính xác (ms). */
+        fun currentElapsed(): Long {
+            return if (isRunningFlag && baseStartElapsed > 0) {
+                SystemClock.elapsedRealtime() - baseStartElapsed
+            } else {
+                elapsedMs
+            }
+        }
     }
 }

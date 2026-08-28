@@ -25,16 +25,28 @@ class AlarmAdapter(
         holder.binding.tvTime.text = timeText
         holder.binding.tvLabel.text = alarm.label
         holder.binding.tvRepeat.text = alarm.getRepeatText()
-        holder.binding.switchEnabled.isChecked = alarm.isEnabled
 
-        holder.binding.switchEnabled.setOnCheckedChangeListener { _, isChecked ->
-            alarm.isEnabled = isChecked
-            onToggle(alarm)
+        // Silent bind — tránh fire listener khi recycle
+        holder.binding.switchEnabled.setOnCheckedChangeListener(null)
+        holder.binding.switchEnabled.setCheckedSilent(alarm.isEnabled)
+        holder.binding.switchEnabled.setLoading(false)
+
+        holder.binding.switchEnabled.setOnCheckedChangeListener { switch, isChecked ->
+            // Loading ngắn + animation đẹp (giống load_switch)
+            switch.setLoading(true)
+            switch.postDelayed({
+                alarm.isEnabled = isChecked
+                onToggle(alarm)
+                switch.setLoading(false)
+            }, 350)
         }
 
         holder.binding.btnDelete.setOnClickListener {
-            onDelete(alarm)
+            Motion.press(it) { onDelete(alarm) }
         }
+
+        // Card entrance subtle
+        Motion.fadeScaleIn(holder.binding.root, delay = (position % 6) * 30L)
     }
 
     override fun getItemCount() = alarms.size

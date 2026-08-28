@@ -89,4 +89,11 @@ object AppSettings {
         val pin = getAntiTrollPin(context)
         return pin.isNotEmpty() && pin == input
     }
+
+    // Language (ISO / BCP-47). "system" = follow device.
+    fun setLanguage(context: Context, code: String) =
+        prefs(context).edit().putString("app_language", code).apply()
+
+    fun getLanguage(context: Context): String =
+        prefs(context).getString("app_language", LanguageCatalog.SYSTEM) ?: LanguageCatalog.SYSTEM
 }

@@ -104,6 +104,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         binding.shimmer.hide()
+        binding.loadingAnim.visibility = android.view.View.GONE
+        binding.loadingAnim.stop()
 
         binding.fabAdd.setOnClickListener {
             Motion.press(it) { showAddDialog() }

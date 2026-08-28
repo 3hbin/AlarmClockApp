@@ -60,6 +60,10 @@ class WorldClockActivity : AppCompatActivity() {
         binding.toolbar.setNavigationOnClickListener { Motion.finishFade(this) }
 
         binding.shimmer.show()
+        binding.loadingAnim.style = LoadingAnimationView.Style.STAGGERED_DOTS_WAVE
+        binding.loadingAnim.animColor = 0xFF3F51B5.toInt()
+        binding.loadingAnim.visibility = android.view.View.VISIBLE
+        binding.loadingAnim.start()
         adapter = WorldClockAdapter(mutableListOf())
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
@@ -82,6 +86,8 @@ class WorldClockActivity : AppCompatActivity() {
                 adapter.update(allCities)
                 binding.tvCount.text = "${allCities.size} múi giờ / thành phố"
                 binding.shimmer.hide()
+                binding.loadingAnim.stop()
+                binding.loadingAnim.visibility = android.view.View.GONE
                 binding.recyclerView.scheduleLayoutAnimation()
             }
         }.start()

@@ -6,6 +6,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,18 +27,35 @@ class StopwatchActivity : AppCompatActivity() {
     private val laps = mutableListOf<Long>()
     private lateinit var lapAdapter: LapAdapter
 
+    /** Vẽ mượt 10ms khi màn hình đang mở — không phụ thuộc broadcast 1s của service. */
+    private val uiHandler = Handler(Looper.getMainLooper())
+    private val uiTick = object : Runnable {
+        override fun run() {
+            if (!isRunning) return
+            timeInMillis = StopwatchService.currentElapsed()
+            updateDisplay()
+            uiHandler.postDelayed(this, 10)
+        }
+    }
+
     private val updateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action != StopwatchService.ACTION_UPDATE) return
-            timeInMillis = intent.getLongExtra(StopwatchService.EXTRA_MS, 0L)
             isRunning = intent.getBooleanExtra(StopwatchService.EXTRA_RUNNING, false)
             if (intent.getBooleanExtra(StopwatchService.EXTRA_RESET, false)) {
+                timeInMillis = 0L
                 laps.clear()
                 lapAdapter.notifyDataSetChanged()
+                stopUiTick()
+            } else {
+                timeInMillis = if (isRunning) StopwatchService.currentElapsed()
+                else intent.getLongExtra(StopwatchService.EXTRA_MS, 0L)
             }
             updateDisplay()
-            binding.btnStartPause.text = if (isRunning) "Tạm dừng" else if (timeInMillis > 0) "Tiếp tục" else "Bắt đầu"
+            binding.btnStartPause.text =
+                if (isRunning) "Tạm dừng" else if (timeInMillis > 0) "Tiếp tục" else "Bắt đầu"
             binding.btnLapReset.text = if (isRunning) "Lượt" else "Đặt lại"
+            if (isRunning) startUiTick() else stopUiTick()
         }
     }
 
@@ -55,11 +74,12 @@ class StopwatchActivity : AppCompatActivity() {
 
         // Đồng bộ nếu service đang chạy
         if (StopwatchService.isActive) {
-            timeInMillis = StopwatchService.elapsedMs
-            isRunning = true
+            isRunning = StopwatchService.isRunningFlag
+            timeInMillis = StopwatchService.currentElapsed()
             updateDisplay()
-            binding.btnStartPause.text = "Tạm dừng"
-            binding.btnLapReset.text = "Lượt"
+            binding.btnStartPause.text = if (isRunning) "Tạm dừng" else if (timeInMillis > 0) "Tiếp tục" else "Bắt đầu"
+            binding.btnLapReset.text = if (isRunning) "Lượt" else "Đặt lại"
+            if (isRunning) startUiTick()
         }
 
         binding.btnStartPause.setOnClickListener {
@@ -88,14 +108,31 @@ class StopwatchActivity : AppCompatActivity() {
             @Suppress("UnspecifiedRegisterReceiverFlag")
             registerReceiver(updateReceiver, filter)
         }
+        // Vào lại màn hình: đồng bộ + vẽ mượt
+        if (StopwatchService.isActive) {
+            isRunning = StopwatchService.isRunningFlag
+            timeInMillis = StopwatchService.currentElapsed()
+            updateDisplay()
+            if (isRunning) startUiTick()
+        }
     }
 
     override fun onStop() {
+        stopUiTick()
         try {
             unregisterReceiver(updateReceiver)
         } catch (_: Exception) {
         }
         super.onStop()
+    }
+
+    private fun startUiTick() {
+        uiHandler.removeCallbacks(uiTick)
+        uiHandler.post(uiTick)
+    }
+
+    private fun stopUiTick() {
+        uiHandler.removeCallbacks(uiTick)
     }
 
     private fun start() {
@@ -108,12 +145,17 @@ class StopwatchActivity : AppCompatActivity() {
         isRunning = true
         binding.btnStartPause.text = "Tạm dừng"
         binding.btnLapReset.text = "Lượt"
+        startUiTick()
         Toast.makeText(this, "Bấm giờ chạy nền — thoát app vẫn chạy (xem thông báo)", Toast.LENGTH_SHORT).show()
     }
 
     private fun pause() {
+        // Lấy thời gian chính xác trước khi pause
+        timeInMillis = StopwatchService.currentElapsed()
         startService(Intent(this, StopwatchService::class.java).setAction(StopwatchService.ACTION_PAUSE))
         isRunning = false
+        stopUiTick()
+        updateDisplay()
         binding.btnStartPause.text = "Tiếp tục"
         binding.btnLapReset.text = "Đặt lại"
     }
@@ -121,6 +163,7 @@ class StopwatchActivity : AppCompatActivity() {
     private fun reset() {
         startService(Intent(this, StopwatchService::class.java).setAction(StopwatchService.ACTION_STOP))
         isRunning = false
+        stopUiTick()
         timeInMillis = 0L
         laps.clear()
         lapAdapter.notifyDataSetChanged()
@@ -130,9 +173,13 @@ class StopwatchActivity : AppCompatActivity() {
     }
 
     private fun addLap() {
-        laps.add(0, timeInMillis)
+        // Thời điểm bấm Lượt — đọc trực tiếp clock, không đợi UI tick
+        val t = StopwatchService.currentElapsed()
+        timeInMillis = t
+        laps.add(0, t)
         lapAdapter.notifyItemInserted(0)
         binding.recyclerLaps.scrollToPosition(0)
+        updateDisplay()
     }
 
     private fun updateDisplay() {

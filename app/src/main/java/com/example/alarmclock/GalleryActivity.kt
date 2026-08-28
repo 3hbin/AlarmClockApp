@@ -100,12 +100,18 @@ class GalleryActivity : AppCompatActivity() {
 
     private fun loadPhotos() {
         binding.shimmer.show()
+        binding.loadingAnim.style = LoadingAnimationView.Style.FOUR_ROTATING_DOTS
+        binding.loadingAnim.animColor = 0xFF3F51B5.toInt()
+        binding.loadingAnim.visibility = android.view.View.VISIBLE
+        binding.loadingAnim.start()
         Thread {
             val dir = File(filesDir, "intruder_photos")
             val files = dir.listFiles()?.filter { it.extension.lowercase() in listOf("jpg", "jpeg", "png") }
                 ?.sortedByDescending { it.lastModified() } ?: emptyList()
             runOnUiThread {
                 binding.shimmer.hide()
+                binding.loadingAnim.stop()
+                binding.loadingAnim.visibility = android.view.View.GONE
                 binding.swipeRefresh.isRefreshing = false
                 binding.tvEmpty.visibility = if (files.isEmpty()) View.VISIBLE else View.GONE
                 binding.recycler.layoutManager = GridLayoutManager(this, 2)

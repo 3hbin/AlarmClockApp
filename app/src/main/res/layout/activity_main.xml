@@ -65,6 +65,12 @@
                 android:visibility="gone">
                 <include layout="@layout/view_shimmer_rows" />
             </com.example.alarmclock.ShimmerFrameLayout>
+            <com.example.alarmclock.LoadingAnimationView
+                android:id="@+id/loadingAnim"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_gravity="center"
+                android:visibility="gone" />
         </FrameLayout>
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
