@@ -6,6 +6,7 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.media.AudioAttributes
+import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.net.Uri
@@ -15,7 +16,9 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.view.View
 import android.view.WindowManager
+import android.widget.EditText
 import android.widget.Toast
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.example.alarmclock.databinding.ActivityAlarmRingBinding
@@ -82,6 +85,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         }
 
         startRinging()
+        enforceAntiTroll()
         setupChallengeUi()
 
         val repo = AlarmRepository(this)
@@ -91,10 +95,14 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         }
 
         binding.btnDismiss.setOnClickListener {
-            dismissAlarm(repo)
+            requestDismiss(repo)
         }
 
         binding.btnSnooze.setOnClickListener {
+            if (AppSettings.isAntiTroll(this) || isStrictAntiSnooze) {
+                Toast.makeText(this, "Chế độ chống troll: không được hoãn!", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
             snoozeAlarm(label)
         }
     }
@@ -211,6 +219,82 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+
+
+    private fun enforceAntiTroll() {
+        if (!AppSettings.isAntiTroll(this)) return
+        // Ẩn snooze, ép volume lớn
+        binding.btnSnooze.visibility = View.GONE
+        try {
+            val am = getSystemService(AUDIO_SERVICE) as AudioManager
+            val max = am.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+            am.setStreamVolume(AudioManager.STREAM_ALARM, max, 0)
+            mediaPlayer?.setVolume(1f, 1f)
+        } catch (_: Exception) {}
+        // Giữ volume: mỗi 2s set lại max
+        binding.root.post(object : Runnable {
+            override fun run() {
+                if (isFinishing) return
+                try {
+                    val am = getSystemService(AUDIO_SERVICE) as AudioManager
+                    val max = am.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+                    am.setStreamVolume(AudioManager.STREAM_ALARM, max, 0)
+                } catch (_: Exception) {}
+                binding.root.postDelayed(this, 2000)
+            }
+        })
+        Toast.makeText(this, "🛡️ Chống troll: cần mã PIN / thử thách để tắt", Toast.LENGTH_LONG).show()
+    }
+
+    private fun requestDismiss(repo: AlarmRepository) {
+        // Nếu đang có challenge (math/shake/face) thì không cho bấm tắt trực tiếp
+        if (challengeType != Alarm.CHALLENGE_NONE && binding.btnDismiss.visibility != View.VISIBLE) {
+            Toast.makeText(this, "Hãy hoàn thành thử thách trước!", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (AppSettings.isAntiTroll(this) && AppSettings.hasAntiTrollPin(this)) {
+            val input = EditText(this).apply {
+                hint = "Nhập mã PIN chống troll"
+                inputType = android.text.InputType.TYPE_CLASS_NUMBER or
+                    android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
+                setPadding(48, 32, 48, 32)
+            }
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Xác minh tắt báo thức")
+                .setMessage("Nhập PIN để tắt — chống người khác troll")
+                .setView(input)
+                .setCancelable(false)
+                .setPositiveButton("Tắt") { _, _ ->
+                    val pin = input.text?.toString().orEmpty()
+                    if (AppSettings.checkAntiTrollPin(this, pin)) {
+                        dismissAlarm(repo)
+                    } else {
+                        Toast.makeText(this, "Sai PIN! Báo thức vẫn kêu.", Toast.LENGTH_LONG).show()
+                        // Chụp mặt nếu bật
+                        if (AppSettings.isFaceCaptureOnFail(this)) {
+                            try {
+                                faceChallengeLauncher.launch(
+                                    android.content.Intent(this, FaceChallengeActivity::class.java)
+                                )
+                            } catch (_: Exception) {}
+                        }
+                    }
+                }
+                .setNegativeButton("Hủy", null)
+                .show()
+        } else {
+            dismissAlarm(repo)
+        }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        if (AppSettings.isAntiTroll(this) || isStrictAntiSnooze || challengeType != Alarm.CHALLENGE_NONE) {
+            Toast.makeText(this, "Không thể thoát — hãy tắt đúng cách!", Toast.LENGTH_SHORT).show()
+            return
+        }
+        super.onBackPressed()
+    }
 
     private fun dismissAlarm(repo: AlarmRepository) {
         stopRinging()

@@ -77,6 +77,31 @@ class SettingsActivity : AppCompatActivity() {
             AppSettings.setPureAlarmOnly(this, on)
         }
 
+        binding.switchAntiTroll.isChecked = AppSettings.isAntiTroll(this)
+        binding.switchAntiTroll.setOnCheckedChangeListener { _, on ->
+            if (on && !AppSettings.hasAntiTrollPin(this)) {
+                Toast.makeText(this, "Hãy đặt PIN (≥4 số) trước khi bật", Toast.LENGTH_LONG).show()
+                binding.switchAntiTroll.isChecked = false
+                return@setOnCheckedChangeListener
+            }
+            AppSettings.setAntiTroll(this, on)
+            Toast.makeText(
+                this,
+                if (on) "Đã bật chống troll — báo thức khó tắt hơn" else "Đã tắt chống troll",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+        binding.btnSaveAntiTrollPin.setOnClickListener {
+            val pin = binding.etAntiTrollPin.text?.toString().orEmpty()
+            if (pin.length < 4) {
+                Toast.makeText(this, "PIN tối thiểu 4 số", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            AppSettings.setAntiTrollPin(this, pin)
+            binding.etAntiTrollPin.text = null
+            Toast.makeText(this, "Đã lưu PIN chống troll", Toast.LENGTH_SHORT).show()
+        }
+
         // Gallery password + recovery email
         binding.etRecoveryEmail.setText(AppSettings.getRecoveryEmail(this))
         binding.btnSaveRecovery.setOnClickListener {

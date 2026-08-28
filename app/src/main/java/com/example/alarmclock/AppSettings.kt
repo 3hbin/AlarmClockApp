@@ -73,4 +73,20 @@ object AppSettings {
         prefs(context).edit().putString("recovery_email", email.trim().lowercase()).apply()
     fun getRecoveryEmail(context: Context) =
         prefs(context).getString("recovery_email", "") ?: ""
+
+    // Anti-troll: chống người khác tắt báo thức
+    fun setAntiTroll(context: Context, on: Boolean) =
+        prefs(context).edit().putBoolean("anti_troll", on).apply()
+    fun isAntiTroll(context: Context) = prefs(context).getBoolean("anti_troll", false)
+
+    fun setAntiTrollPin(context: Context, pin: String) =
+        prefs(context).edit().putString("anti_troll_pin", pin).apply()
+    fun getAntiTrollPin(context: Context) =
+        prefs(context).getString("anti_troll_pin", "") ?: ""
+    fun hasAntiTrollPin(context: Context) = getAntiTrollPin(context).length >= 4
+
+    fun checkAntiTrollPin(context: Context, input: String): Boolean {
+        val pin = getAntiTrollPin(context)
+        return pin.isNotEmpty() && pin == input
+    }
 }

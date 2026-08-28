@@ -55,7 +55,31 @@
         <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/switchPure"
             android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="Chuông thuần (tắt TTS khi báo thức)" android:layout_marginBottom="20dp"/>
+            android:text="Chuông thuần (tắt TTS khi báo thức)" android:layout_marginBottom="12dp"/>
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Chống troll tắt báo thức" android:textStyle="bold"
+            android:layout_marginBottom="4dp" android:layout_marginTop="8dp"/>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Khi bật: ép âm lượng tối đa, khóa nút Back, ẩn Snooze, bắt buộc PIN để tắt. Nên kèm thử thách Toán / Lắc / Quét mặt."
+            android:textSize="12sp" android:textColor="?android:attr/textColorSecondary"
+            android:layout_marginBottom="8dp"/>
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/switchAntiTroll"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Bật chống troll" android:layout_marginBottom="8dp"/>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="Mã PIN tắt báo thức (≥4 số)">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etAntiTrollPin" android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberPassword"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveAntiTrollPin" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="Lưu PIN chống troll"
+            android:layout_marginTop="8dp" android:layout_marginBottom="20dp"/>
 
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="Bảo vệ bộ sưu tập ảnh" android:textStyle="bold" android:layout_marginBottom="8dp"/>
