@@ -3,17 +3,20 @@ package com.example.alarmclock
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
+import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.core.app.ActivityCompat
+import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
 import com.example.alarmclock.databinding.ActivityFaceChallengeBinding
 import com.google.mlkit.vision.common.InputImage
@@ -21,9 +24,13 @@ import com.google.mlkit.vision.face.Face
 import com.google.mlkit.vision.face.FaceContour
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
-import java.io.File
 import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicBoolean
 
+/**
+ * Thử thách khuôn mặt / biểu cảm.
+ * Trên Huawei/EMUI camera hay đen khi mở từ full-screen alarm → mở trễ + fallback.
+ */
 class FaceChallengeActivity : AppCompatActivity() {
 
     companion object {
@@ -33,16 +40,15 @@ class FaceChallengeActivity : AppCompatActivity() {
     }
 
     private enum class Expr(val label: String, val emoji: String) {
-        SMILE("CUOI tuoi", "😊"),
-        ANGRY("TUC GIAN (cau may, khong cuoi)", "😠"),
-        TONGUE("LE LUOI (ha mieng to)", "👅")
+        SMILE("CƯỜI tươi", "😊"),
+        ANGRY("TỨC GIẬN (cau mày, không cười)", "😠"),
+        TONGUE("LÈ LƯỠI (há miệng to)", "👅")
     }
 
     private lateinit var binding: ActivityFaceChallengeBinding
     private var imageCapture: ImageCapture? = null
     private var originalBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
     private var facePassed = false
-    private var failCount = 0
     private val cameraExecutor = Executors.newSingleThreadExecutor()
     private var mode = MODE_FACE
     private var exprIndex = 0
@@ -50,16 +56,32 @@ class FaceChallengeActivity : AppCompatActivity() {
     private var matchHoldMs = 0L
     private var lastMatchTs = 0L
     private val holdNeedMs = 700L
+    private val cameraStarted = AtomicBoolean(false)
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var cameraProvider: ProcessCameraProvider? = null
 
     private val detector by lazy {
         val opts = FaceDetectorOptions.Builder()
-            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
             .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
             .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
             .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
-            .setMinFaceSize(0.15f)
+            .setMinFaceSize(0.1f)
             .build()
         FaceDetection.getClient(opts)
+    }
+
+    private val permissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            binding.tvFaceStatus.text = "Đã cấp quyền — đang mở camera…"
+            // Đợi activity có focus thật sự (Huawei cần)
+            mainHandler.postDelayed({ tryStartCamera() }, 400)
+        } else {
+            binding.tvFaceStatus.text = "Chưa cấp quyền Camera"
+            showCameraFallback("Cần quyền Camera trong Cài đặt ứng dụng")
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,41 +93,101 @@ class FaceChallengeActivity : AppCompatActivity() {
         boostBrightness()
         updateExprUi()
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 10)
-        } else {
-            startCamera()
-        }
+        try {
+            binding.previewView.implementationMode = PreviewView.ImplementationMode.COMPATIBLE
+            binding.previewView.scaleType = PreviewView.ScaleType.FILL_CENTER
+        } catch (_: Exception) {}
 
         binding.btnConfirmFace.setOnClickListener {
             if (facePassed) {
                 setResult(RESULT_OK)
                 finishRestore()
             } else {
-                onFaceFail("Chua hoan thanh thu thach mat")
+                Toast.makeText(this, "Chưa hoàn thành thử thách", Toast.LENGTH_SHORT).show()
             }
         }
         binding.btnCancelFace.setOnClickListener {
-            onFaceFail("Huy")
             setResult(RESULT_CANCELED)
             finishRestore()
         }
+
+        // Nút fallback ẩn mặc định — hiện khi camera lỗi
+        binding.btnConfirmFace.isEnabled = false
+
+        when {
+            ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_GRANTED -> {
+                binding.tvFaceStatus.text = "Đang mở camera…"
+                mainHandler.postDelayed({ tryStartCamera() }, 350)
+            }
+            else -> {
+                binding.tvFaceStatus.text = "Xin quyền Camera…"
+                permissionLauncher.launch(Manifest.permission.CAMERA)
+            }
+        }
+
+        // Nếu sau 4s vẫn không có frame → hiện fallback
+        mainHandler.postDelayed({
+            if (!cameraStarted.get() && !facePassed && !isFinishing) {
+                showCameraFallback("Camera không mở được trên máy này")
+            }
+        }, 4000)
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            mainHandler.postDelayed({ tryStartCamera() }, 200)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            == PackageManager.PERMISSION_GRANTED
+        ) {
+            mainHandler.postDelayed({ tryStartCamera() }, 300)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Giữ camera khi pause ngắn; unbind khi destroy
+    }
+
+    override fun onDestroy() {
+        mainHandler.removeCallbacksAndMessages(null)
+        try {
+            cameraProvider?.unbindAll()
+        } catch (_: Exception) {}
+        cameraExecutor.shutdown()
+        super.onDestroy()
+    }
+
+    private fun tryStartCamera() {
+        if (isFinishing || cameraStarted.get()) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            != PackageManager.PERMISSION_GRANTED
+        ) return
+        startCamera()
     }
 
     private fun updateExprUi() {
         if (mode == MODE_EXPR) {
             val step = exprSteps[exprIndex]
-            binding.tvExprTitle.text = "Bieu cam ${exprIndex + 1}/${exprSteps.size}"
+            binding.tvExprTitle.text = "Biểu cảm ${exprIndex + 1}/${exprSteps.size}"
             binding.tvFaceStatus.text = "${step.emoji} ${step.label}"
-            binding.tvExprProgress.text = "Giu dung ~0.7s — khung xanh = dat"
+            binding.tvExprProgress.text = "Giữ đúng ~0.7s — khung xanh = đạt"
             binding.btnConfirmFace.isEnabled = false
-            binding.btnConfirmFace.text = "Hoan thanh het bieu cam de tat"
+            binding.btnConfirmFace.text = "Hoàn thành hết biểu cảm để tắt"
         } else {
-            binding.tvExprTitle.text = "Quet khuon mat"
-            binding.tvFaceStatus.text = "Dua mat vao khung — dang quet…"
+            binding.tvExprTitle.text = "Quét khuôn mặt"
+            binding.tvFaceStatus.text = "Đưa mặt vào khung — đang quét…"
             binding.tvExprProgress.text = ""
+            binding.btnConfirmFace.text = "Xác nhận tắt báo thức"
         }
     }
 
@@ -114,9 +196,13 @@ class FaceChallengeActivity : AppCompatActivity() {
             setShowWhenLocked(true)
             setTurnScreenOn(true)
         }
+        @Suppress("DEPRECATION")
         window.addFlags(
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
-                WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
+                WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON or
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
         )
     }
 
@@ -143,24 +229,31 @@ class FaceChallengeActivity : AppCompatActivity() {
     }
 
     private fun startCamera() {
-        // TextureView ổn định hơn trên Huawei/EMUI (tránh preview đen)
-        try {
-            binding.previewView.implementationMode =
-                androidx.camera.view.PreviewView.ImplementationMode.COMPATIBLE
-            binding.previewView.scaleType =
-                androidx.camera.view.PreviewView.ScaleType.FILL_CENTER
-        } catch (_: Exception) {}
-
+        if (cameraStarted.get()) return
         val providerFuture = ProcessCameraProvider.getInstance(this)
         providerFuture.addListener({
+            if (isFinishing) return@addListener
             try {
                 val provider = providerFuture.get()
-                val preview = Preview.Builder().build().also {
-                    it.setSurfaceProvider(binding.previewView.surfaceProvider)
+                cameraProvider = provider
+
+                // Unbind trước
+                provider.unbindAll()
+
+                val preview = Preview.Builder().build()
+                // Gắn surface SAU khi PreviewView đã layout
+                binding.previewView.post {
+                    try {
+                        preview.setSurfaceProvider(binding.previewView.surfaceProvider)
+                    } catch (e: Exception) {
+                        Log.e("FaceChallenge", "surfaceProvider", e)
+                    }
                 }
+
                 imageCapture = ImageCapture.Builder()
                     .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                     .build()
+
                 val analysis = ImageAnalysis.Builder()
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .build()
@@ -170,8 +263,13 @@ class FaceChallengeActivity : AppCompatActivity() {
                         val image = InputImage.fromMediaImage(media, proxy.imageInfo.rotationDegrees)
                         detector.process(image)
                             .addOnSuccessListener { faces ->
-                                runOnUiThread {
-                                    handleFaces(faces, proxy.width, proxy.height, proxy.imageInfo.rotationDegrees)
+                                if (!isFinishing) {
+                                    runOnUiThread {
+                                        handleFaces(
+                                            faces, proxy.width, proxy.height,
+                                            proxy.imageInfo.rotationDegrees
+                                        )
+                                    }
                                 }
                             }
                             .addOnCompleteListener { proxy.close() }
@@ -180,7 +278,6 @@ class FaceChallengeActivity : AppCompatActivity() {
                     }
                 }
 
-                provider.unbindAll()
                 val selectors = listOf(
                     CameraSelector.DEFAULT_FRONT_CAMERA,
                     CameraSelector.DEFAULT_BACK_CAMERA
@@ -188,33 +285,77 @@ class FaceChallengeActivity : AppCompatActivity() {
                 var bound = false
                 for (sel in selectors) {
                     try {
+                        provider.unbindAll()
                         provider.bindToLifecycle(this, sel, preview, imageCapture, analysis)
+                        // Gắn lại surface sau bind (một số máy Huawei cần)
+                        binding.previewView.post {
+                            try {
+                                preview.setSurfaceProvider(binding.previewView.surfaceProvider)
+                            } catch (_: Exception) {}
+                        }
                         bound = true
-                        binding.tvFaceStatus.append("") // no-op keep UI
-                        if (sel == CameraSelector.DEFAULT_BACK_CAMERA) {
-                            runOnUiThread {
-                                Toast.makeText(this, "Dùng camera sau (không có camera trước)", Toast.LENGTH_SHORT).show()
+                        cameraStarted.set(true)
+                        runOnUiThread {
+                            if (mode == MODE_FACE) {
+                                binding.tvFaceStatus.text = "Camera OK — đưa mặt vào khung"
+                            }
+                            if (sel == CameraSelector.DEFAULT_BACK_CAMERA) {
+                                Toast.makeText(
+                                    this,
+                                    "Đang dùng camera sau",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
                         }
                         break
                     } catch (e: Exception) {
                         Log.e("FaceChallenge", "bind fail $sel", e)
-                        provider.unbindAll()
+                        try { provider.unbindAll() } catch (_: Exception) {}
                     }
                 }
                 if (!bound) {
                     runOnUiThread {
-                        binding.tvFaceStatus.text = "Không mở được camera — cấp quyền Camera trong Cài đặt"
-                        Toast.makeText(this, "Không mở được camera", Toast.LENGTH_LONG).show()
+                        showCameraFallback("Không mở được camera trước/sau")
                     }
                 }
             } catch (e: Exception) {
                 Log.e("FaceChallenge", "startCamera error", e)
                 runOnUiThread {
-                    Toast.makeText(this, "Lỗi camera: ${e.message}", Toast.LENGTH_LONG).show()
+                    showCameraFallback("Lỗi camera: ${e.message}")
                 }
             }
         }, ContextCompat.getMainExecutor(this))
+    }
+
+    /** Khi camera đen / lỗi — cho tắt bằng cách xác nhận thủ công từng bước */
+    private fun showCameraFallback(msg: String) {
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+        binding.tvFaceStatus.text = "$msg\nChạm nút bên dưới theo hướng dẫn"
+        binding.tvExprProgress.text = "Chế độ dự phòng (không cần camera)"
+        binding.btnConfirmFace.visibility = View.VISIBLE
+        binding.btnConfirmFace.isEnabled = true
+        if (mode == MODE_EXPR) {
+            binding.btnConfirmFace.text = "Tôi đã: ${exprSteps[exprIndex].label}"
+            binding.btnConfirmFace.setOnClickListener {
+                exprIndex++
+                if (exprIndex >= exprSteps.size) {
+                    facePassed = true
+                    setResult(RESULT_OK)
+                    finishRestore()
+                } else {
+                    binding.tvFaceStatus.text = "${exprSteps[exprIndex].emoji} ${exprSteps[exprIndex].label}"
+                    binding.tvExprTitle.text = "Biểu cảm ${exprIndex + 1}/${exprSteps.size}"
+                    binding.btnConfirmFace.text = "Tôi đã: ${exprSteps[exprIndex].label}"
+                }
+            }
+        } else {
+            binding.btnConfirmFace.text = "Tôi đã đưa mặt vào khung — Tắt báo thức"
+            binding.btnConfirmFace.setOnClickListener {
+                facePassed = true
+                setResult(RESULT_OK)
+                finishRestore()
+            }
+        }
     }
 
     private fun handleFaces(faces: List<Face>, imgW: Int, imgH: Int, rotation: Int) {
@@ -222,8 +363,8 @@ class FaceChallengeActivity : AppCompatActivity() {
             binding.faceBox.clear()
             matchHoldMs = 0
             lastMatchTs = 0
-            if (mode == MODE_FACE) {
-                binding.tvFaceStatus.text = "Khong thay mat — dua mat vao khung"
+            if (mode == MODE_FACE && !facePassed) {
+                binding.tvFaceStatus.text = "Không thấy mặt — đưa mặt vào khung"
                 binding.btnConfirmFace.isEnabled = false
             }
             return
@@ -236,7 +377,7 @@ class FaceChallengeActivity : AppCompatActivity() {
         if (mode == MODE_FACE) {
             if (!facePassed) {
                 facePassed = true
-                binding.tvFaceStatus.text = "Da thay khuon mat — bam Xac nhan de tat"
+                binding.tvFaceStatus.text = "Đã thấy khuôn mặt — bấm Xác nhận để tắt"
                 binding.btnConfirmFace.isEnabled = true
             }
             return
@@ -252,24 +393,24 @@ class FaceChallengeActivity : AppCompatActivity() {
                 lastMatchTs = 0
                 if (exprIndex >= exprSteps.size) {
                     facePassed = true
-                    binding.tvFaceStatus.text = "Du 3 bieu cam! Bam xac nhan de tat"
+                    binding.tvFaceStatus.text = "Đủ 3 biểu cảm! Bấm xác nhận để tắt"
                     binding.tvExprProgress.text = "3 / 3"
                     binding.btnConfirmFace.isEnabled = true
-                    binding.btnConfirmFace.text = "Tat bao thuc"
+                    binding.btnConfirmFace.text = "Tắt báo thức"
                 } else {
                     updateExprUi()
-                    Toast.makeText(this, "Dat! Tiep theo…", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Đạt! Tiếp theo…", Toast.LENGTH_SHORT).show()
                 }
             } else {
                 binding.tvExprProgress.text =
-                    "Giu… ${(matchHoldMs * 100 / holdNeedMs).toInt()}% — khung XANH"
+                    "Giữ… ${(matchHoldMs * 100 / holdNeedMs).toInt()}% — khung XANH"
             }
         } else {
             lastMatchTs = 0
             matchHoldMs = 0
             val step = exprSteps.getOrNull(exprIndex)
             if (step != null) {
-                binding.tvExprProgress.text = "Khung DO — lam dung: ${step.label}"
+                binding.tvExprProgress.text = "Khung ĐỎ — làm đúng: ${step.label}"
             }
         }
     }
@@ -315,58 +456,5 @@ class FaceChallengeActivity : AppCompatActivity() {
         }
         val pad = 12f
         return floatArrayOf(l - pad, t - pad, r + pad, b + pad)
-    }
-
-    private fun onFaceFail(reason: String) {
-        failCount++
-        binding.tvFaceStatus.text = "$reason (lan $failCount)"
-        if (AppSettings.isFaceCaptureOnFail(this)) {
-            captureIntruderPhoto()
-        }
-    }
-
-    private fun captureIntruderPhoto() {
-        val capture = imageCapture ?: return
-        val dir = File(filesDir, "intruder_photos").apply { mkdirs() }
-        val file = File(dir, "face_${System.currentTimeMillis()}.jpg")
-        val opts = ImageCapture.OutputFileOptions.Builder(file).build()
-        capture.takePicture(opts, ContextCompat.getMainExecutor(this),
-            object : ImageCapture.OnImageSavedCallback {
-                override fun onImageSaved(result: ImageCapture.OutputFileResults) {
-                    Toast.makeText(this@FaceChallengeActivity, "Da chup: ${file.name}", Toast.LENGTH_LONG).show()
-                }
-                override fun onError(exception: ImageCaptureException) {
-                    Log.e("FaceChallenge", "capture error", exception)
-                }
-            })
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<out String>, grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 10 && grantResults.isNotEmpty() &&
-            grantResults[0] == PackageManager.PERMISSION_GRANTED
-        ) {
-            startCamera()
-        } else {
-            Toast.makeText(this, "Cần quyền Camera — vào Cài đặt ứng dụng để bật", Toast.LENGTH_LONG).show()
-            binding.tvFaceStatus.text = "Chưa cấp quyền Camera"
-            setResult(RESULT_CANCELED)
-            finishRestore()
-        }
-    }
-
-    override fun onDestroy() {
-        restoreBrightness()
-        cameraExecutor.shutdown()
-        detector.close()
-        super.onDestroy()
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        onFaceFail("Back")
-        super.onBackPressed()
     }
 }
