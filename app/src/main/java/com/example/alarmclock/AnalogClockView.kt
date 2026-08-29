@@ -1,9 +1,12 @@
 package com.example.alarmclock
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
@@ -59,6 +62,33 @@ class AnalogClockView @JvmOverloads constructor(
         isFakeBoldText = true
     }
 
+    private var skyFace: Bitmap? = null
+    private var lastPeriod: DynamicIconHelper.Period? = null
+    private val rimWhite = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        style = Paint.Style.STROKE
+        strokeWidth = 10f
+    }
+    private val handDark = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFF1A1A1A.toInt()
+        strokeCap = Paint.Cap.ROUND
+        style = Paint.Style.STROKE
+    }
+    private val hubPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFF5F5F5.toInt()
+        style = Paint.Style.FILL
+        setShadowLayer(4f, 0f, 1f, 0x44000000)
+    }
+
+    private fun ensureSkyFace() {
+        val period = DynamicIconHelper.currentPeriod()
+        if (period == lastPeriod && skyFace != null) return
+        lastPeriod = period
+        skyFace = try {
+            BitmapFactory.decodeResource(resources, period.faceRes)
+        } catch (_: Exception) { null }
+    }
+
     private val ticker = object : Runnable {
         override fun run() {
             invalidate()
@@ -78,36 +108,29 @@ class AnalogClockView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        ensureSkyFace()
         val cx = width / 2f
         val cy = height / 2f
-        val r = min(width, height) / 2f * 0.88f
+        val r = min(width, height) / 2f * 0.92f
 
-        // face
-        canvas.drawCircle(cx, cy, r, facePaint)
-        rimPaint.strokeWidth = r * 0.04f
-        canvas.drawCircle(cx, cy, r, rimPaint)
-
-        // ticks + numbers
-        numberPaint.textSize = r * 0.14f
-        for (i in 0 until 60) {
-            val angle = Math.toRadians((i * 6 - 90).toDouble())
-            val major = i % 5 == 0
-            val inner = if (major) r * 0.78f else r * 0.88f
-            val outer = r * 0.94f
-            tickPaint.strokeWidth = if (major) r * 0.025f else r * 0.012f
-            tickPaint.color = if (major) 0xFF37474F.toInt() else 0xFF90A4AE.toInt()
-            canvas.drawLine(
-                (cx + cos(angle) * inner).toFloat(),
-                (cy + sin(angle) * inner).toFloat(),
-                (cx + cos(angle) * outer).toFloat(),
-                (cy + sin(angle) * outer).toFloat(),
-                tickPaint
-            )
-            if (major) {
-                val num = if (i == 0) 12 else i / 5
-                val ny = cy + sin(angle) * r * 0.68f - (numberPaint.descent() + numberPaint.ascent()) / 2
-                canvas.drawText(num.toString(), (cx + cos(angle) * r * 0.68f).toFloat(), ny.toFloat(), numberPaint)
-            }
+        val face = skyFace
+        if (face != null && !face.isRecycled) {
+            // Clip circle + draw sky face (đã không có viền đen)
+            canvas.save()
+            val path = Path()
+            path.addCircle(cx, cy, r, Path.Direction.CW)
+            canvas.clipPath(path)
+            val src = android.graphics.Rect(0, 0, face.width, face.height)
+            val dst = RectF(cx - r, cy - r, cx + r, cy + r)
+            canvas.drawBitmap(face, src, dst, null)
+            canvas.restore()
+            // Viền trắng mỏng (không đen)
+            rimWhite.strokeWidth = r * 0.045f
+            canvas.drawCircle(cx, cy, r - rimWhite.strokeWidth / 2f, rimWhite)
+        } else {
+            canvas.drawCircle(cx, cy, r, facePaint)
+            rimPaint.strokeWidth = r * 0.04f
+            canvas.drawCircle(cx, cy, r, rimPaint)
         }
 
         val cal = Calendar.getInstance()
@@ -119,32 +142,34 @@ class AnalogClockView @JvmOverloads constructor(
         val minuteAngle = Math.toRadians((minute + second / 60f) * 6.0 - 90)
         val secondAngle = Math.toRadians(second * 6.0 - 90)
 
-        hourPaint.strokeWidth = r * 0.045f
-        minutePaint.strokeWidth = r * 0.03f
-        secondPaint.strokeWidth = r * 0.015f
-
-        // hour hand
+        // Kim tối (xám đậm, không pure black cứng)
+        handDark.color = 0xFF2C2C2C.toInt()
+        handDark.strokeWidth = r * 0.055f
         canvas.drawLine(
             cx, cy,
-            (cx + cos(hourAngle) * r * 0.5).toFloat(),
-            (cy + sin(hourAngle) * r * 0.5).toFloat(),
-            hourPaint
+            (cx + cos(hourAngle) * r * 0.48).toFloat(),
+            (cy + sin(hourAngle) * r * 0.48).toFloat(),
+            handDark
         )
-        // minute hand
+        handDark.strokeWidth = r * 0.038f
         canvas.drawLine(
             cx, cy,
             (cx + cos(minuteAngle) * r * 0.68).toFloat(),
             (cy + sin(minuteAngle) * r * 0.68).toFloat(),
-            minutePaint
+            handDark
         )
-        // second hand
+        // Kim giây mỏng đỏ
+        secondPaint.strokeWidth = r * 0.014f
         canvas.drawLine(
             cx, cy,
-            (cx + cos(secondAngle) * r * 0.78).toFloat(),
-            (cy + sin(secondAngle) * r * 0.78).toFloat(),
+            (cx + cos(secondAngle) * r * 0.76).toFloat(),
+            (cy + sin(secondAngle) * r * 0.76).toFloat(),
             secondPaint
         )
-        canvas.drawCircle(cx, cy, r * 0.04f, centerPaint)
-        canvas.drawCircle(cx, cy, r * 0.018f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE })
+        // Hub trắng
+        canvas.drawCircle(cx, cy, r * 0.06f, hubPaint)
+        canvas.drawCircle(cx, cy, r * 0.025f, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = 0xFF2C2C2C.toInt()
+        })
     }
 }

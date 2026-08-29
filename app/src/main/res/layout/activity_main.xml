@@ -20,15 +20,21 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
-        android:paddingTop="32dp"
-        android:paddingBottom="16dp">
+        android:paddingTop="16dp"
+        android:paddingBottom="8dp">
+
+        <com.example.alarmclock.AnalogClockView
+            android:id="@+id/analogClock"
+            android:layout_width="168dp"
+            android:layout_height="168dp"
+            android:layout_marginBottom="8dp" />
 
         <TextView
             android:id="@+id/tvCurrentTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="12:00"
-            android:textSize="64sp"
+            android:textSize="48sp"
             android:textStyle="bold"
             android:fontFamily="sans-serif-light"
             android:textColor="?android:attr/textColorPrimary" />

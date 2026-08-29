@@ -1,242 +1,36 @@
 package com.example.alarmclock
 
 /**
- * Danh sách ~195 ngôn ngữ (ISO 639-1 / BCP-47) + emoji cờ đại diện.
- * nativeName: tên theo chính ngôn ngữ; englishName: tên tiếng Anh; flag: emoji cờ.
+ * Chỉ tiếng Anh (+ theo hệ thống).
  */
 data class AppLanguage(
     val code: String,
-    val nativeName: String,
-    val englishName: String,
+    val native: String,
+    val english: String,
     val flag: String
-) {
-    val displayLabel: String
-        get() = if (nativeName.equals(englishName, ignoreCase = true)) {
-            "$flag  $nativeName ($code)"
-        } else {
-            "$flag  $nativeName — $englishName ($code)"
-        }
-}
+)
 
 object LanguageCatalog {
-
-    /** Theo hệ thống */
     const val SYSTEM = "system"
 
     val languages: List<AppLanguage> = listOf(
-        AppLanguage("aa", "Afar", "Afar", "🇩🇯"),
-        AppLanguage("ab", "Аҧсуа", "Abkhaz", "🇬🇪"),
-        AppLanguage("af", "Afrikaans", "Afrikaans", "🇿🇦"),
-        AppLanguage("ak", "Akan", "Akan", "🇬🇭"),
-        AppLanguage("am", "አማርኛ", "Amharic", "🇪🇹"),
-        AppLanguage("an", "Aragonés", "Aragonese", "🇪🇸"),
-        AppLanguage("ar", "العربية", "Arabic", "🇸🇦"),
-        AppLanguage("as", "অসমীয়া", "Assamese", "🇮🇳"),
-        AppLanguage("av", "Авар", "Avaric", "🇷🇺"),
-        AppLanguage("ay", "Aymar", "Aymara", "🇧🇴"),
-        AppLanguage("az", "Azərbaycan", "Azerbaijani", "🇦🇿"),
-        AppLanguage("ba", "Башҡорт", "Bashkir", "🇷🇺"),
-        AppLanguage("be", "Беларуская", "Belarusian", "🇧🇾"),
-        AppLanguage("bg", "Български", "Bulgarian", "🇧🇬"),
-        AppLanguage("bh", "भोजपुरी", "Bihari", "🇮🇳"),
-        AppLanguage("bi", "Bislama", "Bislama", "🇻🇺"),
-        AppLanguage("bm", "Bamanankan", "Bambara", "🇲🇱"),
-        AppLanguage("bn", "বাংলা", "Bengali", "🇧🇩"),
-        AppLanguage("bo", "བོད་ཡིག", "Tibetan", "🇨🇳"),
-        AppLanguage("br", "Brezhoneg", "Breton", "🇫🇷"),
-        AppLanguage("bs", "Bosanski", "Bosnian", "🇧🇦"),
-        AppLanguage("ca", "Català", "Catalan", "🇪🇸"),
-        AppLanguage("ce", "Нохчийн", "Chechen", "🇷🇺"),
-        AppLanguage("ch", "Chamoru", "Chamorro", "🇬🇺"),
-        AppLanguage("co", "Corsu", "Corsican", "🇫🇷"),
-        AppLanguage("cr", "ᓀᐦᐃᔭᐍᐏᐣ", "Cree", "🇨🇦"),
-        AppLanguage("cs", "Čeština", "Czech", "🇨🇿"),
-        AppLanguage("cu", "Словѣньскъ", "Church Slavic", "🇧🇬"),
-        AppLanguage("cv", "Чӑваш", "Chuvash", "🇷🇺"),
-        AppLanguage("cy", "Cymraeg", "Welsh", "🏴󠁧󠁢󠁷󠁬󠁳󠁿"),
-        AppLanguage("da", "Dansk", "Danish", "🇩🇰"),
-        AppLanguage("de", "Deutsch", "German", "🇩🇪"),
-        AppLanguage("dv", "ދިވެހި", "Divehi", "🇲🇻"),
-        AppLanguage("dz", "རྫོང་ཁ", "Dzongkha", "🇧🇹"),
-        AppLanguage("ee", "Eʋegbe", "Ewe", "🇹🇬"),
-        AppLanguage("el", "Ελληνικά", "Greek", "🇬🇷"),
-        AppLanguage("en", "English", "English", "🇬🇧"),
-        AppLanguage("eo", "Esperanto", "Esperanto", "🌍"),
-        AppLanguage("es", "Español", "Spanish", "🇪🇸"),
-        AppLanguage("et", "Eesti", "Estonian", "🇪🇪"),
-        AppLanguage("eu", "Euskara", "Basque", "🇪🇸"),
-        AppLanguage("fa", "فارسی", "Persian", "🇮🇷"),
-        AppLanguage("ff", "Fulfulde", "Fulah", "🇸🇳"),
-        AppLanguage("fi", "Suomi", "Finnish", "🇫🇮"),
-        AppLanguage("fj", "Vosa Vakaviti", "Fijian", "🇫🇯"),
-        AppLanguage("fo", "Føroyskt", "Faroese", "🇫🇴"),
-        AppLanguage("fr", "Français", "French", "🇫🇷"),
-        AppLanguage("fy", "Frysk", "Western Frisian", "🇳🇱"),
-        AppLanguage("ga", "Gaeilge", "Irish", "🇮🇪"),
-        AppLanguage("gd", "Gàidhlig", "Scottish Gaelic", "🏴󠁧󠁢󠁳󠁣󠁴󠁿"),
-        AppLanguage("gl", "Galego", "Galician", "🇪🇸"),
-        AppLanguage("gn", "Avañe'ẽ", "Guarani", "🇵🇾"),
-        AppLanguage("gu", "ગુજરાતી", "Gujarati", "🇮🇳"),
-        AppLanguage("gv", "Gaelg", "Manx", "🇮🇲"),
-        AppLanguage("ha", "Hausa", "Hausa", "🇳🇬"),
-        AppLanguage("he", "עברית", "Hebrew", "🇮🇱"),
-        AppLanguage("hi", "हिन्दी", "Hindi", "🇮🇳"),
-        AppLanguage("ho", "Hiri Motu", "Hiri Motu", "🇵🇬"),
-        AppLanguage("hr", "Hrvatski", "Croatian", "🇭🇷"),
-        AppLanguage("ht", "Kreyòl ayisyen", "Haitian Creole", "🇭🇹"),
-        AppLanguage("hu", "Magyar", "Hungarian", "🇭🇺"),
-        AppLanguage("hy", "Հայերեն", "Armenian", "🇦🇲"),
-        AppLanguage("hz", "Otjiherero", "Herero", "🇳🇦"),
-        AppLanguage("ia", "Interlingua", "Interlingua", "🌍"),
-        AppLanguage("id", "Bahasa Indonesia", "Indonesian", "🇮🇩"),
-        AppLanguage("ie", "Interlingue", "Interlingue", "🌍"),
-        AppLanguage("ig", "Igbo", "Igbo", "🇳🇬"),
-        AppLanguage("ii", "ꆈꌠ꒿", "Sichuan Yi", "🇨🇳"),
-        AppLanguage("ik", "Iñupiaq", "Inupiaq", "🇺🇸"),
-        AppLanguage("io", "Ido", "Ido", "🌍"),
-        AppLanguage("is", "Íslenska", "Icelandic", "🇮🇸"),
-        AppLanguage("it", "Italiano", "Italian", "🇮🇹"),
-        AppLanguage("iu", "ᐃᓄᒃᑎᑐᑦ", "Inuktitut", "🇨🇦"),
-        AppLanguage("ja", "日本語", "Japanese", "🇯🇵"),
-        AppLanguage("jv", "Basa Jawa", "Javanese", "🇮🇩"),
-        AppLanguage("ka", "ქართული", "Georgian", "🇬🇪"),
-        AppLanguage("kg", "Kikongo", "Kongo", "🇨🇩"),
-        AppLanguage("ki", "Gĩkũyũ", "Kikuyu", "🇰🇪"),
-        AppLanguage("kj", "Kuanyama", "Kuanyama", "🇳🇦"),
-        AppLanguage("kk", "Қазақ", "Kazakh", "🇰🇿"),
-        AppLanguage("kl", "Kalaallisut", "Kalaallisut", "🇬🇱"),
-        AppLanguage("km", "ខ្មែរ", "Khmer", "🇰🇭"),
-        AppLanguage("kn", "ಕನ್ನಡ", "Kannada", "🇮🇳"),
-        AppLanguage("ko", "한국어", "Korean", "🇰🇷"),
-        AppLanguage("kr", "Kanuri", "Kanuri", "🇳🇬"),
-        AppLanguage("ks", "کٲشُر", "Kashmiri", "🇮🇳"),
-        AppLanguage("ku", "Kurdî", "Kurdish", "🇮🇶"),
-        AppLanguage("kv", "Коми", "Komi", "🇷🇺"),
-        AppLanguage("kw", "Kernewek", "Cornish", "🏴󠁧󠁢󠁥󠁮󠁧󠁿"),
-        AppLanguage("ky", "Кыргызча", "Kyrgyz", "🇰🇬"),
-        AppLanguage("la", "Latina", "Latin", "🇻🇦"),
-        AppLanguage("lb", "Lëtzebuergesch", "Luxembourgish", "🇱🇺"),
-        AppLanguage("lg", "Luganda", "Ganda", "🇺🇬"),
-        AppLanguage("li", "Limburgs", "Limburgish", "🇳🇱"),
-        AppLanguage("ln", "Lingála", "Lingala", "🇨🇩"),
-        AppLanguage("lo", "ລາວ", "Lao", "🇱🇦"),
-        AppLanguage("lt", "Lietuvių", "Lithuanian", "🇱🇹"),
-        AppLanguage("lu", "Tshiluba", "Luba-Katanga", "🇨🇩"),
-        AppLanguage("lv", "Latviešu", "Latvian", "🇱🇻"),
-        AppLanguage("mg", "Malagasy", "Malagasy", "🇲🇬"),
-        AppLanguage("mh", "Kajin M̧ajeļ", "Marshallese", "🇲🇭"),
-        AppLanguage("mi", "Māori", "Maori", "🇳🇿"),
-        AppLanguage("mk", "Македонски", "Macedonian", "🇲🇰"),
-        AppLanguage("ml", "മലയാളം", "Malayalam", "🇮🇳"),
-        AppLanguage("mn", "Монгол", "Mongolian", "🇲🇳"),
-        AppLanguage("mr", "मराठी", "Marathi", "🇮🇳"),
-        AppLanguage("ms", "Bahasa Melayu", "Malay", "🇲🇾"),
-        AppLanguage("mt", "Malti", "Maltese", "🇲🇹"),
-        AppLanguage("my", "မြန်မာ", "Burmese", "🇲🇲"),
-        AppLanguage("na", "Dorerin Naoero", "Nauru", "🇳🇷"),
-        AppLanguage("nb", "Norsk bokmål", "Norwegian Bokmål", "🇳🇴"),
-        AppLanguage("nd", "isiNdebele", "North Ndebele", "🇿🇼"),
-        AppLanguage("ne", "नेपाली", "Nepali", "🇳🇵"),
-        AppLanguage("ng", "Owambo", "Ndonga", "🇳🇦"),
-        AppLanguage("nl", "Nederlands", "Dutch", "🇳🇱"),
-        AppLanguage("nn", "Norsk nynorsk", "Norwegian Nynorsk", "🇳🇴"),
-        AppLanguage("no", "Norsk", "Norwegian", "🇳🇴"),
-        AppLanguage("nr", "isiNdebele", "South Ndebele", "🇿🇦"),
-        AppLanguage("nv", "Diné bizaad", "Navajo", "🇺🇸"),
-        AppLanguage("ny", "Chichewa", "Chichewa", "🇲🇼"),
-        AppLanguage("oc", "Occitan", "Occitan", "🇫🇷"),
-        AppLanguage("oj", "ᐊᓂᔑᓈᐯᒧᐎᓐ", "Ojibwa", "🇨🇦"),
-        AppLanguage("om", "Afaan Oromoo", "Oromo", "🇪🇹"),
-        AppLanguage("or", "ଓଡ଼ିଆ", "Odia", "🇮🇳"),
-        AppLanguage("os", "Ирон", "Ossetian", "🇬🇪"),
-        AppLanguage("pa", "ਪੰਜਾਬੀ", "Punjabi", "🇮🇳"),
-        AppLanguage("pi", "पाळि", "Pali", "🇮🇳"),
-        AppLanguage("pl", "Polski", "Polish", "🇵🇱"),
-        AppLanguage("ps", "پښتو", "Pashto", "🇦🇫"),
-        AppLanguage("pt", "Português", "Portuguese", "🇵🇹"),
-        AppLanguage("qu", "Runa Simi", "Quechua", "🇵🇪"),
-        AppLanguage("rm", "Rumantsch", "Romansh", "🇨🇭"),
-        AppLanguage("rn", "Ikirundi", "Rundi", "🇧🇮"),
-        AppLanguage("ro", "Română", "Romanian", "🇷🇴"),
-        AppLanguage("ru", "Русский", "Russian", "🇷🇺"),
-        AppLanguage("rw", "Kinyarwanda", "Kinyarwanda", "🇷🇼"),
-        AppLanguage("sa", "संस्कृतम्", "Sanskrit", "🇮🇳"),
-        AppLanguage("sc", "Sardu", "Sardinian", "🇮🇹"),
-        AppLanguage("sd", "سنڌي", "Sindhi", "🇵🇰"),
-        AppLanguage("se", "Davvisámegiella", "Northern Sami", "🇳🇴"),
-        AppLanguage("sg", "Sängö", "Sango", "🇨🇫"),
-        AppLanguage("si", "සිංහල", "Sinhala", "🇱🇰"),
-        AppLanguage("sk", "Slovenčina", "Slovak", "🇸🇰"),
-        AppLanguage("sl", "Slovenščina", "Slovenian", "🇸🇮"),
-        AppLanguage("sm", "Gagana Samoa", "Samoan", "🇼🇸"),
-        AppLanguage("sn", "chiShona", "Shona", "🇿🇼"),
-        AppLanguage("so", "Soomaali", "Somali", "🇸🇴"),
-        AppLanguage("sq", "Shqip", "Albanian", "🇦🇱"),
-        AppLanguage("sr", "Српски", "Serbian", "🇷🇸"),
-        AppLanguage("ss", "SiSwati", "Swati", "🇸🇿"),
-        AppLanguage("st", "Sesotho", "Southern Sotho", "🇱🇸"),
-        AppLanguage("su", "Basa Sunda", "Sundanese", "🇮🇩"),
-        AppLanguage("sv", "Svenska", "Swedish", "🇸🇪"),
-        AppLanguage("sw", "Kiswahili", "Swahili", "🇹🇿"),
-        AppLanguage("ta", "தமிழ்", "Tamil", "🇮🇳"),
-        AppLanguage("te", "తెలుగు", "Telugu", "🇮🇳"),
-        AppLanguage("tg", "Тоҷикӣ", "Tajik", "🇹🇯"),
-        AppLanguage("th", "ไทย", "Thai", "🇹🇭"),
-        AppLanguage("ti", "ትግርኛ", "Tigrinya", "🇪🇷"),
-        AppLanguage("tk", "Türkmen", "Turkmen", "🇹🇲"),
-        AppLanguage("tl", "Tagalog", "Tagalog", "🇵🇭"),
-        AppLanguage("tn", "Setswana", "Tswana", "🇧🇼"),
-        AppLanguage("to", "lea faka-Tonga", "Tongan", "🇹🇴"),
-        AppLanguage("tr", "Türkçe", "Turkish", "🇹🇷"),
-        AppLanguage("ts", "Xitsonga", "Tsonga", "🇿🇦"),
-        AppLanguage("tt", "Татар", "Tatar", "🇷🇺"),
-        AppLanguage("tw", "Twi", "Twi", "🇬🇭"),
-        AppLanguage("ty", "Reo Tahiti", "Tahitian", "🇵🇫"),
-        AppLanguage("ug", "ئۇيغۇرچە", "Uyghur", "🇨🇳"),
-        AppLanguage("uk", "Українська", "Ukrainian", "🇺🇦"),
-        AppLanguage("ur", "اردو", "Urdu", "🇵🇰"),
-        AppLanguage("uz", "Oʻzbek", "Uzbek", "🇺🇿"),
-        AppLanguage("ve", "Tshivenḓa", "Venda", "🇿🇦"),
-        AppLanguage("vi", "Tiếng Việt", "Vietnamese", "🇻🇳"),
-        AppLanguage("vo", "Volapük", "Volapük", "🌍"),
-        AppLanguage("wa", "Walon", "Walloon", "🇧🇪"),
-        AppLanguage("wo", "Wolof", "Wolof", "🇸🇳"),
-        AppLanguage("xh", "isiXhosa", "Xhosa", "🇿🇦"),
-        AppLanguage("yi", "ייִדיש", "Yiddish", "🇮🇱"),
-        AppLanguage("yo", "Yorùbá", "Yoruba", "🇳🇬"),
-        AppLanguage("za", "Vahcuengh", "Zhuang", "🇨🇳"),
-        AppLanguage("zh", "中文", "Chinese", "🇨🇳"),
-        AppLanguage("zh-CN", "简体中文", "Chinese (Simplified)", "🇨🇳"),
-        AppLanguage("zh-TW", "繁體中文", "Chinese (Traditional)", "🇹🇼"),
-        AppLanguage("zu", "isiZulu", "Zulu", "🇿🇦"),
-        AppLanguage("ceb", "Cebuano", "Cebuano", "🇵🇭"),
-        AppLanguage("haw", "ʻŌlelo Hawaiʻi", "Hawaiian", "🇺🇸"),
-        AppLanguage("hmn", "Hmoob", "Hmong", "🇱🇦"),
-        AppLanguage("jw", "Basa Jawa", "Javanese (legacy)", "🇮🇩"),
-        AppLanguage("mai", "मैथिली", "Maithili", "🇮🇳"),
-        AppLanguage("pcm", "Naijá", "Nigerian Pidgin", "🇳🇬"),
-        AppLanguage("fil", "Filipino", "Filipino", "🇵🇭"),
-        AppLanguage("yue", "粵語", "Cantonese", "🇭🇰"),
-        AppLanguage("ckb", "کوردیی ناوەندی", "Central Kurdish", "🇮🇶"),
-        AppLanguage("gom", "कोंकणी", "Konkani", "🇮🇳"),
+        AppLanguage("en", "English", "English", "🇬🇧")
     )
 
-    fun find(code: String): AppLanguage? =
-        languages.find { it.code.equals(code, ignoreCase = true) }
-
     fun displayName(code: String): String {
-        if (code == SYSTEM || code.isBlank()) return "🌐  Theo hệ thống / System default"
-        return find(code)?.displayLabel ?: code
+        if (code == SYSTEM || code.isBlank()) return "🌐 System default"
+        val lang = languages.find { it.code.equals(code, ignoreCase = true) }
+            ?: return "🇬🇧 English (en)"
+        return "${lang.flag} ${lang.native} — ${lang.english} (${lang.code})"
     }
 
     fun search(query: String): List<AppLanguage> {
         if (query.isBlank()) return languages
         val q = query.trim().lowercase()
         return languages.filter {
-            it.code.lowercase().contains(q) ||
-                it.nativeName.lowercase().contains(q) ||
-                it.englishName.lowercase().contains(q) ||
-                it.flag.contains(q)
+            it.code.contains(q) ||
+                it.native.lowercase().contains(q) ||
+                it.english.lowercase().contains(q)
         }
     }
 }

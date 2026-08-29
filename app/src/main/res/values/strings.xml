@@ -52,11 +52,11 @@
 
     <!-- Settings -->
     <string name="settings_title">Cài đặt</string>
-    <string name="lang_section">Ngôn ngữ / Language</string>
-    <string name="lang_hint">Chọn trong gần 200 ngôn ngữ. Giao diện đầy đủ: Tiếng Việt &amp; English (và vài ngôn ngữ phổ biến). Ngôn ngữ khác dùng định dạng ngày/giờ + fallback.</string>
+    <string name="lang_section">Language</string>
+    <string name="lang_hint">English only. System default follows device for date/time format.</string>
     <string name="lang_app">Ngôn ngữ ứng dụng</string>
     <string name="lang_system">🌐  Theo hệ thống / System default</string>
-    <string name="lang_pick_title">🌍  Chọn ngôn ngữ (%1$d)</string>
+    <string name="lang_pick_title">Choose language (%1$d)</string>
     <string name="lang_search_hint">🔍  Tìm ngôn ngữ / Search…</string>
     <string name="lang_count">%1$d ngôn ngữ</string>
     <string name="lang_selected">✓  %1$s</string>
@@ -93,6 +93,7 @@
     <string name="nav_style_title">Kiểu thanh dưới</string>
     <string name="nav_style_hint">Chọn giao diện thanh điều hướng dưới (áp dụng mọi màn).</string>
     <string name="nav_style_curved">Android cong (mặc định)</string>
-    <string name="nav_style_glass">Liquid Glass Material (kính mờ Android)</string>
+    <string name="nav_style_persistent">Persistent (thanh phẳng)</string>
     <string name="nav_style_changed">Đã đổi kiểu thanh dưới</string>
+    <string name="nav_style_google">Google Nav (pill mở rộng)</string>
 </resources>

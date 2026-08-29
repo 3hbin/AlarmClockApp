@@ -1,0 +1,64 @@
+package com.example.alarmclock
+
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.RectF
+import android.util.AttributeSet
+import android.view.View
+
+/** Khung vuông theo dõi khuôn mặt: đỏ = chờ / sai, xanh = đúng động tác. */
+class FaceBoxOverlay @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null
+) : View(context, attrs) {
+
+    private val box = RectF()
+    private var hasFace = false
+    private var ok = false
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 6f * resources.displayMetrics.density
+    }
+    private val corner = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 10f * resources.displayMetrics.density
+        strokeCap = Paint.Cap.ROUND
+    }
+
+    fun update(left: Float, top: Float, right: Float, bottom: Float, matched: Boolean) {
+        hasFace = true
+        ok = matched
+        box.set(left, top, right, bottom)
+        invalidate()
+    }
+
+    fun clear() {
+        hasFace = false
+        invalidate()
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        if (!hasFace) return
+        val color = if (ok) 0xFF22C55E.toInt() else 0xFFEF4444.toInt()
+        paint.color = color
+        corner.color = color
+        val r = 12f * resources.displayMetrics.density
+        canvas.drawRoundRect(box, r, r, paint)
+        // Góc vuông kiểu camera
+        val len = box.width().coerceAtMost(box.height()) * 0.18f
+        // TL
+        canvas.drawLine(box.left, box.top + len, box.left, box.top, corner)
+        canvas.drawLine(box.left, box.top, box.left + len, box.top, corner)
+        // TR
+        canvas.drawLine(box.right - len, box.top, box.right, box.top, corner)
+        canvas.drawLine(box.right, box.top, box.right, box.top + len, corner)
+        // BL
+        canvas.drawLine(box.left, box.bottom - len, box.left, box.bottom, corner)
+        canvas.drawLine(box.left, box.bottom, box.left + len, box.bottom, corner)
+        // BR
+        canvas.drawLine(box.right - len, box.bottom, box.right, box.bottom, corner)
+        canvas.drawLine(box.right, box.bottom, box.right, box.bottom - len, corner)
+    }
+}

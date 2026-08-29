@@ -21,7 +21,8 @@ object BottomNavHelper {
 
     fun bind(activity: AppCompatActivity, nav: CurvedBottomNavView, selectedIndex: Int) {
         nav.navStyle = when (AppSettings.getBottomNavStyle(activity)) {
-            AppSettings.NAV_LIQUID_GLASS -> CurvedBottomNavView.Style.LIQUID_GLASS
+            AppSettings.NAV_PERSISTENT -> CurvedBottomNavView.Style.PERSISTENT
+            AppSettings.NAV_GOOGLE -> CurvedBottomNavView.Style.GOOGLE
             else -> CurvedBottomNavView.Style.CURVED
         }
         nav.setItems(items(), selectedIndex)

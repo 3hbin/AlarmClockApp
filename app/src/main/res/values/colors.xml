@@ -4,4 +4,8 @@
     <color name="purple_700">#303F9F</color>
     <color name="teal_200">#FF4081</color>
     <color name="ic_launcher_background">#1565C0</color>
+    <color name="ic_launcher_morning_bg">#FFB8D4F0</color>
+    <color name="ic_launcher_noon_bg">#FF4BA3F0</color>
+    <color name="ic_launcher_evening_bg">#FFFFB070</color>
+    <color name="ic_launcher_night_bg">#FF1A1A4A</color>
 </resources>

@@ -1,12 +1,9 @@
 package com.example.alarmclock
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
-import android.view.View
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -20,20 +17,26 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.alarmclock.databinding.ActivityFaceChallengeBinding
 import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.face.Face
+import com.google.mlkit.vision.face.FaceContour
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import java.io.File
 import java.util.concurrent.Executors
 
-/**
- * Quét khuôn mặt bằng camera trước (không dùng Biometric hệ thống).
- * - Phát hiện có khuôn mặt → cho phép tắt báo thức
- * - Sai / không có mặt / bấm hủy nhiều lần → chụp ảnh người đang cầm máy
- * - Tối: tự tăng độ sáng màn hình 100%, xong trả lại
- *
- * Vân tay: Android không cho app tự đọc cảm biến vân tay ngoài BiometricPrompt hệ thống.
- */
 class FaceChallengeActivity : AppCompatActivity() {
+
+    companion object {
+        const val EXTRA_MODE = "FACE_MODE"
+        const val MODE_FACE = 0
+        const val MODE_EXPR = 1
+    }
+
+    private enum class Expr(val label: String, val emoji: String) {
+        SMILE("CUOI tuoi", "😊"),
+        ANGRY("TUC GIAN (cau may, khong cuoi)", "😠"),
+        TONGUE("LE LUOI (ha mieng to)", "👅")
+    }
 
     private lateinit var binding: ActivityFaceChallengeBinding
     private var imageCapture: ImageCapture? = null
@@ -41,9 +44,19 @@ class FaceChallengeActivity : AppCompatActivity() {
     private var facePassed = false
     private var failCount = 0
     private val cameraExecutor = Executors.newSingleThreadExecutor()
+    private var mode = MODE_FACE
+    private var exprIndex = 0
+    private val exprSteps = listOf(Expr.SMILE, Expr.ANGRY, Expr.TONGUE)
+    private var matchHoldMs = 0L
+    private var lastMatchTs = 0L
+    private val holdNeedMs = 700L
+
     private val detector by lazy {
         val opts = FaceDetectorOptions.Builder()
-            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+            .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+            .setContourMode(FaceDetectorOptions.CONTOUR_MODE_ALL)
+            .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
             .setMinFaceSize(0.15f)
             .build()
         FaceDetection.getClient(opts)
@@ -54,8 +67,9 @@ class FaceChallengeActivity : AppCompatActivity() {
         showOnLockScreen()
         binding = ActivityFaceChallengeBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        mode = intent.getIntExtra(EXTRA_MODE, MODE_FACE)
         boostBrightness()
+        updateExprUi()
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
             != PackageManager.PERMISSION_GRANTED
@@ -70,13 +84,28 @@ class FaceChallengeActivity : AppCompatActivity() {
                 setResult(RESULT_OK)
                 finishRestore()
             } else {
-                onFaceFail("Chưa nhận diện được khuôn mặt")
+                onFaceFail("Chua hoan thanh thu thach mat")
             }
         }
         binding.btnCancelFace.setOnClickListener {
-            onFaceFail("Hủy / không xác minh")
+            onFaceFail("Huy")
             setResult(RESULT_CANCELED)
             finishRestore()
+        }
+    }
+
+    private fun updateExprUi() {
+        if (mode == MODE_EXPR) {
+            val step = exprSteps[exprIndex]
+            binding.tvExprTitle.text = "Bieu cam ${exprIndex + 1}/${exprSteps.size}"
+            binding.tvFaceStatus.text = "${step.emoji} ${step.label}"
+            binding.tvExprProgress.text = "Giu dung ~0.7s — khung xanh = dat"
+            binding.btnConfirmFace.isEnabled = false
+            binding.btnConfirmFace.text = "Hoan thanh het bieu cam de tat"
+        } else {
+            binding.tvExprTitle.text = "Quet khuon mat"
+            binding.tvFaceStatus.text = "Dua mat vao khung — dang quet…"
+            binding.tvExprProgress.text = ""
         }
     }
 
@@ -95,10 +124,9 @@ class FaceChallengeActivity : AppCompatActivity() {
         try {
             val lp = window.attributes
             originalBrightness = lp.screenBrightness
-            lp.screenBrightness = 1.0f // 100%
+            lp.screenBrightness = 1.0f
             window.attributes = lp
-            // Cũng thử tăng độ sáng hệ thống (cần WRITE_SETTINGS trên một số máy — bỏ qua nếu fail)
-        } catch (_: Exception) { }
+        } catch (_: Exception) {}
     }
 
     private fun restoreBrightness() {
@@ -106,7 +134,7 @@ class FaceChallengeActivity : AppCompatActivity() {
             val lp = window.attributes
             lp.screenBrightness = originalBrightness
             window.attributes = lp
-        } catch (_: Exception) { }
+        } catch (_: Exception) {}
     }
 
     private fun finishRestore() {
@@ -134,12 +162,8 @@ class FaceChallengeActivity : AppCompatActivity() {
                     val image = InputImage.fromMediaImage(media, proxy.imageInfo.rotationDegrees)
                     detector.process(image)
                         .addOnSuccessListener { faces ->
-                            if (faces.isNotEmpty()) {
-                                facePassed = true
-                                runOnUiThread {
-                                    binding.tvFaceStatus.text = "✓ Đã thấy khuôn mặt — bấm Xác nhận để tắt"
-                                    binding.btnConfirmFace.isEnabled = true
-                                }
+                            runOnUiThread {
+                                handleFaces(faces, proxy.width, proxy.height, proxy.imageInfo.rotationDegrees)
                             }
                         }
                         .addOnCompleteListener { proxy.close() }
@@ -150,20 +174,119 @@ class FaceChallengeActivity : AppCompatActivity() {
 
             try {
                 provider.unbindAll()
-                // Camera trước để quét mặt
                 provider.bindToLifecycle(
                     this, CameraSelector.DEFAULT_FRONT_CAMERA, preview, imageCapture, analysis
                 )
             } catch (e: Exception) {
                 Log.e("FaceChallenge", "bind failed", e)
-                Toast.makeText(this, "Không mở được camera trước", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Khong mo duoc camera truoc", Toast.LENGTH_LONG).show()
             }
         }, ContextCompat.getMainExecutor(this))
     }
 
+    private fun handleFaces(faces: List<Face>, imgW: Int, imgH: Int, rotation: Int) {
+        if (faces.isEmpty()) {
+            binding.faceBox.clear()
+            matchHoldMs = 0
+            lastMatchTs = 0
+            if (mode == MODE_FACE) {
+                binding.tvFaceStatus.text = "Khong thay mat — dua mat vao khung"
+                binding.btnConfirmFace.isEnabled = false
+            }
+            return
+        }
+        val face = faces.maxByOrNull { it.boundingBox.width() * it.boundingBox.height() } ?: return
+        val mapped = mapBox(face, imgW, imgH, rotation)
+        val matched = if (mode == MODE_EXPR) matchExpression(face) else true
+        binding.faceBox.update(mapped[0], mapped[1], mapped[2], mapped[3], matched)
+
+        if (mode == MODE_FACE) {
+            if (!facePassed) {
+                facePassed = true
+                binding.tvFaceStatus.text = "Da thay khuon mat — bam Xac nhan de tat"
+                binding.btnConfirmFace.isEnabled = true
+            }
+            return
+        }
+
+        val now = System.currentTimeMillis()
+        if (matched) {
+            if (lastMatchTs == 0L) lastMatchTs = now
+            matchHoldMs = now - lastMatchTs
+            if (matchHoldMs >= holdNeedMs) {
+                exprIndex++
+                matchHoldMs = 0
+                lastMatchTs = 0
+                if (exprIndex >= exprSteps.size) {
+                    facePassed = true
+                    binding.tvFaceStatus.text = "Du 3 bieu cam! Bam xac nhan de tat"
+                    binding.tvExprProgress.text = "3 / 3"
+                    binding.btnConfirmFace.isEnabled = true
+                    binding.btnConfirmFace.text = "Tat bao thuc"
+                } else {
+                    updateExprUi()
+                    Toast.makeText(this, "Dat! Tiep theo…", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                binding.tvExprProgress.text =
+                    "Giu… ${(matchHoldMs * 100 / holdNeedMs).toInt()}% — khung XANH"
+            }
+        } else {
+            lastMatchTs = 0
+            matchHoldMs = 0
+            val step = exprSteps.getOrNull(exprIndex)
+            if (step != null) {
+                binding.tvExprProgress.text = "Khung DO — lam dung: ${step.label}"
+            }
+        }
+    }
+
+    private fun matchExpression(face: Face): Boolean {
+        val smile = face.smilingProbability ?: -1f
+        val leftEye = face.leftEyeOpenProbability ?: 1f
+        val rightEye = face.rightEyeOpenProbability ?: 1f
+        val mouthOpen = estimateMouthOpen(face)
+        return when (exprSteps.getOrNull(exprIndex)) {
+            Expr.SMILE -> smile >= 0.55f
+            Expr.ANGRY -> smile in 0f..0.25f && leftEye > 0.4f && rightEye > 0.4f && mouthOpen < 0.35f
+            Expr.TONGUE -> mouthOpen >= 0.45f
+            else -> false
+        }
+    }
+
+    private fun estimateMouthOpen(face: Face): Float {
+        val upper = face.getContour(FaceContour.UPPER_LIP_TOP)?.points
+        val lower = face.getContour(FaceContour.LOWER_LIP_BOTTOM)?.points
+        if (upper.isNullOrEmpty() || lower.isNullOrEmpty()) return 0f
+        val uy = upper.map { it.y }.average()
+        val ly = lower.map { it.y }.average()
+        val faceH = face.boundingBox.height().toFloat().coerceAtLeast(1f)
+        return ((ly - uy) / faceH).toFloat().coerceIn(0f, 1f)
+    }
+
+    private fun mapBox(face: Face, imgW: Int, imgH: Int, rotation: Int): FloatArray {
+        val bb = face.boundingBox
+        val vw = binding.faceBox.width.toFloat().coerceAtLeast(1f)
+        val vh = binding.faceBox.height.toFloat().coerceAtLeast(1f)
+        val rw = if (rotation == 90 || rotation == 270) imgH else imgW
+        val rh = if (rotation == 90 || rotation == 270) imgW else imgH
+        val scale = maxOf(vw / rw.toFloat(), vh / rh.toFloat())
+        val dx = (vw - rw * scale) / 2f
+        val dy = (vh - rh * scale) / 2f
+        var l = vw - (bb.right * scale + dx)
+        var r = vw - (bb.left * scale + dx)
+        val t = bb.top * scale + dy
+        val b = bb.bottom * scale + dy
+        if (l > r) {
+            val tmp = l; l = r; r = tmp
+        }
+        val pad = 12f
+        return floatArrayOf(l - pad, t - pad, r + pad, b + pad)
+    }
+
     private fun onFaceFail(reason: String) {
         failCount++
-        binding.tvFaceStatus.text = "$reason (lần $failCount)"
+        binding.tvFaceStatus.text = "$reason (lan $failCount)"
         if (AppSettings.isFaceCaptureOnFail(this)) {
             captureIntruderPhoto()
         }
@@ -177,11 +300,7 @@ class FaceChallengeActivity : AppCompatActivity() {
         capture.takePicture(opts, ContextCompat.getMainExecutor(this),
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(result: ImageCapture.OutputFileResults) {
-                    Toast.makeText(
-                        this@FaceChallengeActivity,
-                        "Đã chụp người tắt báo thức: ${file.name}",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    Toast.makeText(this@FaceChallengeActivity, "Da chup: ${file.name}", Toast.LENGTH_LONG).show()
                 }
                 override fun onError(exception: ImageCaptureException) {
                     Log.e("FaceChallenge", "capture error", exception)
@@ -198,7 +317,7 @@ class FaceChallengeActivity : AppCompatActivity() {
         ) {
             startCamera()
         } else {
-            Toast.makeText(this, "Cần quyền Camera để quét mặt", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Can quyen Camera", Toast.LENGTH_LONG).show()
             setResult(RESULT_CANCELED)
             finishRestore()
         }

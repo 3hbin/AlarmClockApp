@@ -93,6 +93,7 @@
     <string name="nav_style_title">Bottom bar style</string>
     <string name="nav_style_hint">Choose the bottom navigation look (applies on every screen).</string>
     <string name="nav_style_curved">Android curved (default)</string>
-    <string name="nav_style_glass">Liquid Glass Material</string>
+    <string name="nav_style_persistent">Persistent</string>
     <string name="nav_style_changed">Bottom bar style updated</string>
+    <string name="nav_style_google">Google Nav (expanding pill)</string>
 </resources>

@@ -161,6 +161,110 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
+
+        <!-- Đọc câu -->
+        <LinearLayout
+            android:id="@+id/layoutReadChallenge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="20dp"
+            android:background="@drawable/bg_ring_card"
+            android:layout_marginBottom="20dp"
+            android:visibility="gone">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Đọc to câu sau (không lặp câu cũ)"
+                android:textColor="#A5B4FC"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp" />
+            <TextView
+                android:id="@+id/tvReadSentence"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="..."
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:padding="8dp" />
+            <TextView
+                android:id="@+id/tvReadProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1 / 3"
+                android:textColor="#C7D2FE"
+                android:textSize="14sp"
+                android:layout_marginTop="8dp" />
+            <EditText
+                android:id="@+id/edtReadAnswer"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_ring_input"
+                android:hint="Gõ lại câu (không dấu cũng được)"
+                android:padding="12dp"
+                android:textColor="@android:color/white"
+                android:textColorHint="#94A3B8"
+                android:gravity="center"
+                android:inputType="text" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSubmitRead"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Xác nhận"
+                android:backgroundTint="#6366F1"
+                app:cornerRadius="24dp" />
+        </LinearLayout>
+
+        <!-- Bấm liên tục 200 -->
+        <LinearLayout
+            android:id="@+id/layoutTapChallenge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="20dp"
+            android:background="@drawable/bg_ring_card"
+            android:layout_marginBottom="20dp"
+            android:visibility="gone">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Bấm liên tục 200 lần (chống auto-click)"
+                android:textColor="#A5B4FC"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp" />
+            <TextView
+                android:id="@+id/tvTapProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 / 200"
+                android:textColor="@android:color/white"
+                android:textSize="36sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/tvTapHint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Chạm nút bên dưới bằng tay"
+                android:textColor="#FCA5A5"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTapChallenge"
+                android:layout_width="160dp"
+                android:layout_height="160dp"
+                android:layout_marginTop="16dp"
+                android:text="BẤM"
+                android:textSize="22sp"
+                android:backgroundTint="#EF4444"
+                app:cornerRadius="80dp" />
+        </LinearLayout>
+
         <View
             android:layout_width="0dp"
             android:layout_height="0dp"

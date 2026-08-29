@@ -22,11 +22,16 @@ data class Alarm(
         const val REPEAT_WEEKDAYS = 2
 
         const val CHALLENGE_NONE = 0
-        const val CHALLENGE_MATH = 1
-        const val CHALLENGE_SHAKE = 2
+        const val CHALLENGE_MATH = 1          // 1 bài (dễ)
+        const val CHALLENGE_SHAKE = 2         // lắc (shakeTargetCount)
         const val CHALLENGE_PHOTO = 3
-        const val CHALLENGE_FACE = 4
+        const val CHALLENGE_FACE = 4          // quét mặt cơ bản
         const val CHALLENGE_BIOMETRIC = 5
+        const val CHALLENGE_READ = 6          // đọc câu (không lặp)
+        const val CHALLENGE_MATH10 = 7        // 10 bài toán liên tiếp
+        const val CHALLENGE_SHAKE100 = 8      // lắc 100 lần
+        const val CHALLENGE_TAP200 = 9        // bấm 200 lần (chống auto-click)
+        const val CHALLENGE_FACE_EXPR = 10    // cười / giận / lè lưỡi
     }
 
     fun getRepeatText(): String = when (repeatMode) {
@@ -37,11 +42,16 @@ data class Alarm(
     }
 
     fun getChallengeText(): String = when (challengeType) {
-        CHALLENGE_MATH -> "Giải toán"
+        CHALLENGE_MATH -> "Giải toán (1 bài)"
         CHALLENGE_SHAKE -> "Lắc máy"
         CHALLENGE_PHOTO -> "Chụp ảnh"
-            CHALLENGE_FACE -> "Quét mặt"
-            CHALLENGE_BIOMETRIC -> "Vân tay/Face hệ thống"
+        CHALLENGE_FACE -> "Quét mặt"
+        CHALLENGE_BIOMETRIC -> "Vân tay/Face hệ thống"
+        CHALLENGE_READ -> "Đọc câu"
+        CHALLENGE_MATH10 -> "Giải 10 bài toán"
+        CHALLENGE_SHAKE100 -> "Lắc máy 100 lần"
+        CHALLENGE_TAP200 -> "Bấm 200 lần"
+        CHALLENGE_FACE_EXPR -> "Cười / Giận / Lè lưỡi"
         else -> "Không"
     }
 }

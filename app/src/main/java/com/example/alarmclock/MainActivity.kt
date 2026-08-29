@@ -162,6 +162,8 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         try { binding.curvedNav.selectIndex(0, animate = false) } catch (_: Exception) {}
+        // Cập nhật icon launcher theo buổi hiện tại
+        DynamicIconHelper.applySafe(this)
     }
 
     private fun setupCurvedNav() {
@@ -228,6 +230,11 @@ class MainActivity : AppCompatActivity() {
                 Alarm.CHALLENGE_MATH -> rgChallenge.check(R.id.rbChallengeMath)
                 Alarm.CHALLENGE_SHAKE -> rgChallenge.check(R.id.rbChallengeShake)
                 Alarm.CHALLENGE_FACE -> rgChallenge.check(R.id.rbChallengeFace)
+                Alarm.CHALLENGE_READ -> rgChallenge.check(R.id.rbChallengeRead)
+                Alarm.CHALLENGE_MATH10 -> rgChallenge.check(R.id.rbChallengeMath10)
+                Alarm.CHALLENGE_SHAKE100 -> rgChallenge.check(R.id.rbChallengeShake100)
+                Alarm.CHALLENGE_TAP200 -> rgChallenge.check(R.id.rbChallengeTap200)
+                Alarm.CHALLENGE_FACE_EXPR -> rgChallenge.check(R.id.rbChallengeFaceExpr)
                 Alarm.CHALLENGE_BIOMETRIC -> dialogView.findViewById<RadioGroup>(R.id.rgChallenge2)?.check(R.id.rbChallengeBio)
                 else -> rgChallenge.check(R.id.rbChallengeNone)
             }
@@ -276,7 +283,17 @@ class MainActivity : AppCompatActivity() {
                     rgChallenge.checkedRadioButtonId == R.id.rbChallengeMath -> Alarm.CHALLENGE_MATH
                     rgChallenge.checkedRadioButtonId == R.id.rbChallengeShake -> Alarm.CHALLENGE_SHAKE
                     rgChallenge.checkedRadioButtonId == R.id.rbChallengeFace -> Alarm.CHALLENGE_FACE
+                    rgChallenge.checkedRadioButtonId == R.id.rbChallengeRead -> Alarm.CHALLENGE_READ
+                    rgChallenge.checkedRadioButtonId == R.id.rbChallengeMath10 -> Alarm.CHALLENGE_MATH10
+                    rgChallenge.checkedRadioButtonId == R.id.rbChallengeShake100 -> Alarm.CHALLENGE_SHAKE100
+                    rgChallenge.checkedRadioButtonId == R.id.rbChallengeTap200 -> Alarm.CHALLENGE_TAP200
+                    rgChallenge.checkedRadioButtonId == R.id.rbChallengeFaceExpr -> Alarm.CHALLENGE_FACE_EXPR
                     else -> Alarm.CHALLENGE_NONE
+                }
+                val shakeTarget = when (challengeType) {
+                    Alarm.CHALLENGE_SHAKE100 -> 100
+                    Alarm.CHALLENGE_SHAKE -> 10
+                    else -> 10
                 }
                 val skipHolidays = dialogView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbSkipHolidays).isChecked
                 val isStrict = dialogView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbStrictAntiSnooze).isChecked
@@ -297,6 +314,7 @@ class MainActivity : AppCompatActivity() {
                             existing.snoozeMinutes = snoozeMinutes
                             existing.ringtoneUri = selectedRingtoneUri
                             existing.challengeType = challengeType
+                            existing.shakeTargetCount = shakeTarget
                             existing.skipHolidays = skipHolidays
                             existing.isStrictAntiSnooze = isStrict
                             existing.voiceNote = voiceNote
@@ -317,6 +335,7 @@ class MainActivity : AppCompatActivity() {
                                 snoozeMinutes = snoozeMinutes,
                                 ringtoneUri = selectedRingtoneUri,
                                 challengeType = challengeType,
+                                shakeTargetCount = shakeTarget,
                                 skipHolidays = skipHolidays,
                                 isStrictAntiSnooze = isStrict,
                                 voiceNote = voiceNote,
@@ -439,6 +458,34 @@ class MainActivity : AppCompatActivity() {
         // Camera for flash
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 100)
+        }
+        // Samsung/OEM: bỏ tối ưu pin để báo thức kêu khi khóa màn
+        try {
+            val pm = getSystemService(POWER_SERVICE) as android.os.PowerManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+                !pm.isIgnoringBatteryOptimizations(packageName)
+            ) {
+                val intent = Intent(
+                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                    Uri.parse("package:$packageName")
+                )
+                startActivity(intent)
+            }
+        } catch (_: Exception) {
+        }
+        // Android 14+: full-screen intent permission
+        if (Build.VERSION.SDK_INT >= 34) {
+            try {
+                val nm = getSystemService(android.app.NotificationManager::class.java)
+                if (nm != null && !nm.canUseFullScreenIntent()) {
+                    startActivity(
+                        Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT).apply {
+                            data = Uri.parse("package:$packageName")
+                        }
+                    )
+                }
+            } catch (_: Exception) {
+            }
         }
     }
 }

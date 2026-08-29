@@ -87,20 +87,25 @@ class SettingsActivity : AppCompatActivity() {
             Toast.makeText(this, getString(R.string.dark_mode_changed), Toast.LENGTH_SHORT).show()
         }
 
-        // Kiểu thanh dưới: cong Android / Liquid Glass
+        // Kiểu thanh dưới: Curved / Persistent / Google Nav
         when (AppSettings.getBottomNavStyle(this)) {
-            AppSettings.NAV_LIQUID_GLASS -> binding.rbNavGlass.isChecked = true
+            AppSettings.NAV_PERSISTENT -> binding.rbNavPersistent.isChecked = true
+            AppSettings.NAV_GOOGLE -> binding.rbNavGoogle.isChecked = true
             else -> binding.rbNavCurved.isChecked = true
         }
         binding.rgNavStyle.setOnCheckedChangeListener { _, id ->
-            val style = if (id == R.id.rbNavGlass) AppSettings.NAV_LIQUID_GLASS else AppSettings.NAV_CURVED
+            val style = when (id) {
+                R.id.rbNavPersistent -> AppSettings.NAV_PERSISTENT
+                R.id.rbNavGoogle -> AppSettings.NAV_GOOGLE
+                else -> AppSettings.NAV_CURVED
+            }
             AppSettings.setBottomNavStyle(this, style)
-            // Áp dụng ngay trên màn Cài đặt
             try {
-                binding.curvedNav.navStyle = if (style == AppSettings.NAV_LIQUID_GLASS)
-                    CurvedBottomNavView.Style.LIQUID_GLASS
-                else
-                    CurvedBottomNavView.Style.CURVED
+                binding.curvedNav.navStyle = when (style) {
+                    AppSettings.NAV_PERSISTENT -> CurvedBottomNavView.Style.PERSISTENT
+                    AppSettings.NAV_GOOGLE -> CurvedBottomNavView.Style.GOOGLE
+                    else -> CurvedBottomNavView.Style.CURVED
+                }
                 binding.curvedNav.setItems(BottomNavHelper.items(), 5)
             } catch (_: Exception) {}
             Toast.makeText(this, getString(R.string.nav_style_changed), Toast.LENGTH_SHORT).show()

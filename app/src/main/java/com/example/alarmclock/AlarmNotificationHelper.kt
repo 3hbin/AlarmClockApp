@@ -5,16 +5,20 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 
 /**
- * Thông báo khi báo thức đang kêu — có nút Tắt để tránh lỡ tay bấm full-screen.
+ * Thông báo khi báo thức đang kêu — full-screen intent + nút Tắt.
+ * Samsung/OEM: full-screen intent là cách chính để hiện màn reo khi khóa.
  */
 object AlarmNotificationHelper {
 
-    const val CHANNEL_RINGING = "alarm_ringing"
+    const val CHANNEL_RINGING = "alarm_ringing_v3"
     const val CHANNEL_CHRONO = "chrono_running"
     const val NOTIF_ID_RINGING = 2001
     const val NOTIF_ID_TIMER = 2002
@@ -28,15 +32,31 @@ object AlarmNotificationHelper {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
 
+        // Xóa channel cũ nếu importance thấp
+        try {
+            nm.deleteNotificationChannel("alarm_ringing")
+        } catch (_: Exception) {
+        }
+
         val ringing = NotificationChannel(
             CHANNEL_RINGING,
             "Báo thức đang kêu",
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = "Thông báo khi báo thức reo — có nút Tắt"
+            description = "Full-screen khi báo thức reo — cần bật thông báo + full-screen intent"
             setBypassDnd(true)
             enableVibration(true)
+            enableLights(true)
             setShowBadge(true)
+            lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
+            // Âm thanh từ AlarmRingActivity (STREAM_ALARM); channel không mute
+            setSound(
+                Settings.System.DEFAULT_ALARM_ALERT_URI,
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+            )
         }
         nm.createNotificationChannel(ringing)
 
@@ -45,7 +65,7 @@ object AlarmNotificationHelper {
             "Bấm giờ / Đếm ngược",
             NotificationManager.IMPORTANCE_LOW
         ).apply {
-            description = "Giữ chạy nền, tránh nóng máy — có nút dừng"
+            description = "Giữ chạy nền — có nút dừng"
             setShowBadge(false)
         }
         nm.createNotificationChannel(chrono)
@@ -55,18 +75,41 @@ object AlarmNotificationHelper {
         context: Context,
         alarmId: Int,
         label: String,
-        allowDirectDismiss: Boolean
+        allowDirectDismiss: Boolean,
+        hour: Int = -1,
+        minute: Int = -1,
+        snoozeMinutes: Int = 5,
+        repeatMode: Int = Alarm.REPEAT_DAILY,
+        ringtoneUri: String? = null,
+        challengeType: Int = Alarm.CHALLENGE_NONE,
+        shakeTargetCount: Int = 10,
+        isStrict: Boolean = false,
+        voiceNote: String? = null,
+        useCrescendo: Boolean = true
     ) {
         ensureChannels(context)
 
         val openIntent = Intent(context, AlarmRingActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                Intent.FLAG_ACTIVITY_NO_USER_ACTION
             putExtra("ALARM_ID", alarmId)
             putExtra("ALARM_LABEL", label)
-            action = ACTION_OPEN_RING
+            putExtra("ALARM_HOUR", hour)
+            putExtra("ALARM_MINUTE", minute)
+            putExtra("SNOOZE_MINUTES", snoozeMinutes)
+            putExtra("REPEAT_MODE", repeatMode)
+            putExtra("RINGTONE_URI", ringtoneUri)
+            putExtra("CHALLENGE_TYPE", challengeType)
+            putExtra("SHAKE_TARGET_COUNT", shakeTargetCount)
+            putExtra("STRICT_ANTI_SNOOZE", isStrict)
+            putExtra("VOICE_NOTE", voiceNote)
+            putExtra("USE_CRESCENDO", useCrescendo)
+            action = ACTION_OPEN_RING + "_$alarmId"
         }
         val openPi = PendingIntent.getActivity(
-            context, alarmId, openIntent,
+            context, alarmId + 70000, openIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -75,9 +118,9 @@ object AlarmNotificationHelper {
             .setContentTitle("⏰ $label")
             .setContentText(
                 if (allowDirectDismiss)
-                    "Báo thức đang kêu — bấm Tắt bên dưới (tránh lỡ tay trên màn hình)"
+                    "Báo thức đang kêu — bấm Tắt bên dưới (tránh lỡ tay)"
                 else
-                    "Báo thức đang kêu — mở màn hình để hoàn thành thử thách / PIN"
+                    "Báo thức đang kêu — mở màn hình để PIN / thử thách"
             )
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
@@ -86,6 +129,8 @@ object AlarmNotificationHelper {
             .setContentIntent(openPi)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setFullScreenIntent(openPi, true)
+            .setTimeoutAfter(0)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
 
         if (allowDirectDismiss) {
             val dismissIntent = Intent(context, AlarmActionReceiver::class.java).apply {
@@ -102,7 +147,6 @@ object AlarmNotificationHelper {
                 dismissPi
             )
         } else {
-            // Chỉ mở activity — chống troll / challenge
             builder.addAction(
                 android.R.drawable.ic_menu_view,
                 "Mở màn hình",

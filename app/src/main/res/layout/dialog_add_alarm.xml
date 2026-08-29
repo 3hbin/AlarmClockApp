@@ -124,6 +124,32 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Quét mặt" />
+            <RadioButton
+                android:id="@+id/rbChallengeRead"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Đọc câu (3 câu khác nhau)" />
+            <RadioButton
+                android:id="@+id/rbChallengeMath10"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Giải 10 bài toán liên tiếp" />
+            <RadioButton
+                android:id="@+id/rbChallengeShake100"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Lắc máy 100 lần" />
+            <RadioButton
+                android:id="@+id/rbChallengeTap200"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Bấm 200 lần (chống auto-click)" />
+            <RadioButton
+                android:id="@+id/rbChallengeFaceExpr"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Cười / Giận / Lè lưỡi" />
+
         </RadioGroup>
         <RadioGroup
             android:id="@+id/rgChallenge2"

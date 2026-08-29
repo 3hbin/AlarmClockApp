@@ -61,15 +61,26 @@ object AlarmScheduler {
         }
 
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent
-                )
-            } else {
-                alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+            // setAlarmClock: ưu tiên cao trên Samsung/OEM, hiện icon đồng hồ trên status bar
+            val showIntent = Intent(context, MainActivity::class.java)
+            val showPi = PendingIntent.getActivity(
+                context, alarm.id + 30000, showIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val info = android.app.AlarmManager.AlarmClockInfo(calendar.timeInMillis, showPi)
+            alarmManager.setAlarmClock(info, pendingIntent)
+        } catch (e: Exception) {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent
+                    )
+                } else {
+                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+                }
+            } catch (se: SecurityException) {
+                alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
             }
-        } catch (e: SecurityException) {
-            alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
         }
     }
 
