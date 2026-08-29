@@ -143,43 +143,76 @@ class FaceChallengeActivity : AppCompatActivity() {
     }
 
     private fun startCamera() {
+        // TextureView ổn định hơn trên Huawei/EMUI (tránh preview đen)
+        try {
+            binding.previewView.implementationMode =
+                androidx.camera.view.PreviewView.ImplementationMode.COMPATIBLE
+            binding.previewView.scaleType =
+                androidx.camera.view.PreviewView.ScaleType.FILL_CENTER
+        } catch (_: Exception) {}
+
         val providerFuture = ProcessCameraProvider.getInstance(this)
         providerFuture.addListener({
-            val provider = providerFuture.get()
-            val preview = Preview.Builder().build().also {
-                it.setSurfaceProvider(binding.previewView.surfaceProvider)
-            }
-            imageCapture = ImageCapture.Builder()
-                .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-                .build()
+            try {
+                val provider = providerFuture.get()
+                val preview = Preview.Builder().build().also {
+                    it.setSurfaceProvider(binding.previewView.surfaceProvider)
+                }
+                imageCapture = ImageCapture.Builder()
+                    .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+                    .build()
+                val analysis = ImageAnalysis.Builder()
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .build()
+                analysis.setAnalyzer(cameraExecutor) { proxy ->
+                    val media = proxy.image
+                    if (media != null && !facePassed) {
+                        val image = InputImage.fromMediaImage(media, proxy.imageInfo.rotationDegrees)
+                        detector.process(image)
+                            .addOnSuccessListener { faces ->
+                                runOnUiThread {
+                                    handleFaces(faces, proxy.width, proxy.height, proxy.imageInfo.rotationDegrees)
+                                }
+                            }
+                            .addOnCompleteListener { proxy.close() }
+                    } else {
+                        proxy.close()
+                    }
+                }
 
-            val analysis = ImageAnalysis.Builder()
-                .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                .build()
-            analysis.setAnalyzer(cameraExecutor) { proxy ->
-                val media = proxy.image
-                if (media != null && !facePassed) {
-                    val image = InputImage.fromMediaImage(media, proxy.imageInfo.rotationDegrees)
-                    detector.process(image)
-                        .addOnSuccessListener { faces ->
+                provider.unbindAll()
+                val selectors = listOf(
+                    CameraSelector.DEFAULT_FRONT_CAMERA,
+                    CameraSelector.DEFAULT_BACK_CAMERA
+                )
+                var bound = false
+                for (sel in selectors) {
+                    try {
+                        provider.bindToLifecycle(this, sel, preview, imageCapture, analysis)
+                        bound = true
+                        binding.tvFaceStatus.append("") // no-op keep UI
+                        if (sel == CameraSelector.DEFAULT_BACK_CAMERA) {
                             runOnUiThread {
-                                handleFaces(faces, proxy.width, proxy.height, proxy.imageInfo.rotationDegrees)
+                                Toast.makeText(this, "Dùng camera sau (không có camera trước)", Toast.LENGTH_SHORT).show()
                             }
                         }
-                        .addOnCompleteListener { proxy.close() }
-                } else {
-                    proxy.close()
+                        break
+                    } catch (e: Exception) {
+                        Log.e("FaceChallenge", "bind fail $sel", e)
+                        provider.unbindAll()
+                    }
                 }
-            }
-
-            try {
-                provider.unbindAll()
-                provider.bindToLifecycle(
-                    this, CameraSelector.DEFAULT_FRONT_CAMERA, preview, imageCapture, analysis
-                )
+                if (!bound) {
+                    runOnUiThread {
+                        binding.tvFaceStatus.text = "Không mở được camera — cấp quyền Camera trong Cài đặt"
+                        Toast.makeText(this, "Không mở được camera", Toast.LENGTH_LONG).show()
+                    }
+                }
             } catch (e: Exception) {
-                Log.e("FaceChallenge", "bind failed", e)
-                Toast.makeText(this, "Khong mo duoc camera truoc", Toast.LENGTH_LONG).show()
+                Log.e("FaceChallenge", "startCamera error", e)
+                runOnUiThread {
+                    Toast.makeText(this, "Lỗi camera: ${e.message}", Toast.LENGTH_LONG).show()
+                }
             }
         }, ContextCompat.getMainExecutor(this))
     }
@@ -317,7 +350,8 @@ class FaceChallengeActivity : AppCompatActivity() {
         ) {
             startCamera()
         } else {
-            Toast.makeText(this, "Can quyen Camera", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Cần quyền Camera — vào Cài đặt ứng dụng để bật", Toast.LENGTH_LONG).show()
+            binding.tvFaceStatus.text = "Chưa cấp quyền Camera"
             setResult(RESULT_CANCELED)
             finishRestore()
         }
