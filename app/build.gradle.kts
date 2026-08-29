@@ -31,8 +31,7 @@ android {
 
     buildTypes {
         debug {
-            applicationIdSuffix = ".debug"
-            versionNameSuffix = "-debug"
+            // Không thêm .debug suffix — google-services.json phải khớp applicationId
         }
         release {
             isMinifyEnabled = true
