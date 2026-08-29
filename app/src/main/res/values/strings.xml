@@ -3,11 +3,13 @@
     <string name="app_name">Đồng hồ báo thức</string>
     <string name="add_alarm">Thêm báo thức</string>
     <string name="alarm_label">Tên báo thức</string>
+    <string name="alarm_label_hint">Tên báo thức</string>
     <string name="repeat">Lặp lại</string>
     <string name="once">Chỉ 1 lần</string>
     <string name="daily">Hàng ngày</string>
     <string name="weekdays">Thứ 2 → Thứ 6</string>
     <string name="snooze_time">Thời gian Báo lại (Snooze)</string>
+    <string name="snooze_duration">Thời gian Báo lại (Snooze)</string>
     <string name="min_5">5 phút</string>
     <string name="min_10">10 phút</string>
     <string name="min_15">15 phút</string>
