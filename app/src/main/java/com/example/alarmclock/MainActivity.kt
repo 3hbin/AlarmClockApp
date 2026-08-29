@@ -111,7 +111,7 @@ class MainActivity : AppCompatActivity() {
         binding.loadingAnim.stop()
 
         binding.fabAdd.setOnClickListener {
-            Motion.press(it) { showAddDialog() }
+            Motion.press(it) { showFabMenu() }
         }
 
         binding.fabAdd.setOnLongClickListener {
@@ -197,6 +197,34 @@ class MainActivity : AppCompatActivity() {
                 view.removeCallbacks(update)
                 d.dismiss()
             }
+            .show()
+    }
+
+
+    private fun showFabMenu() {
+        val items = arrayOf(
+            "➕ Thêm báo thức",
+            "📷 Test quét mặt",
+            "😊 Test Cười / Giận / Lè lưỡi"
+        )
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("Chọn")
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> showAddDialog()
+                    1 -> startActivity(
+                        Intent(this, FaceChallengeActivity::class.java).apply {
+                            putExtra(FaceChallengeActivity.EXTRA_MODE, FaceChallengeActivity.MODE_FACE)
+                        }
+                    )
+                    2 -> startActivity(
+                        Intent(this, FaceChallengeActivity::class.java).apply {
+                            putExtra(FaceChallengeActivity.EXTRA_MODE, FaceChallengeActivity.MODE_EXPR)
+                        }
+                    )
+                }
+            }
+            .setNegativeButton("Hủy", null)
             .show()
     }
 

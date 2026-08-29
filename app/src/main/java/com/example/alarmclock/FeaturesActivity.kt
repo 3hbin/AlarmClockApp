@@ -35,6 +35,16 @@ class FeaturesActivity : AppCompatActivity() {
         binding.btnGallery.setOnClickListener {
             startActivity(android.content.Intent(this, GalleryActivity::class.java))
         }
+        binding.btnTestFace.setOnClickListener {
+            startActivity(android.content.Intent(this, FaceChallengeActivity::class.java).apply {
+                putExtra(FaceChallengeActivity.EXTRA_MODE, FaceChallengeActivity.MODE_FACE)
+            })
+        }
+        binding.btnTestExpr.setOnClickListener {
+            startActivity(android.content.Intent(this, FaceChallengeActivity::class.java).apply {
+                putExtra(FaceChallengeActivity.EXTRA_MODE, FaceChallengeActivity.MODE_EXPR)
+            })
+        }
         binding.btnPureAlarm.setOnClickListener {
             val next = !AppSettings.isPureAlarmOnly(this)
             AppSettings.setPureAlarmOnly(this, next)
