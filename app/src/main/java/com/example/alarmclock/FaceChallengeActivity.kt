@@ -126,12 +126,17 @@ class FaceChallengeActivity : AppCompatActivity() {
             }
         }
 
-        // Nếu sau 4s vẫn không có frame → hiện fallback
+        // Hiện nút dự phòng sớm — user không bị kẹt màn đen
         mainHandler.postDelayed({
-            if (!cameraStarted.get() && !facePassed && !isFinishing) {
-                showCameraFallback("Camera không mở được trên máy này")
+            if (!facePassed && !isFinishing) {
+                // Dù camera đã start hay chưa, nếu chưa detect được mặt thì vẫn cho fallback
+                if (!cameraStarted.get()) {
+                    showCameraFallback("Camera không mở được — dùng chế độ dự phòng")
+                }
             }
-        }, 4000)
+        }, 2500)
+        // Luôn cho Hủy rõ ràng
+        binding.btnCancelFace.visibility = android.view.View.VISIBLE
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {

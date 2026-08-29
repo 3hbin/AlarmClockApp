@@ -242,23 +242,32 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                 binding.btnSnooze.visibility = View.GONE
                 initTapChallenge()
             }
-            Alarm.CHALLENGE_FACE -> {
+            Alarm.CHALLENGE_FACE, Alarm.CHALLENGE_FACE_EXPR -> {
+                // Không auto-mở camera (Huawei hay đen + tắt quá nhanh).
+                // Hiện màn báo thức + nút bắt đầu thử thách.
                 binding.btnDismiss.visibility = View.GONE
                 binding.btnSnooze.visibility = View.GONE
-                faceChallengeLauncher.launch(
-                    android.content.Intent(this, FaceChallengeActivity::class.java).apply {
-                        putExtra(FaceChallengeActivity.EXTRA_MODE, FaceChallengeActivity.MODE_FACE)
-                    }
-                )
-            }
-            Alarm.CHALLENGE_FACE_EXPR -> {
-                binding.btnDismiss.visibility = View.GONE
-                binding.btnSnooze.visibility = View.GONE
-                faceChallengeLauncher.launch(
-                    android.content.Intent(this, FaceChallengeActivity::class.java).apply {
-                        putExtra(FaceChallengeActivity.EXTRA_MODE, FaceChallengeActivity.MODE_EXPR)
-                    }
-                )
+                binding.btnDismiss.visibility = View.VISIBLE
+                binding.btnDismiss.text = if (challengeType == Alarm.CHALLENGE_FACE_EXPR)
+                    "Bắt đầu: Cười / Giận / Lè lưỡi"
+                else
+                    "Bắt đầu quét mặt để tắt"
+                binding.btnDismiss.setOnClickListener {
+                    val mode = if (challengeType == Alarm.CHALLENGE_FACE_EXPR)
+                        FaceChallengeActivity.MODE_EXPR
+                    else
+                        FaceChallengeActivity.MODE_FACE
+                    faceChallengeLauncher.launch(
+                        android.content.Intent(this, FaceChallengeActivity::class.java).apply {
+                            putExtra(FaceChallengeActivity.EXTRA_MODE, mode)
+                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                    )
+                }
+                // Vẫn cho báo lại nếu không strict
+                if (!isStrictAntiSnooze) {
+                    binding.btnSnooze.visibility = View.VISIBLE
+                }
             }
             Alarm.CHALLENGE_BIOMETRIC -> {
                 binding.btnDismiss.visibility = View.GONE
