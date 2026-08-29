@@ -235,7 +235,7 @@ class MainActivity : AppCompatActivity() {
                 Alarm.CHALLENGE_SHAKE100 -> rgChallenge.check(R.id.rbChallengeShake100)
                 Alarm.CHALLENGE_TAP200 -> rgChallenge.check(R.id.rbChallengeTap200)
                 Alarm.CHALLENGE_FACE_EXPR -> rgChallenge.check(R.id.rbChallengeFaceExpr)
-                Alarm.CHALLENGE_BIOMETRIC -> dialogView.findViewById<RadioGroup>(R.id.rgChallenge2)?.check(R.id.rbChallengeBio)
+                Alarm.CHALLENGE_BIOMETRIC -> rgChallenge.check(R.id.rbChallengeBio)
                 else -> rgChallenge.check(R.id.rbChallengeNone)
             }
             dialogView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbSkipHolidays).isChecked = existing.skipHolidays
@@ -278,16 +278,16 @@ class MainActivity : AppCompatActivity() {
                     else -> 5
                 }
                 val bioGroup = dialogView.findViewById<android.widget.RadioGroup>(R.id.rgChallenge2)
-                val challengeType = when {
-                    bioGroup?.checkedRadioButtonId == R.id.rbChallengeBio -> Alarm.CHALLENGE_BIOMETRIC
-                    rgChallenge.checkedRadioButtonId == R.id.rbChallengeMath -> Alarm.CHALLENGE_MATH
-                    rgChallenge.checkedRadioButtonId == R.id.rbChallengeShake -> Alarm.CHALLENGE_SHAKE
-                    rgChallenge.checkedRadioButtonId == R.id.rbChallengeFace -> Alarm.CHALLENGE_FACE
-                    rgChallenge.checkedRadioButtonId == R.id.rbChallengeRead -> Alarm.CHALLENGE_READ
-                    rgChallenge.checkedRadioButtonId == R.id.rbChallengeMath10 -> Alarm.CHALLENGE_MATH10
-                    rgChallenge.checkedRadioButtonId == R.id.rbChallengeShake100 -> Alarm.CHALLENGE_SHAKE100
-                    rgChallenge.checkedRadioButtonId == R.id.rbChallengeTap200 -> Alarm.CHALLENGE_TAP200
-                    rgChallenge.checkedRadioButtonId == R.id.rbChallengeFaceExpr -> Alarm.CHALLENGE_FACE_EXPR
+                val challengeType = when (rgChallenge.checkedRadioButtonId) {
+                    R.id.rbChallengeBio -> Alarm.CHALLENGE_BIOMETRIC
+                    R.id.rbChallengeMath -> Alarm.CHALLENGE_MATH
+                    R.id.rbChallengeShake -> Alarm.CHALLENGE_SHAKE
+                    R.id.rbChallengeFace -> Alarm.CHALLENGE_FACE
+                    R.id.rbChallengeRead -> Alarm.CHALLENGE_READ
+                    R.id.rbChallengeMath10 -> Alarm.CHALLENGE_MATH10
+                    R.id.rbChallengeShake100 -> Alarm.CHALLENGE_SHAKE100
+                    R.id.rbChallengeTap200 -> Alarm.CHALLENGE_TAP200
+                    R.id.rbChallengeFaceExpr -> Alarm.CHALLENGE_FACE_EXPR
                     else -> Alarm.CHALLENGE_NONE
                 }
                 val shakeTarget = when (challengeType) {

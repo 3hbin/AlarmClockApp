@@ -124,9 +124,7 @@ class AnalogClockView @JvmOverloads constructor(
             val dst = RectF(cx - r, cy - r, cx + r, cy + r)
             canvas.drawBitmap(face, src, dst, null)
             canvas.restore()
-            // Viền trắng mỏng (không đen)
-            rimWhite.strokeWidth = r * 0.045f
-            canvas.drawCircle(cx, cy, r - rimWhite.strokeWidth / 2f, rimWhite)
+            // Ảnh đã có viền trắng — không vẽ thêm (tránh "tự tay" dày)
         } else {
             canvas.drawCircle(cx, cy, r, facePaint)
             rimPaint.strokeWidth = r * 0.04f
