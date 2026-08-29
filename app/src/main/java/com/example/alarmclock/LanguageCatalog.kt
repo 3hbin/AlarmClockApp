@@ -8,7 +8,10 @@ data class AppLanguage(
     val native: String,
     val english: String,
     val flag: String
-)
+) {
+    val displayLabel: String
+        get() = "$flag $native — $english ($code)"
+}
 
 object LanguageCatalog {
     const val SYSTEM = "system"

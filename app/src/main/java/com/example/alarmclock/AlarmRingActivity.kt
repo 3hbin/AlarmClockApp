@@ -380,9 +380,15 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
 
     private fun normalizeText(s: String): String {
         val nfd = java.text.Normalizer.normalize(s.lowercase().trim(), java.text.Normalizer.Form.NFD)
-        return nfd.replace(Regex("\p{InCombiningDiacriticalMarks}+"), "")
-            .replace(Regex("[^a-z0-9\s]"), "")
-            .replace(Regex("\s+"), " ")
+        val noMarks = buildString {
+            for (c in nfd) {
+                val t = Character.getType(c)
+                if (t != Character.NON_SPACING_MARK.toInt() && t != Character.COMBINING_SPACING_MARK.toInt()) {
+                    append(c)
+                }
+            }
+        }
+        return noMarks.replace(Regex("[^a-z0-9 ]"), "").replace(Regex(" +"), " ").trim()
     }
 
     private fun initTapChallenge() {
