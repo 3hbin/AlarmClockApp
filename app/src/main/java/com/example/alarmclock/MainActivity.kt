@@ -111,7 +111,7 @@ class MainActivity : AppCompatActivity() {
         binding.loadingAnim.stop()
 
         binding.fabAdd.setOnClickListener {
-            Motion.press(it) { showFabMenu() }
+            showFabMenu()
         }
 
         binding.fabAdd.setOnLongClickListener {
@@ -204,11 +204,11 @@ class MainActivity : AppCompatActivity() {
     private fun showFabMenu() {
         val items = arrayOf(
             "➕ Thêm báo thức",
-            "📷 Test quét mặt",
+            "📷 Test quét mặt (camera)",
             "😊 Test Cười / Giận / Lè lưỡi"
         )
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Chọn")
+            .setTitle("Bạn muốn làm gì?")
             .setItems(items) { _, which ->
                 when (which) {
                     0 -> showAddDialog()
@@ -235,6 +235,12 @@ class MainActivity : AppCompatActivity() {
     /** null = thêm mới; có alarm = sửa. */
     private fun showAlarmEditor(existing: Alarm?) {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_alarm, null)
+        // Giới hạn chiều cao để ScrollView cuộn được (tránh cắt thử thách)
+        val maxH = (resources.displayMetrics.heightPixels * 0.65f).toInt()
+        dialogView.layoutParams = android.view.ViewGroup.LayoutParams(
+            android.view.ViewGroup.LayoutParams.MATCH_PARENT, maxH
+        )
+        dialogView.minimumHeight = (resources.displayMetrics.heightPixels * 0.35f).toInt()
         val etLabel = dialogView.findViewById<EditText>(R.id.etLabel)
         val rgRepeat = dialogView.findViewById<RadioGroup>(R.id.rgRepeat)
         val rgSnooze = dialogView.findViewById<RadioGroup>(R.id.rgSnooze)
