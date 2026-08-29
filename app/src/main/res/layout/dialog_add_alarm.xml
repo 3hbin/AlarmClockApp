@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:fillViewport="true"
@@ -121,9 +122,14 @@
                 android:id="@+id/rbChallengeShake"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:text="Lắc máy (nhẹ)" />
+            <RadioButton
+                android:id="@+id/rbChallengeShake100"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:text="Lắc máy 100 lần" />
             <RadioButton
-                android:id="@+id/rbChallengeTap"
+                android:id="@+id/rbChallengeTap200"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Bấm 200 lần (chống auto-click)" />
@@ -138,25 +144,51 @@
                 android:layout_height="wrap_content"
                 android:text="Biểu cảm: Cười / Giận / Lè lưỡi" />
             <RadioButton
-                android:id="@+id/rbChallengeBiometric"
+                android:id="@+id/rbChallengeBio"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Vân tay / khuôn mặt hệ thống" />
         </RadioGroup>
 
-        <!-- Giữ id rgChallenge2 rỗng để code cũ không crash -->
+        <!-- Legacy empty group kept for older code paths -->
         <RadioGroup
             android:id="@+id/rgChallenge2"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:visibility="gone" />
 
-        <CheckBox
+        <com.google.android.material.checkbox.MaterialCheckBox
             android:id="@+id/cbStrictAntiSnooze"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Chống báo lại (bắt buộc xong thử thách mới tắt)"
             android:layout_marginTop="8dp" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/cbSkipHolidays"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Bỏ qua ngày lễ" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/cbCrescendo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Chuông tăng dần (crescendo)" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Ghi chú giọng nói (TTS khi reo)"
+            android:layout_marginTop="8dp"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etVoiceNote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine"
+                android:maxLines="3" />
+        </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnChooseRingtone"
