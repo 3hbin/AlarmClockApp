@@ -9,23 +9,39 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.alarmclock"
+        // Không dùng com.example.* — Play Protect hay gắn cờ sample/debug
+        applicationId = "com.alarmclock.dongho"
         minSdk = 28
         targetSdk = 34
-        versionCode = 35
-        versionName = "3.27"
+        versionCode = 37
+        versionName = "3.29"
         buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"d0d25405fe2640608a6611b6cfdf1b44\"")
         buildConfigField("String", "YOUTUBE_API_KEY", "\"AIzaSyDeh5FsoNyVKEURsSLeSmx4DNp_rJfdD5M\"")
         buildConfigField("String", "WEATHER_API_KEY", "\"82b5a70ad1ea5e93d8482e0c17712f93\"")
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("release.keystore")
+            storePassword = "alarmclock2026"
+            keyAlias = "alarmclock"
+            keyPassword = "alarmclock2026"
+        }
+    }
+
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
@@ -51,17 +67,13 @@ dependencies {
     implementation("androidx.coordinatorlayout:coordinatorlayout:1.2.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
 
-    // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
 
-    // Network for weather
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.google.android.gms:play-services-location:21.3.0")
 
-    // CameraX + ML Kit Face (quét mặt tự làm, không dùng Biometric hệ thống)
-    // Guava ListenableFuture (CameraX ProcessCameraProvider)
     implementation("com.google.guava:guava:33.0.0-android")
     implementation("androidx.concurrent:concurrent-futures:1.2.0")
     implementation("androidx.camera:camera-core:1.3.4")

@@ -113,22 +113,39 @@ class AnalogClockView @JvmOverloads constructor(
         val cy = height / 2f
         val r = min(width, height) / 2f * 0.92f
 
-        val face = skyFace
-        if (face != null && !face.isRecycled) {
-            // Clip circle + draw sky face (đã không có viền đen)
-            canvas.save()
-            val path = Path()
-            path.addCircle(cx, cy, r, Path.Direction.CW)
-            canvas.clipPath(path)
-            val src = android.graphics.Rect(0, 0, face.width, face.height)
-            val dst = RectF(cx - r, cy - r, cx + r, cy + r)
-            canvas.drawBitmap(face, src, dst, null)
-            canvas.restore()
-            // Ảnh đã có viền trắng — không vẽ thêm (tránh "tự tay" dày)
-        } else {
-            canvas.drawCircle(cx, cy, r, facePaint)
-            rimPaint.strokeWidth = r * 0.04f
-            canvas.drawCircle(cx, cy, r, rimPaint)
+        // Mặt đồng hồ sáng (có số) — không dùng bitmap xám trống
+        canvas.drawCircle(cx, cy, r, facePaint)
+        rimPaint.strokeWidth = r * 0.035f
+        rimPaint.color = 0xFFE0E0E0.toInt()
+        canvas.drawCircle(cx, cy, r, rimPaint)
+
+        // Vạch + số 1–12
+        numberPaint.textSize = r * 0.15f
+        numberPaint.color = 0xFF37474F.toInt()
+        for (i in 0 until 60) {
+            val angle = Math.toRadians((i * 6 - 90).toDouble())
+            val major = i % 5 == 0
+            val inner = if (major) r * 0.78f else r * 0.88f
+            val outer = r * 0.94f
+            tickPaint.strokeWidth = if (major) r * 0.028f else r * 0.012f
+            tickPaint.color = if (major) 0xFF455A64.toInt() else 0xFFB0BEC5.toInt()
+            canvas.drawLine(
+                (cx + cos(angle) * inner).toFloat(),
+                (cy + sin(angle) * inner).toFloat(),
+                (cx + cos(angle) * outer).toFloat(),
+                (cy + sin(angle) * outer).toFloat(),
+                tickPaint
+            )
+            if (major) {
+                val num = if (i == 0) 12 else i / 5
+                val ny = cy + sin(angle) * r * 0.65f - (numberPaint.descent() + numberPaint.ascent()) / 2
+                canvas.drawText(
+                    num.toString(),
+                    (cx + cos(angle) * r * 0.65f).toFloat(),
+                    ny.toFloat(),
+                    numberPaint
+                )
+            }
         }
 
         val cal = Calendar.getInstance()

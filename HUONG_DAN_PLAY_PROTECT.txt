@@ -1,0 +1,25 @@
+Cách giảm Google Play Protect chặn APK (sideload)
+
+1) Build bản RELEASE đã ký (không dùng debug):
+   ./gradlew assembleRelease
+   APK: app/build/outputs/apk/release/app-release.apk
+
+2) Package name mới: com.alarmclock.dongho
+   (com.example.* bị Protect gắn cờ sample/debug rất nặng)
+   => Máy đã cài bản cũ phải GỠ rồi cài lại.
+
+3) Keystore: app/release.keystore
+   alias: alarmclock
+   password: alarmclock2026
+   GIỮ keystore này — mọi bản sau phải ký cùng key.
+
+4) Không thể "tắt" Play Protect từ trong APK.
+   Chỉ giảm cảnh báo: ký release + package riêng + ít quyền nguy hiểm.
+
+5) Khi cài vẫn hiện cảnh báo:
+   - Bấm "Thêm thông tin" / "Cài anyway"
+   - Hoặc Play Protect → tắt quét tạm thời → cài → bật lại
+
+6) Firebase: đã đổi package trong google-services.json.
+   Nếu Firebase lỗi, vào Firebase Console thêm Android app
+   package com.alarmclock.dongho và tải lại google-services.json.

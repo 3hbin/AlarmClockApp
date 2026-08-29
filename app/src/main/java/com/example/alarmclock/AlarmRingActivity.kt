@@ -67,6 +67,13 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             dismissAlarm(AlarmRepository(this))
         } else {
             Toast.makeText(this, "Chưa xác minh khuôn mặt — báo thức vẫn kêu", Toast.LENGTH_LONG).show()
+            // Hiện lại nút Tắt để không kẹt màn hình
+            try {
+                binding.btnDismiss.visibility = android.view.View.VISIBLE
+                if (!isStrictAntiSnooze && !AppSettings.isAntiTroll(this)) {
+                    binding.btnSnooze.visibility = android.view.View.VISIBLE
+                }
+            } catch (_: Exception) {}
         }
     }
 
@@ -271,7 +278,14 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             }
             else -> {
                 binding.btnDismiss.visibility = View.VISIBLE
+                if (!isStrictAntiSnooze) {
+                    binding.btnSnooze.visibility = View.VISIBLE
+                }
             }
+        }
+        // Đảm bảo luôn có cách tắt nếu không có challenge UI
+        if (challengeType == Alarm.CHALLENGE_NONE) {
+            binding.btnDismiss.visibility = View.VISIBLE
         }
     }
 
