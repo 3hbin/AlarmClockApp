@@ -44,7 +44,7 @@ data class Alarm(
             CHALLENGE_MATH10 -> "Giải 10 bài toán"
             CHALLENGE_SHAKE100 -> "Lắc máy 100 lần"
             CHALLENGE_TAP200 -> "Bấm 200 lần"
-            CHALLENGE_FACE_EXPR -> "Cười / Giận / Nhắm mắt / 🤞"
+            CHALLENGE_FACE_EXPR -> "10 biểu cảm dễ"
             CHALLENGE_ALL -> "TẤT CẢ thử thách (khó)"
             else -> "Không"
         }

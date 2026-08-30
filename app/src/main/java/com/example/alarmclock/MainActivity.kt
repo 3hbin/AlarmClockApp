@@ -205,7 +205,7 @@ class MainActivity : AppCompatActivity() {
         val items = arrayOf(
             "➕ Thêm báo thức",
             "📷 Test quét mặt (camera)",
-            "😊 Test biểu cảm (Cười / Giận / Nhắm mắt / 🤞 …)"
+            "😊 Test 10 biểu cảm dễ"
         )
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setTitle("Bạn muốn làm gì?")

@@ -259,7 +259,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                 binding.btnSnooze.visibility = View.GONE
                 binding.btnDismiss.visibility = View.VISIBLE
                 binding.btnDismiss.text = if (challengeType == Alarm.CHALLENGE_FACE_EXPR)
-                    "Bắt đầu: Cười / Giận / Nhắm mắt / 🤞 …"
+                    "Bắt đầu: 10 biểu cảm dễ"
                 else
                     "Bắt đầu quét mặt để tắt"
                 binding.btnDismiss.setOnClickListener {

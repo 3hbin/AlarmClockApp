@@ -142,7 +142,7 @@
                 android:id="@+id/rbChallengeFaceExpr"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Biểu cảm: Cười / Giận / Nhắm mắt / 😮 / 🙂 / 😗 / 🤞" />
+                android:text="10 biểu cảm dễ (Cười / Nhắm mắt / Há nhẹ / …)" />
             <RadioButton
                 android:id="@+id/rbChallengeBio"
                 android:layout_width="match_parent"

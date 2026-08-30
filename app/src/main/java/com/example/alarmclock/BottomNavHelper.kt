@@ -42,7 +42,7 @@ object BottomNavHelper {
     fun showFaceTestMenu(activity: android.app.Activity) {
         val items = arrayOf(
             "📷 Test quét mặt (camera)",
-            "😊 Test biểu cảm (Cười / Giận / Nhắm mắt / 🤞 …)"
+            "😊 Test 10 biểu cảm dễ"
         )
         com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
             .setTitle("Bạn muốn làm gì?")

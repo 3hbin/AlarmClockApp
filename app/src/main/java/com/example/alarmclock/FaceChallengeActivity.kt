@@ -40,13 +40,17 @@ class FaceChallengeActivity : AppCompatActivity() {
     }
 
     private enum class Expr(val label: String, val emoji: String) {
-        SMILE("CƯỜI tươi", "😊"),
-        ANGRY("TỨC GIẬN (cau mày, không cười)", "😠"),
-        EYES_CLOSED("NHẮM MẮT (cả hai mắt)", "😌"),
-        SURPRISED("HÁ MIỆNG / NGẠC NHIÊN", "😮"),
-        SOFT_SMILE("CƯỜI NHẸ", "🙂"),
-        KISS("HÔN GIÓ (chu môi)", "😗"),
-        CROSSED("CHÉO NGÓN TAY 🤞 (đưa mặt + tay vào khung)", "🤞")
+        // 10 biểu cảm dễ — ngưỡng thấp
+        SMILE("1/10 CƯỜI nhẹ", "😊"),
+        NEUTRAL("2/10 MẶT THƯỜNG (đừng cười)", "😐"),
+        BLINK("3/10 NHẮM 2 MẮT", "😌"),
+        LOOK("4/10 NHÌN CAMERA", "👀"),
+        BIG_SMILE("5/10 CƯỜI TƯƠI hơn", "😄"),
+        SOFT("6/10 CƯỜI MỈM", "🙂"),
+        MOUTH("7/10 HÁ MIỆNG nhẹ", "😮"),
+        WINK_L("8/10 NHẮM MẮT TRÁI (mắt phải mở)", "😉"),
+        WINK_R("9/10 NHẮM MẮT PHẢI (mắt trái mở)", "😜"),
+        CENTER("10/10 GIỮ MẶT GIỮA KHUNG", "🎯")
     }
 
     private lateinit var binding: ActivityFaceChallengeBinding
@@ -56,10 +60,14 @@ class FaceChallengeActivity : AppCompatActivity() {
     private val cameraExecutor = Executors.newSingleThreadExecutor()
     private var mode = MODE_FACE
     private var exprIndex = 0
-    private val exprSteps = listOf(Expr.SMILE, Expr.ANGRY, Expr.EYES_CLOSED, Expr.SURPRISED, Expr.SOFT_SMILE, Expr.KISS, Expr.CROSSED)
+    private val exprSteps = listOf(
+        Expr.SMILE, Expr.NEUTRAL, Expr.BLINK, Expr.LOOK,
+        Expr.BIG_SMILE, Expr.SOFT, Expr.MOUTH,
+        Expr.WINK_L, Expr.WINK_R, Expr.CENTER
+    )
     private var matchHoldMs = 0L
     private var lastMatchTs = 0L
-    private val holdNeedMs = 700L
+    private val holdNeedMs = 300L
     private val cameraStarted = AtomicBoolean(false)
     private val mainHandler = Handler(Looper.getMainLooper())
     private var cameraProvider: ProcessCameraProvider? = null
@@ -425,19 +433,23 @@ class FaceChallengeActivity : AppCompatActivity() {
     }
 
     private fun matchExpression(face: Face): Boolean {
-        val smile = face.smilingProbability ?: -1f
-        val leftEye = face.leftEyeOpenProbability ?: 1f
-        val rightEye = face.rightEyeOpenProbability ?: 1f
+        val smile = face.smilingProbability ?: 0f
+        val leftEye = face.leftEyeOpenProbability ?: 0.5f
+        val rightEye = face.rightEyeOpenProbability ?: 0.5f
         val mouthOpen = estimateMouthOpen(face)
+        val yaw = try { face.headEulerAngleY } catch (_: Exception) { 0f }
+        // Ngưỡng dễ — máy yếu vẫn qua được
         return when (exprSteps.getOrNull(exprIndex)) {
-            Expr.SMILE -> smile >= 0.55f && leftEye > 0.3f && rightEye > 0.3f
-            Expr.ANGRY -> smile in 0f..0.25f && leftEye > 0.4f && rightEye > 0.4f && mouthOpen < 0.3f
-            Expr.EYES_CLOSED -> leftEye in 0f..0.25f && rightEye in 0f..0.25f
-            Expr.SURPRISED -> mouthOpen >= 0.4f && smile < 0.4f
-            Expr.SOFT_SMILE -> smile in 0.25f..0.55f && leftEye > 0.3f && rightEye > 0.3f
-            Expr.KISS -> mouthOpen in 0.08f..0.28f && smile < 0.35f && leftEye > 0.3f
-            // 🤞 tay không detect được → chỉ cần thấy mặt + mắt mở, giữ ~0.7s
-            Expr.CROSSED -> leftEye > 0.35f && rightEye > 0.35f
+            Expr.SMILE -> smile >= 0.18f
+            Expr.NEUTRAL -> smile < 0.5f
+            Expr.BLINK -> leftEye < 0.55f && rightEye < 0.55f
+            Expr.LOOK -> true
+            Expr.BIG_SMILE -> smile >= 0.28f
+            Expr.SOFT -> smile >= 0.12f
+            Expr.MOUTH -> mouthOpen >= 0.12f
+            Expr.WINK_L -> leftEye < 0.5f && rightEye > 0.25f
+            Expr.WINK_R -> rightEye < 0.5f && leftEye > 0.25f
+            Expr.CENTER -> kotlin.math.abs(yaw) < 25f || true // luôn dễ nếu có mặt
             else -> false
         }
     }
