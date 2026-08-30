@@ -27,6 +27,27 @@ class SettingsActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         title = getString(R.string.settings_title)
 
+        // Test quét mặt / biểu cảm
+        try {
+            binding.btnTestFace.setOnClickListener {
+                startActivity(android.content.Intent(this, FaceChallengeActivity::class.java).apply {
+                    putExtra(FaceChallengeActivity.EXTRA_MODE, FaceChallengeActivity.MODE_FACE)
+                })
+            }
+            binding.btnTestExpr.setOnClickListener {
+                startActivity(android.content.Intent(this, FaceChallengeActivity::class.java).apply {
+                    putExtra(FaceChallengeActivity.EXTRA_MODE, FaceChallengeActivity.MODE_EXPR)
+                })
+            }
+            // Giữ lâu tiêu đề / vùng test → menu "Bạn muốn làm gì?"
+            binding.btnTestFace.setOnLongClickListener {
+                BottomNavHelper.showFaceTestMenu(this); true
+            }
+            binding.btnTestExpr.setOnLongClickListener {
+                BottomNavHelper.showFaceTestMenu(this); true
+            }
+        } catch (_: Exception) {}
+
         // Ngôn ngữ (~195) + hiệu ứng
         refreshLanguageLabel()
         binding.cardLanguage.setOnClickListener { v ->

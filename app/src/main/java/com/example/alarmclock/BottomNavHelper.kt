@@ -30,6 +30,33 @@ object BottomNavHelper {
             if (index == selectedIndex) return@setOnItemSelectedListener
             navigate(activity, index)
         }
+        // Giữ tab Cài → menu test camera / biểu cảm
+        nav.setOnItemLongClickListener { index, _ ->
+            if (index == 5) {
+                showFaceTestMenu(activity)
+                true
+            } else false
+        }
+    }
+
+    fun showFaceTestMenu(activity: android.app.Activity) {
+        val items = arrayOf(
+            "📷 Test quét mặt (camera)",
+            "😊 Test biểu cảm (Cười / Giận / Nhắm mắt / 🤞 …)"
+        )
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
+            .setTitle("Bạn muốn làm gì?")
+            .setItems(items) { _, which ->
+                val mode = if (which == 0) FaceChallengeActivity.MODE_FACE
+                else FaceChallengeActivity.MODE_EXPR
+                activity.startActivity(
+                    android.content.Intent(activity, FaceChallengeActivity::class.java).apply {
+                        putExtra(FaceChallengeActivity.EXTRA_MODE, mode)
+                    }
+                )
+            }
+            .setNegativeButton("Hủy", null)
+            .show()
     }
 
     private fun navigate(from: Activity, index: Int) {

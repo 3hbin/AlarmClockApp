@@ -31,7 +31,8 @@ data class Alarm(
         const val CHALLENGE_MATH10 = 7        // 10 bài toán liên tiếp
         const val CHALLENGE_SHAKE100 = 8      // lắc 100 lần
         const val CHALLENGE_TAP200 = 9        // bấm 200 lần (chống auto-click)
-        const val CHALLENGE_FACE_EXPR = 10    // cười / giận / lè lưỡi
+        const val CHALLENGE_FACE_EXPR = 10    // cười / giận / nhắm mắt / …
+        const val CHALLENGE_ALL = 11         // tất cả thử thách (khó)
     }
 
     fun getRepeatText(): String = when (repeatMode) {
@@ -51,7 +52,8 @@ data class Alarm(
         CHALLENGE_MATH10 -> "Giải 10 bài toán"
         CHALLENGE_SHAKE100 -> "Lắc máy 100 lần"
         CHALLENGE_TAP200 -> "Bấm 200 lần"
-        CHALLENGE_FACE_EXPR -> "Cười / Giận / Lè lưỡi"
+        CHALLENGE_FACE_EXPR -> "Cười / Giận / Nhắm mắt / 🤞"
+        CHALLENGE_ALL -> "TẤT CẢ thử thách (khó)"
         else -> "Không"
     }
 }

@@ -111,7 +111,7 @@ class MainActivity : AppCompatActivity() {
         binding.loadingAnim.stop()
 
         binding.fabAdd.setOnClickListener {
-            showFabMenu()
+            showAddDialog()
         }
 
         binding.fabAdd.setOnLongClickListener {
@@ -205,7 +205,7 @@ class MainActivity : AppCompatActivity() {
         val items = arrayOf(
             "➕ Thêm báo thức",
             "📷 Test quét mặt (camera)",
-            "😊 Test Cười / Giận / Lè lưỡi"
+            "😊 Test biểu cảm (Cười / Giận / Nhắm mắt / 🤞 …)"
         )
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setTitle("Bạn muốn làm gì?")
@@ -270,6 +270,7 @@ class MainActivity : AppCompatActivity() {
                 Alarm.CHALLENGE_TAP200 -> rgChallenge.check(R.id.rbChallengeTap200)
                 Alarm.CHALLENGE_FACE_EXPR -> rgChallenge.check(R.id.rbChallengeFaceExpr)
                 Alarm.CHALLENGE_BIOMETRIC -> rgChallenge.check(R.id.rbChallengeBio)
+                Alarm.CHALLENGE_ALL -> rgChallenge.check(R.id.rbChallengeAll)
                 else -> rgChallenge.check(R.id.rbChallengeNone)
             }
             dialogView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbSkipHolidays).isChecked = existing.skipHolidays
@@ -314,6 +315,7 @@ class MainActivity : AppCompatActivity() {
                 val bioGroup = dialogView.findViewById<android.widget.RadioGroup>(R.id.rgChallenge2)
                 val challengeType = when (rgChallenge.checkedRadioButtonId) {
                     R.id.rbChallengeBio -> Alarm.CHALLENGE_BIOMETRIC
+                    R.id.rbChallengeAll -> Alarm.CHALLENGE_ALL
                     R.id.rbChallengeMath -> Alarm.CHALLENGE_MATH
                     R.id.rbChallengeShake -> Alarm.CHALLENGE_SHAKE
                     R.id.rbChallengeFace -> Alarm.CHALLENGE_FACE
@@ -331,6 +333,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 val skipHolidays = dialogView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbSkipHolidays).isChecked
                 val isStrict = dialogView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbStrictAntiSnooze).isChecked
+                    || challengeType == Alarm.CHALLENGE_ALL
                 val useCrescendo = dialogView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbCrescendo).isChecked
                 val voiceNote = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etVoiceNote).text?.toString()?.takeIf { it.isNotBlank() }
 

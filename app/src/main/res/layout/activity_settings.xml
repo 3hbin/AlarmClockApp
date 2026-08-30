@@ -19,7 +19,37 @@
             android:text="@string/lang_hint"
             android:textSize="12sp" android:textColor="?android:attr/textColorSecondary"
             android:layout_marginBottom="6dp"/>
-        <com.google.android.material.card.MaterialCardView
+        
+        <!-- Test camera / biểu cảm -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Test thử thách mặt"
+            android:textStyle="bold"
+            android:layout_marginBottom="6dp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Hoặc giữ tab ⚙️ Cài ở thanh dưới"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:layout_marginBottom="6dp"/>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnTestFace"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="📷 Test quét mặt"
+            android:layout_marginBottom="6dp"
+            style="@style/Widget.Material3.Button.OutlinedButton"/>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnTestExpr"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="😊 Test biểu cảm (Cười / Giận / 🤞 …)"
+            android:layout_marginBottom="16dp"
+            style="@style/Widget.Material3.Button.OutlinedButton"/>
+
+<com.google.android.material.card.MaterialCardView
             android:id="@+id/cardLanguage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

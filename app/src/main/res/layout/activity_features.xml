@@ -36,7 +36,7 @@
             android:id="@+id/btnTestExpr"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="😊 Test Cười / Giận / Lè lưỡi"
+            android:text="😊 Test biểu cảm (Cười / Giận / Nhắm mắt / 🤞 …)"
             android:layout_marginBottom="8dp"
             style="@style/Widget.Material3.Button.OutlinedButton" />
 

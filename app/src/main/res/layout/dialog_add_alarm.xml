@@ -142,12 +142,17 @@
                 android:id="@+id/rbChallengeFaceExpr"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Biểu cảm: Cười / Giận / Lè lưỡi" />
+                android:text="Biểu cảm: Cười / Giận / Nhắm mắt / 😮 / 🙂 / 😗 / 🤞" />
             <RadioButton
                 android:id="@+id/rbChallengeBio"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Vân tay / khuôn mặt hệ thống" />
+            <RadioButton
+                android:id="@+id/rbChallengeAll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🔥 TẤT CẢ thử thách (khó)" />
         </RadioGroup>
 
         <!-- Legacy empty group kept for older code paths -->

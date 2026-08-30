@@ -35,6 +35,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
     private var animX = 0f
     private var pillExpand = 1f
     private var onItemSelected: ((Int, Item) -> Unit)? = null
+    private var onItemLongClick: ((Int, Item) -> Boolean)? = null
     var navStyle: Style = Style.CURVED
         set(value) {
             if (field == value) return
@@ -138,6 +139,10 @@ class CurvedBottomNavView @JvmOverloads constructor(
         onItemSelected = l
     }
 
+    fun setOnItemLongClickListener(l: (Int, Item) -> Boolean) {
+        onItemLongClick = l
+    }
+
     fun selectIndex(index: Int, animate: Boolean = true) {
         if (index !in items.indices) return
         selectedIndex = index
@@ -198,6 +203,10 @@ class CurvedBottomNavView @JvmOverloads constructor(
                 layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
                 isClickable = true
                 isFocusable = true
+                isLongClickable = true
+                setOnLongClickListener {
+                    onItemLongClick?.invoke(index, item) ?: false
+                }
                 setOnClickListener {
                     val changed = selectedIndex != index
                     selectIndex(index, animate = true)

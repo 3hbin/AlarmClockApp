@@ -41,6 +41,16 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
 
     // Thử thách báo thức
     private var challengeType: Int = Alarm.CHALLENGE_NONE
+    /** Chuỗi thử thách khi chọn TẤT CẢ */
+    private val allChain = listOf(
+        Alarm.CHALLENGE_MATH10,
+        Alarm.CHALLENGE_READ,
+        Alarm.CHALLENGE_SHAKE100,
+        Alarm.CHALLENGE_TAP200,
+        Alarm.CHALLENGE_FACE_EXPR
+    )
+    private var allStepIndex = 0
+    private var runningAll = false
     private var isStrictAntiSnooze: Boolean = false
     private var voiceNote: String? = null
     private var ttsHelper: TtsHelper? = null
@@ -64,7 +74,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
-            dismissAlarm(AlarmRepository(this))
+            onChallengeStepComplete()
         } else {
             Toast.makeText(this, "Chưa xác minh khuôn mặt — báo thức vẫn kêu", Toast.LENGTH_LONG).show()
             // Hiện lại nút Tắt để không kẹt màn hình
@@ -249,7 +259,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                 binding.btnSnooze.visibility = View.GONE
                 binding.btnDismiss.visibility = View.VISIBLE
                 binding.btnDismiss.text = if (challengeType == Alarm.CHALLENGE_FACE_EXPR)
-                    "Bắt đầu: Cười / Giận / Lè lưỡi"
+                    "Bắt đầu: Cười / Giận / Nhắm mắt / 🤞 …"
                 else
                     "Bắt đầu quét mặt để tắt"
                 binding.btnDismiss.setOnClickListener {
@@ -268,6 +278,15 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                 if (!isStrictAntiSnooze) {
                     binding.btnSnooze.visibility = View.VISIBLE
                 }
+            }
+            Alarm.CHALLENGE_ALL -> {
+                runningAll = true
+                allStepIndex = 0
+                isStrictAntiSnooze = true
+                binding.btnSnooze.visibility = View.GONE
+                binding.btnDismiss.visibility = View.GONE
+                Toast.makeText(this, "Thử thách TẤT CẢ — bước 1/${allChain.size}", Toast.LENGTH_LONG).show()
+                startAllChainStep()
             }
             Alarm.CHALLENGE_BIOMETRIC -> {
                 binding.btnDismiss.visibility = View.GONE
@@ -305,7 +324,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             if (userAnswer != null && userAnswer == mathAnswer) {
                 mathSolvedCount++
                 if (mathSolvedCount >= mathNeed) {
-                    dismissAlarm(AlarmRepository(this))
+                    onChallengeStepComplete()
                 } else {
                     Toast.makeText(this, "Đúng! Còn ${mathNeed - mathSolvedCount} bài", Toast.LENGTH_SHORT).show()
                     binding.edtMathAnswer.setText("")
@@ -380,7 +399,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             if (typed == expect || typed.contains(expect.take(12)) || expect.contains(typed.take(12))) {
                 readIndex++
                 if (readIndex >= 3) {
-                    dismissAlarm(AlarmRepository(this))
+                    onChallengeStepComplete()
                 } else {
                     Toast.makeText(this, "Đúng! Câu tiếp theo", Toast.LENGTH_SHORT).show()
                     binding.edtReadAnswer.setText("")
@@ -465,7 +484,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         binding.tvTapProgress.text = "$tapCount / 200"
         binding.tvTapHint.text = if (tapCount % 50 == 0) "Còn ${200 - tapCount} lần — tiếp tục!" else "Chạm nút bằng tay"
         if (tapCount >= 200) {
-            dismissAlarm(AlarmRepository(this))
+            onChallengeStepComplete()
         }
     }
 
@@ -503,7 +522,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                 getString(R.string.shake_progress, currentShakeCount, shakeTargetCount)
 
             if (currentShakeCount >= shakeTargetCount) {
-                dismissAlarm(AlarmRepository(this))
+                onChallengeStepComplete()
             }
         }
     }
@@ -598,6 +617,85 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             return
         }
         super.onBackPressed()
+    }
+
+
+    /** Chạy một bước trong chuỗi TẤT CẢ */
+    private fun startAllChainStep() {
+        if (allStepIndex >= allChain.size) {
+            dismissAlarm(AlarmRepository(this))
+            return
+        }
+        val step = allChain[allStepIndex]
+        Toast.makeText(
+            this,
+            "Bước ${allStepIndex + 1}/${allChain.size}: ${Alarm(challengeType = step).getChallengeText()}",
+            Toast.LENGTH_SHORT
+        ).show()
+        // Tạm gán challengeType = bước hiện tại để UI/init dùng đúng
+        challengeType = step
+        hideAllChallenges()
+        when (step) {
+            Alarm.CHALLENGE_MATH10 -> {
+                binding.layoutMathChallenge.visibility = View.VISIBLE
+                binding.btnDismiss.visibility = View.GONE
+                binding.btnSnooze.visibility = View.GONE
+                mathNeed = 10
+                mathSolvedCount = 0
+                initMathChallenge()
+            }
+            Alarm.CHALLENGE_READ -> {
+                binding.layoutReadChallenge.visibility = View.VISIBLE
+                binding.btnDismiss.visibility = View.GONE
+                binding.btnSnooze.visibility = View.GONE
+                initReadChallenge()
+            }
+            Alarm.CHALLENGE_SHAKE100 -> {
+                shakeTargetCount = 100
+                binding.layoutShakeChallenge.visibility = View.VISIBLE
+                binding.btnDismiss.visibility = View.GONE
+                binding.btnSnooze.visibility = View.GONE
+                initShakeChallenge()
+            }
+            Alarm.CHALLENGE_TAP200 -> {
+                binding.layoutTapChallenge.visibility = View.VISIBLE
+                binding.btnDismiss.visibility = View.GONE
+                binding.btnSnooze.visibility = View.GONE
+                initTapChallenge()
+            }
+            Alarm.CHALLENGE_FACE_EXPR -> {
+                binding.btnDismiss.visibility = View.VISIBLE
+                binding.btnSnooze.visibility = View.GONE
+                binding.btnDismiss.text = "Bắt đầu biểu cảm (${allStepIndex + 1}/${allChain.size})"
+                binding.btnDismiss.setOnClickListener {
+                    faceChallengeLauncher.launch(
+                        android.content.Intent(this, FaceChallengeActivity::class.java).apply {
+                            putExtra(FaceChallengeActivity.EXTRA_MODE, FaceChallengeActivity.MODE_EXPR)
+                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                    )
+                }
+            }
+            else -> onChallengeStepComplete()
+        }
+    }
+
+    /** Xong 1 bước thử thách (đơn hoặc trong chuỗi TẤT CẢ) */
+    private fun onChallengeStepComplete() {
+        if (runningAll) {
+            allStepIndex++
+            if (allStepIndex >= allChain.size) {
+                Toast.makeText(this, "Hoàn thành TẤT CẢ thử thách!", Toast.LENGTH_LONG).show()
+                runningAll = false
+                challengeType = Alarm.CHALLENGE_ALL
+                dismissAlarm(AlarmRepository(this))
+            } else {
+                Toast.makeText(this, "Xong bước ${allStepIndex}/${allChain.size} — tiếp tục!", Toast.LENGTH_SHORT).show()
+                startAllChainStep()
+            }
+        } else {
+            dismissAlarm(AlarmRepository(this))
+        }
     }
 
     private fun dismissAlarm(repo: AlarmRepository) {

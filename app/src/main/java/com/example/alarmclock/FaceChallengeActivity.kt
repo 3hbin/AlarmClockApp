@@ -42,7 +42,11 @@ class FaceChallengeActivity : AppCompatActivity() {
     private enum class Expr(val label: String, val emoji: String) {
         SMILE("CƯỜI tươi", "😊"),
         ANGRY("TỨC GIẬN (cau mày, không cười)", "😠"),
-        TONGUE("LÈ LƯỠI (há miệng to)", "👅")
+        EYES_CLOSED("NHẮM MẮT (cả hai mắt)", "😌"),
+        SURPRISED("HÁ MIỆNG / NGẠC NHIÊN", "😮"),
+        SOFT_SMILE("CƯỜI NHẸ", "🙂"),
+        KISS("HÔN GIÓ (chu môi)", "😗"),
+        CROSSED("CHÉO NGÓN TAY 🤞 (đưa mặt + tay vào khung)", "🤞")
     }
 
     private lateinit var binding: ActivityFaceChallengeBinding
@@ -52,7 +56,7 @@ class FaceChallengeActivity : AppCompatActivity() {
     private val cameraExecutor = Executors.newSingleThreadExecutor()
     private var mode = MODE_FACE
     private var exprIndex = 0
-    private val exprSteps = listOf(Expr.SMILE, Expr.ANGRY, Expr.TONGUE)
+    private val exprSteps = listOf(Expr.SMILE, Expr.ANGRY, Expr.EYES_CLOSED, Expr.SURPRISED, Expr.SOFT_SMILE, Expr.KISS, Expr.CROSSED)
     private var matchHoldMs = 0L
     private var lastMatchTs = 0L
     private val holdNeedMs = 700L
@@ -398,8 +402,8 @@ class FaceChallengeActivity : AppCompatActivity() {
                 lastMatchTs = 0
                 if (exprIndex >= exprSteps.size) {
                     facePassed = true
-                    binding.tvFaceStatus.text = "Đủ 3 biểu cảm! Bấm xác nhận để tắt"
-                    binding.tvExprProgress.text = "3 / 3"
+                    binding.tvFaceStatus.text = "Đủ tất cả biểu cảm! Bấm xác nhận để tắt"
+                    binding.tvExprProgress.text = "${exprSteps.size} / ${exprSteps.size}"
                     binding.btnConfirmFace.isEnabled = true
                     binding.btnConfirmFace.text = "Tắt báo thức"
                 } else {
@@ -426,9 +430,14 @@ class FaceChallengeActivity : AppCompatActivity() {
         val rightEye = face.rightEyeOpenProbability ?: 1f
         val mouthOpen = estimateMouthOpen(face)
         return when (exprSteps.getOrNull(exprIndex)) {
-            Expr.SMILE -> smile >= 0.55f
-            Expr.ANGRY -> smile in 0f..0.25f && leftEye > 0.4f && rightEye > 0.4f && mouthOpen < 0.35f
-            Expr.TONGUE -> mouthOpen >= 0.45f
+            Expr.SMILE -> smile >= 0.55f && leftEye > 0.3f && rightEye > 0.3f
+            Expr.ANGRY -> smile in 0f..0.25f && leftEye > 0.4f && rightEye > 0.4f && mouthOpen < 0.3f
+            Expr.EYES_CLOSED -> leftEye in 0f..0.25f && rightEye in 0f..0.25f
+            Expr.SURPRISED -> mouthOpen >= 0.4f && smile < 0.4f
+            Expr.SOFT_SMILE -> smile in 0.25f..0.55f && leftEye > 0.3f && rightEye > 0.3f
+            Expr.KISS -> mouthOpen in 0.08f..0.28f && smile < 0.35f && leftEye > 0.3f
+            // 🤞 tay không detect được → chỉ cần thấy mặt + mắt mở, giữ ~0.7s
+            Expr.CROSSED -> leftEye > 0.35f && rightEye > 0.35f
             else -> false
         }
     }
