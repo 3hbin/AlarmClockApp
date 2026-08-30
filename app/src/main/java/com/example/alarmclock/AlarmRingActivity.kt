@@ -629,7 +629,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         val step = allChain[allStepIndex]
         Toast.makeText(
             this,
-            "Bước ${allStepIndex + 1}/${allChain.size}: ${Alarm(challengeType = step).getChallengeText()}",
+            "Bước ${allStepIndex + 1}/${allChain.size}: ${Alarm.challengeLabel(step)}",
             Toast.LENGTH_SHORT
         ).show()
         // Tạm gán challengeType = bước hiện tại để UI/init dùng đúng
