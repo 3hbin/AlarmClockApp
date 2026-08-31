@@ -348,7 +348,9 @@
         android:paddingEnd="28dp"
         android:paddingBottom="28dp"
         android:paddingTop="8dp"
-        android:background="#CC0D1B4A">
+        android:background="#CC0D1B4A"
+        android:clipChildren="false"
+        android:clipToPadding="false">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnSnooze"

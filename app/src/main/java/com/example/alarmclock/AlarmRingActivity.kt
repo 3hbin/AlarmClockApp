@@ -227,6 +227,10 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         binding.btnDismiss.setOnClickListener {
             requestDismiss(repo)
         }
+        // Hiệu ứng Ripple Rings khi chạm nút Tắt
+        try {
+            RippleRingsEffect.attach(binding.btnDismiss, 0xFF67E8F9.toInt())
+        } catch (_: Exception) {}
 
         binding.btnSnooze.setOnClickListener {
             if (AppSettings.isAntiTroll(this) || isStrictAntiSnooze) {
