@@ -98,6 +98,7 @@
         <activity android:name=".AlarmRingActivity" android:exported="false"
             android:showWhenLocked="true" android:turnScreenOn="true"
             android:excludeFromRecents="true" android:launchMode="singleInstance"
+            android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.AlarmClock.FullScreen" />
 
         <activity android:name=".TimerActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />

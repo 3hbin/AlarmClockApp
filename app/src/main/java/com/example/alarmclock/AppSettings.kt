@@ -90,6 +90,40 @@ object AppSettings {
         return pin.isNotEmpty() && pin == input
     }
 
+
+    // ===== Khóa Cài đặt (PIN) =====
+    fun setSettingsPin(context: Context, plain: String) {
+        val hash = plain.hashCode().toString()
+        prefs(context).edit().putString("settings_pin", hash).apply()
+    }
+    fun hasSettingsPin(context: Context) =
+        !prefs(context).getString("settings_pin", null).isNullOrBlank()
+    fun checkSettingsPin(context: Context, plain: String): Boolean {
+        val stored = prefs(context).getString("settings_pin", null) ?: return false
+        return stored == plain.hashCode().toString()
+    }
+    fun clearSettingsPin(context: Context) =
+        prefs(context).edit().remove("settings_pin").apply()
+
+    /** Session unlock — hết khi tắt app / process chết */
+    @Volatile var settingsUnlockedThisSession: Boolean = false
+
+    // Mã khôi phục PIN (6 số), hết hạn 15 phút
+    fun setRecoveryCode(context: Context, code: String) {
+        prefs(context).edit()
+            .putString("settings_recovery_code", code)
+            .putLong("settings_recovery_exp", System.currentTimeMillis() + 15 * 60 * 1000L)
+            .apply()
+    }
+    fun checkRecoveryCode(context: Context, input: String): Boolean {
+        val code = prefs(context).getString("settings_recovery_code", null) ?: return false
+        val exp = prefs(context).getLong("settings_recovery_exp", 0L)
+        if (System.currentTimeMillis() > exp) return false
+        return code == input.trim()
+    }
+    fun clearRecoveryCode(context: Context) =
+        prefs(context).edit().remove("settings_recovery_code").remove("settings_recovery_exp").apply()
+
     // Language (ISO / BCP-47). "system" = follow device.
     fun setLanguage(context: Context, code: String) =
         prefs(context).edit().putString("app_language", code).apply()

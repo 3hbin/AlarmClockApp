@@ -20,7 +20,63 @@
             android:textSize="12sp" android:textColor="?android:attr/textColorSecondary"
             android:layout_marginBottom="6dp"/>
         
-        <!-- Test camera / biểu cảm -->
+        
+        <!-- Khóa Cài đặt PIN -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🔒 Khóa Cài đặt (PIN)"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Chống người khác vào Cài đặt sửa báo thức. Quên PIN → dùng Gmail khôi phục."
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:layout_marginBottom="6dp"/>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtSettingsPin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="PIN mới (≥4 số)"
+                android:inputType="numberPassword"
+                android:maxLength="12"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSaveSettingsPin"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Lưu PIN"
+                android:layout_marginEnd="4dp"
+                style="@style/Widget.Material3.Button.TonalButton"/>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnClearSettingsPin"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Xóa PIN"
+                android:layout_marginStart="4dp"
+                style="@style/Widget.Material3.Button.OutlinedButton"/>
+        </LinearLayout>
+        <TextView
+            android:id="@+id/tvSettingsPinStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:layout_marginBottom="12dp"/>
+
+<!-- Test camera / biểu cảm -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

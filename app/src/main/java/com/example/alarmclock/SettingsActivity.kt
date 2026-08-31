@@ -27,6 +27,14 @@ class SettingsActivity : AppCompatActivity() {
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         title = getString(R.string.settings_title)
 
+        // Bắt buộc PIN nếu đã đặt
+        if (AppSettings.hasSettingsPin(this) && !AppSettings.settingsUnlockedThisSession) {
+            SettingsLockHelper.requireUnlock(this) {
+                // đã mở — tiếp tục; UI đã inflate sẵn
+                refreshSettingsPinStatus()
+            }
+        }
+
         // Test quét mặt / biểu cảm
         try {
             binding.btnTestFace.setOnClickListener {
@@ -45,6 +53,61 @@ class SettingsActivity : AppCompatActivity() {
             }
             binding.btnTestExpr.setOnLongClickListener {
                 BottomNavHelper.showFaceTestMenu(this); true
+            }
+        } catch (_: Exception) {}
+
+
+        // PIN khóa Cài đặt
+        try {
+            refreshSettingsPinStatus()
+            binding.btnSaveSettingsPin.setOnClickListener {
+                val pin = binding.edtSettingsPin.text?.toString()?.trim().orEmpty()
+                if (pin.length < 4 || !pin.all { it.isDigit() }) {
+                    Toast.makeText(this, "PIN tối thiểu 4 chữ số", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                val email = AppSettings.getRecoveryEmail(this)
+                if (email.isBlank()) {
+                    Toast.makeText(this, "Nên lưu Gmail khôi phục trước (phía dưới)", Toast.LENGTH_LONG).show()
+                }
+                AppSettings.setSettingsPin(this, pin)
+                AppSettings.settingsUnlockedThisSession = true
+                binding.edtSettingsPin.setText("")
+                refreshSettingsPinStatus()
+                Toast.makeText(this, "Đã khóa Cài đặt bằng PIN", Toast.LENGTH_SHORT).show()
+            }
+            binding.btnClearSettingsPin.setOnClickListener {
+                if (!AppSettings.hasSettingsPin(this)) {
+                    Toast.makeText(this, "Chưa đặt PIN", Toast.LENGTH_SHORT).show()
+                    return@setOnClickListener
+                }
+                // Xác nhận bằng PIN hiện tại
+                val input = android.widget.EditText(this).apply {
+                    hint = "Nhập PIN hiện tại để xóa"
+                    inputType = android.text.InputType.TYPE_CLASS_NUMBER or
+                        android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
+                    setPadding(48, 32, 48, 32)
+                }
+                com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                    .setTitle("Xóa PIN Cài đặt?")
+                    .setView(input)
+                    .setPositiveButton("Xóa") { _, _ ->
+                        val pin = input.text?.toString()?.trim().orEmpty()
+                        if (AppSettings.checkSettingsPin(this, pin)) {
+                            AppSettings.clearSettingsPin(this)
+                            refreshSettingsPinStatus()
+                            Toast.makeText(this, "Đã xóa PIN Cài đặt", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this, "Sai PIN", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    .setNeutralButton("Quên PIN?") { _, _ ->
+                        SettingsLockHelper.showForgotFlow(this) {
+                            refreshSettingsPinStatus()
+                        }
+                    }
+                    .setNegativeButton("Hủy", null)
+                    .show()
             }
         } catch (_: Exception) {}
 
@@ -347,5 +410,17 @@ class SettingsActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         Motion.finishFade(this)
         return true
+    }
+
+    private fun refreshSettingsPinStatus() {
+        try {
+            val has = AppSettings.hasSettingsPin(this)
+            val email = AppSettings.getRecoveryEmail(this)
+            binding.tvSettingsPinStatus.text = when {
+                has && email.isNotBlank() -> "✅ Đang khóa PIN · Gmail khôi phục: $email"
+                has -> "⚠️ Đang khóa PIN · Chưa có Gmail khôi phục — nên lưu email!"
+                else -> "Chưa khóa — ai cũng vào được Cài đặt"
+            }
+        } catch (_: Exception) {}
     }
 }

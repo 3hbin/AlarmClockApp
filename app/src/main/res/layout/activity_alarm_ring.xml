@@ -23,15 +23,21 @@
         android:background="@drawable/bg_ring_blob_bottom"
         android:alpha="0.4" />
 
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:paddingBottom="160dp"
+        android:clipToPadding="false">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center_horizontal"
         android:paddingStart="28dp"
         android:paddingEnd="28dp"
-        android:paddingTop="48dp"
-        android:paddingBottom="36dp">
+        android:paddingTop="24dp"
+        android:paddingBottom="24dp">
 
         <TextView
             android:layout_width="wrap_content"
@@ -45,16 +51,17 @@
 
         <!-- Clock emoji in glass circle -->
         <FrameLayout
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:layout_marginBottom="20dp"
+            android:id="@+id/layoutRingIcon"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_marginBottom="8dp"
             android:background="@drawable/bg_ring_icon_circle">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:text="⏰"
-                android:textSize="56sp" />
+                android:textSize="36sp" />
         </FrameLayout>
 
         <TextView
@@ -62,7 +69,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="07:00"
-            android:textSize="56sp"
+            android:textSize="40sp"
             android:textStyle="bold"
             android:fontFamily="sans-serif-light"
             android:textColor="@android:color/white"
@@ -76,7 +83,7 @@
             android:textSize="18sp"
             android:textColor="#C7D2FE"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="28dp" />
+            android:layout_marginBottom="12dp" />
 
         <!-- Challenge cards -->
         <LinearLayout
@@ -123,12 +130,13 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSubmitMath"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="14dp"
                 android:text="@string/confirm"
+                android:textSize="16sp"
                 android:backgroundTint="#6366F1"
-                app:cornerRadius="24dp" />
+                app:cornerRadius="26dp" />
         </LinearLayout>
 
         <LinearLayout
@@ -212,12 +220,13 @@
                 android:inputType="text" />
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSubmitRead"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="14dp"
                 android:text="Xác nhận"
+                android:textSize="16sp"
                 android:backgroundTint="#6366F1"
-                app:cornerRadius="24dp" />
+                app:cornerRadius="26dp" />
         </LinearLayout>
 
         <!-- Bấm liên tục 200 -->
@@ -265,11 +274,8 @@
                 app:cornerRadius="80dp" />
         </LinearLayout>
 
-        <View
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
     </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
 
     <!-- Nút luôn neo dưới màn hình -->
     <LinearLayout

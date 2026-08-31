@@ -319,7 +319,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
 
     private fun initMathChallenge() {
         nextMathQuestion()
-        binding.btnSubmitMath.setOnClickListener {
+        val submit = View.OnClickListener {
             val userAnswer = binding.edtMathAnswer.text.toString().toIntOrNull()
             if (userAnswer != null && userAnswer == mathAnswer) {
                 mathSolvedCount++
@@ -333,9 +333,18 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             } else {
                 Toast.makeText(this, getString(R.string.wrong_answer), Toast.LENGTH_SHORT).show()
                 binding.edtMathAnswer.setText("")
-                // Sai → đổi câu mới (khó hơn)
                 nextMathQuestion(harder = mathNeed >= 10)
             }
+        }
+        binding.btnSubmitMath.setOnClickListener(submit)
+        // Nút neo dưới — luôn bấm được (không bị bàn phím che)
+        binding.btnSnooze.visibility = View.GONE
+        binding.btnDismiss.visibility = View.VISIBLE
+        binding.btnDismiss.text = "Xác nhận đáp án"
+        binding.btnDismiss.setOnClickListener(submit)
+        // Enter trên bàn phím cũng nộp
+        binding.edtMathAnswer.setOnEditorActionListener { _, _, _ ->
+            submit.onClick(binding.btnDismiss); true
         }
     }
 
@@ -393,6 +402,15 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
 
     private fun initReadChallenge() {
         pickNewSentence()
+        // Nút neo dưới luôn hiện
+        binding.btnSnooze.visibility = View.GONE
+        binding.btnDismiss.visibility = View.VISIBLE
+        binding.btnDismiss.text = "Xác nhận câu đọc"
+        val submitRead = View.OnClickListener {
+            // delegated below — same body
+            binding.btnSubmitRead.performClick()
+        }
+        binding.btnDismiss.setOnClickListener(submitRead)
         binding.btnSubmitRead.setOnClickListener {
             val typed = normalizeText(binding.edtReadAnswer.text?.toString().orEmpty())
             val expect = normalizeText(currentSentence)
@@ -489,40 +507,77 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private fun initShakeChallenge() {
+        currentShakeCount = 0
+        lastShakeTime = 0L
         binding.tvShakeProgress.text = getString(R.string.shake_progress, currentShakeCount, shakeTargetCount)
+        Toast.makeText(this, "Lắc mạnh điện thoại để đếm!", Toast.LENGTH_SHORT).show()
 
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as? SensorManager
-        accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+        // Ưu tiên LINEAR (không trọng lực) nếu có — nhạy hơn trên một số máy Huawei
+        accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
+            ?: sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
         if (accelerometer == null) {
-            // Máy không có cảm biến gia tốc: cho phép tắt bằng nút thường để tránh kẹt màn hình
             Toast.makeText(this, getString(R.string.no_accelerometer), Toast.LENGTH_LONG).show()
             binding.layoutShakeChallenge.visibility = View.GONE
             binding.btnDismiss.visibility = View.VISIBLE
+            binding.btnDismiss.text = "Tắt (không có cảm biến)"
+            binding.btnDismiss.setOnClickListener { onChallengeStepComplete() }
             return
         }
 
-        sensorManager?.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI)
+        sensorManager?.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST)
+
+        // Fallback: nếu 12 giây vẫn 0 lần → hiện nút "Tôi đang lắc" cộng từng lần bấm
+        binding.btnSnooze.visibility = View.GONE
+        binding.btnDismiss.visibility = View.GONE
+        binding.root.postDelayed({
+            if (isFinishing) return@postDelayed
+            if (currentShakeCount == 0 &&
+                (challengeType == Alarm.CHALLENGE_SHAKE || challengeType == Alarm.CHALLENGE_SHAKE100)
+            ) {
+                binding.btnDismiss.visibility = View.VISIBLE
+                binding.btnDismiss.text = "Cảm biến chậm — bấm để +1 lắc"
+                binding.btnDismiss.setOnClickListener {
+                    currentShakeCount++
+                    binding.tvShakeProgress.text =
+                        getString(R.string.shake_progress, currentShakeCount, shakeTargetCount)
+                    if (currentShakeCount >= shakeTargetCount) onChallengeStepComplete()
+                }
+                Toast.makeText(this, "Cảm biến không nhận — dùng nút bên dưới", Toast.LENGTH_LONG).show()
+            }
+        }, 12_000L)
     }
 
     override fun onSensorChanged(event: SensorEvent?) {
-        if (challengeType != Alarm.CHALLENGE_SHAKE || event == null) return
-
+        // CHALLENGE_SHAKE và CHALLENGE_SHAKE100 (chuỗi TẤT CẢ) đều cần đếm lắc
+        val isShake = challengeType == Alarm.CHALLENGE_SHAKE ||
+            challengeType == Alarm.CHALLENGE_SHAKE100
+        if (!isShake || event == null) return
         val x = event.values[0]
         val y = event.values[1]
         val z = event.values[2]
+        val type = event.sensor?.type ?: return
 
-        val gForce = sqrt((x * x + y * y + z * z).toDouble()) / SensorManager.GRAVITY_EARTH
+        val intensity = if (type == Sensor.TYPE_LINEAR_ACCELERATION) {
+            // m/s² không trọng lực — lắc mạnh ~8+
+            sqrt((x * x + y * y + z * z).toDouble())
+        } else {
+            // gia tốc / g
+            sqrt((x * x + y * y + z * z).toDouble()) / SensorManager.GRAVITY_EARTH
+        }
+        val threshold = if (type == Sensor.TYPE_LINEAR_ACCELERATION) 4.5 else 1.25
         val currentTime = System.currentTimeMillis()
 
-        if (gForce > 2.0 && currentTime - lastShakeTime > 300) {
+        if (intensity > threshold && currentTime - lastShakeTime > 120) {
             lastShakeTime = currentTime
             currentShakeCount++
-            binding.tvShakeProgress.text =
-                getString(R.string.shake_progress, currentShakeCount, shakeTargetCount)
-
+            runOnUiThread {
+                binding.tvShakeProgress.text =
+                    getString(R.string.shake_progress, currentShakeCount, shakeTargetCount)
+            }
             if (currentShakeCount >= shakeTargetCount) {
-                onChallengeStepComplete()
+                runOnUiThread { onChallengeStepComplete() }
             }
         }
     }
@@ -824,6 +879,25 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             wl.acquire(10_000L)
         } catch (_: Exception) {
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Đăng ký lại cảm biến lắc nếu đang ở thử thách lắc
+        if (challengeType == Alarm.CHALLENGE_SHAKE || challengeType == Alarm.CHALLENGE_SHAKE100) {
+            val sm = getSystemService(Context.SENSOR_SERVICE) as? SensorManager
+            val acc = sm?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+            if (sm != null && acc != null) {
+                sensorManager = sm
+                accelerometer = acc
+                sm.registerListener(this, acc, SensorManager.SENSOR_DELAY_GAME)
+            }
+        }
+    }
+
+    override fun onPause() {
+        try { sensorManager?.unregisterListener(this) } catch (_: Exception) {}
+        super.onPause()
     }
 
     override fun onDestroy() {

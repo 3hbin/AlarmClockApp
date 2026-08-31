@@ -79,6 +79,21 @@ object BottomNavHelper {
         }
         if (from::class.java == target) return
 
+        // Khóa Cài đặt bằng PIN
+        if (target == SettingsActivity::class.java &&
+            AppSettings.hasSettingsPin(from) &&
+            !AppSettings.settingsUnlockedThisSession
+        ) {
+            SettingsLockHelper.requireUnlock(from) {
+                val intent = Intent(from, target).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+                }
+                Motion.startSharedAxis(from, intent)
+                if (from !is MainActivity) from.finish()
+            }
+            return
+        }
+
         val intent = Intent(from, target).apply {
             // Tránh chồng activity khi nhảy tab liên tục
             addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
