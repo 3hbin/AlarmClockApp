@@ -81,12 +81,35 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         if (result.resultCode == RESULT_OK) {
             onChallengeStepComplete()
         } else {
-            Toast.makeText(this, "Chưa xác minh khuôn mặt — báo thức vẫn kêu", Toast.LENGTH_LONG).show()
-            // Hiện lại nút Tắt để không kẹt màn hình
+            Toast.makeText(
+                this,
+                "Chưa xong biểu cảm — bấm nút đỏ để thử lại",
+                Toast.LENGTH_LONG
+            ).show()
+            // Giữ đúng bước hiện tại trong chuỗi TẤT CẢ — hiện lại nút bắt đầu
             try {
-                binding.btnDismiss.visibility = android.view.View.VISIBLE
-                if (!isStrictAntiSnooze && !AppSettings.isAntiTroll(this)) {
-                    binding.btnSnooze.visibility = android.view.View.VISIBLE
+                if (runningAll) {
+                    // challengeType đang = FACE_EXPR; hiện lại nút bước 5
+                    binding.btnDismiss.visibility = View.VISIBLE
+                    binding.btnSnooze.visibility = View.GONE
+                    binding.btnDismiss.text =
+                        "Bắt đầu biểu cảm (${allStepIndex + 1}/${allChain.size})"
+                    binding.btnDismiss.setOnClickListener {
+                        faceChallengeLauncher.launch(
+                            android.content.Intent(this, FaceChallengeActivity::class.java).apply {
+                                putExtra(
+                                    FaceChallengeActivity.EXTRA_MODE,
+                                    FaceChallengeActivity.MODE_EXPR
+                                )
+                            }
+                        )
+                    }
+                } else {
+                    binding.btnDismiss.visibility = View.VISIBLE
+                    binding.btnDismiss.text = "Bắt đầu quét mặt lại"
+                    if (!isStrictAntiSnooze && !AppSettings.isAntiTroll(this)) {
+                        binding.btnSnooze.visibility = View.VISIBLE
+                    }
                 }
             } catch (_: Exception) {}
         }
@@ -275,7 +298,6 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                     faceChallengeLauncher.launch(
                         android.content.Intent(this, FaceChallengeActivity::class.java).apply {
                             putExtra(FaceChallengeActivity.EXTRA_MODE, mode)
-                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                         }
                     )
                 }
@@ -827,7 +849,6 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                     faceChallengeLauncher.launch(
                         android.content.Intent(this, FaceChallengeActivity::class.java).apply {
                             putExtra(FaceChallengeActivity.EXTRA_MODE, FaceChallengeActivity.MODE_EXPR)
-                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                         }
                     )
                 }

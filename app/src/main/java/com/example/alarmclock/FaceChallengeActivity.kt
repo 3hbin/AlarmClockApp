@@ -402,18 +402,22 @@ class FaceChallengeActivity : AppCompatActivity() {
 
         val now = System.currentTimeMillis()
         if (matched) {
+            // Cộng dồn thời gian khớp (không reset nếu frame lệch nhẹ)
             if (lastMatchTs == 0L) lastMatchTs = now
-            matchHoldMs = now - lastMatchTs
+            matchHoldMs += (now - lastMatchTs).coerceIn(0L, 80L)
+            lastMatchTs = now
             if (matchHoldMs >= holdNeedMs) {
                 exprIndex++
                 matchHoldMs = 0
                 lastMatchTs = 0
                 if (exprIndex >= exprSteps.size) {
                     facePassed = true
-                    binding.tvFaceStatus.text = "Đủ tất cả biểu cảm! Bấm xác nhận để tắt"
+                    binding.tvFaceStatus.text = "Đủ tất cả biểu cảm!"
                     binding.tvExprProgress.text = "${exprSteps.size} / ${exprSteps.size}"
-                    binding.btnConfirmFace.isEnabled = true
-                    binding.btnConfirmFace.text = "Tắt báo thức"
+                    // Tự hoàn thành — không bắt bấm thêm (tránh kẹt bước 5/5)
+                    setResult(RESULT_OK)
+                    finishRestore()
+                    return
                 } else {
                     updateExprUi()
                     Toast.makeText(this, "Đạt! Tiếp theo…", Toast.LENGTH_SHORT).show()
@@ -447,8 +451,9 @@ class FaceChallengeActivity : AppCompatActivity() {
             Expr.BIG_SMILE -> smile >= 0.28f
             Expr.SOFT -> smile >= 0.12f
             Expr.MOUTH -> mouthOpen >= 0.12f
-            Expr.WINK_L -> leftEye < 0.5f && rightEye > 0.25f
-            Expr.WINK_R -> rightEye < 0.5f && leftEye > 0.25f
+            // Camera trước hay đảo trái/phải — chấp nhận nháy 1 bên
+            Expr.WINK_L -> (leftEye < 0.45f && rightEye > 0.2f) || (rightEye < 0.45f && leftEye > 0.2f)
+            Expr.WINK_R -> (rightEye < 0.45f && leftEye > 0.2f) || (leftEye < 0.45f && rightEye > 0.2f)
             Expr.CENTER -> kotlin.math.abs(yaw) < 25f || true // luôn dễ nếu có mặt
             else -> false
         }
