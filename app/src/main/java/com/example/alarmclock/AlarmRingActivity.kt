@@ -75,44 +75,44 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     private var sensorManager: SensorManager? = null
     private var accelerometer: Sensor? = null
     private var currentLabel: String = ""
-    private val faceChallengeLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result ->
-        if (result.resultCode == RESULT_OK) {
-            onChallengeStepComplete()
-        } else {
-            Toast.makeText(
-                this,
-                "Chưa xong biểu cảm — bấm nút đỏ để thử lại",
-                Toast.LENGTH_LONG
-            ).show()
-            // Giữ đúng bước hiện tại trong chuỗi TẤT CẢ — hiện lại nút bắt đầu
-            try {
-                if (runningAll) {
-                    // challengeType đang = FACE_EXPR; hiện lại nút bước 5
-                    binding.btnDismiss.visibility = View.VISIBLE
-                    binding.btnSnooze.visibility = View.GONE
-                    binding.btnDismiss.text =
-                        "Bắt đầu biểu cảm (${allStepIndex + 1}/${allChain.size})"
-                    binding.btnDismiss.setOnClickListener {
-                        faceChallengeLauncher.launch(
-                            android.content.Intent(this, FaceChallengeActivity::class.java).apply {
-                                putExtra(
-                                    FaceChallengeActivity.EXTRA_MODE,
-                                    FaceChallengeActivity.MODE_EXPR
-                                )
-                            }
-                        )
-                    }
-                } else {
-                    binding.btnDismiss.visibility = View.VISIBLE
-                    binding.btnDismiss.text = "Bắt đầu quét mặt lại"
-                    if (!isStrictAntiSnooze && !AppSettings.isAntiTroll(this)) {
-                        binding.btnSnooze.visibility = View.VISIBLE
-                    }
-                }
-            } catch (_: Exception) {}
+    private val faceChallengeLauncher:
+        androidx.activity.result.ActivityResultLauncher<android.content.Intent> =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == RESULT_OK) {
+                onChallengeStepComplete()
+            } else {
+                onFaceChallengeCanceled()
+            }
         }
+
+    private fun launchFaceExpr() {
+        faceChallengeLauncher.launch(
+            android.content.Intent(this, FaceChallengeActivity::class.java).apply {
+                putExtra(FaceChallengeActivity.EXTRA_MODE, FaceChallengeActivity.MODE_EXPR)
+            }
+        )
+    }
+
+    private fun onFaceChallengeCanceled() {
+        Toast.makeText(
+            this,
+            "Chưa xong biểu cảm — bấm nút đỏ để thử lại",
+            Toast.LENGTH_LONG
+        ).show()
+        try {
+            binding.btnDismiss.visibility = View.VISIBLE
+            binding.btnSnooze.visibility = View.GONE
+            if (runningAll) {
+                binding.btnDismiss.text =
+                    "Bắt đầu biểu cảm (${allStepIndex + 1}/${allChain.size})"
+            } else {
+                binding.btnDismiss.text = "Bắt đầu quét mặt lại"
+                if (!isStrictAntiSnooze && !AppSettings.isAntiTroll(this)) {
+                    binding.btnSnooze.visibility = View.VISIBLE
+                }
+            }
+            binding.btnDismiss.setOnClickListener { launchFaceExpr() }
+        } catch (_: Exception) {}
     }
 
     /** Nhận lệnh Tắt từ nút trên thông báo (tránh lỡ tay full-screen). */
@@ -845,13 +845,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                 binding.btnDismiss.visibility = View.VISIBLE
                 binding.btnSnooze.visibility = View.GONE
                 binding.btnDismiss.text = "Bắt đầu biểu cảm (${allStepIndex + 1}/${allChain.size})"
-                binding.btnDismiss.setOnClickListener {
-                    faceChallengeLauncher.launch(
-                        android.content.Intent(this, FaceChallengeActivity::class.java).apply {
-                            putExtra(FaceChallengeActivity.EXTRA_MODE, FaceChallengeActivity.MODE_EXPR)
-                        }
-                    )
-                }
+                binding.btnDismiss.setOnClickListener { launchFaceExpr() }
             }
             else -> onChallengeStepComplete()
         }
