@@ -61,8 +61,7 @@ class WorldClockActivity : AppCompatActivity() {
         binding.toolbar.setNavigationOnClickListener { Motion.finishFade(this) }
 
         binding.shimmer.show()
-        binding.loadingAnim.style = LoadingAnimationView.Style.STAGGERED_DOTS_WAVE
-        binding.loadingAnim.animColor = 0xFF3F51B5.toInt()
+        binding.loadingAnim.applyBrandDefault()
         binding.loadingAnim.visibility = android.view.View.VISIBLE
         binding.loadingAnim.start()
         adapter = WorldClockAdapter(mutableListOf())

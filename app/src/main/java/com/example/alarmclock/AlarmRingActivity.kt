@@ -41,16 +41,27 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
 
     // Thử thách báo thức
     private var challengeType: Int = Alarm.CHALLENGE_NONE
-    /** Chuỗi thử thách khi chọn TẤT CẢ */
-    private val allChain = listOf(
+    /** Chuỗi thử thách khi chọn TẤT CẢ (khó / dễ) */
+    private val allChainHard = listOf(
         Alarm.CHALLENGE_MATH10,
         Alarm.CHALLENGE_READ,
         Alarm.CHALLENGE_SHAKE100,
         Alarm.CHALLENGE_TAP200,
         Alarm.CHALLENGE_FACE_EXPR
     )
+    /** TẤT CẢ dễ — ít bài, ít lắc/bấm, ít biểu cảm */
+    private val allChainEasy = listOf(
+        Alarm.CHALLENGE_MATH,      // sẽ set mathNeed=3
+        Alarm.CHALLENGE_READ,      // 1 câu, 15s
+        Alarm.CHALLENGE_SHAKE,     // 20 lần
+        Alarm.CHALLENGE_TAP200,    // sẽ set tapNeed=30
+        Alarm.CHALLENGE_FACE_EXPR  // 3 biểu cảm
+    )
+    private var allChain: List<Int> = allChainHard
     private var allStepIndex = 0
     private var runningAll = false
+    private var allEasyMode = false
+    private var tapNeed = 200
     private var isStrictAntiSnooze: Boolean = false
     private var voiceNote: String? = null
     private var ttsHelper: TtsHelper? = null
@@ -61,6 +72,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     private var mathSolvedCount = 0
     private var mathNeed = 1
     private var readIndex = 0
+    private var readNeed = 3
     private var readWordIndex = 0
     private var readWords: List<String> = emptyList()
     private var readTimerLeft = 10
@@ -89,6 +101,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         faceChallengeLauncher.launch(
             android.content.Intent(this, FaceChallengeActivity::class.java).apply {
                 putExtra(FaceChallengeActivity.EXTRA_MODE, FaceChallengeActivity.MODE_EXPR)
+                putExtra(FaceChallengeActivity.EXTRA_EASY, allEasyMode)
             }
         )
     }
@@ -275,6 +288,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                 initReadChallenge()
             }
             Alarm.CHALLENGE_TAP200 -> {
+                tapNeed = 200
                 binding.layoutTapChallenge.visibility = View.VISIBLE
                 binding.btnDismiss.visibility = View.GONE
                 binding.btnSnooze.visibility = View.GONE
@@ -308,11 +322,24 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             }
             Alarm.CHALLENGE_ALL -> {
                 runningAll = true
+                allEasyMode = false
+                allChain = allChainHard
                 allStepIndex = 0
                 isStrictAntiSnooze = true
                 binding.btnSnooze.visibility = View.GONE
                 binding.btnDismiss.visibility = View.GONE
-                Toast.makeText(this, "Thử thách TẤT CẢ — bước 1/${allChain.size}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Thử thách TẤT CẢ (khó) — bước 1/${allChain.size}", Toast.LENGTH_LONG).show()
+                startAllChainStep()
+            }
+            Alarm.CHALLENGE_ALL_EASY -> {
+                runningAll = true
+                allEasyMode = true
+                allChain = allChainEasy
+                allStepIndex = 0
+                isStrictAntiSnooze = false
+                binding.btnSnooze.visibility = View.VISIBLE
+                binding.btnDismiss.visibility = View.GONE
+                Toast.makeText(this, "TẤT CẢ dễ — không mất ngủ · bước 1/${allChain.size}", Toast.LENGTH_LONG).show()
                 startAllChainStep()
             }
             Alarm.CHALLENGE_BIOMETRIC -> {
@@ -450,6 +477,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         binding.btnSnooze.visibility = View.GONE
         binding.btnDismiss.visibility = View.GONE
         readIndex = 0
+        readNeed = if (allEasyMode) 1 else 3
         pickNewSentence()
     }
 
@@ -460,7 +488,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
 
     private fun startReadTimer() {
         stopReadTimer()
-        readTimerLeft = 10
+        readTimerLeft = if (allEasyMode) 15 else 10
         try { binding.tvReadTimer.text = "⏱ $readTimerLeft giây" } catch (_: Exception) {}
         val tick = object : Runnable {
             override fun run() {
@@ -501,7 +529,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         readWordIndex = 0
         try {
             binding.tvReadSentence.text = s
-            binding.tvReadProgress.text = "${readIndex + 1} / 3"
+            binding.tvReadProgress.text = "${readIndex + 1} / $readNeed"
             binding.tvReadBuilt.text = "…"
         } catch (_: Exception) {}
         buildReadWordChips()
@@ -542,11 +570,11 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             if (readWordIndex >= readWords.size) {
                 stopReadTimer()
                 readIndex++
-                if (readIndex >= 3) {
+                if (readIndex >= readNeed) {
                     Toast.makeText(this, "Xong chọn từ!", Toast.LENGTH_SHORT).show()
                     onChallengeStepComplete()
                 } else {
-                    Toast.makeText(this, "Đúng! Câu tiếp (${readIndex}/3)", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Đúng! Câu tiếp (${readIndex}/$readNeed)", Toast.LENGTH_SHORT).show()
                     pickNewSentence()
                 }
             }
@@ -578,7 +606,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         tapCount = 0
         tapTimes.clear()
         autoClickStrikes = 0
-        binding.tvTapProgress.text = "0 / 200"
+        binding.tvTapProgress.text = "0 / $tapNeed"
         binding.btnTapChallenge.setOnClickListener { onHumanTap() }
         // Chặn long-press spam từ auto-click một số app
         binding.btnTapChallenge.setOnLongClickListener { true }
@@ -596,7 +624,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                 // Phạt: trừ 15 lần
                 tapCount = (tapCount - 15).coerceAtLeast(0)
                 autoClickStrikes = 0
-                binding.tvTapProgress.text = "$tapCount / 200"
+                binding.tvTapProgress.text = "$tapCount / $tapNeed"
             }
             return
         }
@@ -617,14 +645,14 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                     autoClickStrikes = 0
                     Toast.makeText(this, "Phát hiện auto-click — trừ 20 lần", Toast.LENGTH_LONG).show()
                 }
-                binding.tvTapProgress.text = "$tapCount / 200"
+                binding.tvTapProgress.text = "$tapCount / $tapNeed"
                 return
             }
         }
         tapCount++
-        binding.tvTapProgress.text = "$tapCount / 200"
-        binding.tvTapHint.text = if (tapCount % 50 == 0) "Còn ${200 - tapCount} lần — tiếp tục!" else "Chạm nút bằng tay"
-        if (tapCount >= 200) {
+        binding.tvTapProgress.text = "$tapCount / $tapNeed"
+        binding.tvTapHint.text = if (tapCount % 10 == 0) "Còn ${tapNeed - tapCount} lần — tiếp tục!" else "Chạm nút bằng tay"
+        if (tapCount >= tapNeed) {
             onChallengeStepComplete()
         }
     }
@@ -822,6 +850,14 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                 mathSolvedCount = 0
                 initMathChallenge()
             }
+            Alarm.CHALLENGE_MATH -> {
+                binding.layoutMathChallenge.visibility = View.VISIBLE
+                binding.btnDismiss.visibility = View.GONE
+                binding.btnSnooze.visibility = View.GONE
+                mathNeed = if (allEasyMode) 3 else 1
+                mathSolvedCount = 0
+                initMathChallenge()
+            }
             Alarm.CHALLENGE_READ -> {
                 binding.layoutReadChallenge.visibility = View.VISIBLE
                 binding.btnDismiss.visibility = View.GONE
@@ -835,7 +871,15 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                 binding.btnSnooze.visibility = View.GONE
                 initShakeChallenge()
             }
+            Alarm.CHALLENGE_SHAKE -> {
+                shakeTargetCount = if (allEasyMode) 20 else 10
+                binding.layoutShakeChallenge.visibility = View.VISIBLE
+                binding.btnDismiss.visibility = View.GONE
+                binding.btnSnooze.visibility = View.GONE
+                initShakeChallenge()
+            }
             Alarm.CHALLENGE_TAP200 -> {
+                tapNeed = if (allEasyMode) 30 else 200
                 binding.layoutTapChallenge.visibility = View.VISIBLE
                 binding.btnDismiss.visibility = View.GONE
                 binding.btnSnooze.visibility = View.GONE
@@ -844,7 +888,9 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             Alarm.CHALLENGE_FACE_EXPR -> {
                 binding.btnDismiss.visibility = View.VISIBLE
                 binding.btnSnooze.visibility = View.GONE
-                binding.btnDismiss.text = "Bắt đầu biểu cảm (${allStepIndex + 1}/${allChain.size})"
+                binding.btnDismiss.text =
+                    if (allEasyMode) "Bắt đầu 3 biểu cảm dễ (${allStepIndex + 1}/${allChain.size})"
+                    else "Bắt đầu biểu cảm (${allStepIndex + 1}/${allChain.size})"
                 binding.btnDismiss.setOnClickListener { launchFaceExpr() }
             }
             else -> onChallengeStepComplete()

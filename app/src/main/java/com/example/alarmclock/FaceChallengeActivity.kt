@@ -37,6 +37,7 @@ class FaceChallengeActivity : AppCompatActivity() {
         const val EXTRA_MODE = "FACE_MODE"
         const val MODE_FACE = 0
         const val MODE_EXPR = 1
+        const val EXTRA_EASY = "easy_expr"
     }
 
     private enum class Expr(val label: String, val emoji: String) {
@@ -60,11 +61,15 @@ class FaceChallengeActivity : AppCompatActivity() {
     private val cameraExecutor = Executors.newSingleThreadExecutor()
     private var mode = MODE_FACE
     private var exprIndex = 0
-    private val exprSteps = listOf(
+    private val exprStepsFull = listOf(
         Expr.SMILE, Expr.NEUTRAL, Expr.BLINK, Expr.LOOK,
         Expr.BIG_SMILE, Expr.SOFT, Expr.MOUTH,
         Expr.WINK_L, Expr.WINK_R, Expr.CENTER
     )
+    private val exprStepsEasy = listOf(
+        Expr.SMILE, Expr.MOUTH, Expr.BLINK
+    )
+    private var exprSteps = exprStepsFull
     private var matchHoldMs = 0L
     private var lastMatchTs = 0L
     private val holdNeedMs = 300L
@@ -102,6 +107,8 @@ class FaceChallengeActivity : AppCompatActivity() {
         binding = ActivityFaceChallengeBinding.inflate(layoutInflater)
         setContentView(binding.root)
         mode = intent.getIntExtra(EXTRA_MODE, MODE_FACE)
+        val easy = intent.getBooleanExtra(EXTRA_EASY, false)
+        exprSteps = if (easy) exprStepsEasy else exprStepsFull
         boostBrightness()
         updateExprUi()
 

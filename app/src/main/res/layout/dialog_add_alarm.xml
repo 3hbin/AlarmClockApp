@@ -153,6 +153,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="🔥 TẤT CẢ thử thách (khó)" />
+                <RadioButton
+                    android:id="@+id/rbChallengeAllEasy"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="😊 TẤT CẢ dễ — không mất ngủ (toán 3 · từ · lắc 20 · bấm 30 · 3 biểu cảm)"
+                    android:textSize="13sp" />
         </RadioGroup>
 
         <!-- Legacy empty group kept for older code paths -->

@@ -112,8 +112,7 @@ class GalleryActivity : AppCompatActivity() {
 
     private fun loadPhotos() {
         binding.shimmer.show()
-        binding.loadingAnim.style = LoadingAnimationView.Style.FOUR_ROTATING_DOTS
-        binding.loadingAnim.animColor = 0xFF3F51B5.toInt()
+        binding.loadingAnim.applyBrandDefault()
         binding.loadingAnim.visibility = android.view.View.VISIBLE
         binding.loadingAnim.start()
         Thread {
