@@ -475,7 +475,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         } else candidates).random()
         readUsed.add(s)
         currentSentence = s
-        readWords = s.split(Regex("\s+")).filter { it.isNotBlank() }
+        readWords = s.split(" ").map { it.trim() }.filter { it.isNotBlank() }
         readWordIndex = 0
         try {
             binding.tvReadSentence.text = s
