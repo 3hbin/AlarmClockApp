@@ -25,13 +25,13 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🔒 Khóa Cài đặt (PIN)"
+            android:text="@string/settings_pin_title"
             android:textStyle="bold"
             android:layout_marginBottom="4dp"/>
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Chống người khác vào Cài đặt sửa báo thức. Quên PIN → dùng Gmail khôi phục."
+            android:text="@string/settings_pin_hint"
             android:textSize="12sp"
             android:textColor="?android:attr/textColorSecondary"
             android:layout_marginBottom="6dp"/>
@@ -57,7 +57,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Lưu PIN"
+                android:text="@string/settings_pin_save"
                 android:layout_marginEnd="4dp"
                 style="@style/Widget.Material3.Button.TonalButton"/>
             <com.google.android.material.button.MaterialButton
@@ -65,7 +65,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Xóa PIN"
+                android:text="@string/settings_pin_clear"
                 android:layout_marginStart="4dp"
                 style="@style/Widget.Material3.Button.OutlinedButton"/>
         </LinearLayout>
@@ -80,13 +80,13 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Test thử thách mặt"
+            android:text="@string/test_section"
             android:textStyle="bold"
             android:layout_marginBottom="6dp"/>
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Hoặc giữ tab ⚙️ Cài ở thanh dưới"
+            android:text="@string/test_section_hint"
             android:textSize="12sp"
             android:textColor="?android:attr/textColorSecondary"
             android:layout_marginBottom="6dp"/>
@@ -94,14 +94,14 @@
             android:id="@+id/btnTestFace"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="📷 Test quét mặt"
+            android:text="@string/test_face_scan_btn"
             android:layout_marginBottom="6dp"
             style="@style/Widget.Material3.Button.OutlinedButton"/>
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnTestExpr"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="😊 Test biểu cảm (Cười / Giận / 🤞 …)"
+            android:text="@string/test_face_expr_btn"
             android:layout_marginBottom="16dp"
             style="@style/Widget.Material3.Button.OutlinedButton"/>
 

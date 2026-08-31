@@ -190,7 +190,7 @@ class SettingsActivity : AppCompatActivity() {
                     AppSettings.NAV_GOOGLE -> CurvedBottomNavView.Style.GOOGLE
                     else -> CurvedBottomNavView.Style.CURVED
                 }
-                binding.curvedNav.setItems(BottomNavHelper.items(), 5)
+                binding.curvedNav.setItems(BottomNavHelper.items(this), 5)
             } catch (_: Exception) {}
             Toast.makeText(this, getString(R.string.nav_style_changed), Toast.LENGTH_SHORT).show()
         }
@@ -341,7 +341,11 @@ class SettingsActivity : AppCompatActivity() {
                 val label = if (code == LanguageCatalog.SYSTEM) systemLabel else LanguageCatalog.displayName(code)
                 Toast.makeText(this, getString(R.string.lang_selected, label), Toast.LENGTH_SHORT).show()
                 dialog?.dismiss()
-                binding.root.postDelayed({ recreate() }, 220)
+                binding.root.postDelayed({
+                    // Tránh màn đen: recreate sau khi dialog đóng hẳn
+                    window.setWindowAnimations(0)
+                    recreate()
+                }, 350)
             }
         }
         recycler.adapter = adapter

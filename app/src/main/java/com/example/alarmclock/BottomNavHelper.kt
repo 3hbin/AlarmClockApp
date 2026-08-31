@@ -1,22 +1,23 @@
 package com.example.alarmclock
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 
 /**
- * Gắn cùng 6 nút thanh dưới cho mọi màn chính — không chỉ Báo thức.
- * index: 0 Báo, 1 Thế giới, 2 Bấm, 3 Đếm, 4 Ảnh, 5 Cài
+ * 6 nút thanh dưới — icon vector kiểu Flaticon (không emoji).
+ * alarm-clock / globe / clock(stopwatch) / time-quarter(timer) / picture / settings
  */
 object BottomNavHelper {
 
-    fun items() = listOf(
-        CurvedBottomNavView.Item(0, "⏰", "Báo"),
-        CurvedBottomNavView.Item(1, "🌍", "Thế giới"),
-        CurvedBottomNavView.Item(2, "⏱️", "Bấm"),
-        CurvedBottomNavView.Item(3, "⏳", "Đếm"),
-        CurvedBottomNavView.Item(4, "🖼️", "Ảnh"),
-        CurvedBottomNavView.Item(5, "⚙️", "Cài")
+    fun items(ctx: Context) = listOf(
+        CurvedBottomNavView.Item(0, "", ctx.getString(R.string.nav_alarm), R.drawable.ic_nav_alarm),
+        CurvedBottomNavView.Item(1, "", ctx.getString(R.string.nav_world), R.drawable.ic_nav_globe),
+        CurvedBottomNavView.Item(2, "", ctx.getString(R.string.nav_stopwatch), R.drawable.ic_nav_stopwatch),
+        CurvedBottomNavView.Item(3, "", ctx.getString(R.string.nav_timer), R.drawable.ic_nav_timer),
+        CurvedBottomNavView.Item(4, "", ctx.getString(R.string.nav_gallery), R.drawable.ic_nav_gallery),
+        CurvedBottomNavView.Item(5, "", ctx.getString(R.string.nav_settings), R.drawable.ic_nav_settings)
     )
 
     fun bind(activity: AppCompatActivity, nav: CurvedBottomNavView, selectedIndex: Int) {
@@ -25,12 +26,11 @@ object BottomNavHelper {
             AppSettings.NAV_GOOGLE -> CurvedBottomNavView.Style.GOOGLE
             else -> CurvedBottomNavView.Style.CURVED
         }
-        nav.setItems(items(), selectedIndex)
+        nav.setItems(items(activity), selectedIndex)
         nav.setOnItemSelectedListener { index, _ ->
             if (index == selectedIndex) return@setOnItemSelectedListener
             navigate(activity, index)
         }
-        // Giữ tab Cài → menu test camera / biểu cảm
         nav.setOnItemLongClickListener { index, _ ->
             if (index == 5) {
                 showFaceTestMenu(activity)
@@ -39,23 +39,23 @@ object BottomNavHelper {
         }
     }
 
-    fun showFaceTestMenu(activity: android.app.Activity) {
+    fun showFaceTestMenu(activity: Activity) {
         val items = arrayOf(
-            "📷 Test quét mặt (camera)",
-            "😊 Test 10 biểu cảm dễ"
+            activity.getString(R.string.test_face_scan),
+            activity.getString(R.string.test_face_expr)
         )
         com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
-            .setTitle("Bạn muốn làm gì?")
+            .setTitle(activity.getString(R.string.test_menu_title))
             .setItems(items) { _, which ->
                 val mode = if (which == 0) FaceChallengeActivity.MODE_FACE
                 else FaceChallengeActivity.MODE_EXPR
                 activity.startActivity(
-                    android.content.Intent(activity, FaceChallengeActivity::class.java).apply {
+                    Intent(activity, FaceChallengeActivity::class.java).apply {
                         putExtra(FaceChallengeActivity.EXTRA_MODE, mode)
                     }
                 )
             }
-            .setNegativeButton("Hủy", null)
+            .setNegativeButton(android.R.string.cancel, null)
             .show()
     }
 
@@ -69,7 +69,6 @@ object BottomNavHelper {
             5 -> SettingsActivity::class.java
             else -> return
         }
-        // Đã ở Main → chỉ cần finish các màn con
         if (target == MainActivity::class.java) {
             if (from !is MainActivity) {
                 from.finish()
@@ -79,27 +78,24 @@ object BottomNavHelper {
         }
         if (from::class.java == target) return
 
-        // Khóa Cài đặt bằng PIN
         if (target == SettingsActivity::class.java &&
             AppSettings.hasSettingsPin(from) &&
             !AppSettings.settingsUnlockedThisSession
         ) {
             SettingsLockHelper.requireUnlock(from) {
-                val intent = Intent(from, target).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
-                }
-                Motion.startSharedAxis(from, intent)
-                if (from !is MainActivity) from.finish()
+                startTab(from, target)
             }
             return
         }
+        startTab(from, target)
+    }
 
+    private fun startTab(from: Activity, target: Class<*>) {
         val intent = Intent(from, target).apply {
-            // Tránh chồng activity khi nhảy tab liên tục
-            addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
+            addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         }
-        Motion.startSharedAxis(from, intent)
-        // Main giữ lại trong stack; các tab khác finish để không chồng vô hạn
+        from.startActivity(intent)
+        from.overridePendingTransition(R.anim.fade_through_enter, R.anim.fade_through_exit)
         if (from !is MainActivity) {
             from.finish()
         }

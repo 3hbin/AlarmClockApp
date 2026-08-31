@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_alarm">Báo</string>
+    <string name="nav_world">Thế giới</string>
+    <string name="nav_stopwatch">Bấm</string>
+    <string name="nav_timer">Đếm</string>
+    <string name="nav_gallery">Ảnh</string>
+    <string name="nav_settings">Cài</string>
+    <string name="test_face_scan">📷 Test quét mặt</string>
+    <string name="test_face_expr">😊 Test biểu cảm</string>
+    <string name="test_menu_title">Bạn muốn làm gì?</string>
+    <string name="lang_section">Ngôn ngữ</string>
+    <string name="lang_hint">Chỉ tiếng Anh. Theo hệ thống dùng định dạng ngày giờ máy.</string>
+    <string name="lang_app">Ngôn ngữ ứng dụng</string>
+    <string name="lang_system">🌐  Theo hệ thống</string>
+    <string name="lang_pick_title">Chọn ngôn ngữ (%1$d)</string>
+    <string name="lang_search_hint">🔍  Tìm ngôn ngữ…</string>
+    <string name="lang_count">%1$d ngôn ngữ</string>
+    <string name="lang_selected">✓  %1$s</string>
+    <string name="nav_style_title">Kiểu thanh dưới</string>
+    <string name="nav_style_hint">Chọn giao diện thanh điều hướng dưới.</string>
+    <string name="nav_style_curved">Android cong (mặc định)</string>
+    <string name="nav_style_persistent">Persistent</string>
+    <string name="nav_style_google">Google Nav</string>
+    <string name="nav_style_changed">Đã đổi kiểu thanh dưới</string>
+    <string name="settings_pin_title">🔒 Khóa Cài đặt (PIN)</string>
+    <string name="settings_pin_hint">Chống người khác vào Cài đặt sửa báo thức. Quên PIN → dùng Gmail khôi phục.</string>
+    <string name="settings_pin_save">Lưu PIN</string>
+    <string name="settings_pin_clear">Xóa PIN</string>
+    <string name="settings_pin_unlocked">Chưa khóa — ai cũng vào được Cài đặt</string>
+    <string name="test_section">Test thử thách mặt</string>
+    <string name="test_section_hint">Hoặc giữ tab ⚙️ Cài ở thanh dưới</string>
+    <string name="test_face_scan_btn">📷 Test quét mặt</string>
+    <string name="test_face_expr_btn">😊 Test biểu cảm (Cười / Giận / 🤞 …)</string>
+</resources>

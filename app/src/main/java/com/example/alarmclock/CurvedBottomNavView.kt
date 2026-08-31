@@ -28,7 +28,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
 
     enum class Style { CURVED, PERSISTENT, GOOGLE }
 
-    data class Item(val id: Int, val emoji: String, val label: String)
+    data class Item(val id: Int, val emoji: String, val label: String, val iconRes: Int = 0)
 
     private val items = mutableListOf<Item>()
     private var selectedIndex = 0
@@ -216,13 +216,28 @@ class CurvedBottomNavView @JvmOverloads constructor(
                 }
             }
 
-            val icon = TextView(context).apply {
-                text = item.emoji
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, if (navStyle == Style.GOOGLE) 17f else 18f)
-                gravity = Gravity.CENTER
-                layoutParams = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, dp(28f).toInt()
-                )
+            val icon: View = if (item.iconRes != 0) {
+                android.widget.ImageView(context).apply {
+                    setImageResource(item.iconRes)
+                    scaleType = android.widget.ImageView.ScaleType.CENTER_INSIDE
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, dp(26f).toInt()
+                    )
+                    setColorFilter(
+                        if (index == selectedIndex) accent else 0xFF6B7280.toInt(),
+                        android.graphics.PorterDuff.Mode.SRC_IN
+                    )
+                    tag = "nav_icon"
+                }
+            } else {
+                TextView(context).apply {
+                    text = item.emoji
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, if (navStyle == Style.GOOGLE) 17f else 18f)
+                    gravity = Gravity.CENTER
+                    layoutParams = LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, dp(28f).toInt()
+                    )
+                }
             }
             val label = TextView(context).apply {
                 text = item.label
@@ -239,6 +254,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
             col.addView(icon)
             col.addView(label)
             iconViews.add(icon)
+            if (navStyle == Style.GOOGLE) label.visibility = INVISIBLE
             labelViews.add(label)
             row.addView(col)
         }
@@ -255,6 +271,11 @@ class CurvedBottomNavView @JvmOverloads constructor(
         iconViews.forEachIndexed { i, tv ->
             val selected = i == selectedIndex
             tv.animate().cancel()
+            // Tint vector icons
+            if (tv is android.widget.ImageView) {
+                val c = if (selected) accent else 0xFF6B7280.toInt()
+                tv.setColorFilter(c, android.graphics.PorterDuff.Mode.SRC_IN)
+            }
             when (navStyle) {
                 Style.CURVED -> {
                     tv.scaleX = 1f
@@ -334,13 +355,24 @@ class CurvedBottomNavView @JvmOverloads constructor(
         canvas.drawCircle(cx, cy, btnR - dp(1.5f), accentRing)
 
         if (selectedIndex in items.indices) {
-            val tp = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                textAlign = Paint.Align.CENTER
-                textSize = dp(20f)
+            val item = items[selectedIndex]
+            if (item.iconRes != 0) {
+                val d = context.getDrawable(item.iconRes)?.mutate()
+                if (d != null) {
+                    val s = (btnR * 1.1f).toInt().coerceAtLeast(1)
+                    d.setBounds((cx - s / 2f).toInt(), (cy - s / 2f).toInt(), (cx + s / 2f).toInt(), (cy + s / 2f).toInt())
+                    d.setColorFilter(android.graphics.PorterDuffColorFilter(0xFFFFFFFF.toInt(), android.graphics.PorterDuff.Mode.SRC_IN))
+                    d.draw(canvas)
+                }
+            } else {
+                val tp = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                    textAlign = Paint.Align.CENTER
+                    textSize = dp(20f)
+                }
+                val emoji = item.emoji
+                val fm = tp.fontMetrics
+                canvas.drawText(emoji, cx, cy - (fm.ascent + fm.descent) / 2f, tp)
             }
-            val emoji = items[selectedIndex].emoji
-            val fm = tp.fontMetrics
-            canvas.drawText(emoji, cx, cy - (fm.ascent + fm.descent) / 2f, tp)
         }
     }
 
@@ -389,18 +421,30 @@ class CurvedBottomNavView @JvmOverloads constructor(
             color = accent
             isFakeBoldText = true
         }
-        val emoji = item.emoji
         val label = item.label
-        val emojiW = tp.measureText(emoji)
+        val iconSize = dp(18f)
         val labelW = labelP.measureText(label)
         val gap = dp(6f)
-        val total = emojiW + gap + labelW
+        val total = iconSize + gap + labelW
         val startX = cx - total / 2f
         val cy = pillTop + pillH / 2f
-        val fm = tp.fontMetrics
-        canvas.drawText(emoji, startX + emojiW / 2f, cy - (fm.ascent + fm.descent) / 2f, tp)
+        if (item.iconRes != 0) {
+            val d = context.getDrawable(item.iconRes)?.mutate()
+            if (d != null) {
+                val s = iconSize.toInt()
+                val left = startX.toInt()
+                val top = (cy - s / 2f).toInt()
+                d.setBounds(left, top, left + s, top + s)
+                d.setColorFilter(android.graphics.PorterDuffColorFilter(accent, android.graphics.PorterDuff.Mode.SRC_IN))
+                d.draw(canvas)
+            }
+        } else {
+            tp.textAlign = Paint.Align.CENTER
+            val fm = tp.fontMetrics
+            canvas.drawText(item.emoji, startX + iconSize / 2f, cy - (fm.ascent + fm.descent) / 2f, tp)
+        }
         val lfm = labelP.fontMetrics
-        canvas.drawText(label, startX + emojiW + gap, cy - (lfm.ascent + lfm.descent) / 2f, labelP)
+        canvas.drawText(label, startX + iconSize + gap, cy - (lfm.ascent + lfm.descent) / 2f, labelP)
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

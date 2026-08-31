@@ -766,6 +766,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private fun requestDismiss(repo: AlarmRepository) {
+        try { RippleRingsEffect.stop(this) } catch (_: Exception) {}
         // Nếu đang có challenge (math/shake/face) thì không cho bấm tắt trực tiếp
         if (challengeType != Alarm.CHALLENGE_NONE && binding.btnDismiss.visibility != View.VISIBLE) {
             Toast.makeText(this, "Hãy hoàn thành thử thách trước!", Toast.LENGTH_SHORT).show()
@@ -920,6 +921,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private fun dismissAlarm(repo: AlarmRepository) {
+        try { RippleRingsEffect.stop(this) } catch (_: Exception) {}
         stopRinging()
         AlarmNotificationHelper.cancelRinging(this)
         if (repeatMode != Alarm.REPEAT_ONCE) {
@@ -1067,6 +1069,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     override fun onDestroy() {
+        try { RippleRingsEffect.stop(this) } catch (_: Exception) {}
         stopReadTimer()
 
         try {
