@@ -61,6 +61,11 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     private var mathSolvedCount = 0
     private var mathNeed = 1
     private var readIndex = 0
+    private var readWordIndex = 0
+    private var readWords: List<String> = emptyList()
+    private var readTimerLeft = 10
+    private val readTimerHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var readTimerRunnable: Runnable? = null
     private val readUsed = mutableSetOf<String>()
     private var currentSentence = ""
     private var tapCount = 0
@@ -318,35 +323,35 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private fun initMathChallenge() {
+        binding.btnSnooze.visibility = View.GONE
+        binding.btnDismiss.visibility = View.GONE
         nextMathQuestion()
-        val submit = View.OnClickListener {
-            val userAnswer = binding.edtMathAnswer.text.toString().toIntOrNull()
-            if (userAnswer != null && userAnswer == mathAnswer) {
+        val onPick: (Int) -> Unit = { chosen ->
+            if (chosen == mathAnswer) {
                 mathSolvedCount++
                 if (mathSolvedCount >= mathNeed) {
                     onChallengeStepComplete()
                 } else {
                     Toast.makeText(this, "Đúng! Còn ${mathNeed - mathSolvedCount} bài", Toast.LENGTH_SHORT).show()
-                    binding.edtMathAnswer.setText("")
                     nextMathQuestion()
                 }
             } else {
                 Toast.makeText(this, getString(R.string.wrong_answer), Toast.LENGTH_SHORT).show()
-                binding.edtMathAnswer.setText("")
                 nextMathQuestion(harder = mathNeed >= 10)
             }
         }
-        binding.btnSubmitMath.setOnClickListener(submit)
-        // Nút neo dưới — luôn bấm được (không bị bàn phím che)
-        binding.btnSnooze.visibility = View.GONE
-        binding.btnDismiss.visibility = View.VISIBLE
-        binding.btnDismiss.text = "Xác nhận đáp án"
-        binding.btnDismiss.setOnClickListener(submit)
-        // Enter trên bàn phím cũng nộp
-        binding.edtMathAnswer.setOnEditorActionListener { _, _, _ ->
-            submit.onClick(binding.btnDismiss); true
+        try {
+            binding.btnMathA.setOnClickListener { onPick(mathChoices.getOrElse(0) { 0 }) }
+            binding.btnMathB.setOnClickListener { onPick(mathChoices.getOrElse(1) { 0 }) }
+            binding.btnMathC.setOnClickListener { onPick(mathChoices.getOrElse(2) { 0 }) }
+            binding.btnMathD.setOnClickListener { onPick(mathChoices.getOrElse(3) { 0 }) }
+        } catch (e: Exception) {
+            Toast.makeText(this, "Lỗi nút đáp án: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
+
+    /** 4 đáp án A–D (đã xáo), đúng nằm trong list */
+    private var mathChoices: List<Int> = emptyList()
 
     private fun nextMathQuestion(harder: Boolean = mathNeed >= 10) {
         val (q, a) = if (harder) {
@@ -377,10 +382,29 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             getString(R.string.math_question, a1, b1) to (a1 + b1)
         }
         mathAnswer = a
+        // 3 đáp án nhiễu gần đúng + đáp án đúng, xáo trộn
+        val wrong = mutableSetOf<Int>()
+        var guard = 0
+        while (wrong.size < 3 && guard < 40) {
+            guard++
+            val delta = listOf(-12, -8, -5, -3, -2, -1, 1, 2, 3, 5, 7, 9, 11, 15).random()
+            val w = a + delta
+            if (w != a) wrong.add(w)
+        }
+        while (wrong.size < 3) wrong.add(a + wrong.size + 17)
+        mathChoices = (wrong.toList() + a).shuffled()
+        val labels = listOf("A", "B", "C", "D")
         binding.tvMathQuestion.text = if (mathNeed > 1)
-            "($mathSolvedCount/$mathNeed) $q"
+            "(${mathSolvedCount + 1}/$mathNeed) $q"
         else q
+        try {
+            binding.btnMathA.text = "A. ${mathChoices[0]}"
+            binding.btnMathB.text = "B. ${mathChoices[1]}"
+            binding.btnMathC.text = "C. ${mathChoices[2]}"
+            binding.btnMathD.text = "D. ${mathChoices[3]}"
+        } catch (_: Exception) {}
     }
+
 
     private val readPool = listOf(
         "Bình minh trên sông Hồng rất đẹp",
@@ -401,41 +425,118 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     )
 
     private fun initReadChallenge() {
-        pickNewSentence()
-        // Nút neo dưới luôn hiện
         binding.btnSnooze.visibility = View.GONE
-        binding.btnDismiss.visibility = View.VISIBLE
-        binding.btnDismiss.text = "Xác nhận câu đọc"
-        val submitRead = View.OnClickListener {
-            // delegated below — same body
-            binding.btnSubmitRead.performClick()
-        }
-        binding.btnDismiss.setOnClickListener(submitRead)
-        binding.btnSubmitRead.setOnClickListener {
-            val typed = normalizeText(binding.edtReadAnswer.text?.toString().orEmpty())
-            val expect = normalizeText(currentSentence)
-            if (typed == expect || typed.contains(expect.take(12)) || expect.contains(typed.take(12))) {
-                readIndex++
-                if (readIndex >= 3) {
-                    onChallengeStepComplete()
-                } else {
-                    Toast.makeText(this, "Đúng! Câu tiếp theo", Toast.LENGTH_SHORT).show()
-                    binding.edtReadAnswer.setText("")
+        binding.btnDismiss.visibility = View.GONE
+        readIndex = 0
+        pickNewSentence()
+    }
+
+    private fun stopReadTimer() {
+        readTimerRunnable?.let { readTimerHandler.removeCallbacks(it) }
+        readTimerRunnable = null
+    }
+
+    private fun startReadTimer() {
+        stopReadTimer()
+        readTimerLeft = 10
+        try { binding.tvReadTimer.text = "⏱ $readTimerLeft giây" } catch (_: Exception) {}
+        val tick = object : Runnable {
+            override fun run() {
+                if (isFinishing) return
+                readTimerLeft--
+                try {
+                    binding.tvReadTimer.text = if (readTimerLeft > 0)
+                        "⏱ $readTimerLeft giây"
+                    else
+                        "⏱ Hết giờ!"
+                    binding.tvReadTimer.setTextColor(
+                        if (readTimerLeft <= 3) 0xFFEF4444.toInt() else 0xFFFCA5A5.toInt()
+                    )
+                } catch (_: Exception) {}
+                if (readTimerLeft <= 0) {
+                    Toast.makeText(this@AlarmRingActivity, "Hết 10 giây — câu mới!", Toast.LENGTH_SHORT).show()
+                    // Không cộng readIndex — làm lại câu khác
                     pickNewSentence()
+                    return
                 }
-            } else {
-                Toast.makeText(this, "Sai — gõ lại đúng câu (có thể bỏ dấu)", Toast.LENGTH_SHORT).show()
+                readTimerHandler.postDelayed(this, 1000L)
             }
         }
+        readTimerRunnable = tick
+        readTimerHandler.postDelayed(tick, 1000L)
     }
 
     private fun pickNewSentence() {
+        stopReadTimer()
         val candidates = readPool.filter { it !in readUsed }
-        val s = (if (candidates.isEmpty()) readPool else candidates).random()
+        val s = (if (candidates.isEmpty()) {
+            readUsed.clear()
+            readPool
+        } else candidates).random()
         readUsed.add(s)
         currentSentence = s
-        binding.tvReadSentence.text = s
-        binding.tvReadProgress.text = "${readIndex + 1} / 3"
+        readWords = s.split(Regex("\s+")).filter { it.isNotBlank() }
+        readWordIndex = 0
+        try {
+            binding.tvReadSentence.text = s
+            binding.tvReadProgress.text = "${readIndex + 1} / 3"
+            binding.tvReadBuilt.text = "…"
+        } catch (_: Exception) {}
+        buildReadWordChips()
+        startReadTimer()
+    }
+
+    private fun buildReadWordChips() {
+        try {
+            val group = binding.chipGroupReadWords
+            group.removeAllViews()
+            val shuffled = readWords.mapIndexed { i, w -> i to w }.shuffled()
+            for ((origIndex, word) in shuffled) {
+                val chip = com.google.android.material.chip.Chip(this).apply {
+                    text = word
+                    isCheckable = false
+                    isClickable = true
+                    isFocusable = true
+                    chipBackgroundColor = android.content.res.ColorStateList.valueOf(0xFF4338CA.toInt())
+                    setTextColor(0xFFFFFFFF.toInt())
+                    textSize = 15f
+                    setOnClickListener { onReadWordTapped(origIndex, word, this) }
+                }
+                group.addView(chip)
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this, "Lỗi chip từ: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun onReadWordTapped(origIndex: Int, word: String, chip: com.google.android.material.chip.Chip) {
+        if (origIndex == readWordIndex) {
+            // Đúng thứ tự
+            chip.isEnabled = false
+            chip.alpha = 0.35f
+            readWordIndex++
+            val built = readWords.take(readWordIndex).joinToString(" ")
+            try { binding.tvReadBuilt.text = built } catch (_: Exception) {}
+            if (readWordIndex >= readWords.size) {
+                stopReadTimer()
+                readIndex++
+                if (readIndex >= 3) {
+                    Toast.makeText(this, "Xong chọn từ!", Toast.LENGTH_SHORT).show()
+                    onChallengeStepComplete()
+                } else {
+                    Toast.makeText(this, "Đúng! Câu tiếp (${readIndex}/3)", Toast.LENGTH_SHORT).show()
+                    pickNewSentence()
+                }
+            }
+        } else {
+            // Sai — rung nhẹ / toast
+            Toast.makeText(this, "Sai thứ tự — chọn từ đúng tiếp theo", Toast.LENGTH_SHORT).show()
+            chip.animate().translationX(12f).setDuration(40)
+                .withEndAction { chip.animate().translationX(-12f).setDuration(40)
+                    .withEndAction { chip.animate().translationX(0f).setDuration(40).start() }
+                    .start() }
+                .start()
+        }
     }
 
     private fun normalizeText(s: String): String {
@@ -901,6 +1002,8 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     override fun onDestroy() {
+        stopReadTimer()
+
         try {
             unregisterReceiver(forceStopReceiver)
         } catch (_: Exception) {

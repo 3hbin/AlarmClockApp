@@ -114,29 +114,64 @@
                 android:textSize="28sp"
                 android:textStyle="bold" />
 
+            <!-- Giữ id cũ (ẩn) để binding không vỡ nếu còn reference -->
             <EditText
                 android:id="@+id/edtMathAnswer"
-                android:layout_width="160dp"
-                android:layout_height="48dp"
-                android:layout_marginTop="14dp"
-                android:background="@drawable/bg_ring_input"
-                android:hint="@string/challenge_hint"
-                android:inputType="numberSigned"
-                android:padding="12dp"
-                android:textColor="@android:color/white"
-                android:textColorHint="#94A3B8"
-                android:gravity="center"
-                android:textSize="18sp" />
-
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSubmitMath"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
+
+            <GridLayout
+                android:id="@+id/gridMathChoices"
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="wrap_content"
+                android:columnCount="2"
                 android:layout_marginTop="14dp"
-                android:text="@string/confirm"
-                android:textSize="16sp"
-                android:backgroundTint="#6366F1"
-                app:cornerRadius="26dp" />
+                android:alignmentMode="alignBounds"
+                android:useDefaultMargins="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMathA"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_columnWeight="1"
+                    android:text="A. —"
+                    android:textSize="16sp"
+                    android:backgroundTint="#4338CA"
+                    app:cornerRadius="16dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMathB"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_columnWeight="1"
+                    android:text="B. —"
+                    android:textSize="16sp"
+                    android:backgroundTint="#4338CA"
+                    app:cornerRadius="16dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMathC"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_columnWeight="1"
+                    android:text="C. —"
+                    android:textSize="16sp"
+                    android:backgroundTint="#4338CA"
+                    app:cornerRadius="16dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMathD"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_columnWeight="1"
+                    android:text="D. —"
+                    android:textSize="16sp"
+                    android:backgroundTint="#4338CA"
+                    app:cornerRadius="16dp" />
+            </GridLayout>
         </LinearLayout>
 
         <LinearLayout
@@ -170,63 +205,89 @@
         </LinearLayout>
 
 
-        <!-- Đọc câu -->
+        <!-- Chọn từ nhanh (kiểu Duolingo) 10 giây -->
         <LinearLayout
             android:id="@+id/layoutReadChallenge"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:gravity="center"
-            android:padding="20dp"
+            android:gravity="center_horizontal"
+            android:padding="16dp"
             android:background="@drawable/bg_ring_card"
             android:layout_marginBottom="20dp"
             android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvReadTimer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⏱ 10 giây"
+                android:textColor="#FCA5A5"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="6dp" />
+
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Đọc to câu sau (không lặp câu cũ)"
+                android:text="Chọn từ theo đúng thứ tự (nhanh!)"
                 android:textColor="#A5B4FC"
                 android:textSize="13sp"
                 android:layout_marginBottom="8dp" />
-            <TextView
-                android:id="@+id/tvReadSentence"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="..."
-                android:textColor="@android:color/white"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:gravity="center"
-                android:padding="8dp" />
+
             <TextView
                 android:id="@+id/tvReadProgress"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="1 / 3"
                 android:textColor="#C7D2FE"
-                android:textSize="14sp"
-                android:layout_marginTop="8dp" />
+                android:textSize="12sp"
+                android:layout_marginBottom="6dp" />
+
+            <!-- Câu đang ghép -->
+            <TextView
+                android:id="@+id/tvReadBuilt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:gravity="center"
+                android:padding="10dp"
+                android:background="@drawable/bg_ring_input"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:text="…"
+                android:layout_marginBottom="10dp" />
+
+            <!-- Ẩn câu gốc (chỉ dùng nội bộ / gợi ý nhẹ) -->
+            <TextView
+                android:id="@+id/tvReadSentence"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="#64748B"
+                android:textSize="11sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupReadWords"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp"
+                app:singleSelection="false" />
+
+            <!-- Giữ id cũ ẩn để binding không vỡ -->
             <EditText
                 android:id="@+id/edtReadAnswer"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="12dp"
-                android:background="@drawable/bg_ring_input"
-                android:hint="Gõ lại câu (không dấu cũng được)"
-                android:padding="12dp"
-                android:textColor="@android:color/white"
-                android:textColorHint="#94A3B8"
-                android:gravity="center"
-                android:inputType="text" />
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSubmitRead"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="14dp"
-                android:text="Xác nhận"
-                android:textSize="16sp"
-                android:backgroundTint="#6366F1"
-                app:cornerRadius="26dp" />
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
         </LinearLayout>
 
         <!-- Bấm liên tục 200 -->

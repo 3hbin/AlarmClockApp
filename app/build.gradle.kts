@@ -13,8 +13,8 @@ android {
         applicationId = "com.alarmclock.dongho"
         minSdk = 28
         targetSdk = 34
-        versionCode = 57
-        versionName = "3.49"
+        versionCode = 59
+        versionName = "3.51"
         buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"d0d25405fe2640608a6611b6cfdf1b44\"")
         buildConfigField("String", "YOUTUBE_API_KEY", "\"AIzaSyDeh5FsoNyVKEURsSLeSmx4DNp_rJfdD5M\"")
         buildConfigField("String", "WEATHER_API_KEY", "\"82b5a70ad1ea5e93d8482e0c17712f93\"")

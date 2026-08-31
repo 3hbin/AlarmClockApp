@@ -40,7 +40,7 @@ data class Alarm(
             CHALLENGE_PHOTO -> "Chụp ảnh"
             CHALLENGE_FACE -> "Quét mặt"
             CHALLENGE_BIOMETRIC -> "Vân tay/Face hệ thống"
-            CHALLENGE_READ -> "Đọc câu"
+            CHALLENGE_READ -> "Chọn từ nhanh (10s)"
             CHALLENGE_MATH10 -> "Giải 10 bài toán"
             CHALLENGE_SHAKE100 -> "Lắc máy 100 lần"
             CHALLENGE_TAP200 -> "Bấm 200 lần"
