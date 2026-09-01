@@ -152,11 +152,11 @@ class CurvedBottomNavView @JvmOverloads constructor(
         if (animate && width > 0) {
             ValueAnimator.ofFloat(animX, target).apply {
                 duration = when (navStyle) {
-                    Style.GOOGLE -> 380L
-                    Style.PERSISTENT -> 280L
-                    else -> 450L
+                    Style.GOOGLE -> 320L
+                    Style.PERSISTENT -> 260L
+                    else -> 320L
                 }
-                interpolator = DecelerateInterpolator(1.6f)
+                interpolator = android.view.animation.OvershootInterpolator(0.6f)
                 addUpdateListener {
                     animX = it.animatedValue as Float
                     invalidate()
@@ -280,17 +280,28 @@ class CurvedBottomNavView @JvmOverloads constructor(
             }
             when (navStyle) {
                 Style.CURVED -> {
-                    tv.scaleX = 1f
-                    tv.scaleY = 1f
+                    // Emoji luôn hiện — không ẩn alpha (canvas emoji hay lỗi)
+                    tv.alpha = 1f
+                    val scale = if (selected) 1.35f else 1f
+                    val ty = if (selected) -dp(18f) else 0f
                     if (animated) {
-                        tv.animate().alpha(if (selected) 0f else 1f).setDuration(180).start()
+                        tv.animate()
+                            .scaleX(scale).scaleY(scale)
+                            .translationY(ty)
+                            .setDuration(280)
+                            .setInterpolator(DecelerateInterpolator())
+                            .start()
                     } else {
-                        tv.alpha = if (selected) 0f else 1f
+                        tv.scaleX = scale
+                        tv.scaleY = scale
+                        tv.translationY = ty
                     }
                     labelViews.getOrNull(i)?.apply {
                         visibility = VISIBLE
                         setTextColor(if (selected) labelActive else labelInactive)
                         paint.isFakeBoldText = selected
+                        // Ẩn chữ tab đang chọn (nút nổi che)
+                        alpha = if (selected) 0f else 1f
                     }
                 }
                 Style.PERSISTENT -> {
@@ -367,13 +378,8 @@ class CurvedBottomNavView @JvmOverloads constructor(
                     d.draw(canvas)
                 }
             } else {
-                val tp = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    textAlign = Paint.Align.CENTER
-                    textSize = dp(20f)
-                }
-                val emoji = item.emoji
-                val fm = tp.fontMetrics
-                canvas.drawText(emoji, cx, cy - (fm.ascent + fm.descent) / 2f, tp)
+                // Emoji đã vẽ bằng TextView (scale + translationY) — không vẽ lại trên canvas
+                // tránh chồng 2 emoji / font lỗi
             }
         }
     }

@@ -2,7 +2,7 @@
 <resources>
     <string name="nav_alarm">Báo</string>
     <string name="nav_world">Thế giới</string>
-    <string name="nav_stopwatch">Bấm</string>
+    <string name="nav_stopwatch">Bấm giờ</string>
     <string name="nav_timer">Đếm</string>
     <string name="nav_gallery">Ảnh</string>
     <string name="nav_settings">Cài</string>

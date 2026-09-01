@@ -6,18 +6,17 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 
 /**
- * 6 nút thanh dưới — icon vector kiểu Flaticon (không emoji).
- * alarm-clock / globe / clock(stopwatch) / time-quarter(timer) / picture / settings
+ * 6 nút thanh dưới — emoji như bản cũ (dễ nhìn, không vector).
  */
 object BottomNavHelper {
 
     fun items(ctx: Context) = listOf(
-        CurvedBottomNavView.Item(0, "", ctx.getString(R.string.nav_alarm), R.drawable.ic_nav_alarm),
-        CurvedBottomNavView.Item(1, "", ctx.getString(R.string.nav_world), R.drawable.ic_nav_globe),
-        CurvedBottomNavView.Item(2, "", ctx.getString(R.string.nav_stopwatch), R.drawable.ic_nav_stopwatch),
-        CurvedBottomNavView.Item(3, "", ctx.getString(R.string.nav_timer), R.drawable.ic_nav_timer),
-        CurvedBottomNavView.Item(4, "", ctx.getString(R.string.nav_gallery), R.drawable.ic_nav_gallery),
-        CurvedBottomNavView.Item(5, "", ctx.getString(R.string.nav_settings), R.drawable.ic_nav_settings)
+        CurvedBottomNavView.Item(0, "⏰", ctx.getString(R.string.nav_alarm)),
+        CurvedBottomNavView.Item(1, "🌍", ctx.getString(R.string.nav_world)),
+        CurvedBottomNavView.Item(2, "⏱️", ctx.getString(R.string.nav_stopwatch)),
+        CurvedBottomNavView.Item(3, "⏳", ctx.getString(R.string.nav_timer)),
+        CurvedBottomNavView.Item(4, "🖼️", ctx.getString(R.string.nav_gallery)),
+        CurvedBottomNavView.Item(5, "⚙️", ctx.getString(R.string.nav_settings))
     )
 
     fun bind(activity: AppCompatActivity, nav: CurvedBottomNavView, selectedIndex: Int) {
