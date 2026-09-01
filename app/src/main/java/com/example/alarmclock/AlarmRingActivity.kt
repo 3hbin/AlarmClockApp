@@ -103,19 +103,35 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             }
         }
 
+    private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
+        try {
+            faceChallengeLauncher.launch(
+                android.content.Intent(this, FaceChallengeActivity::class.java).apply {
+                    putExtra(FaceChallengeActivity.EXTRA_MODE, mode)
+                    putExtra(FaceChallengeActivity.EXTRA_EASY, allEasyMode || challengeType == Alarm.CHALLENGE_FACE_EXPR)
+                    addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                }
+            )
+        } catch (e: Exception) {
+            Toast.makeText(this, "Không mở được quét mặt: ${e.message}", Toast.LENGTH_LONG).show()
+            // Cho tắt thủ công nếu camera hỏng hoàn toàn
+            binding.btnDismiss.visibility = View.VISIBLE
+            binding.btnDismiss.text = "Camera lỗi — bấm để tắt"
+            binding.btnDismiss.setOnClickListener { onChallengeStepComplete() }
+        }
+    }
+
     private fun launchFaceExpr() {
-        faceChallengeLauncher.launch(
-            android.content.Intent(this, FaceChallengeActivity::class.java).apply {
-                putExtra(FaceChallengeActivity.EXTRA_MODE, FaceChallengeActivity.MODE_EXPR)
-                putExtra(FaceChallengeActivity.EXTRA_EASY, allEasyMode)
-            }
-        )
+        launchFaceChallenge(FaceChallengeActivity.MODE_EXPR)
     }
 
     private fun onFaceChallengeCanceled() {
+        val isExpr = challengeType == Alarm.CHALLENGE_FACE_EXPR ||
+            (runningAll && allChain.getOrNull(allStepIndex) == Alarm.CHALLENGE_FACE_EXPR)
         Toast.makeText(
             this,
-            "Chưa xong biểu cảm — bấm nút đỏ để thử lại",
+            if (isExpr) "Chưa xong biểu cảm — bấm nút đỏ thử lại"
+            else "Chưa quét mặt — bấm nút đỏ thử lại",
             Toast.LENGTH_LONG
         ).show()
         try {
@@ -123,14 +139,17 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             binding.btnSnooze.visibility = View.GONE
             if (runningAll) {
                 binding.btnDismiss.text =
-                    "Bắt đầu biểu cảm (${allStepIndex + 1}/${allChain.size})"
+                    "Thử lại (${allStepIndex + 1}/${allChain.size})"
+            } else if (isExpr) {
+                binding.btnDismiss.text = "Bắt đầu: 10 biểu cảm dễ"
             } else {
                 binding.btnDismiss.text = "Bắt đầu quét mặt lại"
-                if (!isStrictAntiSnooze && !AppSettings.isAntiTroll(this)) {
-                    binding.btnSnooze.visibility = View.VISIBLE
-                }
             }
-            binding.btnDismiss.setOnClickListener { launchFaceExpr() }
+            if (!isStrictAntiSnooze && !AppSettings.isAntiTroll(this) && !runningAll) {
+                binding.btnSnooze.visibility = View.VISIBLE
+            }
+            val mode = if (isExpr) FaceChallengeActivity.MODE_EXPR else FaceChallengeActivity.MODE_FACE
+            binding.btnDismiss.setOnClickListener { launchFaceChallenge(mode) }
         } catch (_: Exception) {}
     }
 
@@ -305,9 +324,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                 initTapChallenge()
             }
             Alarm.CHALLENGE_FACE, Alarm.CHALLENGE_FACE_EXPR -> {
-                // Không auto-mở camera (Huawei hay đen + tắt quá nhanh).
-                // Hiện màn báo thức + nút bắt đầu thử thách.
-                binding.btnDismiss.visibility = View.GONE
+                // Không auto-mở camera (Huawei hay đen). Hiện nút bắt đầu.
                 binding.btnSnooze.visibility = View.GONE
                 binding.btnDismiss.visibility = View.VISIBLE
                 binding.btnDismiss.text = if (challengeType == Alarm.CHALLENGE_FACE_EXPR)
@@ -319,14 +336,9 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                         FaceChallengeActivity.MODE_EXPR
                     else
                         FaceChallengeActivity.MODE_FACE
-                    faceChallengeLauncher.launch(
-                        android.content.Intent(this, FaceChallengeActivity::class.java).apply {
-                            putExtra(FaceChallengeActivity.EXTRA_MODE, mode)
-                        }
-                    )
+                    launchFaceChallenge(mode)
                 }
-                // Vẫn cho báo lại nếu không strict
-                if (!isStrictAntiSnooze) {
+                if (!isStrictAntiSnooze && !AppSettings.isAntiTroll(this)) {
                     binding.btnSnooze.visibility = View.VISIBLE
                 }
             }
