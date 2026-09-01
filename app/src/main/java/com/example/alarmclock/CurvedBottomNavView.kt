@@ -10,9 +10,11 @@ import android.graphics.RectF
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.widget.ImageView
 import android.widget.TextView
 
 /**
@@ -87,7 +89,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
     }
     private val path = Path()
     private val rect = RectF()
-    private val iconViews = mutableListOf<TextView>()
+    private val iconViews = mutableListOf<View>()
     private val labelViews = mutableListOf<TextView>()
 
     private fun dp(v: Float) = v * resources.displayMetrics.density
@@ -217,9 +219,9 @@ class CurvedBottomNavView @JvmOverloads constructor(
             }
 
             val icon: View = if (item.iconRes != 0) {
-                android.widget.ImageView(context).apply {
+                ImageView(context).apply {
                     setImageResource(item.iconRes)
-                    scaleType = android.widget.ImageView.ScaleType.CENTER_INSIDE
+                    scaleType = ImageView.ScaleType.CENTER_INSIDE
                     layoutParams = LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT, dp(26f).toInt()
                     )
@@ -272,7 +274,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
             val selected = i == selectedIndex
             tv.animate().cancel()
             // Tint vector icons
-            if (tv is android.widget.ImageView) {
+            if (tv is ImageView) {
                 val c = if (selected) accent else 0xFF6B7280.toInt()
                 tv.setColorFilter(c, android.graphics.PorterDuff.Mode.SRC_IN)
             }
