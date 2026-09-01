@@ -42,6 +42,13 @@ class FaceChallengeActivity : AppCompatActivity() {
         const val MODE_EXPR = 1
         const val EXTRA_EASY = "easy_expr"
         private const val TAG = "FaceChallenge"
+        /** singleInstance AlarmRing hay mất ActivityResult → dùng cờ này */
+        @JvmStatic @Volatile var pendingResultOk: Boolean? = null
+        fun consumePendingResult(): Boolean? {
+            val v = pendingResultOk
+            pendingResultOk = null
+            return v
+        }
     }
 
     private enum class Expr(val label: String, val emoji: String) {
@@ -112,6 +119,10 @@ class FaceChallengeActivity : AppCompatActivity() {
         try { showOnLockScreen() } catch (_: Exception) {}
         binding = ActivityFaceChallengeBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        try {
+            window.statusBarColor = 0xFF0F172A.toInt()
+            window.navigationBarColor = 0xFF0F172A.toInt()
+        } catch (_: Exception) {}
         mode = intent.getIntExtra(EXTRA_MODE, MODE_FACE)
         val easy = intent.getBooleanExtra(EXTRA_EASY, true)
         exprSteps = if (easy || mode == MODE_EXPR) exprStepsEasy else exprStepsFull
@@ -126,6 +137,7 @@ class FaceChallengeActivity : AppCompatActivity() {
 
         binding.btnConfirmFace.setOnClickListener {
             if (facePassed || usingFallback) {
+                pendingResultOk = true
                 setResult(RESULT_OK)
                 finishRestore()
             } else {
@@ -133,6 +145,7 @@ class FaceChallengeActivity : AppCompatActivity() {
             }
         }
         binding.btnCancelFace.setOnClickListener {
+            pendingResultOk = false
             setResult(RESULT_CANCELED)
             finishRestore()
         }
@@ -341,7 +354,8 @@ class FaceChallengeActivity : AppCompatActivity() {
                 exprIndex++
                 if (exprIndex >= exprSteps.size) {
                     facePassed = true
-                    setResult(RESULT_OK)
+                    pendingResultOk = true
+                setResult(RESULT_OK)
                     finishRestore()
                 } else {
                     updateExprUi()
@@ -352,6 +366,7 @@ class FaceChallengeActivity : AppCompatActivity() {
                 }
             } else {
                 facePassed = true
+                pendingResultOk = true
                 setResult(RESULT_OK)
                 finishRestore()
             }
@@ -388,6 +403,7 @@ class FaceChallengeActivity : AppCompatActivity() {
                 facePassed = true
                 binding.tvFaceStatus.text = "Xong! Đang tắt…"
                 binding.btnConfirmFace.isEnabled = true
+                pendingResultOk = true
                 setResult(RESULT_OK)
                 finishRestore()
             } else {
@@ -410,7 +426,8 @@ class FaceChallengeActivity : AppCompatActivity() {
                 if (exprIndex >= exprSteps.size) {
                     facePassed = true
                     binding.tvFaceStatus.text = "Đủ 10 biểu cảm!"
-                    setResult(RESULT_OK)
+                    pendingResultOk = true
+                setResult(RESULT_OK)
                     finishRestore()
                 } else {
                     updateExprUi()

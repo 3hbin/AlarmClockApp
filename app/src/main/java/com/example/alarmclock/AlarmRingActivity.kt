@@ -96,6 +96,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     private val faceChallengeLauncher:
         androidx.activity.result.ActivityResultLauncher<android.content.Intent> =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            android.util.Log.i("AlarmRing", "FaceChallenge result=${result.resultCode}")
             if (result.resultCode == RESULT_OK) {
                 onChallengeStepComplete()
             } else {
@@ -105,11 +106,14 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
 
     private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
         try {
+            FaceChallengeActivity.pendingResultOk = null
             faceChallengeLauncher.launch(
                 android.content.Intent(this, FaceChallengeActivity::class.java).apply {
                     putExtra(FaceChallengeActivity.EXTRA_MODE, mode)
-                    putExtra(FaceChallengeActivity.EXTRA_EASY, allEasyMode || challengeType == Alarm.CHALLENGE_FACE_EXPR)
-                    addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    putExtra(
+                        FaceChallengeActivity.EXTRA_EASY,
+                        allEasyMode || challengeType == Alarm.CHALLENGE_FACE_EXPR
+                    )
                 }
             )
         } catch (e: Exception) {
@@ -1159,6 +1163,11 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     override fun onResume() {
+        FaceChallengeActivity.consumePendingResult()?.let { ok ->
+            android.util.Log.i("AlarmRing", "Face pending result ok=$ok")
+            if (ok) onChallengeStepComplete() else onFaceChallengeCanceled()
+        }
+
         super.onResume()
         // Đăng ký lại cảm biến lắc nếu đang ở thử thách lắc
         if (challengeType == Alarm.CHALLENGE_SHAKE || challengeType == Alarm.CHALLENGE_SHAKE100) {
