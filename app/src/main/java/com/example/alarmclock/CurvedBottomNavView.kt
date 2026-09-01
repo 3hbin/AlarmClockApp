@@ -13,15 +13,13 @@ import android.view.Gravity
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
-import android.widget.LinearLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 
 /**
- * Bottom nav 3 kiểu:
- * - CURVED: Android cong + nút tròn nổi
- * - PERSISTENT: persistent_bottom_nav_bar — thanh phẳng, icon+label
- * - GOOGLE: google_nav_bar — pill mở rộng icon+chữ
+ * Bottom nav 3 kiểu — CURVED theo curved_labeled_navigation_bar:
+ * thanh trắng lõm sâu + nút tròn nổi chứa icon tab đang chọn.
  */
 class CurvedBottomNavView @JvmOverloads constructor(
     context: Context,
@@ -38,6 +36,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
     private var pillExpand = 1f
     private var onItemSelected: ((Int, Item) -> Unit)? = null
     private var onItemLongClick: ((Int, Item) -> Boolean)? = null
+
     var navStyle: Style = Style.CURVED
         set(value) {
             if (field == value) return
@@ -57,30 +56,28 @@ class CurvedBottomNavView @JvmOverloads constructor(
             }
         }
 
-    private val barColor = Color.WHITE
-    private val gapColor = 0xFFF7F8FC.toInt()
     private val accent = 0xFF4F5BFF.toInt()
-    private val labelActive = 0xFF4F5BFF.toInt()
     private val labelInactive = 0xFF9AA0B4.toInt()
+    private val labelActive = 0xFF4F5BFF.toInt()
 
     private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
-        color = barColor
-        setShadowLayer(16f, 0f, -2f, 0x28000000)
+        color = Color.WHITE
+        setShadowLayer(14f, 0f, -2f, 0x30000000)
     }
     private val buttonPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
         color = Color.WHITE
         setShadowLayer(12f, 0f, 4f, 0x40000000)
     }
-    private val accentRing = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 3f * resources.displayMetrics.density
+        strokeWidth = 2.5f * resources.displayMetrics.density
         color = accent
     }
     private val pillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
-        color = 0x1A3F51B5
+        color = 0x1A4F5BFF
     }
     private val topLine = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -97,10 +94,10 @@ class CurvedBottomNavView @JvmOverloads constructor(
     private val flatBarH get() = when (navStyle) {
         Style.GOOGLE -> dp(62f)
         Style.PERSISTENT -> dp(58f)
-        else -> dp(52f)
+        else -> dp(58f)
     }
-    private val dip get() = dp(22f)
-    private val btnR get() = dp(26f)
+    private val dip get() = dp(30f)
+    private val btnR get() = dp(30f)
 
     init {
         setWillNotDraw(false)
@@ -113,9 +110,9 @@ class CurvedBottomNavView @JvmOverloads constructor(
     private fun applyStyleChrome() {
         when (navStyle) {
             Style.CURVED -> {
-                setBackgroundColor(gapColor)
-                barPaint.color = barColor
-                barPaint.setShadowLayer(16f, 0f, -2f, 0x28000000)
+                setBackgroundColor(0xFFF7F8FC.toInt())
+                barPaint.color = Color.WHITE
+                barPaint.setShadowLayer(14f, 0f, -2f, 0x30000000)
             }
             Style.PERSISTENT, Style.GOOGLE -> {
                 setBackgroundColor(Color.TRANSPARENT)
@@ -132,8 +129,8 @@ class CurvedBottomNavView @JvmOverloads constructor(
         buildItems()
         post {
             animX = centerX(selectedIndex)
-            invalidate()
             styleItems(false)
+            invalidate()
         }
     }
 
@@ -152,11 +149,11 @@ class CurvedBottomNavView @JvmOverloads constructor(
         if (animate && width > 0) {
             ValueAnimator.ofFloat(animX, target).apply {
                 duration = when (navStyle) {
+                    Style.CURVED -> 420L
                     Style.GOOGLE -> 320L
-                    Style.PERSISTENT -> 260L
-                    else -> 320L
+                    else -> 260L
                 }
-                interpolator = android.view.animation.OvershootInterpolator(0.6f)
+                interpolator = DecelerateInterpolator(1.5f)
                 addUpdateListener {
                     animX = it.animatedValue as Float
                     invalidate()
@@ -185,23 +182,25 @@ class CurvedBottomNavView @JvmOverloads constructor(
         removeAllViews()
         iconViews.clear()
         labelViews.clear()
+        if (items.isEmpty()) return
 
         val topPad = when (navStyle) {
-            Style.CURVED -> (btnR * 0.85f).toInt()
-            Style.GOOGLE -> dp(8f).toInt()
-            Style.PERSISTENT -> dp(6f).toInt()
+            Style.CURVED -> (btnR * 0.9f).toInt()
+            else -> 0
         }
         val row = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER
-            setPadding(dp(4f).toInt(), topPad, dp(4f).toInt(), dp(6f).toInt())
-            layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+            gravity = Gravity.BOTTOM
+            layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT).apply {
+                topMargin = topPad
+            }
+            setPadding(0, 0, 0, dp(6f).toInt())
         }
 
         items.forEachIndexed { index, item ->
             val col = LinearLayout(context).apply {
                 orientation = LinearLayout.VERTICAL
-                gravity = Gravity.CENTER
+                gravity = Gravity.CENTER_HORIZONTAL or Gravity.BOTTOM
                 layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
                 isClickable = true
                 isFocusable = true
@@ -214,7 +213,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
                     selectIndex(index, animate = true)
                     postDelayed({
                         onItemSelected?.invoke(index, item)
-                    }, if (changed) 220L else 0L)
+                    }, if (changed) 240L else 0L)
                 }
             }
 
@@ -222,32 +221,27 @@ class CurvedBottomNavView @JvmOverloads constructor(
                 ImageView(context).apply {
                     setImageResource(item.iconRes)
                     scaleType = ImageView.ScaleType.CENTER_INSIDE
-                    layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, dp(22f).toInt()
-                    )
+                    layoutParams = LinearLayout.LayoutParams(dp(28f).toInt(), dp(26f).toInt())
                     setColorFilter(
                         if (index == selectedIndex) accent else 0xFF6B7280.toInt(),
                         android.graphics.PorterDuff.Mode.SRC_IN
                     )
-                    tag = "nav_icon"
                 }
             } else {
                 TextView(context).apply {
                     text = item.emoji
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, if (navStyle == Style.GOOGLE) 14f else 15f)
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
                     gravity = Gravity.CENTER
-                    layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, dp(26f).toInt()
-                    )
+                    layoutParams = LinearLayout.LayoutParams(dp(36f).toInt(), dp(28f).toInt())
                 }
             }
+
             val label = TextView(context).apply {
                 text = item.label
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, if (navStyle == Style.GOOGLE) 10f else 9f)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 10f)
                 gravity = Gravity.CENTER
                 maxLines = 1
                 setTextColor(labelInactive)
-                visibility = if (navStyle == Style.GOOGLE) INVISIBLE else VISIBLE
                 layoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
                     LinearLayout.LayoutParams.WRAP_CONTENT
@@ -256,7 +250,6 @@ class CurvedBottomNavView @JvmOverloads constructor(
             col.addView(icon)
             col.addView(label)
             iconViews.add(icon)
-            if (navStyle == Style.GOOGLE) label.visibility = INVISIBLE
             labelViews.add(label)
             row.addView(col)
         }
@@ -273,24 +266,40 @@ class CurvedBottomNavView @JvmOverloads constructor(
         iconViews.forEachIndexed { i, tv ->
             val selected = i == selectedIndex
             tv.animate().cancel()
-            // Tint vector icons
             if (tv is ImageView) {
                 val c = if (selected) accent else 0xFF6B7280.toInt()
                 tv.setColorFilter(c, android.graphics.PorterDuff.Mode.SRC_IN)
             }
             when (navStyle) {
                 Style.CURVED -> {
-                    // Thanh phẳng hiện đại: emoji + label luôn hiện, tab chọn to hơn + nhô nhẹ
+                    // Icon tab chọn nhô vào nút tròn nổi
                     tv.alpha = 1f
-                    val scale = if (selected) 1.12f else 1f
-                    // Không translationY — tránh icon lệch khỏi vòng chọn
+                    val scale = if (selected) 1.2f else 0.92f
+                    val ty = if (selected) -dp(26f) else 0f
                     if (animated) {
                         tv.animate()
                             .scaleX(scale).scaleY(scale)
-                            .translationY(0f)
-                            .setDuration(220)
+                            .translationY(ty)
+                            .setDuration(300)
                             .setInterpolator(DecelerateInterpolator())
                             .start()
+                    } else {
+                        tv.scaleX = scale
+                        tv.scaleY = scale
+                        tv.translationY = ty
+                    }
+                    labelViews.getOrNull(i)?.apply {
+                        visibility = VISIBLE
+                        // Ẩn label tab đang chọn (nằm trong nút nổi)
+                        alpha = if (selected) 0f else 1f
+                        setTextColor(labelInactive)
+                    }
+                }
+                Style.PERSISTENT -> {
+                    tv.alpha = 1f
+                    val scale = if (selected) 1.12f else 1f
+                    if (animated) {
+                        tv.animate().scaleX(scale).scaleY(scale).translationY(0f).setDuration(200).start()
                     } else {
                         tv.scaleX = scale
                         tv.scaleY = scale
@@ -301,29 +310,13 @@ class CurvedBottomNavView @JvmOverloads constructor(
                         alpha = 1f
                         setTextColor(if (selected) labelActive else labelInactive)
                         paint.isFakeBoldText = selected
-                        textSize = if (selected) 10f else 9f
-                    }
-                }
-                Style.PERSISTENT -> {
-                    tv.alpha = 1f
-                    val scale = if (selected) 1.15f else 1f
-                    if (animated) {
-                        tv.animate().scaleX(scale).scaleY(scale).setDuration(200).start()
-                    } else {
-                        tv.scaleX = scale
-                        tv.scaleY = scale
-                    }
-                    labelViews.getOrNull(i)?.apply {
-                        visibility = VISIBLE
-                        setTextColor(if (selected) labelActive else labelInactive)
-                        paint.isFakeBoldText = selected
-                        alpha = if (selected) 1f else 0.75f
                     }
                 }
                 Style.GOOGLE -> {
                     tv.alpha = if (selected) 0f else 1f
                     tv.scaleX = 1f
                     tv.scaleY = 1f
+                    tv.translationY = 0f
                     labelViews.getOrNull(i)?.visibility = INVISIBLE
                 }
             }
@@ -345,39 +338,39 @@ class CurvedBottomNavView @JvmOverloads constructor(
         }
     }
 
+    /** Lõm sâu + nút tròn trắng nổi — giống curved_labeled_navigation_bar */
     private fun drawCurved(canvas: Canvas) {
         val w = width.toFloat()
         val h = height.toFloat()
         val top = h - flatBarH
         val cx = if (animX == 0f) centerX(selectedIndex) else animX
-        val half = btnR * 1.05f
+        val notchHalf = btnR * 1.65f
 
-        // Thanh trắng bo cong nhẹ chỗ tab chọn
         path.reset()
         path.moveTo(0f, top)
-        path.lineTo((cx - half * 2.0f).coerceAtLeast(0f), top)
-        path.cubicTo(cx - half * 1.3f, top, cx - half * 0.85f, top + dip * 0.35f, cx, top + dip * 0.35f)
-        path.cubicTo(cx + half * 0.85f, top + dip * 0.35f, cx + half * 1.3f, top, (cx + half * 2.0f).coerceAtMost(w), top)
+        path.lineTo((cx - notchHalf - dp(6f)).coerceAtLeast(0f), top)
+        path.cubicTo(
+            cx - notchHalf * 0.5f, top,
+            cx - btnR * 1.1f, top + dip,
+            cx, top + dip
+        )
+        path.cubicTo(
+            cx + btnR * 1.1f, top + dip,
+            cx + notchHalf * 0.5f, top,
+            (cx + notchHalf + dp(6f)).coerceAtMost(w), top
+        )
         path.lineTo(w, top)
-        path.lineTo(w, h + 20f)
-        path.lineTo(0f, h + 20f)
+        path.lineTo(w, h + dp(20f))
+        path.lineTo(0f, h + dp(20f))
         path.close()
         canvas.drawPath(path, barPaint)
 
-        // Vòng chọn căn giữa slot — cy trong vùng icon
-        val cy = top + dp(18f)
-        val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE
-            strokeWidth = dp(2.2f)
-            color = accent
-        }
-        val soft = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.FILL
-            color = 0x184F5BFF.toInt()
-        }
-        val r = btnR * 0.78f
-        canvas.drawCircle(cx, cy, r, soft)
-        canvas.drawCircle(cx, cy, r, ring)
+        // Nút tròn nổi
+        val cy = top
+        buttonPaint.color = Color.WHITE
+        buttonPaint.setShadowLayer(dp(12f), 0f, dp(3f), 0x45000000)
+        canvas.drawCircle(cx, cy, btnR, buttonPaint)
+        canvas.drawCircle(cx, cy, btnR - dp(1.5f), ringPaint)
     }
 
     private fun drawPersistent(canvas: Canvas) {
@@ -390,8 +383,8 @@ class CurvedBottomNavView @JvmOverloads constructor(
 
         val cx = if (animX == 0f) centerX(selectedIndex) else animX
         val pillW = dp(48f)
-        val pillH = dp(4f)
-        rect.set(cx - pillW / 2f, top + dp(4f), cx + pillW / 2f, top + dp(4f) + pillH)
+        val pillH = dp(3.5f)
+        rect.set(cx - pillW / 2f, top + dp(5f), cx + pillW / 2f, top + dp(5f) + pillH)
         pillPaint.color = accent
         canvas.drawRoundRect(rect, dp(2f), dp(2f), pillPaint)
     }
@@ -409,10 +402,10 @@ class CurvedBottomNavView @JvmOverloads constructor(
         val item = items[selectedIndex]
 
         val pillH = dp(40f)
-        val pillW = dp(96f) * pillExpand
+        val pillW = dp(100f) * pillExpand
         val pillTop = top + (flatBarH - pillH) / 2f - dp(2f)
         rect.set(cx - pillW / 2f, pillTop, cx + pillW / 2f, pillTop + pillH)
-        pillPaint.color = 0x223F51B5.toInt()
+        pillPaint.color = 0x224F5BFF.toInt()
         canvas.drawRoundRect(rect, dp(20f), dp(20f), pillPaint)
 
         val tp = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -437,9 +430,11 @@ class CurvedBottomNavView @JvmOverloads constructor(
             if (d != null) {
                 val s = iconSize.toInt()
                 val left = startX.toInt()
-                val top = (cy - s / 2f).toInt()
-                d.setBounds(left, top, left + s, top + s)
-                d.setColorFilter(android.graphics.PorterDuffColorFilter(accent, android.graphics.PorterDuff.Mode.SRC_IN))
+                val topI = (cy - s / 2f).toInt()
+                d.setBounds(left, topI, left + s, topI + s)
+                d.setColorFilter(
+                    android.graphics.PorterDuffColorFilter(accent, android.graphics.PorterDuff.Mode.SRC_IN)
+                )
                 d.draw(canvas)
             }
         } else {
@@ -453,7 +448,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val total = when (navStyle) {
-            Style.CURVED -> (flatBarH + dp(10f)).toInt()
+            Style.CURVED -> (flatBarH + btnR + dp(6f)).toInt()
             else -> (flatBarH + dp(6f)).toInt()
         }
         super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(total, MeasureSpec.EXACTLY))
