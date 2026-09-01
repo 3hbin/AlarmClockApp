@@ -8,10 +8,6 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import java.util.Locale
 
-/**
- * Áp dụng ngôn ngữ đã chọn (Cài đặt → Ngôn ngữ).
- * Dùng AppCompat per-app locales (Android 13+ style, backported).
- */
 object LocaleHelper {
 
     fun applySavedLocale(context: Context) {
@@ -28,20 +24,31 @@ object LocaleHelper {
         AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(tag))
     }
 
-    /** Wrap context (Activity attachBaseContext) — fallback nếu cần. */
+    /** Wrap context: ngôn ngữ + cỡ chữ (bé / vừa / to). */
     fun wrap(context: Context): Context {
-        val code = AppSettings.getLanguage(context)
-        if (code == LanguageCatalog.SYSTEM || code.isBlank()) return context
-        val locale = localeFromCode(code)
-        Locale.setDefault(locale)
         val config = Configuration(context.resources.configuration)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            config.setLocales(LocaleList(locale))
-        } else {
-            @Suppress("DEPRECATION")
-            config.locale = locale
+        var changed = false
+
+        val scale = AppSettings.getFontScale(context)
+        if (config.fontScale != scale) {
+            config.fontScale = scale
+            changed = true
         }
-        return context.createConfigurationContext(config)
+
+        val code = AppSettings.getLanguage(context)
+        if (code != LanguageCatalog.SYSTEM && code.isNotBlank()) {
+            val locale = localeFromCode(code)
+            Locale.setDefault(locale)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                config.setLocales(LocaleList(locale))
+            } else {
+                @Suppress("DEPRECATION")
+                config.locale = locale
+            }
+            changed = true
+        }
+
+        return if (changed) context.createConfigurationContext(config) else context
     }
 
     private fun localeFromCode(code: String): Locale {

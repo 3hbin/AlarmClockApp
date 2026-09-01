@@ -17,6 +17,10 @@ import com.example.alarmclock.databinding.ActivitySettingsBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class SettingsActivity : AppCompatActivity() {
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(LocaleHelper.wrap(newBase))
+    }
+
     private lateinit var binding: ActivitySettingsBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -119,6 +123,26 @@ class SettingsActivity : AppCompatActivity() {
         Motion.fadeScaleIn(binding.cardLanguage, delay = 40)
 
         // Volume
+        
+        // Cỡ chữ bé / vừa / to
+        try {
+            when (AppSettings.getFontScaleMode(this)) {
+                0 -> binding.rbFontSmall.isChecked = true
+                2 -> binding.rbFontLarge.isChecked = true
+                else -> binding.rbFontNormal.isChecked = true
+            }
+            binding.rgFontScale.setOnCheckedChangeListener { _, checkedId ->
+                val mode = when (checkedId) {
+                    R.id.rbFontSmall -> 0
+                    R.id.rbFontLarge -> 2
+                    else -> 1
+                }
+                AppSettings.setFontScaleMode(this, mode)
+                Toast.makeText(this, "Đã đổi cỡ chữ — mở lại màn hình để áp dụng", Toast.LENGTH_SHORT).show()
+                recreate()
+            }
+        } catch (_: Exception) {}
+
         binding.seekVolume.progress = AppSettings.getAlarmVolume(this)
         binding.tvVolumeValue.text = "${binding.seekVolume.progress}%"
         binding.seekVolume.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {

@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/primary"
-        app:title="Đồng hồ"
+        app:title="@string/app_name"
         app:titleTextColor="@android:color/white" />
 
     <LinearLayout
@@ -48,6 +48,33 @@
             android:textSize="14sp"
             android:textColor="@color/text_secondary"
             android:layout_marginTop="4dp" />
+
+        <TextView
+            android:id="@+id/tvNextAlarm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Chưa có báo thức"
+            android:textSize="13sp"
+            android:textColor="@color/primary"
+            android:textStyle="bold"
+            android:layout_marginTop="6dp"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:background="?attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/tvDailyTip"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text=""
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginTop="4dp"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp" />
 
         <HorizontalScrollView
             android:layout_width="match_parent"

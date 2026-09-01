@@ -199,6 +199,21 @@
                 android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/min_15"/>
         </RadioGroup>
 
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Cỡ chữ"
+            android:textStyle="bold" android:layout_marginBottom="4dp"/>
+        <RadioGroup android:id="@+id/rgFontScale" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+            <RadioButton android:id="@+id/rbFontSmall" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1" android:text="Chữ bé"/>
+            <RadioButton android:id="@+id/rbFontNormal" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1" android:text="Vừa"/>
+            <RadioButton android:id="@+id/rbFontLarge" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1" android:text="Chữ to"/>
+        </RadioGroup>
+
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="@string/dark_mode" android:textStyle="bold" android:layout_marginBottom="4dp"/>
         <RadioGroup android:id="@+id/rgDarkMode" android:layout_width="match_parent"

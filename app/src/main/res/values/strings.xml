@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Đồng hồ báo thức</string>
+    <string name="app_name">Báo thức Challenge</string>
     <string name="add_alarm">Thêm báo thức</string>
     <string name="alarm_label">Tên báo thức</string>
     <string name="alarm_label_hint">Tên báo thức</string>

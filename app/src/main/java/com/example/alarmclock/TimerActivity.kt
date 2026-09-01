@@ -20,6 +20,10 @@ import com.example.alarmclock.databinding.ActivityTimerBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class TimerActivity : AppCompatActivity() {
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(LocaleHelper.wrap(newBase))
+    }
+
 
     private lateinit var binding: ActivityTimerBinding
     private var timeLeftInMillis: Long = 0

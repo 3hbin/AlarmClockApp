@@ -28,6 +28,10 @@ data class CityTime(
 }
 
 class WorldClockActivity : AppCompatActivity() {
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(LocaleHelper.wrap(newBase))
+    }
+
 
     companion object {
         const val PAYLOAD_TIME = "time"

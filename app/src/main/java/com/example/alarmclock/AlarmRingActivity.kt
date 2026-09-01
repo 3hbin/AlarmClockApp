@@ -29,6 +29,10 @@ import java.util.Calendar
 import kotlin.math.sqrt
 
 class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(LocaleHelper.wrap(newBase))
+    }
+
 
     private lateinit var binding: ActivityAlarmRingBinding
     private var mediaPlayer: MediaPlayer? = null
@@ -923,13 +927,24 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private fun dismissAlarm(repo: AlarmRepository) {
+        try {
+            AlarmHistory.add(this, intent.getStringExtra("ALARM_LABEL") ?: "",
+                intent.getIntExtra("ALARM_HOUR", 0),
+                intent.getIntExtra("ALARM_MINUTE", 0), "dismiss")
+        } catch (_: Exception) {}
         try { RippleRingsEffect.stop(this) } catch (_: Exception) {}
         stopRinging()
         AlarmNotificationHelper.cancelRinging(this)
-        if (repeatMode != Alarm.REPEAT_ONCE) {
-            val alarms = repo.getAlarms()
-            val alarm = alarms.find { it.id == alarmId }
-            if (alarm != null) {
+        val alarms = repo.getAlarms().toMutableList()
+        val alarm = alarms.find { it.id == alarmId }
+        if (alarm != null) {
+            if (repeatMode == Alarm.REPEAT_ONCE) {
+                // 1 lần → tắt hẳn, không lên lịch lại (tiết kiệm pin)
+                alarm.isEnabled = false
+                repo.saveAlarms(alarms)
+                AlarmScheduler.cancel(this, alarmId)
+            } else {
+                // Hàng ngày / T2–T6 → lên lịch lần kế (scheduler bỏ qua T7 CN)
                 AlarmScheduler.schedule(this, alarm)
             }
         }
@@ -937,6 +952,11 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private fun snoozeAlarm(label: String) {
+        try {
+            AlarmHistory.add(this, label,
+                intent.getIntExtra("ALARM_HOUR", 0),
+                intent.getIntExtra("ALARM_MINUTE", 0), "snooze")
+        } catch (_: Exception) {}
         stopRinging()
         AlarmNotificationHelper.cancelRinging(this)
         val cal = Calendar.getInstance()

@@ -21,6 +21,10 @@ import java.io.File
  * Mở khóa bằng mật khẩu HOẶC email khôi phục (không dùng Google Sign-In — lỗi 10).
  */
 class GalleryActivity : AppCompatActivity() {
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(LocaleHelper.wrap(newBase))
+    }
+
     private lateinit var binding: ActivityGalleryBinding
     private var unlocked = false
 

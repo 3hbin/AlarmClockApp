@@ -32,6 +32,10 @@ import java.util.Calendar
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(LocaleHelper.wrap(newBase))
+    }
+
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var repo: AlarmRepository
@@ -61,6 +65,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        try { binding.toolbar.title = getString(R.string.app_name) } catch (_: Exception) {}
 
         repo = AlarmRepository(this)
         selectedRingtoneUri = repo.getGlobalRingtone() ?: "app:soft_chime"
@@ -159,11 +164,85 @@ class MainActivity : AppCompatActivity() {
         handler.removeCallbacks(timeUpdater)
     }
 
+    private fun updateNextAlarmBanner() {
+        try {
+            val enabled = alarms.filter { it.isEnabled }
+            if (enabled.isEmpty()) {
+                binding.tvNextAlarm.text = "Chưa có báo thức — bấm +"
+                return
+            }
+            val now = java.util.Calendar.getInstance()
+            var bestMs = Long.MAX_VALUE
+            var best: Alarm? = null
+            for (a in enabled) {
+                val c = java.util.Calendar.getInstance().apply {
+                    set(java.util.Calendar.HOUR_OF_DAY, a.hour)
+                    set(java.util.Calendar.MINUTE, a.minute)
+                    set(java.util.Calendar.SECOND, 0)
+                    set(java.util.Calendar.MILLISECOND, 0)
+                    if (timeInMillis <= now.timeInMillis) add(java.util.Calendar.DAY_OF_YEAR, 1)
+                    if (a.repeatMode == Alarm.REPEAT_WEEKDAYS) {
+                        while (get(java.util.Calendar.DAY_OF_WEEK) == java.util.Calendar.SATURDAY ||
+                            get(java.util.Calendar.DAY_OF_WEEK) == java.util.Calendar.SUNDAY) {
+                            add(java.util.Calendar.DAY_OF_YEAR, 1)
+                        }
+                    }
+                }
+                if (c.timeInMillis < bestMs) {
+                    bestMs = c.timeInMillis
+                    best = a
+                }
+            }
+            val diff = bestMs - now.timeInMillis
+            val h = (diff / 3_600_000).toInt()
+            val m = ((diff % 3_600_000) / 60_000).toInt()
+            val timeStr = "%02d:%02d".format(best!!.hour, best.minute)
+            val left = when {
+                h > 24 -> "còn ${h / 24} ngày"
+                h > 0 -> "còn ${h}giờ ${m}phút"
+                else -> "còn ${m} phút"
+            }
+            binding.tvNextAlarm.text = "⏰ Tiếp theo $timeStr · $left"
+        } catch (_: Exception) {
+            try { binding.tvNextAlarm.text = "⏰ Báo thức" } catch (_: Exception) {}
+        }
+    }
+
+    private fun showAlarmHistory() {
+        val lines = AlarmHistory.formatLines(this)
+        val msg = if (lines.isEmpty()) "Chưa có lịch sử tắt/báo lại."
+        else lines.take(30).joinToString("\n")
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("Lịch sử báo thức")
+            .setMessage(msg)
+            .setPositiveButton("Đóng", null)
+            .setNeutralButton("Xóa lịch sử") { _, _ ->
+                AlarmHistory.clear(this)
+                android.widget.Toast.makeText(this, "Đã xóa lịch sử", android.widget.Toast.LENGTH_SHORT).show()
+            }
+            .show()
+    }
+
+    private fun updateDailyTip() {
+        val tips = listOf(
+            "💡 Thử thách dễ giúp dậy đúng giờ mà không mất ngủ",
+            "🌅 Đặt báo thức T2–T6 để cuối tuần ngủ thêm",
+            "🎙 Hey Google: đặt báo thức bằng Báo thức Challenge",
+            "🔋 Báo thức 1 lần tự tắt — tiết kiệm pin",
+            "📱 Xoay ngang để xem danh sách rộng hơn",
+            "🔤 Cài đặt → Cỡ chữ: bé / vừa / to",
+            "📜 Bấm dòng báo thức tiếp theo để xem lịch sử"
+        )
+        val day = java.util.Calendar.getInstance().get(java.util.Calendar.DAY_OF_YEAR)
+        try { binding.tvDailyTip.text = tips[day % tips.size] } catch (_: Exception) {}
+    }
+
     private fun updateCurrentTime() {
         val now = Calendar.getInstance()
         val timeFormat = SimpleDateFormat(if (AppSettings.isUse24h(this)) "HH:mm" else "hh:mm a", Locale.getDefault())
         val dateFormat = SimpleDateFormat("EEEE, dd/MM/yyyy", Locale.getDefault())
         binding.tvCurrentTime.text = timeFormat.format(now.time)
+        updateNextAlarmBanner()
         binding.tvCurrentDate.text = dateFormat.format(now.time).replaceFirstChar {
             if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
         }

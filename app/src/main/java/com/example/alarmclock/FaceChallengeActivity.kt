@@ -32,6 +32,10 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Trên Huawei/EMUI camera hay đen khi mở từ full-screen alarm → mở trễ + fallback.
  */
 class FaceChallengeActivity : AppCompatActivity() {
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(LocaleHelper.wrap(newBase))
+    }
+
 
     companion object {
         const val EXTRA_MODE = "FACE_MODE"

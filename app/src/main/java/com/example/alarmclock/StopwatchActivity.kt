@@ -20,6 +20,10 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.alarmclock.databinding.ActivityStopwatchBinding
 
 class StopwatchActivity : AppCompatActivity() {
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(LocaleHelper.wrap(newBase))
+    }
+
 
     private lateinit var binding: ActivityStopwatchBinding
     private var timeInMillis = 0L

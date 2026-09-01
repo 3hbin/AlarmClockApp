@@ -54,6 +54,16 @@ object AppSettings {
         prefs(context).edit().putBoolean("use_24h", use24).apply()
     fun isUse24h(context: Context) = prefs(context).getBoolean("use_24h", true)
 
+    /** Cỡ chữ: 0=bé (0.85), 1=vừa (1.0), 2=to (1.30) */
+    fun setFontScaleMode(context: Context, mode: Int) =
+        prefs(context).edit().putInt("font_scale_mode", mode.coerceIn(0, 2)).apply()
+    fun getFontScaleMode(context: Context) = prefs(context).getInt("font_scale_mode", 1)
+    fun getFontScale(context: Context): Float = when (getFontScaleMode(context)) {
+        0 -> 0.85f
+        2 -> 1.30f
+        else -> 1.0f
+    }
+
     // Gallery password (simple hash store)
     fun setGalleryPassword(context: Context, plain: String) {
         val hash = plain.hashCode().toString()

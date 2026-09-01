@@ -16,6 +16,10 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlin.concurrent.thread
 
 class FeaturesActivity : AppCompatActivity() {
+    override fun attachBaseContext(newBase: android.content.Context) {
+        super.attachBaseContext(LocaleHelper.wrap(newBase))
+    }
+
     private lateinit var binding: ActivityFeaturesBinding
     private var dreamHelper: DreamRecorderHelper? = null
     private var isRecording = false
