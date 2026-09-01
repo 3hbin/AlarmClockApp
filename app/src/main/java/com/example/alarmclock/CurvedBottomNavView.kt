@@ -230,9 +230,11 @@ class CurvedBottomNavView @JvmOverloads constructor(
             } else {
                 TextView(context).apply {
                     text = item.emoji
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
+                    // Emoji trên thanh điều hướng hơi phô trương, nên giữ nhỏ và gọn.
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
                     gravity = Gravity.CENTER
-                    layoutParams = LinearLayout.LayoutParams(dp(36f).toInt(), dp(28f).toInt())
+                    includeFontPadding = false
+                    layoutParams = LinearLayout.LayoutParams(dp(30f).toInt(), dp(22f).toInt())
                 }
             }
 
