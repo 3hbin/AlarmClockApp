@@ -64,7 +64,9 @@ class MainActivity : AppCompatActivity() {
 
         repo = AlarmRepository(this)
         selectedRingtoneUri = repo.getGlobalRingtone() ?: "app:soft_chime"
-        alarms.addAll(repo.getAlarms())
+        alarms.addAll(repo.getAlarms().onEach {
+            if (it.ringtoneUri.isNullOrEmpty()) it.ringtoneUri = "app:soft_chime"
+        })
 
         createNotificationChannel()
         checkPermissions()
@@ -361,7 +363,7 @@ class MainActivity : AppCompatActivity() {
                             existing.label = label
                             existing.repeatMode = repeatMode
                             existing.snoozeMinutes = snoozeMinutes
-                            existing.ringtoneUri = selectedRingtoneUri
+                            existing.ringtoneUri = selectedRingtoneUri ?: "app:soft_chime"
                             existing.challengeType = challengeType
                             existing.shakeTargetCount = shakeTarget
                             existing.skipHolidays = skipHolidays
@@ -382,7 +384,7 @@ class MainActivity : AppCompatActivity() {
                                 label = label,
                                 repeatMode = repeatMode,
                                 snoozeMinutes = snoozeMinutes,
-                                ringtoneUri = selectedRingtoneUri,
+                                ringtoneUri = selectedRingtoneUri ?: "app:soft_chime",
                                 challengeType = challengeType,
                                 shakeTargetCount = shakeTarget,
                                 skipHolidays = skipHolidays,

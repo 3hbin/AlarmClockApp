@@ -971,25 +971,42 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
 
     private fun startRinging() {
         try {
-            val uri = resolveAlarmUri(ringtoneUri)
-            mediaPlayer = MediaPlayer().apply {
-                setDataSource(this@AlarmRingActivity, uri)
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build()
-                )
-                isLooping = true
-                prepare()
-                val vol = AppSettings.getAlarmVolume(this@AlarmRingActivity) / 100f
-                setVolume(vol, vol)
-                start()
+            val vol = AppSettings.getAlarmVolume(this) / 100f
+            val rawId = when {
+                ringtoneUri.isNullOrEmpty() ||
+                    ringtoneUri == "app:soft_chime" ||
+                    ringtoneUri!!.endsWith("/soft_chime") -> R.raw.soft_chime
+                ringtoneUri == "app:soft_bell" ||
+                    ringtoneUri!!.endsWith("/soft_bell") -> R.raw.soft_bell
+                else -> 0
+            }
+            if (rawId != 0) {
+                // Chuông trong app — create() ổn định hơn setDataSource(resource)
+                mediaPlayer = MediaPlayer.create(this, rawId)?.apply {
+                    isLooping = true
+                    setVolume(vol, vol)
+                    start()
+                }
+                if (mediaPlayer == null) throw IllegalStateException("MediaPlayer.create failed")
+            } else {
+                val uri = android.net.Uri.parse(ringtoneUri)
+                mediaPlayer = MediaPlayer().apply {
+                    setDataSource(this@AlarmRingActivity, uri)
+                    setAudioAttributes(
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_ALARM)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build()
+                    )
+                    isLooping = true
+                    prepare()
+                    setVolume(vol, vol)
+                    start()
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
             try {
-                // Fallback: soft chime trong app
                 mediaPlayer = MediaPlayer.create(this@AlarmRingActivity, R.raw.soft_chime)?.apply {
                     isLooping = true
                     val vol = AppSettings.getAlarmVolume(this@AlarmRingActivity) / 100f

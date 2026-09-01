@@ -18,7 +18,7 @@ import androidx.core.app.NotificationManagerCompat
  */
 object AlarmNotificationHelper {
 
-    const val CHANNEL_RINGING = "alarm_ringing_v3"
+    const val CHANNEL_RINGING = "alarm_ringing_v4"
     const val CHANNEL_CHRONO = "chrono_running"
     const val NOTIF_ID_RINGING = 2001
     const val NOTIF_ID_TIMER = 2002
@@ -32,26 +32,26 @@ object AlarmNotificationHelper {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
 
-        // Xóa channel cũ nếu importance thấp
-        try {
-            nm.deleteNotificationChannel("alarm_ringing")
-        } catch (_: Exception) {
+        // Xóa channel cũ (có tiếng hệ thống) — tránh kêu 2 chuông
+        for (oldId in listOf("alarm_ringing", "alarm_ringing_v2", "alarm_ringing_v3")) {
+            try { nm.deleteNotificationChannel(oldId) } catch (_: Exception) {}
         }
 
+        val softUri = Uri.parse("android.resource://${context.packageName}/${R.raw.soft_chime}")
         val ringing = NotificationChannel(
-            CHANNEL_RINGING,
+            "alarm_ringing_v4",
             "Báo thức đang kêu",
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = "Full-screen khi báo thức reo — cần bật thông báo + full-screen intent"
+            description = "Full-screen khi báo thức reo"
             setBypassDnd(true)
             enableVibration(true)
             enableLights(true)
             setShowBadge(true)
             lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
-            // Âm thanh từ AlarmRingActivity (STREAM_ALARM); channel không mute
+            // Chuông êm trong app — KHÔNG dùng chuông hệ thống
             setSound(
-                Settings.System.DEFAULT_ALARM_ALERT_URI,
+                softUri,
                 AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_ALARM)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
