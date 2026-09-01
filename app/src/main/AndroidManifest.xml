@@ -33,7 +33,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AlarmClock">
 
-        <activity android:name=".MainActivity" android:exported="true" android:theme="@style/Theme.AlarmClock">
+        <activity android:name=".MainActivity" android:exported="true" android:theme="@style/Theme.AlarmClock" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden">
             <!-- LAUNCHER chuyển sang activity-alias theo buổi; giữ MAIN dự phòng -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -95,6 +95,27 @@
             </intent-filter>
         </activity-alias>
 
+        
+        <!-- Google Assistant / Gemini / Hey Google: đặt báo thức -->
+        <activity
+            android:name=".VoiceAlarmActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true"
+            android:taskAffinity="">
+            <intent-filter>
+                <action android:name="android.intent.action.SET_ALARM" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SHOW_ALARMS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SET_TIMER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <activity android:name=".AlarmRingActivity" android:exported="false"
             android:showWhenLocked="true" android:turnScreenOn="true"
             android:excludeFromRecents="true" android:launchMode="singleInstance"
