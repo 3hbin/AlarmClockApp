@@ -234,10 +234,10 @@ class CurvedBottomNavView @JvmOverloads constructor(
             } else {
                 TextView(context).apply {
                     text = item.emoji
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, if (navStyle == Style.GOOGLE) 15f else 16f)
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, if (navStyle == Style.GOOGLE) 14f else 15f)
                     gravity = Gravity.CENTER
                     layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, dp(24f).toInt()
+                        LinearLayout.LayoutParams.MATCH_PARENT, dp(26f).toInt()
                     )
                 }
             }
@@ -282,19 +282,19 @@ class CurvedBottomNavView @JvmOverloads constructor(
                 Style.CURVED -> {
                     // Thanh phẳng hiện đại: emoji + label luôn hiện, tab chọn to hơn + nhô nhẹ
                     tv.alpha = 1f
-                    val scale = if (selected) 1.08f else 1f
-                    val ty = if (selected) -dp(6f) else 0f
+                    val scale = if (selected) 1.12f else 1f
+                    // Không translationY — tránh icon lệch khỏi vòng chọn
                     if (animated) {
                         tv.animate()
                             .scaleX(scale).scaleY(scale)
-                            .translationY(ty)
-                            .setDuration(240)
+                            .translationY(0f)
+                            .setDuration(220)
                             .setInterpolator(DecelerateInterpolator())
                             .start()
                     } else {
                         tv.scaleX = scale
                         tv.scaleY = scale
-                        tv.translationY = ty
+                        tv.translationY = 0f
                     }
                     labelViews.getOrNull(i)?.apply {
                         visibility = VISIBLE
@@ -356,27 +356,28 @@ class CurvedBottomNavView @JvmOverloads constructor(
         path.reset()
         path.moveTo(0f, top)
         path.lineTo((cx - half * 2.0f).coerceAtLeast(0f), top)
-        path.cubicTo(cx - half * 1.3f, top, cx - half * 0.85f, top + dip * 0.7f, cx, top + dip * 0.7f)
-        path.cubicTo(cx + half * 0.85f, top + dip * 0.7f, cx + half * 1.3f, top, (cx + half * 2.0f).coerceAtMost(w), top)
+        path.cubicTo(cx - half * 1.3f, top, cx - half * 0.85f, top + dip * 0.35f, cx, top + dip * 0.35f)
+        path.cubicTo(cx + half * 0.85f, top + dip * 0.35f, cx + half * 1.3f, top, (cx + half * 2.0f).coerceAtMost(w), top)
         path.lineTo(w, top)
         path.lineTo(w, h + 20f)
         path.lineTo(0f, h + 20f)
         path.close()
         canvas.drawPath(path, barPaint)
 
-        // Vòng accent mềm dưới emoji (không phủ trắng đè emoji)
-        val cy = top - dp(2f)
+        // Vòng chọn căn giữa slot — cy trong vùng icon
+        val cy = top + dp(18f)
         val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
-            strokeWidth = dp(2.5f)
+            strokeWidth = dp(2.2f)
             color = accent
         }
         val soft = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.FILL
-            color = 0x1A4F5BFF.toInt()
+            color = 0x184F5BFF.toInt()
         }
-        canvas.drawCircle(cx, cy, btnR * 0.92f, soft)
-        canvas.drawCircle(cx, cy, btnR * 0.92f, ring)
+        val r = btnR * 0.78f
+        canvas.drawCircle(cx, cy, r, soft)
+        canvas.drawCircle(cx, cy, r, ring)
     }
 
     private fun drawPersistent(canvas: Canvas) {
@@ -452,7 +453,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val total = when (navStyle) {
-            Style.CURVED -> (flatBarH + btnR + dp(6f)).toInt()
+            Style.CURVED -> (flatBarH + dp(10f)).toInt()
             else -> (flatBarH + dp(6f)).toInt()
         }
         super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(total, MeasureSpec.EXACTLY))
