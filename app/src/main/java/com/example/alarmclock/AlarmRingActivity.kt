@@ -956,11 +956,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
 
     private fun startRinging() {
         try {
-            val uri = if (!ringtoneUri.isNullOrEmpty()) {
-                Uri.parse(ringtoneUri)
-            } else {
-                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            }
+            val uri = resolveAlarmUri(ringtoneUri)
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(this@AlarmRingActivity, uri)
                 setAudioAttributes(
@@ -978,11 +974,11 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         } catch (e: Exception) {
             e.printStackTrace()
             try {
-                val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                mediaPlayer = MediaPlayer().apply {
-                    setDataSource(this@AlarmRingActivity, uri)
+                // Fallback: soft chime trong app
+                mediaPlayer = MediaPlayer.create(this@AlarmRingActivity, R.raw.soft_chime)?.apply {
                     isLooping = true
-                    prepare()
+                    val vol = AppSettings.getAlarmVolume(this@AlarmRingActivity) / 100f
+                    setVolume(vol, vol)
                     start()
                 }
             } catch (ex: Exception) {

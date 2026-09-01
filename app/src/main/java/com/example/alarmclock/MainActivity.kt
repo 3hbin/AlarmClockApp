@@ -63,7 +63,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         repo = AlarmRepository(this)
-        selectedRingtoneUri = repo.getGlobalRingtone()
+        selectedRingtoneUri = repo.getGlobalRingtone() ?: "app:soft_chime"
         alarms.addAll(repo.getAlarms())
 
         createNotificationChannel()
@@ -426,16 +426,38 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun pickRingtone() {
-        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
-            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
-            putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, getString(R.string.choose_ringtone))
-            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
-            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
-            if (selectedRingtoneUri != null) {
-                putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(selectedRingtoneUri))
+        val choices = arrayOf(
+            "Chuông êm (trong app)",
+            "Chuông nhẹ chuông (trong app)",
+            "Chọn nhạc hệ thống…"
+        )
+        MaterialAlertDialogBuilder(this)
+            .setTitle(getString(R.string.choose_ringtone))
+            .setItems(choices) { _, which ->
+                when (which) {
+                    0 -> {
+                        selectedRingtoneUri = "app:soft_chime"
+                        Toast.makeText(this, "Chuông êm", Toast.LENGTH_SHORT).show()
+                    }
+                    1 -> {
+                        selectedRingtoneUri = "app:soft_bell"
+                        Toast.makeText(this, "Chuông nhẹ", Toast.LENGTH_SHORT).show()
+                    }
+                    else -> {
+                        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_ALARM)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, getString(R.string.choose_ringtone))
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+                            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, false)
+                            if (selectedRingtoneUri != null && selectedRingtoneUri!!.startsWith("content")) {
+                                putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, Uri.parse(selectedRingtoneUri))
+                            }
+                        }
+                        ringtonePicker.launch(intent)
+                    }
+                }
             }
-        }
-        ringtonePicker.launch(intent)
+            .show()
     }
 
     private fun createNotificationChannel() {
@@ -553,6 +575,7 @@ class MainActivity : AppCompatActivity() {
             label = "Ngủ gật +$minutes phút",
             repeatMode = Alarm.REPEAT_ONCE,
             challengeType = Alarm.CHALLENGE_NONE,
+            ringtoneUri = "app:soft_chime",
             useCrescendo = true
         )
         alarms.add(alarm)
