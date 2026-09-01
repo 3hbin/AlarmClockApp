@@ -4,14 +4,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?android:attr/colorBackground"
+    android:background="@color/surface"
     android:clipChildren="false">
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
+        android:background="@color/primary"
         app:title="Đồng hồ"
         app:titleTextColor="@android:color/white" />
 
@@ -34,18 +34,20 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="12:00"
-            android:textSize="48sp"
+            android:textSize="52sp"
+            android:letterSpacing="-0.03"
+            android:fontFamily="sans-serif-medium"
             android:textStyle="bold"
             android:fontFamily="sans-serif-light"
-            android:textColor="?android:attr/textColorPrimary" />
+            android:textColor="@color/text_primary" />
 
         <TextView
             android:id="@+id/tvCurrentDate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Thứ Ba, 25/08/2026"
-            android:textSize="16sp"
-            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
             android:layout_marginTop="4dp" />
 
         <HorizontalScrollView
@@ -72,7 +74,7 @@
                     android:layout_marginEnd="8dp" />
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnQuick5"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/Button.Soft.Outline"
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
                     android:text="+5 phút"
@@ -85,7 +87,7 @@
                     android:layout_marginEnd="6dp" />
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnQuick10"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/Button.Soft.Outline"
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
                     android:text="+10 phút"
@@ -98,7 +100,7 @@
                     android:layout_marginEnd="6dp" />
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnQuick15"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/Button.Soft.Outline"
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
                     android:text="+15 phút"
@@ -111,7 +113,7 @@
                     android:layout_marginEnd="6dp" />
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnQuick30"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    style="@style/Button.Soft.Outline"
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
                     android:text="+30 phút"
@@ -169,7 +171,10 @@
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="12dp"
             android:src="@android:drawable/ic_input_add"
-            app:tint="@android:color/white" />
+            app:backgroundTint="@color/primary"
+            app:tint="@android:color/white"
+            app:elevation="4dp"
+            app:borderWidth="0dp" />
     </FrameLayout>
 
     <com.example.alarmclock.CurvedBottomNavView

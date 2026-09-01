@@ -58,10 +58,10 @@ class CurvedBottomNavView @JvmOverloads constructor(
         }
 
     private val barColor = Color.WHITE
-    private val gapColor = 0xFFF5F5FA.toInt()
-    private val accent = 0xFF3F51B5.toInt()
-    private val labelActive = 0xFF3F51B5.toInt()
-    private val labelInactive = 0xFF90A4AE.toInt()
+    private val gapColor = 0xFFF7F8FC.toInt()
+    private val accent = 0xFF4F5BFF.toInt()
+    private val labelActive = 0xFF4F5BFF.toInt()
+    private val labelInactive = 0xFF9AA0B4.toInt()
 
     private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
@@ -223,7 +223,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
                     setImageResource(item.iconRes)
                     scaleType = ImageView.ScaleType.CENTER_INSIDE
                     layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, dp(26f).toInt()
+                        LinearLayout.LayoutParams.MATCH_PARENT, dp(22f).toInt()
                     )
                     setColorFilter(
                         if (index == selectedIndex) accent else 0xFF6B7280.toInt(),
@@ -234,10 +234,10 @@ class CurvedBottomNavView @JvmOverloads constructor(
             } else {
                 TextView(context).apply {
                     text = item.emoji
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, if (navStyle == Style.GOOGLE) 18f else 22f)
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, if (navStyle == Style.GOOGLE) 15f else 16f)
                     gravity = Gravity.CENTER
                     layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT, dp(28f).toInt()
+                        LinearLayout.LayoutParams.MATCH_PARENT, dp(24f).toInt()
                     )
                 }
             }
@@ -282,8 +282,8 @@ class CurvedBottomNavView @JvmOverloads constructor(
                 Style.CURVED -> {
                     // Thanh phẳng hiện đại: emoji + label luôn hiện, tab chọn to hơn + nhô nhẹ
                     tv.alpha = 1f
-                    val scale = if (selected) 1.22f else 1f
-                    val ty = if (selected) -dp(10f) else 0f
+                    val scale = if (selected) 1.08f else 1f
+                    val ty = if (selected) -dp(6f) else 0f
                     if (animated) {
                         tv.animate()
                             .scaleX(scale).scaleY(scale)
@@ -373,7 +373,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
         }
         val soft = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.FILL
-            color = 0x183F51B5.toInt()
+            color = 0x1A4F5BFF.toInt()
         }
         canvas.drawCircle(cx, cy, btnR * 0.92f, soft)
         canvas.drawCircle(cx, cy, btnR * 0.92f, ring)

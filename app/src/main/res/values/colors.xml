@@ -1,9 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_500">#3F51B5</color>
-    <color name="purple_700">#303F9F</color>
-    <color name="teal_200">#FF4081</color>
-    <color name="ic_launcher_background">#1565C0</color>
+    <!-- 2026 soft indigo / violet system -->
+    <color name="seed">#5B6CFF</color>
+    <color name="primary">#4F5BFF</color>
+    <color name="primary_dark">#3A45D9</color>
+    <color name="primary_container">#E8EAFF</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="secondary">#7C5CFF</color>
+    <color name="secondary_container">#F0EBFF</color>
+    <color name="surface">#F7F8FC</color>
+    <color name="surface_card">#FFFFFF</color>
+    <color name="surface_variant">#EEF0F8</color>
+    <color name="outline">#E2E5F0</color>
+    <color name="text_primary">#1A1C28</color>
+    <color name="text_secondary">#6B7085</color>
+    <color name="text_tertiary">#9AA0B4</color>
+    <color name="danger">#FF4D6A</color>
+    <color name="success">#22C55E</color>
+
+    <color name="purple_500">#4F5BFF</color>
+    <color name="purple_700">#3A45D9</color>
+    <color name="teal_200">#7C5CFF</color>
+    <color name="ic_launcher_background">#4F5BFF</color>
     <color name="ic_launcher_morning_bg">#FFB8D4F0</color>
     <color name="ic_launcher_noon_bg">#FF4BA3F0</color>
     <color name="ic_launcher_evening_bg">#FFFFB070</color>
