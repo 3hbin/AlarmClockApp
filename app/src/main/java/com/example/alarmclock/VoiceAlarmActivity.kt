@@ -103,7 +103,7 @@ class VoiceAlarmActivity : AppCompatActivity() {
         repo.saveAlarms(alarms)
         AlarmScheduler.schedule(this, alarm)
 
-        val labelChallenge = Alarm.challengeName(challenge)
+        val labelChallenge = Alarm.challengeLabel(challenge)
         Toast.makeText(
             this,
             "Đã đặt ${"%02d:%02d".format(alarm.hour, alarm.minute)} · $labelChallenge",

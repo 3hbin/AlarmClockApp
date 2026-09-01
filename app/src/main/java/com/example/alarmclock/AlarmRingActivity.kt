@@ -32,6 +32,8 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
 
     private lateinit var binding: ActivityAlarmRingBinding
     private var mediaPlayer: MediaPlayer? = null
+    private var prevInterruptionFilter: Int = -1
+    private var dndEnabledByUs: Boolean = false
     private var vibrator: Vibrator? = null
     private var alarmId: Int = -1
     private var snoozeMinutes: Int = 5
@@ -967,6 +969,53 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             }
         }
         return android.net.Uri.parse("android.resource://${packageName}/${R.raw.soft_chime}")
+    }
+
+
+    /** Bật chế độ tập trung (DND) + ẩn thanh hệ thống — khó vuốt thoát khi khoá màn hình */
+    private fun enableFocusMode() {
+        try {
+            // Immersive sticky — ẩn nav bar / status
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = (
+                android.view.View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    or android.view.View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    or android.view.View.SYSTEM_UI_FLAG_FULLSCREEN
+                    or android.view.View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    or android.view.View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    or android.view.View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                )
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                window.insetsController?.let { c ->
+                    c.hide(android.view.WindowInsets.Type.navigationBars() or android.view.WindowInsets.Type.statusBars())
+                    c.systemBarsBehavior =
+                        android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                }
+            }
+        } catch (_: Exception) {}
+
+        try {
+            val nm = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                if (nm.isNotificationPolicyAccessGranted) {
+                    prevInterruptionFilter = nm.currentInterruptionFilter
+                    nm.setInterruptionFilter(android.app.NotificationManager.INTERRUPTION_FILTER_ALARMS)
+                    dndEnabledByUs = true
+                }
+            }
+        } catch (_: Exception) {}
+    }
+
+    private fun restoreFocusMode() {
+        try {
+            if (dndEnabledByUs && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                val nm = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
+                if (nm.isNotificationPolicyAccessGranted && prevInterruptionFilter >= 0) {
+                    nm.setInterruptionFilter(prevInterruptionFilter)
+                }
+                dndEnabledByUs = false
+            }
+        } catch (_: Exception) {}
     }
 
     private fun startRinging() {
