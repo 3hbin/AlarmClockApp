@@ -954,6 +954,21 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         finish()
     }
 
+
+    /** URI nhạc: resource app (êm) hoặc URI hệ thống. Mặc định soft_chime. */
+    private fun resolveAlarmUri(uriStr: String?): android.net.Uri {
+        if (!uriStr.isNullOrEmpty()) {
+            when {
+                uriStr == "app:soft_chime" || uriStr.endsWith("/soft_chime") ->
+                    return android.net.Uri.parse("android.resource://${packageName}/${R.raw.soft_chime}")
+                uriStr == "app:soft_bell" || uriStr.endsWith("/soft_bell") ->
+                    return android.net.Uri.parse("android.resource://${packageName}/${R.raw.soft_bell}")
+                else -> return android.net.Uri.parse(uriStr)
+            }
+        }
+        return android.net.Uri.parse("android.resource://${packageName}/${R.raw.soft_chime}")
+    }
+
     private fun startRinging() {
         try {
             val uri = resolveAlarmUri(ringtoneUri)
