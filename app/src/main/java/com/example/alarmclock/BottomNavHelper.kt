@@ -6,15 +6,15 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 
 /**
- * 6 nút thanh dưới — emoji như bản cũ (dễ nhìn, không vector).
+ * 6 nút thanh dưới — emoji rõ, label tiếng Việt.
  */
 object BottomNavHelper {
 
     fun items(ctx: Context) = listOf(
-        CurvedBottomNavView.Item(0, "⏰", ctx.getString(R.string.nav_alarm)),
-        CurvedBottomNavView.Item(1, "🌍", ctx.getString(R.string.nav_world)),
+        CurvedBottomNavView.Item(0, "🔔", ctx.getString(R.string.nav_alarm)),
+        CurvedBottomNavView.Item(1, "🌐", ctx.getString(R.string.nav_world)),
         CurvedBottomNavView.Item(2, "⏱️", ctx.getString(R.string.nav_stopwatch)),
-        CurvedBottomNavView.Item(3, "⏳", ctx.getString(R.string.nav_timer)),
+        CurvedBottomNavView.Item(3, "⏲️", ctx.getString(R.string.nav_timer)),
         CurvedBottomNavView.Item(4, "🖼️", ctx.getString(R.string.nav_gallery)),
         CurvedBottomNavView.Item(5, "⚙️", ctx.getString(R.string.nav_settings))
     )

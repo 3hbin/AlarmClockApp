@@ -234,7 +234,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
             } else {
                 TextView(context).apply {
                     text = item.emoji
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, if (navStyle == Style.GOOGLE) 17f else 18f)
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, if (navStyle == Style.GOOGLE) 18f else 22f)
                     gravity = Gravity.CENTER
                     layoutParams = LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT, dp(28f).toInt()
@@ -280,15 +280,15 @@ class CurvedBottomNavView @JvmOverloads constructor(
             }
             when (navStyle) {
                 Style.CURVED -> {
-                    // Emoji luôn hiện — không ẩn alpha (canvas emoji hay lỗi)
+                    // Thanh phẳng hiện đại: emoji + label luôn hiện, tab chọn to hơn + nhô nhẹ
                     tv.alpha = 1f
-                    val scale = if (selected) 1.35f else 1f
-                    val ty = if (selected) -dp(18f) else 0f
+                    val scale = if (selected) 1.22f else 1f
+                    val ty = if (selected) -dp(10f) else 0f
                     if (animated) {
                         tv.animate()
                             .scaleX(scale).scaleY(scale)
                             .translationY(ty)
-                            .setDuration(280)
+                            .setDuration(240)
                             .setInterpolator(DecelerateInterpolator())
                             .start()
                     } else {
@@ -298,10 +298,10 @@ class CurvedBottomNavView @JvmOverloads constructor(
                     }
                     labelViews.getOrNull(i)?.apply {
                         visibility = VISIBLE
+                        alpha = 1f
                         setTextColor(if (selected) labelActive else labelInactive)
                         paint.isFakeBoldText = selected
-                        // Ẩn chữ tab đang chọn (nút nổi che)
-                        alpha = if (selected) 0f else 1f
+                        textSize = if (selected) 10f else 9f
                     }
                 }
                 Style.PERSISTENT -> {
@@ -350,38 +350,33 @@ class CurvedBottomNavView @JvmOverloads constructor(
         val h = height.toFloat()
         val top = h - flatBarH
         val cx = if (animX == 0f) centerX(selectedIndex) else animX
-        val half = btnR * 1.2f
+        val half = btnR * 1.05f
 
+        // Thanh trắng bo cong nhẹ chỗ tab chọn
         path.reset()
         path.moveTo(0f, top)
-        path.lineTo((cx - half * 2.1f).coerceAtLeast(0f), top)
-        path.cubicTo(cx - half * 1.4f, top, cx - half * 0.9f, top + dip, cx, top + dip)
-        path.cubicTo(cx + half * 0.9f, top + dip, cx + half * 1.4f, top, (cx + half * 2.1f).coerceAtMost(w), top)
+        path.lineTo((cx - half * 2.0f).coerceAtLeast(0f), top)
+        path.cubicTo(cx - half * 1.3f, top, cx - half * 0.85f, top + dip * 0.7f, cx, top + dip * 0.7f)
+        path.cubicTo(cx + half * 0.85f, top + dip * 0.7f, cx + half * 1.3f, top, (cx + half * 2.0f).coerceAtMost(w), top)
         path.lineTo(w, top)
         path.lineTo(w, h + 20f)
         path.lineTo(0f, h + 20f)
         path.close()
         canvas.drawPath(path, barPaint)
 
-        val cy = top
-        canvas.drawCircle(cx, cy, btnR, buttonPaint)
-        canvas.drawCircle(cx, cy, btnR - dp(1.5f), accentRing)
-
-        if (selectedIndex in items.indices) {
-            val item = items[selectedIndex]
-            if (item.iconRes != 0) {
-                val d = context.getDrawable(item.iconRes)?.mutate()
-                if (d != null) {
-                    val s = (btnR * 1.1f).toInt().coerceAtLeast(1)
-                    d.setBounds((cx - s / 2f).toInt(), (cy - s / 2f).toInt(), (cx + s / 2f).toInt(), (cy + s / 2f).toInt())
-                    d.setColorFilter(android.graphics.PorterDuffColorFilter(0xFFFFFFFF.toInt(), android.graphics.PorterDuff.Mode.SRC_IN))
-                    d.draw(canvas)
-                }
-            } else {
-                // Emoji đã vẽ bằng TextView (scale + translationY) — không vẽ lại trên canvas
-                // tránh chồng 2 emoji / font lỗi
-            }
+        // Vòng accent mềm dưới emoji (không phủ trắng đè emoji)
+        val cy = top - dp(2f)
+        val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = dp(2.5f)
+            color = accent
         }
+        val soft = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.FILL
+            color = 0x183F51B5.toInt()
+        }
+        canvas.drawCircle(cx, cy, btnR * 0.92f, soft)
+        canvas.drawCircle(cx, cy, btnR * 0.92f, ring)
     }
 
     private fun drawPersistent(canvas: Canvas) {

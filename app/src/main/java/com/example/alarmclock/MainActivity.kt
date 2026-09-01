@@ -109,7 +109,15 @@ class MainActivity : AppCompatActivity() {
         binding.shimmer.hide()
         binding.loadingAnim.applyBrandDefault()
         binding.loadingAnim.visibility = android.view.View.GONE
+
         binding.loadingAnim.stop()
+
+        // Báo thức nhanh (ngủ gật)
+        binding.btnQuick5.setOnClickListener { addQuickAlarm(5) }
+        binding.btnQuick10.setOnClickListener { addQuickAlarm(10) }
+        binding.btnQuick15.setOnClickListener { addQuickAlarm(15) }
+        binding.btnQuick30.setOnClickListener { addQuickAlarm(30) }
+
 
         binding.fabAdd.setOnClickListener {
             showAddDialog()
@@ -529,4 +537,35 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    /** Tạo báo thức một lần sau [minutes] phút (ngủ gật / power nap). */
+    private fun addQuickAlarm(minutes: Int) {
+        val cal = java.util.Calendar.getInstance().apply {
+            add(java.util.Calendar.MINUTE, minutes)
+        }
+        val hour = cal.get(java.util.Calendar.HOUR_OF_DAY)
+        val minute = cal.get(java.util.Calendar.MINUTE)
+        val alarm = Alarm(
+            id = repo.getNextId(),
+            hour = hour,
+            minute = minute,
+            isEnabled = true,
+            label = "Ngủ gật +$minutes phút",
+            repeatMode = Alarm.REPEAT_ONCE,
+            challengeType = Alarm.CHALLENGE_NONE,
+            useCrescendo = true
+        )
+        alarms.add(alarm)
+        repo.saveAlarms(alarms)
+        AlarmScheduler.schedule(this, alarm)
+        adapter.notifyDataSetChanged()
+        val timeStr = String.format("%02d:%02d", hour, minute)
+        com.google.android.material.snackbar.Snackbar.make(
+            binding.root,
+            "Báo thức $timeStr (sau $minutes phút)",
+            com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+        ).show()
+    }
+
+
 }

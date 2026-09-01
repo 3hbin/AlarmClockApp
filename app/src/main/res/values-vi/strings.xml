@@ -32,4 +32,5 @@
     <string name="test_section_hint">Hoặc giữ tab ⚙️ Cài ở thanh dưới</string>
     <string name="test_face_scan_btn">📷 Test quét mặt</string>
     <string name="test_face_expr_btn">😊 Test biểu cảm (Cười / Giận / 🤞 …)</string>
+    <string name="quick_nap">Ngủ gật</string>
 </resources>

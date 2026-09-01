@@ -15,9 +15,11 @@ import kotlin.math.min
 import kotlin.math.sin
 
 /**
- * Loading theo hãng (Canvas thuần — không video/logo Iconscout):
- * - Samsung: 1 chấm xanh pulse (chỉ máy Samsung)
- * - Còn lại: 4 chấm quỹ đạo kiểu Google (1 chấm cyan nổi bật)
+ * Loading tự nhận diện hãng máy (Canvas — không lấy được loader gốc OEM):
+ * Samsung → pulse 1 chấm · Google/Pixel → 4 chấm orbit
+ * Xiaomi → wave · Oppo/Realme/OnePlus → 3 chấm quay
+ * Huawei/Honor → vòng cung · Vivo → staggered · LG → 3 chấm ngang
+ * Motorola → 4 chấm quay · Sony → ink drop · khác → Google orbit
  */
 class LoadingAnimationView @JvmOverloads constructor(
     context: Context,
@@ -89,45 +91,94 @@ class LoadingAnimationView @JvmOverloads constructor(
         applyBrandDefault()
     }
 
-    /** Gọi khi muốn reset đúng style Samsung / Google theo máy. */
+    /** Gọi khi muốn reset style theo hãng máy hiện tại. */
     fun applyBrandDefault() {
         style = brandDefaultStyle()
-        if (isSamsungDevice()) {
-            animColor = 0xFF2196F3.toInt() // xanh Samsung-like
-            anim.duration = 900
-        } else {
-            animColor = 0xFF1A73E8.toInt() // Google Blue
-            accentColor = 0xFF00E5C0.toInt()
-            anim.duration = 1100
+        // Màu theo hãng (gần palette UI gốc)
+        when (detectBrand()) {
+            Brand.SAMSUNG -> {
+                animColor = 0xFF2196F3.toInt()
+                accentColor = 0xFF2196F3.toInt()
+            }
+            Brand.GOOGLE -> {
+                animColor = 0xFF4285F4.toInt()
+                accentColor = 0xFF34A853.toInt()
+            }
+            Brand.XIAOMI -> {
+                animColor = 0xFFFF6900.toInt()
+                accentColor = 0xFFFF6900.toInt()
+            }
+            Brand.OPPO, Brand.REALME, Brand.ONEPLUS -> {
+                animColor = 0xFF00C853.toInt()
+                accentColor = 0xFF00C853.toInt()
+            }
+            Brand.HUAWEI, Brand.HONOR -> {
+                animColor = 0xFFCF0A2C.toInt()
+                accentColor = 0xFFCF0A2C.toInt()
+            }
+            Brand.VIVO -> {
+                animColor = 0xFF415FFF.toInt()
+                accentColor = 0xFF415FFF.toInt()
+            }
+            Brand.LG -> {
+                animColor = 0xFFA50034.toInt()
+                accentColor = 0xFFA50034.toInt()
+            }
+            Brand.MOTOROLA -> {
+                animColor = 0xFFE1140A.toInt()
+                accentColor = 0xFFE1140A.toInt()
+            }
+            Brand.SONY -> {
+                animColor = 0xFF000000.toInt()
+                accentColor = 0xFF000000.toInt()
+            }
+            else -> {
+                animColor = 0xFF3F51B5.toInt()
+                accentColor = 0xFF00E5C0.toInt()
+            }
         }
-        invalidate()
     }
 
-    companion object {
-        fun isSamsungDevice(): Boolean {
-            val m = Build.MANUFACTURER?.lowercase().orEmpty()
-            val b = Build.BRAND?.lowercase().orEmpty()
-            return m.contains("samsung") || b.contains("samsung")
+    private enum class Brand {
+        SAMSUNG, GOOGLE, XIAOMI, OPPO, REALME, ONEPLUS,
+        HUAWEI, HONOR, VIVO, LG, MOTOROLA, SONY, OTHER
+    }
+
+    private fun detectBrand(): Brand {
+        val m = (Build.MANUFACTURER ?: "").lowercase()
+        val b = (Build.BRAND ?: "").lowercase()
+        val model = (Build.MODEL ?: "").lowercase()
+        val all = "$m $b $model"
+        return when {
+            "samsung" in all -> Brand.SAMSUNG
+            "google" in all || "pixel" in all -> Brand.GOOGLE
+            "xiaomi" in all || "redmi" in all || "poco" in all || "miui" in all -> Brand.XIAOMI
+            "realme" in all -> Brand.REALME
+            "oneplus" in all || "oppo" in all -> Brand.OPPO
+            "huawei" in all -> Brand.HUAWEI
+            "honor" in all -> Brand.HONOR
+            "vivo" in all || "iqoo" in all -> Brand.VIVO
+            "lg" in all || "lge" in all -> Brand.LG
+            "motorola" in all || "moto" in all -> Brand.MOTOROLA
+            "sony" in all || "xperia" in all -> Brand.SONY
+            else -> Brand.OTHER
         }
-
-        fun brandDefaultStyle(): Style =
-            if (isSamsungDevice()) Style.SAMSUNG_PULSE else Style.GOOGLE_ORBIT
     }
 
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-        if (visibility == VISIBLE) start()
+    private fun brandDefaultStyle(): Style = when (detectBrand()) {
+        Brand.SAMSUNG -> Style.SAMSUNG_PULSE
+        Brand.GOOGLE -> Style.GOOGLE_ORBIT
+        Brand.XIAOMI -> Style.WAVE_DOTS
+        Brand.OPPO, Brand.REALME, Brand.ONEPLUS -> Style.THREE_ROTATING_DOTS
+        Brand.HUAWEI, Brand.HONOR -> Style.DISCRETE_CIRCULAR
+        Brand.VIVO -> Style.STAGGERED_DOTS_WAVE
+        Brand.LG -> Style.HORIZONTAL_DOTS
+        Brand.MOTOROLA -> Style.FOUR_ROTATING_DOTS
+        Brand.SONY -> Style.INK_DROP
+        Brand.OTHER -> Style.GOOGLE_ORBIT
     }
 
-    override fun onDetachedFromWindow() {
-        stop()
-        super.onDetachedFromWindow()
-    }
-
-    override fun onVisibilityChanged(changedView: View, visibility: Int) {
-        super.onVisibilityChanged(changedView, visibility)
-        if (visibility == VISIBLE) start() else stop()
-    }
+    private fun isSamsungDevice(): Boolean = detectBrand() == Brand.SAMSUNG
 
     fun start() {
         if (anim.isRunning) return
