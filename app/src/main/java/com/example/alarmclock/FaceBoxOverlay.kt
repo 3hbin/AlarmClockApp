@@ -7,7 +7,7 @@ import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
 
-/** Khung vuông theo dõi khuôn mặt: đỏ = chờ / sai, xanh = đúng động tác. */
+/** Khung vuông theo dõi khuôn mặt: đỏ = chờ / sai, xanh = đúng. Luôn vẽ vòng hướng dẫn giữa. */
 class FaceBoxOverlay @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
@@ -25,6 +25,15 @@ class FaceBoxOverlay @JvmOverloads constructor(
         strokeWidth = 10f * resources.displayMetrics.density
         strokeCap = Paint.Cap.ROUND
     }
+    private val guidePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = 3f * resources.displayMetrics.density
+        color = 0x88FFFFFF.toInt()
+    }
+    private val guideFill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.FILL
+        color = 0x22000000
+    }
 
     fun update(left: Float, top: Float, right: Float, bottom: Float, matched: Boolean) {
         hasFace = true
@@ -40,24 +49,26 @@ class FaceBoxOverlay @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
+        val cx = width / 2f
+        val cy = height / 2f
+        val radius = minOf(width, height) * 0.28f
+        // Vòng hướng dẫn luôn hiện
+        canvas.drawCircle(cx, cy, radius, guideFill)
+        canvas.drawCircle(cx, cy, radius, guidePaint)
+
         if (!hasFace) return
         val color = if (ok) 0xFF22C55E.toInt() else 0xFFEF4444.toInt()
         paint.color = color
         corner.color = color
         val r = 12f * resources.displayMetrics.density
         canvas.drawRoundRect(box, r, r, paint)
-        // Góc vuông kiểu camera
         val len = box.width().coerceAtMost(box.height()) * 0.18f
-        // TL
         canvas.drawLine(box.left, box.top + len, box.left, box.top, corner)
         canvas.drawLine(box.left, box.top, box.left + len, box.top, corner)
-        // TR
         canvas.drawLine(box.right - len, box.top, box.right, box.top, corner)
         canvas.drawLine(box.right, box.top, box.right, box.top + len, corner)
-        // BL
         canvas.drawLine(box.left, box.bottom - len, box.left, box.bottom, corner)
         canvas.drawLine(box.left, box.bottom, box.left + len, box.bottom, corner)
-        // BR
         canvas.drawLine(box.right - len, box.bottom, box.right, box.bottom, corner)
         canvas.drawLine(box.right, box.bottom, box.right, box.bottom - len, corner)
     }

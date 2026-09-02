@@ -107,21 +107,20 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
         try {
             FaceChallengeActivity.pendingResultOk = null
-            faceChallengeLauncher.launch(
-                android.content.Intent(this, FaceChallengeActivity::class.java).apply {
-                    putExtra(FaceChallengeActivity.EXTRA_MODE, mode)
-                    putExtra(
-                        FaceChallengeActivity.EXTRA_EASY,
-                        allEasyMode || challengeType == Alarm.CHALLENGE_FACE_EXPR
-                    )
-                }
-            )
+            val intent = android.content.Intent(this, FaceChallengeActivity::class.java).apply {
+                putExtra(FaceChallengeActivity.EXTRA_MODE, mode)
+                putExtra(
+                    FaceChallengeActivity.EXTRA_EASY,
+                    allEasyMode || challengeType == Alarm.CHALLENGE_FACE_EXPR
+                )
+            }
+            startActivity(intent)
+            Toast.makeText(this, "Đang mở quét mặt… đưa mặt vào khung", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Toast.makeText(this, "Không mở được quét mặt: ${e.message}", Toast.LENGTH_LONG).show()
-            // Cho tắt thủ công nếu camera hỏng hoàn toàn
             binding.btnDismiss.visibility = View.VISIBLE
-            binding.btnDismiss.text = "Camera lỗi — bấm để tắt"
-            binding.btnDismiss.setOnClickListener { onChallengeStepComplete() }
+            binding.btnDismiss.text = "Lỗi mở quét — bấm thử lại"
+            binding.btnDismiss.setOnClickListener { launchFaceChallenge(mode) }
         }
     }
 
@@ -377,8 +376,10 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                     onFail = { msg ->
                         Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
                         if (AppSettings.isFaceCaptureOnFail(this)) {
-                            faceChallengeLauncher.launch(
-                                android.content.Intent(this, FaceChallengeActivity::class.java)
+                            startActivity(
+                                android.content.Intent(this, FaceChallengeActivity::class.java).apply {
+                                    putExtra(FaceChallengeActivity.EXTRA_MODE, FaceChallengeActivity.MODE_FACE)
+                                }
                             )
                         }
                     }
