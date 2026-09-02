@@ -3,17 +3,25 @@ package com.example.alarmclock
 import java.util.Calendar
 
 /**
- * Ngày lễ cố định (dương lịch) Việt Nam.
- * Tết Âm lịch / Giỗ Tổ cần lịch âm hoặc API riêng.
+ * Ngày lễ / sự kiện dương lịch (VN + một số ngày quốc tế thường thấy trên lịch máy).
  */
 object VietnamHolidays {
-    data class Holiday(val month: Int, val day: Int, val name: String)
+    data class Holiday(val month: Int, val day: Int, val name: String, val allDay: Boolean = true)
 
     private val fixed = listOf(
         Holiday(1, 1, "Tết Dương lịch"),
+        Holiday(2, 14, "Valentine"),
+        Holiday(3, 8, "Quốc tế Phụ nữ"),
         Holiday(4, 30, "Giải phóng miền Nam"),
         Holiday(5, 1, "Quốc tế Lao động"),
-        Holiday(9, 2, "Quốc khánh Việt Nam")
+        Holiday(6, 1, "Quốc tế Thiếu nhi"),
+        Holiday(9, 2, "Quốc khánh"),
+        Holiday(10, 20, "Ngày Phụ nữ Việt Nam"),
+        Holiday(11, 20, "Ngày Nhà giáo Việt Nam"),
+        Holiday(11, 24, "Ngày Văn hoá Việt Nam"),
+        Holiday(12, 24, "Đêm Giáng sinh"),
+        Holiday(12, 25, "Giáng sinh/Nôen"),
+        Holiday(12, 31, "Đêm giao thừa")
     )
 
     fun isHoliday(cal: Calendar): Boolean {
@@ -35,17 +43,25 @@ object VietnamHolidays {
             cal.get(Calendar.MONTH) + 1,
             cal.get(Calendar.YEAR)
         )
-        return if (name != null) {
-            "Hôm nay $dateStr là $name 🎉"
-        } else {
-            "Hôm nay $dateStr — không phải ngày lễ cố định"
-        }
+        return if (name != null) "Hôm nay $dateStr là $name 🎉" else "Hôm nay $dateStr"
     }
 
-    fun upcomingLines(from: Calendar = Calendar.getInstance(), count: Int = 6): List<String> {
-        val lines = mutableListOf<String>()
+    /** Danh sách sự kiện sắp tới (kèm quá khứ gần trong năm) — kiểu agenda lịch máy. */
+    data class AgendaItem(
+        val whenLabel: String,   // "HÔM NAY" hoặc "THỨ BA, NGÀY 24 THÁNG 11"
+        val title: String,
+        val allDay: Boolean,
+        val isToday: Boolean,
+        val timeMs: Long
+    )
+
+    private val vnDays = arrayOf(
+        "", "Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"
+    )
+
+    fun agendaItems(from: Calendar = Calendar.getInstance(), count: Int = 20): List<AgendaItem> {
         val year = from.get(Calendar.YEAR)
-        val all = (year..year + 1).flatMap { y ->
+        val pairs = (year..year + 1).flatMap { y ->
             fixed.map { h ->
                 val c = Calendar.getInstance().apply {
                     set(Calendar.YEAR, y)
@@ -58,19 +74,30 @@ object VietnamHolidays {
                 }
                 h to c
             }
-        }.filter { it.second.timeInMillis >= from.timeInMillis - 24 * 3600_000L }
-            .sortedBy { it.second.timeInMillis }
+        }.filter {
+            // từ đầu năm hiện tại trở đi
+            it.second.get(Calendar.YEAR) > year ||
+                it.second.get(Calendar.DAY_OF_YEAR) >= from.get(Calendar.DAY_OF_YEAR) - 1
+        }.sortedBy { it.second.timeInMillis }
             .take(count)
-        all.forEach { (h, c) ->
-            val ds = "%02d/%02d/%04d".format(
-                c.get(Calendar.DAY_OF_MONTH),
-                c.get(Calendar.MONTH) + 1,
-                c.get(Calendar.YEAR)
-            )
-            val mark = if (isSameDay(c, from)) " ← HÔM NAY" else ""
-            lines.add("$ds · ${h.name}$mark")
+
+        return pairs.map { (h, c) ->
+            val today = isSameDay(c, from)
+            val whenLabel = if (today) {
+                "HÔM NAY"
+            } else {
+                val dow = vnDays[c.get(Calendar.DAY_OF_WEEK)]
+                val day = c.get(Calendar.DAY_OF_MONTH)
+                val month = c.get(Calendar.MONTH) + 1
+                val y = c.get(Calendar.YEAR)
+                if (y != year) {
+                    "$dow, ngày $day tháng $month năm $y".uppercase()
+                } else {
+                    "$dow, ngày $day tháng $month".uppercase()
+                }
+            }
+            AgendaItem(whenLabel, h.name, h.allDay, today, c.timeInMillis)
         }
-        return lines
     }
 
     private fun isSameDay(a: Calendar, b: Calendar): Boolean =

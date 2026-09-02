@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingLeft="20dp"
+    android:paddingRight="20dp"
+    android:paddingTop="14dp"
+    android:paddingBottom="14dp">
+
+    <TextView
+        android:id="@+id/tvWhen"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="HÔM NAY"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:textColor="#FF1A73E8"
+        android:letterSpacing="0.04" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="10dp">
+
+        <View
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:background="#FF1A73E8" />
+
+        <TextView
+            android:id="@+id/tvAllDay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cả ngày"
+            android:textSize="13sp"
+            android:textColor="#FF5F6368"
+            android:layout_marginLeft="12dp"
+            android:minWidth="64dp" />
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Quốc khánh"
+            android:textSize="16sp"
+            android:textColor="#FF202124"
+            android:textStyle="bold"
+            android:layout_marginLeft="12dp" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#FFE8EAED"
+        android:layout_marginTop="14dp" />
+</LinearLayout>

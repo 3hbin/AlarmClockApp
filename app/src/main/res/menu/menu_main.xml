@@ -19,6 +19,6 @@
         app:showAsAction="never" />
     <item
         android:id="@+id/menu_version"
-        android:title="ℹ️ Phiên bản v3.87"
+        android:title="ℹ️ Phiên bản v3.88"
         app:showAsAction="never" />
 </menu>

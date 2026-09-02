@@ -83,6 +83,10 @@ object AppSettings {
         prefs(context).edit().putString("recovery_email", email.trim().lowercase()).apply()
     fun getRecoveryEmail(context: Context) =
         prefs(context).getString("recovery_email", "") ?: ""
+    fun setGoogleDisplayName(context: Context, name: String) =
+        prefs(context).edit().putString("google_display_name", name).apply()
+    fun getGoogleDisplayName(context: Context) =
+        prefs(context).getString("google_display_name", "") ?: ""
 
     // Anti-troll: chống người khác tắt báo thức
     fun setAntiTroll(context: Context, on: Boolean) =
@@ -115,8 +119,17 @@ object AppSettings {
     fun clearSettingsPin(context: Context) =
         prefs(context).edit().remove("settings_pin").apply()
 
-    /** Session unlock — hết khi tắt app / process chết */
+    /** Session unlock Cài đặt — hết khi tắt app / process chết */
     @Volatile var settingsUnlockedThisSession: Boolean = false
+
+    /** Session unlock toàn app (giống ngân hàng) */
+    @Volatile var appUnlockedThisSession: Boolean = false
+
+    /** Khóa cả app mỗi lần mở (dùng chung PIN Cài đặt) */
+    fun setAppLockEnabled(context: Context, on: Boolean) =
+        prefs(context).edit().putBoolean("app_lock_full", on).apply()
+    fun isAppLockEnabled(context: Context) =
+        prefs(context).getBoolean("app_lock_full", false) && hasSettingsPin(context)
 
     // Mã khôi phục PIN (6 số), hết hạn 15 phút
     fun setRecoveryCode(context: Context, code: String) {

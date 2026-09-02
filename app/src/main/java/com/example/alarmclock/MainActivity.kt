@@ -9,6 +9,8 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import android.view.View
 import android.provider.CalendarContract
 import android.text.InputType
 import android.widget.TextView
@@ -67,6 +69,22 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, getString(R.string.choose_ringtone) + " OK", Toast.LENGTH_SHORT).show()
         }
     }
+
+    private val googleSignInLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val account = GoogleSignInHelper.handleResult(this, result.data)
+            if (account != null) {
+                val email = account.email ?: ""
+                Toast.makeText(this, "Đã đăng nhập: $email", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(
+                    this,
+                    "Google Sign-In chưa cấu hình OAuth (lỗi 10) — dùng email bên dưới",
+                    Toast.LENGTH_LONG
+                ).show()
+                showGoogleEmailFallback()
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -266,8 +284,67 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         try { binding.curvedNav.selectIndex(0, animate = false) } catch (_: Exception) {}
-        // Cập nhật icon launcher theo buổi hiện tại
         DynamicIconHelper.applySafe(this)
+        maybeRequireAppLock()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // Rời app (Home / app khác) → khóa lại như ngân hàng
+        if (AppSettings.isAppLockEnabled(this)) {
+            AppSettings.appUnlockedThisSession = false
+            AppSettings.settingsUnlockedThisSession = false
+        }
+    }
+
+    private var appLockDialogShowing = false
+
+    private fun maybeRequireAppLock() {
+        if (!AppSettings.isAppLockEnabled(this)) return
+        if (AppSettings.appUnlockedThisSession) return
+        if (appLockDialogShowing) return
+        appLockDialogShowing = true
+        // Che nội dung khi đang khóa
+        try { binding.root.alpha = 0.15f } catch (_: Exception) {}
+        val input = EditText(this).apply {
+            hint = "Nhập PIN mở app"
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            setPadding(48, 32, 48, 32)
+        }
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("🔒 App đã khóa")
+            .setMessage("Nhập PIN để mở Báo thức Challenge")
+            .setView(input)
+            .setCancelable(false)
+            .setPositiveButton("Mở") { _, _ ->
+                val pin = input.text?.toString()?.trim().orEmpty()
+                if (AppSettings.checkSettingsPin(this, pin)) {
+                    AppSettings.appUnlockedThisSession = true
+                    AppSettings.settingsUnlockedThisSession = true
+                    appLockDialogShowing = false
+                    try { binding.root.alpha = 1f } catch (_: Exception) {}
+                    Toast.makeText(this, "Đã mở khóa", Toast.LENGTH_SHORT).show()
+                } else {
+                    appLockDialogShowing = false
+                    Toast.makeText(this, "Sai PIN", Toast.LENGTH_SHORT).show()
+                    maybeRequireAppLock()
+                }
+            }
+            .setNeutralButton("Quên PIN?") { _, _ ->
+                appLockDialogShowing = false
+                SettingsLockHelper.requireUnlock(this) {
+                    AppSettings.appUnlockedThisSession = true
+                    try { binding.root.alpha = 1f } catch (_: Exception) {}
+                }
+            }
+            .setOnDismissListener {
+                // Nếu vẫn chưa mở → hỏi lại
+                if (!AppSettings.appUnlockedThisSession && AppSettings.isAppLockEnabled(this)) {
+                    appLockDialogShowing = false
+                    binding.root.post { maybeRequireAppLock() }
+                }
+            }
+            .show()
     }
 
     private fun setupCurvedNav() {
@@ -726,28 +803,49 @@ class MainActivity : AppCompatActivity() {
 
     private fun showAppLockMenu() {
         val hasPin = AppSettings.hasSettingsPin(this)
+        val fullOn = AppSettings.isAppLockEnabled(this)
         val items = if (hasPin) {
-            arrayOf("Mở khóa / vào Cài đặt", "Đổi PIN App lock", "Tắt App lock", "Khóa lại ngay")
+            arrayOf(
+                "Mở khóa / vào Cài đặt",
+                "Đổi PIN",
+                if (fullOn) "Tắt khóa cả app (chỉ còn khóa Cài đặt)" else "Bật khóa cả app khi mở (như ngân hàng)",
+                "Tắt hết App lock (xóa PIN)",
+                "Khóa lại ngay"
+            )
         } else {
-            arrayOf("Bật App lock (đặt PIN)")
+            arrayOf("Bật App lock (đặt PIN + khóa cả app)")
         }
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setTitle("🔒 App lock")
             .setItems(items) { _, which ->
                 when {
-                    !hasPin && which == 0 -> promptSetPin()
+                    !hasPin && which == 0 -> promptSetPin(enableFull = true)
                     hasPin && which == 0 -> SettingsLockHelper.requireUnlock(this) {
                         startActivity(Intent(this, SettingsActivity::class.java))
                     }
-                    hasPin && which == 1 -> promptSetPin()
+                    hasPin && which == 1 -> promptSetPin(enableFull = fullOn)
                     hasPin && which == 2 -> {
-                        AppSettings.clearSettingsPin(this)
-                        AppSettings.settingsUnlockedThisSession = true
-                        Toast.makeText(this, "Đã tắt App lock", Toast.LENGTH_SHORT).show()
+                        if (fullOn) {
+                            AppSettings.setAppLockEnabled(this, false)
+                            Toast.makeText(this, "Chỉ còn khóa Cài đặt", Toast.LENGTH_SHORT).show()
+                        } else {
+                            AppSettings.setAppLockEnabled(this, true)
+                            AppSettings.appUnlockedThisSession = true
+                            Toast.makeText(this, "Đã bật khóa cả app — mỗi lần mở cần PIN", Toast.LENGTH_LONG).show()
+                        }
                     }
                     hasPin && which == 3 -> {
+                        AppSettings.clearSettingsPin(this)
+                        AppSettings.setAppLockEnabled(this, false)
+                        AppSettings.settingsUnlockedThisSession = true
+                        AppSettings.appUnlockedThisSession = true
+                        Toast.makeText(this, "Đã tắt App lock", Toast.LENGTH_SHORT).show()
+                    }
+                    hasPin && which == 4 -> {
+                        AppSettings.appUnlockedThisSession = false
                         AppSettings.settingsUnlockedThisSession = false
-                        Toast.makeText(this, "Đã khóa — lần sau cần PIN", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Đã khóa — cần PIN để tiếp tục", Toast.LENGTH_SHORT).show()
+                        maybeRequireAppLock()
                     }
                 }
             }
@@ -755,7 +853,7 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun promptSetPin() {
+    private fun promptSetPin(enableFull: Boolean = true) {
         val input = EditText(this).apply {
             hint = "PIN ≥ 4 số"
             inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
@@ -763,6 +861,7 @@ class MainActivity : AppCompatActivity() {
         }
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setTitle("Đặt PIN App lock")
+            .setMessage(if (enableFull) "PIN này khóa cả app mỗi lần mở (và Cài đặt)." else "Đổi PIN hiện tại.")
             .setView(input)
             .setPositiveButton("Lưu") { _, _ ->
                 val pin = input.text?.toString()?.trim().orEmpty()
@@ -770,8 +869,14 @@ class MainActivity : AppCompatActivity() {
                     Toast.makeText(this, "PIN cần ≥ 4 số", Toast.LENGTH_SHORT).show()
                 } else {
                     AppSettings.setSettingsPin(this, pin)
+                    if (enableFull) AppSettings.setAppLockEnabled(this, true)
                     AppSettings.settingsUnlockedThisSession = true
-                    Toast.makeText(this, "Đã bật App lock", Toast.LENGTH_SHORT).show()
+                    AppSettings.appUnlockedThisSession = true
+                    Toast.makeText(
+                        this,
+                        if (enableFull) "Đã bật khóa cả app + PIN" else "Đã đổi PIN",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
             .setNegativeButton("Hủy", null)
@@ -779,21 +884,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showCalendarMenu() {
-        val today = java.util.Calendar.getInstance()
-        val header = VietnamHolidays.todayMessage(today)
-        val upcoming = VietnamHolidays.upcomingLines(today).joinToString("\n")
-        val msg = "$header\n\nSắp tới:\n$upcoming\n\n• Bấm «Thêm sự kiện» để ghi vào lịch hệ thống (vd: Quốc khánh)."
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("📅 Lịch & ngày lễ")
-            .setMessage(msg)
-            .setPositiveButton("Thêm sự kiện") { _, _ ->
-                openAddCalendarEvent()
-            }
-            .setNeutralButton("Quốc khánh") { _, _ ->
-                openNationalDayEvent()
-            }
-            .setNegativeButton("Đóng", null)
-            .show()
+        startActivity(Intent(this, CalendarAgendaActivity::class.java))
     }
 
     private fun openNationalDayEvent() {
@@ -838,6 +929,36 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showGoogleLoginMenu() {
+        val view = layoutInflater.inflate(R.layout.dialog_google_sign_in, null)
+        val status = view.findViewById<TextView>(R.id.tvGoogleStatus)
+        val current = GoogleSignInHelper.lastSignedInEmail(this)
+            ?: AppSettings.getRecoveryEmail(this)
+        val name = AppSettings.getGoogleDisplayName(this)
+        status.text = when {
+            current.isNotBlank() && name.isNotBlank() -> "Đã lưu: $name\n$current"
+            current.isNotBlank() -> "Đã lưu: $current"
+            else -> "Chưa đăng nhập"
+        }
+        view.findViewById<View>(R.id.btnGoogleSignIn).setOnClickListener {
+            try {
+                googleSignInLauncher.launch(GoogleSignInHelper.signInIntent(this))
+            } catch (e: Exception) {
+                Toast.makeText(this, "Không mở Google: ${e.message}", Toast.LENGTH_LONG).show()
+                showGoogleEmailFallback()
+            }
+        }
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setView(view)
+            .setPositiveButton("Đóng", null)
+            .setNeutralButton("Nhập email") { _, _ -> showGoogleEmailFallback() }
+            .setNegativeButton("Đăng xuất") { _, _ ->
+                GoogleSignInHelper.signOut(this)
+                Toast.makeText(this, "Đã đăng xuất Google trên máy", Toast.LENGTH_SHORT).show()
+            }
+            .show()
+    }
+
+    private fun showGoogleEmailFallback() {
         val current = AppSettings.getRecoveryEmail(this)
         val input = EditText(this).apply {
             hint = "you@gmail.com"
@@ -845,37 +966,20 @@ class MainActivity : AppCompatActivity() {
             setText(current)
             setPadding(48, 32, 48, 32)
         }
-        val box = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(24, 8, 24, 8)
-            addView(TextView(this@MainActivity).apply {
-                text = "Đăng nhập Gmail (không server):\n• Lưu email để khôi phục PIN\n• Gửi nhật ký báo thức vào Hộp thư đến của bạn"
-                setPadding(16, 8, 16, 16)
-            })
-            addView(input)
-        }
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("📧 Đăng nhập Google")
-            .setView(box)
-            .setPositiveButton("Lưu email") { _, _ ->
+            .setTitle("Email Google")
+            .setMessage("Lưu Gmail để khôi phục PIN và gửi nhật ký.")
+            .setView(input)
+            .setPositiveButton("Lưu") { _, _ ->
                 val email = input.text?.toString()?.trim().orEmpty()
-                if (!email.contains("@") || !email.contains(".")) {
+                if (email.contains("@")) {
+                    AppSettings.setRecoveryEmail(this, email)
+                    Toast.makeText(this, "Đã lưu $email", Toast.LENGTH_SHORT).show()
+                } else {
                     Toast.makeText(this, "Email không hợp lệ", Toast.LENGTH_SHORT).show()
-                } else {
-                    AppSettings.setRecoveryEmail(this, email)
-                    Toast.makeText(this, "Đã lưu: $email", Toast.LENGTH_SHORT).show()
                 }
             }
-            .setNeutralButton("Gửi nhật ký") { _, _ ->
-                val email = input.text?.toString()?.trim().orEmpty().ifBlank { current }
-                if (email.isBlank()) {
-                    Toast.makeText(this, "Nhập Gmail trước", Toast.LENGTH_SHORT).show()
-                } else {
-                    AppSettings.setRecoveryEmail(this, email)
-                    sendHistoryToGmail(email)
-                }
-            }
-            .setNegativeButton("Đóng", null)
+            .setNegativeButton("Hủy", null)
             .show()
     }
 

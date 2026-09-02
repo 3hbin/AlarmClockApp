@@ -131,6 +131,7 @@
             android:launchMode="singleTop"
             android:taskAffinity=""
             android:theme="@style/Theme.AlarmClock.FullScreen" />
+        <activity android:name=".CalendarAgendaActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".SettingsActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".GalleryActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".FeaturesActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
