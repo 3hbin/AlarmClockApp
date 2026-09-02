@@ -122,6 +122,7 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     AlarmScheduler.cancel(this, alarm.id)
                 }
+                updateNextAlarmBanner()
                 updateOngoingNotification()
             },
             onDelete = { alarm ->
@@ -290,6 +291,8 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         try { binding.curvedNav.selectIndex(0, animate = false) } catch (_: Exception) {}
         DynamicIconHelper.applySafe(this)
+        // Sau khi tắt báo thức / kêu xong → đồng bộ list + gỡ thông báo status
+        try { reloadAlarmsFromDisk() } catch (_: Exception) {}
         maybeRequireAppLock()
     }
 
@@ -654,10 +657,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateOngoingNotification() {
         val enabledCount = alarms.count { it.isEnabled }
-        val manager = NotificationManagerCompat.from(this)
+        val nmCompat = NotificationManagerCompat.from(this)
+        val nm = getSystemService(NotificationManager::class.java)
 
         if (enabledCount == 0) {
-            manager.cancel(1001)
+            // Tắt hẳn thông báo "Báo thức đang bật"
+            try { nmCompat.cancel(1001) } catch (_: Exception) {}
+            try { nm?.cancel(1001) } catch (_: Exception) {}
+            try { nmCompat.cancel(AlarmNotificationHelper.NOTIF_ID_RINGING) } catch (_: Exception) {}
+            try { nm?.cancel(AlarmNotificationHelper.NOTIF_ID_RINGING) } catch (_: Exception) {}
             return
         }
 
@@ -672,15 +680,28 @@ class MainActivity : AppCompatActivity() {
             .setContentTitle(getString(R.string.notification_title))
             .setContentText(getString(R.string.notification_text, enabledCount))
             .setOngoing(true)
+            .setOnlyAlertOnce(true)
             .setContentIntent(pending)
             .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setSilent(true)
             .build()
 
         try {
-            manager.notify(1001, notification)
+            nmCompat.notify(1001, notification)
         } catch (e: SecurityException) {
             // Permission not granted
         }
+    }
+
+    /** Đồng bộ lại list từ đĩa (sau khi báo thức kêu / tắt ở màn khác). */
+    private fun reloadAlarmsFromDisk() {
+        alarms.clear()
+        alarms.addAll(repo.getAlarms().onEach {
+            if (it.ringtoneUri.isNullOrEmpty()) it.ringtoneUri = "app:soft_chime"
+        })
+        try { adapter.notifyDataSetChanged() } catch (_: Exception) {}
+        updateNextAlarmBanner()
+        updateOngoingNotification()
     }
 
     private fun checkPermissions() {
