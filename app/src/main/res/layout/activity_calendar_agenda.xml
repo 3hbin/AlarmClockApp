@@ -15,7 +15,7 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="#FFFFFFFF"
-            app:title="Kế hoạch"
+            app:title="Lịch"
             app:titleTextColor="#FF202124"
             app:navigationIcon="?attr/homeAsUpIndicator" />
 
@@ -29,25 +29,24 @@
             android:textColor="#FF202124"
             android:paddingLeft="20dp"
             android:paddingRight="20dp"
-            android:paddingBottom="8dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Sự kiện &amp; ngày lễ"
-            android:textSize="13sp"
-            android:textColor="#FF1A73E8"
-            android:textStyle="bold"
-            android:paddingLeft="20dp"
             android:paddingBottom="4dp" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerAgenda"
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabModes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFFFFFFF"
+            app:tabMode="fixed"
+            app:tabGravity="fill"
+            app:tabIndicatorColor="#FF1A73E8"
+            app:tabSelectedTextColor="#FF1A73E8"
+            app:tabTextColor="#FF5F6368" />
+
+        <FrameLayout
+            android:id="@+id/calendarContent"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:clipToPadding="false"
-            android:paddingBottom="88dp" />
+            android:layout_weight="1" />
     </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
