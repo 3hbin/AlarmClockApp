@@ -252,10 +252,14 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             flashHelper?.startFlashing()
         }
 
-        binding.btnDismiss.setOnClickListener {
-            requestDismiss(repo)
+        // CHỈ gắn "Tắt" khi KHÔNG có thử thách.
+        // Có FACE/EXPR/… thì setupChallengeUi() đã gắn đúng listener — không được ghi đè!
+        if (challengeType == Alarm.CHALLENGE_NONE) {
+            binding.btnDismiss.setOnClickListener {
+                requestDismiss(repo)
+            }
         }
-        // Hiệu ứng Ripple Rings khi chạm nút Tắt
+        // Hiệu ứng Ripple Rings khi chạm nút (Tắt hoặc Bắt đầu quét)
         try {
             RippleRingsEffect.attach(binding.btnDismiss, 0xFF67E8F9.toInt())
         } catch (_: Exception) {}
@@ -790,8 +794,8 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
 
     private fun requestDismiss(repo: AlarmRepository) {
         try { RippleRingsEffect.stop(this) } catch (_: Exception) {}
-        // Nếu đang có challenge (math/shake/face) thì không cho bấm tắt trực tiếp
-        if (challengeType != Alarm.CHALLENGE_NONE && binding.btnDismiss.visibility != View.VISIBLE) {
+        // Có thử thách → không tắt trực tiếp (kể cả khi nút đỏ đang hiện = "Bắt đầu quét…")
+        if (challengeType != Alarm.CHALLENGE_NONE) {
             Toast.makeText(this, "Hãy hoàn thành thử thách trước!", Toast.LENGTH_SHORT).show()
             return
         }

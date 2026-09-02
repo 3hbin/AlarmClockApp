@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/menu_app_lock"
+        android:title="🔒 App lock"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_calendar"
+        android:title="📅 Lịch &amp; ngày lễ"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_google"
+        android:title="📧 Đăng nhập Google"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_history"
+        android:title="📋 Nhật ký báo thức"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_version"
+        android:title="ℹ️ Phiên bản v3.87"
+        app:showAsAction="never" />
+</menu>

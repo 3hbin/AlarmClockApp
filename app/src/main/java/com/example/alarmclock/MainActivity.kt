@@ -9,6 +9,13 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.CalendarContract
+import android.text.InputType
+import android.widget.TextView
+import android.widget.ScrollView
+import android.widget.LinearLayout
+import android.view.MenuItem
+import android.view.Menu
 import android.os.Handler
 import android.os.Looper
 import android.Manifest
@@ -65,7 +72,14 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        try { binding.toolbar.title = getString(R.string.app_name) } catch (_: Exception) {}
+        try {
+            setSupportActionBar(binding.toolbar)
+            supportActionBar?.setDisplayShowTitleEnabled(true)
+            binding.toolbar.title = getString(R.string.app_name)
+            binding.toolbar.setTitleTextColor(0xFFFFFFFF.toInt())
+            // Overflow 3 chấm màu trắng trên nền xanh
+            binding.toolbar.overflowIcon?.setTint(0xFFFFFFFF.toInt())
+        } catch (_: Exception) {}
 
         repo = AlarmRepository(this)
         selectedRingtoneUri = repo.getGlobalRingtone() ?: "app:soft_chime"
@@ -671,5 +685,256 @@ class MainActivity : AppCompatActivity() {
         ).show()
     }
 
+
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        // Cập nhật dòng phiên bản
+        try {
+            val pInfo = packageManager.getPackageInfo(packageName, 0)
+            val ver = pInfo.versionName ?: "3.87"
+            menu.findItem(R.id.menu_version)?.title = "ℹ️ Phiên bản v$ver"
+        } catch (_: Exception) {}
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.menu_app_lock -> {
+                showAppLockMenu()
+                return true
+            }
+            R.id.menu_calendar -> {
+                showCalendarMenu()
+                return true
+            }
+            R.id.menu_google -> {
+                showGoogleLoginMenu()
+                return true
+            }
+            R.id.menu_history -> {
+                showAlarmHistoryDialog()
+                return true
+            }
+            R.id.menu_version -> {
+                showVersionDialog()
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    private fun showAppLockMenu() {
+        val hasPin = AppSettings.hasSettingsPin(this)
+        val items = if (hasPin) {
+            arrayOf("Mở khóa / vào Cài đặt", "Đổi PIN App lock", "Tắt App lock", "Khóa lại ngay")
+        } else {
+            arrayOf("Bật App lock (đặt PIN)")
+        }
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("🔒 App lock")
+            .setItems(items) { _, which ->
+                when {
+                    !hasPin && which == 0 -> promptSetPin()
+                    hasPin && which == 0 -> SettingsLockHelper.requireUnlock(this) {
+                        startActivity(Intent(this, SettingsActivity::class.java))
+                    }
+                    hasPin && which == 1 -> promptSetPin()
+                    hasPin && which == 2 -> {
+                        AppSettings.clearSettingsPin(this)
+                        AppSettings.settingsUnlockedThisSession = true
+                        Toast.makeText(this, "Đã tắt App lock", Toast.LENGTH_SHORT).show()
+                    }
+                    hasPin && which == 3 -> {
+                        AppSettings.settingsUnlockedThisSession = false
+                        Toast.makeText(this, "Đã khóa — lần sau cần PIN", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            .setNegativeButton("Đóng", null)
+            .show()
+    }
+
+    private fun promptSetPin() {
+        val input = EditText(this).apply {
+            hint = "PIN ≥ 4 số"
+            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            setPadding(48, 32, 48, 32)
+        }
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("Đặt PIN App lock")
+            .setView(input)
+            .setPositiveButton("Lưu") { _, _ ->
+                val pin = input.text?.toString()?.trim().orEmpty()
+                if (pin.length < 4) {
+                    Toast.makeText(this, "PIN cần ≥ 4 số", Toast.LENGTH_SHORT).show()
+                } else {
+                    AppSettings.setSettingsPin(this, pin)
+                    AppSettings.settingsUnlockedThisSession = true
+                    Toast.makeText(this, "Đã bật App lock", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Hủy", null)
+            .show()
+    }
+
+    private fun showCalendarMenu() {
+        val today = java.util.Calendar.getInstance()
+        val header = VietnamHolidays.todayMessage(today)
+        val upcoming = VietnamHolidays.upcomingLines(today).joinToString("\n")
+        val msg = "$header\n\nSắp tới:\n$upcoming\n\n• Bấm «Thêm sự kiện» để ghi vào lịch hệ thống (vd: Quốc khánh)."
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("📅 Lịch & ngày lễ")
+            .setMessage(msg)
+            .setPositiveButton("Thêm sự kiện") { _, _ ->
+                openAddCalendarEvent()
+            }
+            .setNeutralButton("Quốc khánh") { _, _ ->
+                openNationalDayEvent()
+            }
+            .setNegativeButton("Đóng", null)
+            .show()
+    }
+
+    private fun openNationalDayEvent() {
+        val cal = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.MONTH, java.util.Calendar.SEPTEMBER)
+            set(java.util.Calendar.DAY_OF_MONTH, 2)
+            set(java.util.Calendar.HOUR_OF_DAY, 0)
+            set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0)
+        }
+        // Nếu đã qua 2/9 năm nay → năm sau
+        val now = java.util.Calendar.getInstance()
+        if (cal.before(now) && !(cal.get(java.util.Calendar.DAY_OF_YEAR) == now.get(java.util.Calendar.DAY_OF_YEAR)
+                && cal.get(java.util.Calendar.YEAR) == now.get(java.util.Calendar.YEAR))) {
+            cal.add(java.util.Calendar.YEAR, 1)
+        }
+        try {
+            val intent = Intent(Intent.ACTION_INSERT).apply {
+                data = CalendarContract.Events.CONTENT_URI
+                putExtra(CalendarContract.Events.TITLE, "Quốc khánh Việt Nam")
+                putExtra(CalendarContract.Events.DESCRIPTION, "Ngày Quốc khánh 2/9 — nhắc từ Báo thức Challenge")
+                putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, cal.timeInMillis)
+                putExtra(CalendarContract.EXTRA_EVENT_ALL_DAY, true)
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Không mở được lịch: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun openAddCalendarEvent() {
+        try {
+            val intent = Intent(Intent.ACTION_INSERT).apply {
+                data = CalendarContract.Events.CONTENT_URI
+                putExtra(CalendarContract.Events.TITLE, "Sự kiện từ Báo thức Challenge")
+                putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, System.currentTimeMillis())
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Không mở được lịch: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun showGoogleLoginMenu() {
+        val current = AppSettings.getRecoveryEmail(this)
+        val input = EditText(this).apply {
+            hint = "you@gmail.com"
+            inputType = InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+            setText(current)
+            setPadding(48, 32, 48, 32)
+        }
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(24, 8, 24, 8)
+            addView(TextView(this@MainActivity).apply {
+                text = "Đăng nhập Gmail (không server):\n• Lưu email để khôi phục PIN\n• Gửi nhật ký báo thức vào Hộp thư đến của bạn"
+                setPadding(16, 8, 16, 16)
+            })
+            addView(input)
+        }
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("📧 Đăng nhập Google")
+            .setView(box)
+            .setPositiveButton("Lưu email") { _, _ ->
+                val email = input.text?.toString()?.trim().orEmpty()
+                if (!email.contains("@") || !email.contains(".")) {
+                    Toast.makeText(this, "Email không hợp lệ", Toast.LENGTH_SHORT).show()
+                } else {
+                    AppSettings.setRecoveryEmail(this, email)
+                    Toast.makeText(this, "Đã lưu: $email", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNeutralButton("Gửi nhật ký") { _, _ ->
+                val email = input.text?.toString()?.trim().orEmpty().ifBlank { current }
+                if (email.isBlank()) {
+                    Toast.makeText(this, "Nhập Gmail trước", Toast.LENGTH_SHORT).show()
+                } else {
+                    AppSettings.setRecoveryEmail(this, email)
+                    sendHistoryToGmail(email)
+                }
+            }
+            .setNegativeButton("Đóng", null)
+            .show()
+    }
+
+    private fun sendHistoryToGmail(email: String) {
+        val lines = AlarmHistory.formatLines(this)
+        val body = if (lines.isEmpty()) {
+            "Chưa có nhật ký báo thức.\n\n— Báo thức Challenge v3.87"
+        } else {
+            "Nhật ký báo thức:\n\n" + lines.joinToString("\n") + "\n\n— Báo thức Challenge v3.87"
+        }
+        try {
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "message/rfc822"
+                putExtra(Intent.EXTRA_EMAIL, arrayOf(email))
+                putExtra(Intent.EXTRA_SUBJECT, "[Báo thức Challenge] Nhật ký ${System.currentTimeMillis() % 100000}")
+                putExtra(Intent.EXTRA_TEXT, body)
+            }
+            startActivity(Intent.createChooser(intent, "Gửi qua Gmail"))
+        } catch (e: Exception) {
+            Toast.makeText(this, "Không mở được Gmail: ${e.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun showAlarmHistoryDialog() {
+        val lines = AlarmHistory.formatLines(this)
+        val msg = if (lines.isEmpty()) "Chưa có nhật ký.\nBáo thức tắt/báo lại sẽ được ghi tại đây."
+        else lines.take(40).joinToString("\n")
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("📋 Nhật ký báo thức")
+            .setMessage(msg)
+            .setPositiveButton("Đóng", null)
+            .setNeutralButton("Xóa nhật ký") { _, _ ->
+                AlarmHistory.clear(this)
+                Toast.makeText(this, "Đã xóa nhật ký", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Gửi Gmail") { _, _ ->
+                val email = AppSettings.getRecoveryEmail(this)
+                if (email.isBlank()) {
+                    Toast.makeText(this, "Vào «Đăng nhập Google» để lưu email trước", Toast.LENGTH_LONG).show()
+                    showGoogleLoginMenu()
+                } else {
+                    sendHistoryToGmail(email)
+                }
+            }
+            .show()
+    }
+
+    private fun showVersionDialog() {
+        val ver = try {
+            packageManager.getPackageInfo(packageName, 0).versionName ?: "3.87"
+        } catch (_: Exception) { "3.87" }
+        val code = try {
+            packageManager.getPackageInfo(packageName, 0).longVersionCode
+        } catch (_: Exception) { 95L }
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("ℹ️ Phiên bản")
+            .setMessage("Báo thức Challenge\nPhiên bản: v$ver\nMã bản dựng: $code\n\nQuét mặt · Thử thách · App lock · Lịch lễ")
+            .setPositiveButton("OK", null)
+            .show()
+    }
 
 }
