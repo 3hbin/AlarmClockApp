@@ -72,17 +72,20 @@ class MainActivity : AppCompatActivity() {
 
     private val googleSignInLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            // Ưu tiên AccountPicker (không cần OAuth)
+            val email = GoogleSignInHelper.handleAccountPicker(this, result.data)
+            if (!email.isNullOrBlank()) {
+                Toast.makeText(this, "Đã đăng nhập: $email", Toast.LENGTH_LONG).show()
+                return@registerForActivityResult
+            }
+            // Thử Google Sign-In chuẩn (nếu sau này có OAuth)
             val account = GoogleSignInHelper.handleResult(this, result.data)
             if (account != null) {
-                val email = account.email ?: ""
-                Toast.makeText(this, "Đã đăng nhập: $email", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Đã đăng nhập: ${account.email}", Toast.LENGTH_LONG).show()
+            } else if (result.resultCode == android.app.Activity.RESULT_CANCELED) {
+                Toast.makeText(this, "Đã hủy chọn tài khoản", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(
-                    this,
-                    "Google Sign-In chưa cấu hình OAuth (lỗi 10) — dùng email bên dưới",
-                    Toast.LENGTH_LONG
-                ).show()
-                showGoogleEmailFallback()
+                Toast.makeText(this, "Không lấy được tài khoản — thử Nhập email", Toast.LENGTH_LONG).show()
             }
         }
 
@@ -941,10 +944,15 @@ class MainActivity : AppCompatActivity() {
         }
         view.findViewById<View>(R.id.btnGoogleSignIn).setOnClickListener {
             try {
-                googleSignInLauncher.launch(GoogleSignInHelper.signInIntent(this))
+                // AccountPicker: chọn Gmail trên máy, không cần OAuth (hết lỗi 10)
+                googleSignInLauncher.launch(GoogleSignInHelper.accountPickerIntent())
             } catch (e: Exception) {
-                Toast.makeText(this, "Không mở Google: ${e.message}", Toast.LENGTH_LONG).show()
-                showGoogleEmailFallback()
+                try {
+                    googleSignInLauncher.launch(GoogleSignInHelper.signInIntent(this))
+                } catch (e2: Exception) {
+                    Toast.makeText(this, "Không mở Google: ${e2.message}", Toast.LENGTH_LONG).show()
+                    showGoogleEmailFallback()
+                }
             }
         }
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
