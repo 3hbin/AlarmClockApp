@@ -7,12 +7,25 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:297353017052:android:111a0ca623ece8d800e619",
+        "mobilesdk_app_id": "1:297353017052:android:4ad8c20195d97e6200e619",
         "android_client_info": {
           "package_name": "com.alarmclock.dongho"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "297353017052-jm10floc4tperdnhdvjsveapllt6e9oc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.alarmclock.dongho",
+            "certificate_hash": "b3f629f3003145ca241a470a1bd998115cd85239"
+          }
+        },
+        {
+          "client_id": "297353017052-lkqrj6s8a1ube2c8quhvk9ebkhodedbq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCB3aOGpk79YcAGR07Cr6g5aq7a3JVK-Vo"
@@ -20,26 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:297353017052:android:111a0ca623ece8d800e619",
-        "android_client_info": {
-          "package_name": "com.example.alarmclock"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyCB3aOGpk79YcAGR07Cr6g5aq7a3JVK-Vo"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "297353017052-lkqrj6s8a1ube2c8quhvk9ebkhodedbq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
