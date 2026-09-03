@@ -15,6 +15,7 @@ object BottomNavHelper {
         CurvedBottomNavView.Item(5, "", ctx.getString(R.string.nav_settings), R.drawable.ic_nav_settings)
     )
 
+    /** Nếu đã ở MainTabActivity thì không làm gì (nav do activity tự xử lý). */
     fun bind(activity: AppCompatActivity, nav: CurvedBottomNavView, selectedIndex: Int) {
         if (activity is MainTabActivity) return
 
@@ -27,30 +28,15 @@ object BottomNavHelper {
         nav.setItems(items(activity), selectedIndex)
         try { nav.selectIndex(selectedIndex, animate = false) } catch (_: Exception) {}
 
+        // Activity cũ → nhảy về MainTabActivity (ViewPager, không đen)
         nav.setOnItemSelectedListener { index, _ ->
             if (index == selectedIndex) return@setOnItemSelectedListener
-            val cls = when (index) {
-                0 -> MainActivity::class.java
-                1 -> WorldClockActivity::class.java
-                2 -> StopwatchActivity::class.java
-                3 -> TimerActivity::class.java
-                4 -> GalleryActivity::class.java
-                5 -> SettingsActivity::class.java
-                else -> null
-            } ?: return@setOnItemSelectedListener
-
             val open = {
-                try { nav.selectIndex(index, animate = false) } catch (_: Exception) {}
-                val i = Intent(activity, cls)
-                if (index == 0) {
-                    // Báo thức: CLEAR_TOP để tái tạo UI sạch — tránh màn đen Huawei/Samsung
-                    i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                } else {
-                    i.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                }
-                i.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                val i = Intent(activity, MainTabActivity::class.java)
+                    .putExtra(MainTabActivity.EXTRA_TAB, index)
+                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 activity.startActivity(i)
-                try { activity.overridePendingTransition(0, 0) } catch (_: Exception) {}
+                try { activity.finish() } catch (_: Exception) {}
             }
             if (index == 5) SettingsLockHelper.requireUnlock(activity) { open() }
             else open()

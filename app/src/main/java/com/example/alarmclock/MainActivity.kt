@@ -93,6 +93,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Dùng MainTabActivity (ViewPager) — tránh màn đen khi đổi tab trên Huawei
+        if (intent?.getBooleanExtra("keep_main", false) != true) {
+            startActivity(android.content.Intent(this, MainTabActivity::class.java)
+                .putExtra(MainTabActivity.EXTRA_TAB, 0)
+                .addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP))
+            finish()
+            try { overridePendingTransition(0, 0) } catch (_: Exception) {}
+            return
+        }
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         try {

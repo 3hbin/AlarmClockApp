@@ -55,13 +55,17 @@ class MainTabActivity : AppCompatActivity() {
         val start = intent.getIntExtra(EXTRA_TAB, 0).coerceIn(0, 5)
         try { goToPage(start) } catch (_: Exception) {}
         try { DynamicIconHelper.applySafe(this) } catch (_: Exception) {}
+        try {
+            window.setBackgroundDrawableResource(R.color.surface)
+            window.decorView.setBackgroundColor(0xFFF5F5F5.toInt())
+        } catch (_: Exception) {}
     }
 
     private fun setupViewPager() {
         val pager = binding.viewPager
         pager.isUserInputEnabled = false
         // Chỉ preload tab kề → tránh tạo 6 Fragment cùng lúc (dễ crash)
-        pager.offscreenPageLimit = 1
+        pager.offscreenPageLimit = 5
         pager.setPageTransformer { _, _ -> }
         pager.adapter = object : FragmentStateAdapter(this) {
             override fun getItemCount() = 6
@@ -190,6 +194,10 @@ class MainTabActivity : AppCompatActivity() {
         super.onResume()
         try { applyNavStyle(AppSettings.getBottomNavStyle(this)) } catch (_: Exception) {}
         try { DynamicIconHelper.applySafe(this) } catch (_: Exception) {}
+        try {
+            window.setBackgroundDrawableResource(R.color.surface)
+            window.decorView.setBackgroundColor(0xFFF5F5F5.toInt())
+        } catch (_: Exception) {}
     }
 
     @Deprecated("Deprecated in Java")
@@ -201,6 +209,16 @@ class MainTabActivity : AppCompatActivity() {
             }
         } catch (_: Exception) {}
         super.onBackPressed()
+    }
+
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val tab = intent.getIntExtra(EXTRA_TAB, -1)
+        if (tab in 0..5) {
+            try { goToPage(tab) } catch (_: Exception) {}
+        }
     }
 
     companion object {
