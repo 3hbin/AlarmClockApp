@@ -193,6 +193,12 @@ class StopwatchActivity : AppCompatActivity() {
         val centis = (timeInMillis / 10) % 100
         binding.tvTime.text = String.format("%02d:%02d.%02d", minutes, seconds, centis)
     }
+
+    override fun onResume() {
+        super.onResume()
+        try { binding.root.alpha = 1f } catch (_: Exception) {}
+        try { binding.curvedNav.selectIndex(2, animate = false) } catch (_: Exception) {}
+    }
 }
 
 class LapAdapter(private val laps: List<Long>) : RecyclerView.Adapter<LapAdapter.VH>() {
@@ -216,10 +222,4 @@ class LapAdapter(private val laps: List<Long>) : RecyclerView.Adapter<LapAdapter
     }
 
     override fun getItemCount() = laps.size
-    override fun onResume() {
-        super.onResume()
-        try { binding.root.alpha = 1f } catch (_: Exception) {}
-        try { binding.curvedNav.selectIndex(2, animate = false) } catch (_: Exception) {}
-    }
-
 }

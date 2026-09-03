@@ -386,6 +386,12 @@ class WorldClockActivity : AppCompatActivity() {
         }
         return result
     }
+
+    override fun onResume() {
+        super.onResume()
+        try { binding.root.alpha = 1f } catch (_: Exception) {}
+        try { binding.curvedNav.selectIndex(1, animate = false) } catch (_: Exception) {}
+    }
 }
 
 class WorldClockAdapter(private var cities: MutableList<CityTime>) :
@@ -443,11 +449,6 @@ class WorldClockAdapter(private var cities: MutableList<CityTime>) :
         val gmt = if (offsetM == 0) "GMT%+d".format(offsetH) else "GMT%+d:%02d".format(offsetH, offsetM)
         holder.tvDate.text = "${dateFmt.format(now)} · $gmt"
         holder.tvTime.text = timeFmt.format(now)
-    }
-    override fun onResume() {
-        super.onResume()
-        try { binding.root.alpha = 1f } catch (_: Exception) {}
-        try { binding.curvedNav.selectIndex(1, animate = false) } catch (_: Exception) {}
     }
 
 }
