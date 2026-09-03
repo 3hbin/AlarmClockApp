@@ -5,7 +5,6 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ServiceInfo
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.os.Build
@@ -43,10 +42,11 @@ class AlarmRingService : Service() {
         val crescendo = intent?.getBooleanExtra("USE_CRESCENDO", true) ?: true
 
         acquireWake()
-        val notif = buildNotification(alarmId, label, hour, minute, snooze, repeat, challenge, shake, strict, voice, crescendo)
+        val notif = buildNotification(alarmId, label, hour, minute, snooze, repeat, challenge, shake, strict, voice, crescendo, ringtoneUri)
         try {
             if (Build.VERSION.SDK_INT >= 34) {
-                startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING, notif, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+                // 1073741824 = FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+                startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING, notif, 1073741824)
             } else {
                 startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING, notif)
             }
@@ -82,7 +82,7 @@ class AlarmRingService : Service() {
     private fun buildNotification(
         alarmId: Int, label: String, hour: Int, minute: Int,
         snooze: Int, repeat: Int, challenge: Int, shake: Int,
-        strict: Boolean, voice: String?, crescendo: Boolean
+        strict: Boolean, voice: String?, crescendo: Boolean, ringtoneUri: String?
     ): Notification {
         AlarmNotificationHelper.ensureChannels(this)
         val open = Intent(this, AlarmRingActivity::class.java).apply {
@@ -98,7 +98,7 @@ class AlarmRingService : Service() {
             putExtra("STRICT_ANTI_SNOOZE", strict)
             putExtra("VOICE_NOTE", voice)
             putExtra("USE_CRESCENDO", crescendo)
-            putExtra("RINGTONE_URI", intent?.getStringExtra("RINGTONE_URI"))
+            putExtra("RINGTONE_URI", ringtoneUri)
             action = AlarmNotificationHelper.ACTION_OPEN_RING + "_$alarmId"
         }
         val openPi = PendingIntent.getActivity(
@@ -115,8 +115,7 @@ class AlarmRingService : Service() {
             .setContentIntent(openPi)
             .setFullScreenIntent(openPi, true)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
-            .build()
+                        .build()
     }
 
     private fun startSound(ringtoneUri: String?) {
@@ -163,7 +162,7 @@ class AlarmRingService : Service() {
             val pm = getSystemService(POWER_SERVICE) as PowerManager
             @Suppress("DEPRECATION")
             wakeLock = pm.newWakeLock(
-                PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
+                PowerManager.PARTIAL_WAKE_LOCK,
                 "AlarmClock:RingService"
             ).apply {
                 setReferenceCounted(false)
