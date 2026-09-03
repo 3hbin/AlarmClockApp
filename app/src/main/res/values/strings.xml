@@ -94,10 +94,10 @@
     <string name="dark_mode_changed">Đã đổi chế độ tối</string>
     <string name="nav_style_title">Bottom bar style</string>
     <string name="nav_style_hint">Choose the bottom navigation look (applies on every screen).</string>
-    <string name="nav_style_curved">Android curved (default)</string>
-    <string name="nav_style_persistent">Persistent</string>
+    <string name="nav_style_curved">Curved (nút tròn nổi)</string>
+    <string name="nav_style_persistent">Glassmorphism (kính mờ)</string>
     <string name="nav_style_changed">Bottom bar style updated</string>
-    <string name="nav_style_google">Google Nav (pill mở rộng)</string>
+    <string name="nav_style_google">Google Material 3</string>
     <string name="nav_alarm">Alarm</string>\n    <string name="nav_world">World</string>\n    <string name="nav_stopwatch">Stopwatch</string>\n    <string name="nav_timer">Timer</string>\n    <string name="nav_gallery">Photos</string>\n    <string name="nav_settings">Settings</string>\n    <string name="test_face_scan">📷 Face scan test</string>\n    <string name="test_face_expr">😊 Expression test</string>\n    <string name="test_menu_title">What do you want to do?</string>\n    <string name="settings_pin_title">🔒 Settings lock (PIN)</string>
     <string name="settings_pin_hint">Stop others from changing alarms. Forgot PIN → recover via Gmail.</string>
     <string name="settings_pin_save">Save PIN</string>

@@ -156,9 +156,10 @@ object AppSettings {
 
     /** Bottom nav: 0 = curved, 1 = persistent, 2 = google nav */
     const val NAV_CURVED = 0
-    const val NAV_PERSISTENT = 1
-    const val NAV_GOOGLE = 2
-    @Deprecated("Removed") const val NAV_LIQUID_GLASS = 1
+    const val NAV_GLASS = 1       // Glassmorphism kính mờ
+    const val NAV_PERSISTENT = 1  // alias glass
+    const val NAV_GOOGLE = 2      // Material 3 BottomNavigationView
+    @Deprecated("Use NAV_GLASS") const val NAV_LIQUID_GLASS = 1
 
     fun setBottomNavStyle(context: Context, style: Int) =
         prefs(context).edit().putInt("bottom_nav_style", style).apply()

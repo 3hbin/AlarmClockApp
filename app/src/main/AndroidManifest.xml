@@ -35,13 +35,18 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AlarmClock">
 
-        <activity android:name=".MainActivity" android:exported="true" android:theme="@style/Theme.AlarmClock" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden">
-            <!-- LAUNCHER chuyển sang activity-alias theo buổi; giữ MAIN dự phòng -->
+        <activity android:name=".MainTabActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:theme="@style/Theme.AlarmClock">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".MainActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
 
         <!-- Icon launcher tự đổi: sáng / trưa / chiều / tối -->
         <activity-alias
@@ -51,7 +56,7 @@
             android:icon="@mipmap/ic_launcher_morning"
             android:roundIcon="@mipmap/ic_launcher_morning_round"
             android:label="@string/app_name"
-            android:targetActivity=".MainActivity">
+            android:targetActivity=".MainTabActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -64,7 +69,7 @@
             android:icon="@mipmap/ic_launcher_noon"
             android:roundIcon="@mipmap/ic_launcher_noon_round"
             android:label="@string/app_name"
-            android:targetActivity=".MainActivity">
+            android:targetActivity=".MainTabActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -77,7 +82,7 @@
             android:icon="@mipmap/ic_launcher_evening"
             android:roundIcon="@mipmap/ic_launcher_evening_round"
             android:label="@string/app_name"
-            android:targetActivity=".MainActivity">
+            android:targetActivity=".MainTabActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -90,7 +95,7 @@
             android:icon="@mipmap/ic_launcher_night"
             android:roundIcon="@mipmap/ic_launcher_night_round"
             android:label="@string/app_name"
-            android:targetActivity=".MainActivity">
+            android:targetActivity=".MainTabActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

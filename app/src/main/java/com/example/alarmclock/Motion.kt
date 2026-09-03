@@ -6,30 +6,26 @@ import android.view.View
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.view.animation.DecelerateInterpolator
 
-/**
- * Flutter `animations` package equivalents (fade-through, shared-axis, fade-scale).
- * Short durations — no lag on low-end phones.
- */
+/** Micro-interactions only — NO activity transition animations (tránh nháy trắng). */
 object Motion {
     private val ease = AccelerateDecelerateInterpolator()
     private val decel = DecelerateInterpolator()
 
     fun startFadeThrough(from: Activity, intent: Intent) {
         from.startActivity(intent)
-        from.overridePendingTransition(R.anim.fade_through_enter, R.anim.fade_through_exit)
+        try { from.overridePendingTransition(0, 0) } catch (_: Exception) {}
     }
 
     fun startSharedAxis(from: Activity, intent: Intent) {
         from.startActivity(intent)
-        from.overridePendingTransition(R.anim.shared_axis_enter, R.anim.shared_axis_exit)
+        try { from.overridePendingTransition(0, 0) } catch (_: Exception) {}
     }
 
     fun finishFade(activity: Activity) {
         activity.finish()
-        activity.overridePendingTransition(R.anim.fade_through_enter, R.anim.fade_through_exit)
+        try { activity.overridePendingTransition(0, 0) } catch (_: Exception) {}
     }
 
-    /** Fade-scale like Flutter FadeScaleTransition (dialogs / FAB). */
     fun fadeScaleIn(view: View, delay: Long = 0) {
         view.alpha = 0f
         view.scaleX = 0.92f
@@ -59,7 +55,6 @@ object Motion {
             .start()
     }
 
-    /** Flag / emoji bounce khi chọn ngôn ngữ. */
     fun bounce(view: View, then: (() -> Unit)? = null) {
         view.animate().cancel()
         view.animate()
@@ -77,7 +72,6 @@ object Motion {
             .start()
     }
 
-    /** Slide-fade khi mở danh sách / filter ngôn ngữ. */
     fun slideFadeIn(view: View, delay: Long = 0) {
         view.alpha = 0f
         view.translationY = 18f
@@ -89,7 +83,6 @@ object Motion {
             .start()
     }
 
-    /** Pulse nhẹ cho card đang chọn. */
     fun pulse(view: View) {
         view.animate().cancel()
         view.animate()

@@ -13,16 +13,25 @@
         <item name="android:statusBarColor">@color/primary</item>
         <item name="android:navigationBarColor">@color/surface</item>
         <item name="android:windowLightNavigationBar">true</item>
-        <item name="android:windowAnimationStyle">@style/WindowFadeThrough</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowDisablePreview">true</item>
         <item name="materialCardViewStyle">@style/Card.Soft</item>
         <item name="materialButtonStyle">@style/Button.Soft</item>
     </style>
 
     <style name="WindowFadeThrough">
-        <item name="android:activityOpenEnterAnimation">@anim/fade_through_enter</item>
-        <item name="android:activityOpenExitAnimation">@anim/fade_through_exit</item>
-        <item name="android:activityCloseEnterAnimation">@anim/fade_through_enter</item>
-        <item name="android:activityCloseExitAnimation">@anim/fade_through_exit</item>
+        <item name="android:activityOpenEnterAnimation">@anim/no_anim</item>
+        <item name="android:activityOpenExitAnimation">@anim/no_anim</item>
+        <item name="android:activityCloseEnterAnimation">@anim/no_anim</item>
+        <item name="android:activityCloseExitAnimation">@anim/no_anim</item>
+        <item name="android:taskOpenEnterAnimation">@anim/no_anim</item>
+        <item name="android:taskOpenExitAnimation">@anim/no_anim</item>
+        <item name="android:taskCloseEnterAnimation">@anim/no_anim</item>
+        <item name="android:taskCloseExitAnimation">@anim/no_anim</item>
+        <item name="android:taskToFrontEnterAnimation">@anim/no_anim</item>
+        <item name="android:taskToFrontExitAnimation">@anim/no_anim</item>
+        <item name="android:taskToBackEnterAnimation">@anim/no_anim</item>
+        <item name="android:taskToBackExitAnimation">@anim/no_anim</item>
     </style>
 
     <style name="Theme.AlarmClock.FullScreen" parent="Theme.Material3.DayNight.NoActionBar">

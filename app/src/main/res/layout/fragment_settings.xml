@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="20dp">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/lang_section" android:textStyle="bold" android:layout_marginBottom="4dp"/>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/lang_hint"
+            android:textSize="12sp" android:textColor="?android:attr/textColorSecondary"
+            android:layout_marginBottom="6dp"/>
+        
+        
+        <!-- Khóa Cài đặt PIN -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_pin_title"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_pin_hint"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:layout_marginBottom="6dp"/>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/edtSettingsPin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="PIN mới (≥4 số)"
+                android:inputType="numberPassword"
+                android:maxLength="12"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSaveSettingsPin"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/settings_pin_save"
+                android:layout_marginEnd="4dp"
+                style="@style/Widget.Material3.Button.TonalButton"/>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnClearSettingsPin"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/settings_pin_clear"
+                android:layout_marginStart="4dp"
+                style="@style/Widget.Material3.Button.OutlinedButton"/>
+        </LinearLayout>
+        <TextView
+            android:id="@+id/tvSettingsPinStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="13sp"
+            android:layout_marginBottom="12dp"/>
+
+<!-- Test camera / biểu cảm -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/test_section"
+            android:textStyle="bold"
+            android:layout_marginBottom="6dp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/test_section_hint"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:layout_marginBottom="6dp"/>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnTestFace"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/test_face_scan_btn"
+            android:layout_marginBottom="6dp"
+            style="@style/Widget.Material3.Button.OutlinedButton"/>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnTestExpr"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/test_face_expr_btn"
+            android:layout_marginBottom="16dp"
+            style="@style/Widget.Material3.Button.OutlinedButton"/>
+
+<com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardLanguage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="14dp"
+                android:gravity="center_vertical">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/tvLanguageTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/lang_app"
+                        android:textSize="16sp"/>
+                    <TextView
+                        android:id="@+id/tvLanguageValue"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="@string/lang_system"
+                        android:textSize="13sp"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:layout_marginTop="2dp"/>
+                </LinearLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="›"
+                    android:textSize="22sp"
+                    android:textColor="?android:attr/textColorSecondary"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+
+        <!-- Kiểu thanh dưới -->
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/nav_style_title" android:textStyle="bold"
+            android:layout_marginTop="12dp" android:layout_marginBottom="4dp"/>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/nav_style_hint"
+            android:textSize="12sp" android:textColor="?android:attr/textColorSecondary"
+            android:layout_marginBottom="6dp"/>
+        <RadioGroup android:id="@+id/rgNavStyle" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:orientation="vertical"
+            android:layout_marginBottom="16dp">
+            <RadioButton android:id="@+id/rbNavCurved" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="@string/nav_style_curved"/>
+            <RadioButton android:id="@+id/rbNavPersistent" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="@string/nav_style_persistent"/>
+            <RadioButton android:id="@+id/rbNavGoogle" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="@string/nav_style_google"/>
+        </RadioGroup>
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/volume_alarm" android:textStyle="bold" android:layout_marginBottom="4dp"/>
+        <TextView android:id="@+id/tvVolumeValue" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="80%"/>
+        <SeekBar android:id="@+id/seekVolume" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:max="100" android:layout_marginBottom="16dp"/>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="@string/vibrate_mode" android:textSize="16sp"/>
+            <com.example.alarmclock.LoadSwitchView
+                android:id="@+id/switchVibrate"
+                android:layout_width="52dp" android:layout_height="32dp"/>
+        </LinearLayout>
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/snooze_default" android:textStyle="bold"
+            android:layout_marginBottom="4dp"/>
+        <RadioGroup android:id="@+id/rgSnoozeDefault" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+            <RadioButton android:id="@+id/rbSnooze5" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/min_5"/>
+            <RadioButton android:id="@+id/rbSnooze10" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/min_10"/>
+            <RadioButton android:id="@+id/rbSnooze15" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/min_15"/>
+        </RadioGroup>
+
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Cỡ chữ"
+            android:textStyle="bold" android:layout_marginBottom="4dp"/>
+        <RadioGroup android:id="@+id/rgFontScale" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:orientation="horizontal"
+            android:layout_marginBottom="12dp">
+            <RadioButton android:id="@+id/rbFontSmall" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1" android:text="Chữ bé"/>
+            <RadioButton android:id="@+id/rbFontNormal" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1" android:text="Vừa"/>
+            <RadioButton android:id="@+id/rbFontLarge" android:layout_width="0dp"
+                android:layout_height="wrap_content" android:layout_weight="1" android:text="Chữ to"/>
+        </RadioGroup>
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/dark_mode" android:textStyle="bold" android:layout_marginBottom="4dp"/>
+        <RadioGroup android:id="@+id/rgDarkMode" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:orientation="vertical"
+            android:layout_marginBottom="12dp">
+            <RadioButton android:id="@+id/rbDarkSystem" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="@string/dark_system"/>
+            <RadioButton android:id="@+id/rbDarkOn" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="@string/dark_on"/>
+            <RadioButton android:id="@+id/rbDarkOff" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="@string/dark_off"/>
+        </RadioGroup>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="@string/format_24h" android:textSize="16sp"/>
+            <com.example.alarmclock.LoadSwitchView
+                android:id="@+id/switch24h"
+                android:layout_width="52dp" android:layout_height="32dp"/>
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="@string/pure_ringtone" android:textSize="16sp"/>
+            <com.example.alarmclock.LoadSwitchView
+                android:id="@+id/switchPure"
+                android:layout_width="52dp" android:layout_height="32dp"/>
+        </LinearLayout>
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/anti_troll_title" android:textStyle="bold"
+            android:layout_marginBottom="4dp" android:layout_marginTop="8dp"/>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/anti_troll_desc"
+            android:textSize="12sp" android:textColor="?android:attr/textColorSecondary"
+            android:layout_marginBottom="8dp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="@string/anti_troll_enable" android:textSize="16sp"/>
+            <com.example.alarmclock.LoadSwitchView
+                android:id="@+id/switchAntiTroll"
+                android:layout_width="52dp" android:layout_height="32dp"/>
+        </LinearLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="@string/anti_troll_pin_hint">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etAntiTrollPin" android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberPassword"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveAntiTrollPin" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="@string/anti_troll_pin_save"
+            android:layout_marginTop="8dp" android:layout_marginBottom="20dp"/>
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="@string/gallery_protect" android:textStyle="bold" android:layout_marginBottom="8dp"/>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="@string/gallery_pw_hint">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etGalleryPw" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:inputType="textPassword"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSetGalleryPw" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="@string/gallery_pw_set"
+            android:layout_marginTop="8dp" android:layout_marginBottom="8dp"/>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnClearGalleryPw" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="@string/gallery_pw_clear"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_marginBottom="12dp"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:hint="@string/recovery_email_hint">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etRecoveryEmail" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:inputType="textEmailAddress"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSaveRecovery" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:text="@string/recovery_email_save"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_marginTop="8dp"/>
+    </LinearLayout>
+</ScrollView>
+</LinearLayout>

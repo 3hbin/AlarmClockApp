@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F5F5F5">
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/layout_navigation_bars"
+        android:overScrollMode="never" />
+
+    <FrameLayout
+        android:id="@+id/layout_navigation_bars"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
+
+        <!-- 1. Google Material 3 -->
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/googleNavBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFFFFF"
+            android:elevation="8dp"
+            android:visibility="gone"
+            app:itemIconTint="@color/nav_item_tint"
+            app:itemTextColor="@color/nav_item_tint"
+            app:labelVisibilityMode="labeled"
+            app:menu="@menu/bottom_nav_menu" />
+
+        <!-- 2. Glassmorphism -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/glassNavBar"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="12dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginTop="4dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="@android:color/transparent"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="8dp">
+
+            <LinearLayout
+                android:id="@+id/glassNavRow"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/bg_glass"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp">
+
+                <ImageView android:id="@+id/glass_0" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:padding="14dp" android:src="@drawable/ic_nav_alarm" android:contentDescription="@string/nav_alarm" />
+                <ImageView android:id="@+id/glass_1" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:padding="14dp" android:src="@drawable/ic_nav_globe" android:contentDescription="@string/nav_world" />
+                <ImageView android:id="@+id/glass_2" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:padding="14dp" android:src="@drawable/ic_nav_stopwatch" android:contentDescription="@string/nav_stopwatch" />
+                <ImageView android:id="@+id/glass_3" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:padding="14dp" android:src="@drawable/ic_nav_timer" android:contentDescription="@string/nav_timer" />
+                <ImageView android:id="@+id/glass_4" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:padding="14dp" android:src="@drawable/ic_nav_gallery" android:contentDescription="@string/nav_gallery" />
+                <ImageView android:id="@+id/glass_5" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:padding="14dp" android:src="@drawable/ic_nav_settings" android:contentDescription="@string/nav_settings" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- 3. Curved (custom view sẵn có) -->
+        <com.example.alarmclock.CurvedBottomNavView
+            android:id="@+id/curvedNav"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:elevation="16dp"
+            android:visibility="gone" />
+    </FrameLayout>
+</RelativeLayout>

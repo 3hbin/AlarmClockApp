@@ -4,7 +4,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
-/** Thanh dưới kiểu Google Clock — icon Material, chuyển tab không animation (tránh giật). */
+/** Thanh dưới — khi không ở MainTabActivity thì mở host ViewPager2 (không animation). */
 object BottomNavHelper {
 
     fun items(ctx: android.content.Context) = listOf(
@@ -17,44 +17,32 @@ object BottomNavHelper {
     )
 
     fun bind(activity: AppCompatActivity, nav: CurvedBottomNavView, selectedIndex: Int) {
-        // Mặc định flat Google (không curved nổi — đỡ giật)
+        if (activity is MainTabActivity) return // host tự bind
+
         nav.navStyle = when (AppSettings.getBottomNavStyle(activity)) {
             AppSettings.NAV_CURVED -> CurvedBottomNavView.Style.CURVED
             AppSettings.NAV_PERSISTENT -> CurvedBottomNavView.Style.PERSISTENT
             else -> CurvedBottomNavView.Style.GOOGLE
         }
-        // Nếu chưa chọn style → GOOGLE flat
-        if (AppSettings.getBottomNavStyle(activity) == AppSettings.NAV_CURVED &&
-            !AppSettings.hasExplicitNavStyle(activity)
-        ) {
+        if (!AppSettings.hasExplicitNavStyle(activity)) {
             nav.navStyle = CurvedBottomNavView.Style.GOOGLE
         }
         nav.setItems(items(activity), selectedIndex)
         nav.setOnItemSelectedListener { index, _ ->
             if (index == selectedIndex) return@setOnItemSelectedListener
-
-            val cls = when (index) {
-                0 -> MainActivity::class.java
-                1 -> WorldClockActivity::class.java
-                2 -> StopwatchActivity::class.java
-                3 -> TimerActivity::class.java
-                4 -> GalleryActivity::class.java
-                5 -> SettingsActivity::class.java
-                else -> null
-            } ?: return@setOnItemSelectedListener
-
             val open = {
-                val i = Intent(activity, cls).addFlags(
-                    Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
-                        Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                        Intent.FLAG_ACTIVITY_NO_ANIMATION
-                )
+                val i = Intent(activity, MainTabActivity::class.java)
+                    .addFlags(
+                        Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                            Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                            Intent.FLAG_ACTIVITY_NO_ANIMATION
+                    )
+                    .putExtra(MainTabActivity.EXTRA_TAB, index)
                 activity.startActivity(i)
-                try {
-                    activity.overridePendingTransition(0, 0)
-                } catch (_: Exception) {}
+                try { activity.overridePendingTransition(0, 0) } catch (_: Exception) {}
+                activity.finish()
+                try { activity.overridePendingTransition(0, 0) } catch (_: Exception) {}
             }
-
             if (index == 5) {
                 SettingsLockHelper.requireUnlock(activity) { open() }
             } else {

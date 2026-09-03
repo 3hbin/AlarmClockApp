@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/surface"
+    android:clipChildren="false">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/primary"
+        app:title="@string/app_name"
+        app:titleTextColor="@android:color/white" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingTop="16dp"
+        android:paddingBottom="8dp">
+
+        <com.example.alarmclock.AnalogClockView
+            android:id="@+id/analogClock"
+            android:layout_width="140dp"
+            android:layout_height="140dp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvCurrentTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="12:00"
+            android:textSize="44sp"
+            android:letterSpacing="-0.03"
+            android:fontFamily="sans-serif-medium"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+
+        <TextView
+            android:id="@+id/tvCurrentDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Thứ Ba, 25/08/2026"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginTop="4dp" />
+
+        <TextView
+            android:id="@+id/tvNextAlarm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Chưa có báo thức"
+            android:textSize="13sp"
+            android:textColor="@color/primary"
+            android:textStyle="bold"
+            android:layout_marginTop="6dp"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:background="?attr/selectableItemBackground" />
+
+        <TextView
+            android:id="@+id/tvDailyTip"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text=""
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginTop="4dp"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:paddingTop="12dp"
+            android:paddingBottom="4dp"
+            android:clipToPadding="false"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
+            <LinearLayout
+                android:id="@+id/quickAlarmRow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ngủ gật"
+                    android:textSize="12sp"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:layout_marginEnd="8dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnQuick5"
+                    style="@style/Button.Soft.Outline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="+5 phút"
+                    android:textSize="12sp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:paddingLeft="12dp"
+                    android:paddingRight="12dp"
+                    android:layout_marginEnd="6dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnQuick10"
+                    style="@style/Button.Soft.Outline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="+10 phút"
+                    android:textSize="12sp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:paddingLeft="12dp"
+                    android:paddingRight="12dp"
+                    android:layout_marginEnd="6dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnQuick15"
+                    style="@style/Button.Soft.Outline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="+15 phút"
+                    android:textSize="12sp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:paddingLeft="12dp"
+                    android:paddingRight="12dp"
+                    android:layout_marginEnd="6dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnQuick30"
+                    style="@style/Button.Soft.Outline"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="+30 phút"
+                    android:textSize="12sp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:minWidth="0dp"
+                    android:paddingLeft="12dp"
+                    android:paddingRight="12dp" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+    </LinearLayout>
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefresh"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="14dp"
+                android:clipToPadding="false"
+                 />
+            <com.example.alarmclock.ShimmerFrameLayout
+                android:id="@+id/shimmer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone">
+                <include layout="@layout/view_shimmer_rows" />
+            </com.example.alarmclock.ShimmerFrameLayout>
+            <com.example.alarmclock.LoadingAnimationView
+                android:id="@+id/loadingAnim"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:layout_gravity="center"
+                android:visibility="gone" />
+        </FrameLayout>
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipChildren="false">
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/fabAdd"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="12dp"
+            android:src="@android:drawable/ic_input_add"
+            app:backgroundTint="@color/primary"
+            app:tint="@android:color/white"
+            app:elevation="4dp"
+            app:borderWidth="0dp" />
+    </FrameLayout>
+</LinearLayout>

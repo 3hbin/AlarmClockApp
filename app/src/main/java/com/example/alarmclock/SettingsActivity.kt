@@ -209,12 +209,12 @@ class SettingsActivity : AppCompatActivity() {
             }
             AppSettings.setBottomNavStyle(this, style)
             try {
-                binding.curvedNav.navStyle = when (style) {
-                    AppSettings.NAV_PERSISTENT -> CurvedBottomNavView.Style.PERSISTENT
-                    AppSettings.NAV_GOOGLE -> CurvedBottomNavView.Style.GOOGLE
-                    else -> CurvedBottomNavView.Style.CURVED
+val name = when (style) {
+                    AppSettings.NAV_GOOGLE -> "Google Material 3"
+                    AppSettings.NAV_GLASS, AppSettings.NAV_PERSISTENT -> "Glassmorphism"
+                    else -> "Curved"
                 }
-                binding.curvedNav.setItems(BottomNavHelper.items(this), 5)
+                android.widget.Toast.makeText(this, "Thanh dưới: $name", android.widget.Toast.LENGTH_SHORT).show()
             } catch (_: Exception) {}
             Toast.makeText(this, getString(R.string.nav_style_changed), Toast.LENGTH_SHORT).show()
         }
