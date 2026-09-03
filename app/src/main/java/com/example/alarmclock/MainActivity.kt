@@ -93,16 +93,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Chuyển sang ViewPager2 host — hết nháy trắng khi đổi tab
-        startActivity(
-            android.content.Intent(this, MainTabActivity::class.java)
-                .addFlags(android.content.Intent.FLAG_ACTIVITY_NO_ANIMATION)
-                .putExtra(MainTabActivity.EXTRA_TAB, intent.getIntExtra(MainTabActivity.EXTRA_TAB, 0))
-        )
-        finish()
-        try { overridePendingTransition(0, 0) } catch (_: Exception) {}
-        return
-        // (code cũ giữ để compile reference — unreachable)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         try {
