@@ -4,7 +4,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
-/** 6 nút thanh dưới — icon vector (không emoji). */
+/** Thanh dưới kiểu Google Clock — icon Material, chuyển tab không animation (tránh giật). */
 object BottomNavHelper {
 
     fun items(ctx: android.content.Context) = listOf(
@@ -17,10 +17,17 @@ object BottomNavHelper {
     )
 
     fun bind(activity: AppCompatActivity, nav: CurvedBottomNavView, selectedIndex: Int) {
+        // Mặc định flat Google (không curved nổi — đỡ giật)
         nav.navStyle = when (AppSettings.getBottomNavStyle(activity)) {
+            AppSettings.NAV_CURVED -> CurvedBottomNavView.Style.CURVED
             AppSettings.NAV_PERSISTENT -> CurvedBottomNavView.Style.PERSISTENT
-            AppSettings.NAV_GOOGLE -> CurvedBottomNavView.Style.GOOGLE
-            else -> CurvedBottomNavView.Style.CURVED
+            else -> CurvedBottomNavView.Style.GOOGLE
+        }
+        // Nếu chưa chọn style → GOOGLE flat
+        if (AppSettings.getBottomNavStyle(activity) == AppSettings.NAV_CURVED &&
+            !AppSettings.hasExplicitNavStyle(activity)
+        ) {
+            nav.navStyle = CurvedBottomNavView.Style.GOOGLE
         }
         nav.setItems(items(activity), selectedIndex)
         nav.setOnItemSelectedListener { index, _ ->
@@ -38,9 +45,14 @@ object BottomNavHelper {
 
             val open = {
                 val i = Intent(activity, cls).addFlags(
-                    Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                        Intent.FLAG_ACTIVITY_NO_ANIMATION
                 )
                 activity.startActivity(i)
+                try {
+                    activity.overridePendingTransition(0, 0)
+                } catch (_: Exception) {}
             }
 
             if (index == 5) {
@@ -51,7 +63,6 @@ object BottomNavHelper {
         }
     }
 
-    /** Long-press vùng test mặt trong Cài đặt. */
     fun showFaceTestMenu(activity: AppCompatActivity) {
         MaterialAlertDialogBuilder(activity)
             .setTitle("Bạn muốn làm gì?")

@@ -56,7 +56,9 @@ class CurvedBottomNavView @JvmOverloads constructor(
             }
         }
 
-    private val accent = 0xFF4F5BFF.toInt()
+    private val accentBlue = 0xFF4F5BFF.toInt()
+    private val accentGoogle = 0xFFEA4335.toInt() // Google red
+    private val accent get() = if (navStyle == Style.GOOGLE) accentGoogle else accentBlue
     private val labelInactive = 0xFF9AA0B4.toInt()
     private val labelActive = 0xFF4F5BFF.toInt()
 
@@ -280,7 +282,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
                         tv.animate()
                             .scaleX(scale).scaleY(scale)
                             .translationY(ty)
-                            .setDuration(300)
+                            .setDuration(160)
                             .setInterpolator(DecelerateInterpolator())
                             .start()
                     } else {
@@ -313,11 +315,16 @@ class CurvedBottomNavView @JvmOverloads constructor(
                     }
                 }
                 Style.GOOGLE -> {
-                    tv.alpha = if (selected) 0f else 1f
+                    tv.alpha = 1f
                     tv.scaleX = 1f
                     tv.scaleY = 1f
                     tv.translationY = 0f
-                    labelViews.getOrNull(i)?.visibility = INVISIBLE
+                    labelViews.getOrNull(i)?.apply {
+                        visibility = VISIBLE
+                        alpha = 1f
+                        setTextColor(if (selected) accentGoogle else labelInactive)
+                        paint.isFakeBoldText = selected
+                    }
                 }
             }
         }

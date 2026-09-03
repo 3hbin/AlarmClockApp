@@ -163,8 +163,11 @@ object AppSettings {
     fun setBottomNavStyle(context: Context, style: Int) =
         prefs(context).edit().putInt("bottom_nav_style", style).apply()
 
+    fun hasExplicitNavStyle(context: Context): Boolean =
+        prefs(context).contains("bottom_nav_style")
+
     fun getBottomNavStyle(context: Context): Int {
-        val s = prefs(context).getInt("bottom_nav_style", NAV_CURVED)
+        val s = prefs(context).getInt("bottom_nav_style", NAV_GOOGLE)
         // map old liquid glass -> persistent
         return if (s !in 0..2) NAV_CURVED else s
     }
