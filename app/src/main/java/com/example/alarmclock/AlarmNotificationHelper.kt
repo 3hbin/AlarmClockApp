@@ -18,7 +18,7 @@ import androidx.core.app.NotificationManagerCompat
  */
 object AlarmNotificationHelper {
 
-    const val CHANNEL_RINGING = "alarm_ringing_v4"
+    const val CHANNEL_RINGING = "alarm_ringing_v5"
     const val CHANNEL_CHRONO = "chrono_running"
     const val NOTIF_ID_RINGING = 2001
     const val NOTIF_ID_TIMER = 2002
@@ -33,13 +33,13 @@ object AlarmNotificationHelper {
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
 
         // Xóa channel cũ (có tiếng hệ thống) — tránh kêu 2 chuông
-        for (oldId in listOf("alarm_ringing", "alarm_ringing_v2", "alarm_ringing_v3")) {
+        for (oldId in listOf("alarm_ringing", "alarm_ringing_v2", "alarm_ringing_v3", "alarm_ringing_v4")) {
             try { nm.deleteNotificationChannel(oldId) } catch (_: Exception) {}
         }
 
         val softUri = Uri.parse("android.resource://${context.packageName}/${R.raw.soft_chime}")
         val ringing = NotificationChannel(
-            "alarm_ringing_v4",
+            CHANNEL_RINGING,
             "Báo thức đang kêu",
             NotificationManager.IMPORTANCE_HIGH
         ).apply {

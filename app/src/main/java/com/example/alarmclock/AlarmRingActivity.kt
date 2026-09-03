@@ -956,6 +956,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         try { RippleRingsEffect.stop(this) } catch (_: Exception) {}
         stopRinging()
         AlarmNotificationHelper.cancelRinging(this)
+        try { AlarmRingService.stop(this) } catch (_: Exception) {}
         val alarms = repo.getAlarms().toMutableList()
         val alarm = alarms.find { it.id == alarmId }
         if (alarm != null) {
@@ -980,6 +981,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         } catch (_: Exception) {}
         stopRinging()
         AlarmNotificationHelper.cancelRinging(this)
+        try { AlarmRingService.stop(this) } catch (_: Exception) {}
         val cal = Calendar.getInstance()
         cal.add(Calendar.MINUTE, snoozeMinutes)
         val snoozeAlarm = Alarm(

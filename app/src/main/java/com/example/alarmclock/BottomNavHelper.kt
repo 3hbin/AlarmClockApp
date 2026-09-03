@@ -1,20 +1,20 @@
 package com.example.alarmclock
 
-import android.app.Activity
-import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
-/** 6 nút thanh dưới — emoji nhỏ, gọn. */
+/** 6 nút thanh dưới — icon vector (không emoji). */
 object BottomNavHelper {
 
-    fun items(ctx: Context) = listOf(
-        CurvedBottomNavView.Item(0, "⏰", ctx.getString(R.string.nav_alarm)),
-        CurvedBottomNavView.Item(1, "🌍", ctx.getString(R.string.nav_world)),
-        CurvedBottomNavView.Item(2, "⏱", ctx.getString(R.string.nav_stopwatch)),
-        CurvedBottomNavView.Item(3, "⏳", ctx.getString(R.string.nav_timer)),
-        CurvedBottomNavView.Item(4, "🖼", ctx.getString(R.string.nav_gallery)),
-        CurvedBottomNavView.Item(5, "⚙", ctx.getString(R.string.nav_settings))
+    fun items(ctx: android.content.Context) = listOf(
+        CurvedBottomNavView.Item(0, "", ctx.getString(R.string.nav_alarm), R.drawable.ic_nav_alarm),
+        CurvedBottomNavView.Item(1, "", ctx.getString(R.string.nav_world), R.drawable.ic_nav_globe),
+        CurvedBottomNavView.Item(2, "", ctx.getString(R.string.nav_stopwatch), R.drawable.ic_nav_stopwatch),
+        CurvedBottomNavView.Item(3, "", ctx.getString(R.string.nav_timer), R.drawable.ic_nav_timer),
+        CurvedBottomNavView.Item(4, "", ctx.getString(R.string.nav_gallery), R.drawable.ic_nav_gallery),
+        CurvedBottomNavView.Item(5, "", ctx.getString(R.string.nav_settings), R.drawable.ic_nav_settings)
     )
 
     fun bind(activity: AppCompatActivity, nav: CurvedBottomNavView, selectedIndex: Int) {
@@ -26,75 +26,56 @@ object BottomNavHelper {
         nav.setItems(items(activity), selectedIndex)
         nav.setOnItemSelectedListener { index, _ ->
             if (index == selectedIndex) return@setOnItemSelectedListener
-            navigate(activity, index)
-        }
-        nav.setOnItemLongClickListener { index, _ ->
-            if (index == 5) {
-                showFaceTestMenu(activity)
-                true
-            } else false
-        }
-    }
-
-    fun showFaceTestMenu(activity: Activity) {
-        val items = arrayOf(
-            activity.getString(R.string.test_face_scan),
-            activity.getString(R.string.test_face_expr)
-        )
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(activity)
-            .setTitle(activity.getString(R.string.test_menu_title))
-            .setItems(items) { _, which ->
-                val mode = if (which == 0) FaceChallengeActivity.MODE_FACE
-                else FaceChallengeActivity.MODE_EXPR
-                activity.startActivity(
-                    Intent(activity, FaceChallengeActivity::class.java).apply {
-                        putExtra(FaceChallengeActivity.EXTRA_MODE, mode)
-                    }
+            val go = {
+                val cls = when (index) {
+                    0 -> MainActivity::class.java
+                    1 -> WorldClockActivity::class.java
+                    2 -> StopwatchActivity::class.java
+                    3 -> TimerActivity::class.java
+                    4 -> GalleryActivity::class.java
+                    5 -> SettingsActivity::class.java
+                    else -> null
+                } ?: return@setOnItemSelectedListener
+                val i = Intent(activity, cls).addFlags(
+                    Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
                 )
+                activity.startActivity(i)
+                if (activity::class.java != cls && activity !is MainActivity) {
+                    // optional: don't finish Main
+                }
             }
-            .setNegativeButton(android.R.string.cancel, null)
+            if (index == 5) {
+                SettingsLockHelper.requireUnlock(activity) { go() }
+            } else {
+                go()
+            }
+        }
+    }
+
+    /** Long-press vùng test mặt trong Cài đặt. */
+    fun showFaceTestMenu(activity: AppCompatActivity) {
+        MaterialAlertDialogBuilder(activity)
+            .setTitle("Bạn muốn làm gì?")
+            .setItems(
+                arrayOf(
+                    "Test quét mặt (giữ 2 giây)",
+                    "Test 10 biểu cảm",
+                    "Đóng"
+                )
+            ) { _, which ->
+                when (which) {
+                    0 -> activity.startActivity(
+                        Intent(activity, FaceChallengeActivity::class.java).apply {
+                            putExtra(FaceChallengeActivity.EXTRA_MODE, FaceChallengeActivity.MODE_FACE)
+                        }
+                    )
+                    1 -> activity.startActivity(
+                        Intent(activity, FaceChallengeActivity::class.java).apply {
+                            putExtra(FaceChallengeActivity.EXTRA_MODE, FaceChallengeActivity.MODE_EXPR)
+                        }
+                    )
+                }
+            }
             .show()
-    }
-
-    private fun navigate(from: Activity, index: Int) {
-        val target = when (index) {
-            0 -> MainActivity::class.java
-            1 -> WorldClockActivity::class.java
-            2 -> StopwatchActivity::class.java
-            3 -> TimerActivity::class.java
-            4 -> GalleryActivity::class.java
-            5 -> SettingsActivity::class.java
-            else -> return
-        }
-        if (target == MainActivity::class.java) {
-            if (from !is MainActivity) {
-                from.finish()
-                from.overridePendingTransition(R.anim.fade_through_enter, R.anim.fade_through_exit)
-            }
-            return
-        }
-        if (from::class.java == target) return
-
-        if (target == SettingsActivity::class.java &&
-            AppSettings.hasSettingsPin(from) &&
-            !AppSettings.settingsUnlockedThisSession
-        ) {
-            SettingsLockHelper.requireUnlock(from) {
-                startTab(from, target)
-            }
-            return
-        }
-        startTab(from, target)
-    }
-
-    private fun startTab(from: Activity, target: Class<*>) {
-        val intent = Intent(from, target).apply {
-            addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        }
-        from.startActivity(intent)
-        from.overridePendingTransition(R.anim.fade_through_enter, R.anim.fade_through_exit)
-        if (from !is MainActivity) {
-            from.finish()
-        }
     }
 }

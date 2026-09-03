@@ -64,6 +64,25 @@ class AlarmReceiver : BroadcastReceiver() {
                 useCrescendo = useCrescendo
             )
 
+            // 1b) Foreground service phát chuông (Samsung A12: Activity bị chặn khi khóa)
+            try {
+                val svc = Intent(context, AlarmRingService::class.java).apply {
+                    putExtra("ALARM_ID", alarmId)
+                    putExtra("ALARM_LABEL", label)
+                    putExtra("ALARM_HOUR", hour)
+                    putExtra("ALARM_MINUTE", minute)
+                    putExtra("SNOOZE_MINUTES", snoozeMinutes)
+                    putExtra("REPEAT_MODE", repeatMode)
+                    putExtra("RINGTONE_URI", ringtoneUri)
+                    putExtra("CHALLENGE_TYPE", challengeType)
+                    putExtra("SHAKE_TARGET_COUNT", shakeTargetCount)
+                    putExtra("STRICT_ANTI_SNOOZE", isStrict)
+                    putExtra("VOICE_NOTE", voiceNote)
+                    putExtra("USE_CRESCENDO", useCrescendo)
+                }
+                AlarmRingService.start(context, svc)
+            } catch (_: Exception) {}
+
             // 2) Thử mở activity trực tiếp (một số máy vẫn cho phép)
             val ringIntent = Intent(context, AlarmRingActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or

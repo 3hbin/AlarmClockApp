@@ -221,7 +221,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
                 ImageView(context).apply {
                     setImageResource(item.iconRes)
                     scaleType = ImageView.ScaleType.CENTER_INSIDE
-                    layoutParams = LinearLayout.LayoutParams(dp(28f).toInt(), dp(26f).toInt())
+                    layoutParams = LinearLayout.LayoutParams(dp(24f).toInt(), dp(24f).toInt())
                     setColorFilter(
                         if (index == selectedIndex) accent else 0xFF6B7280.toInt(),
                         android.graphics.PorterDuff.Mode.SRC_IN
@@ -230,7 +230,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
             } else {
                 TextView(context).apply {
                     text = item.emoji
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
                     gravity = Gravity.CENTER
                     layoutParams = LinearLayout.LayoutParams(dp(36f).toInt(), dp(28f).toInt())
                 }
