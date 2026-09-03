@@ -15,10 +15,16 @@ object BottomNavHelper {
         CurvedBottomNavView.Item(5, "", ctx.getString(R.string.nav_settings), R.drawable.ic_nav_settings)
     )
 
-    /** Nếu đã ở MainTabActivity thì không làm gì (nav do activity tự xử lý). */
-    fun bind(activity: AppCompatActivity, nav: CurvedBottomNavView, selectedIndex: Int) {
-        if (activity is MainTabActivity) return
+    private fun targetClass(index: Int): Class<out AppCompatActivity> = when (index) {
+        0 -> MainActivity::class.java
+        1 -> WorldClockActivity::class.java
+        2 -> StopwatchActivity::class.java
+        3 -> TimerActivity::class.java
+        4 -> GalleryActivity::class.java
+        else -> SettingsActivity::class.java
+    }
 
+    fun bind(activity: AppCompatActivity, nav: CurvedBottomNavView, selectedIndex: Int) {
         val style = AppSettings.getBottomNavStyle(activity)
         nav.navStyle = when (style) {
             AppSettings.NAV_CURVED -> CurvedBottomNavView.Style.CURVED
@@ -28,15 +34,20 @@ object BottomNavHelper {
         nav.setItems(items(activity), selectedIndex)
         try { nav.selectIndex(selectedIndex, animate = false) } catch (_: Exception) {}
 
-        // Activity cũ → nhảy về MainTabActivity (ViewPager, không đen)
         nav.setOnItemSelectedListener { index, _ ->
             if (index == selectedIndex) return@setOnItemSelectedListener
             val open = {
-                val i = Intent(activity, MainTabActivity::class.java)
-                    .putExtra(MainTabActivity.EXTRA_TAB, index)
-                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                val cls = targetClass(index)
+                // Luôn finish activity hiện tại rồi mở mới — tránh màn đen Huawei khi REORDER
+                val i = Intent(activity, cls)
+                // MainActivity: CLEAR_TOP để tái dùng instance nếu còn
+                if (index == 0) {
+                    i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                }
                 activity.startActivity(i)
-                try { activity.finish() } catch (_: Exception) {}
+                if (index != selectedIndex) {
+                    try { activity.finish() } catch (_: Exception) {}
+                }
             }
             if (index == 5) SettingsLockHelper.requireUnlock(activity) { open() }
             else open()
