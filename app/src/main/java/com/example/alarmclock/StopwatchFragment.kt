@@ -110,8 +110,6 @@ class StopwatchFragment : Fragment() {
         val min = ((total / 100) / 60).toInt()
         try {
             b.tvTime.text = "%02d:%02d.%02d".format(min, sec, centi)
-        } catch (_: Exception) {
-            try { b.tvStopwatch.text = "%02d:%02d.%02d".format(min, sec, centi) } catch (_: Exception) {}
-        }
+        } catch (_: Exception) {}
     }
 }
