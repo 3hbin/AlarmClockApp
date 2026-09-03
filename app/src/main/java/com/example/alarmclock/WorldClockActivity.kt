@@ -44,14 +44,17 @@ class WorldClockActivity : AppCompatActivity() {
 
     private val updateRunnable = object : Runnable {
         override fun run() {
-            val lm = binding.recyclerView.layoutManager as? LinearLayoutManager
-            if (lm != null) {
-                val first = lm.findFirstVisibleItemPosition()
-                val last = lm.findLastVisibleItemPosition()
-                if (first >= 0 && last >= first) {
-                    adapter.notifyItemRangeChanged(first, last - first + 1, PAYLOAD_TIME)
+            if (isFinishing || isDestroyed) return
+            try {
+                val lm = binding.recyclerView.layoutManager as? LinearLayoutManager
+                if (lm != null) {
+                    val first = lm.findFirstVisibleItemPosition()
+                    val last = lm.findLastVisibleItemPosition()
+                    if (first >= 0 && last >= first) {
+                        adapter.notifyItemRangeChanged(first, last - first + 1, PAYLOAD_TIME)
+                    }
                 }
-            }
+            } catch (_: Exception) {}
             handler.postDelayed(this, 1000)
         }
     }
@@ -120,6 +123,11 @@ class WorldClockActivity : AppCompatActivity() {
         } else {
             "${filtered.size} kết quả cho \"$query\""
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        handler.removeCallbacks(updateRunnable)
     }
 
     override fun onDestroy() {
@@ -391,6 +399,8 @@ class WorldClockActivity : AppCompatActivity() {
         super.onResume()
         try { binding.root.alpha = 1f } catch (_: Exception) {}
         try { binding.curvedNav.selectIndex(1, animate = false) } catch (_: Exception) {}
+        handler.removeCallbacks(updateRunnable)
+        handler.post(updateRunnable)
     }
 }
 

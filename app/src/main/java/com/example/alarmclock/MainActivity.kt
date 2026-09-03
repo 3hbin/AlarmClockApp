@@ -276,14 +276,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateCurrentTime() {
-        val now = Calendar.getInstance()
-        val timeFormat = SimpleDateFormat(if (AppSettings.isUse24h(this)) "HH:mm" else "hh:mm a", Locale.getDefault())
-        val dateFormat = SimpleDateFormat("EEEE, dd/MM/yyyy", Locale.getDefault())
-        binding.tvCurrentTime.text = timeFormat.format(now.time)
-        updateNextAlarmBanner()
-        binding.tvCurrentDate.text = dateFormat.format(now.time).replaceFirstChar {
-            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-        }
+        if (isFinishing || isDestroyed) return
+        try {
+            val now = Calendar.getInstance()
+            val timeFormat = SimpleDateFormat(if (AppSettings.isUse24h(this)) "HH:mm" else "hh:mm a", Locale.getDefault())
+            val dateFormat = SimpleDateFormat("EEEE, dd/MM/yyyy", Locale.getDefault())
+            binding.tvCurrentTime.text = timeFormat.format(now.time)
+            updateNextAlarmBanner()
+            binding.tvCurrentDate.text = dateFormat.format(now.time).replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+            }
+        } catch (_: Exception) {}
     }
 
     
@@ -301,6 +304,9 @@ class MainActivity : AppCompatActivity() {
         try { binding.curvedNav.selectIndex(0, animate = false) } catch (_: Exception) {}
         DynamicIconHelper.applySafe(this)
         try { reloadAlarmsFromDisk() } catch (_: Exception) {}
+        // Khởi động lại vòng lặp cập nhật giờ (đã bị dừng ở onStop)
+        handler.removeCallbacks(timeUpdater)
+        handler.post(timeUpdater)
         try { maybeRequireAppLock() } catch (_: Exception) {
             try { forceShowUi() } catch (_: Exception) {}
         }
@@ -327,6 +333,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
+        // Dừng vòng lặp cập nhật giờ ngay khi Activity không còn hiển thị,
+        // tránh chạm vào binding sau khi chuyển tab / Activity đang bị hủy
+        handler.removeCallbacks(timeUpdater)
         // Rời app (Home / app khác) → khóa lại như ngân hàng
         if (AppSettings.isAppLockEnabled(this)) {
             AppSettings.appUnlockedThisSession = false
