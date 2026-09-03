@@ -18,12 +18,16 @@ object BottomNavHelper {
     fun bind(activity: AppCompatActivity, nav: CurvedBottomNavView, selectedIndex: Int) {
         if (activity is MainTabActivity) return
 
-        nav.navStyle = when (AppSettings.getBottomNavStyle(activity)) {
+        val style = AppSettings.getBottomNavStyle(activity)
+        nav.navStyle = when (style) {
             AppSettings.NAV_CURVED -> CurvedBottomNavView.Style.CURVED
             AppSettings.NAV_GLASS, AppSettings.NAV_PERSISTENT -> CurvedBottomNavView.Style.PERSISTENT
             else -> CurvedBottomNavView.Style.GOOGLE
         }
         nav.setItems(items(activity), selectedIndex)
+        // Ép highlight đúng tab hiện tại (không animate → hết giật)
+        try { nav.selectIndex(selectedIndex, animate = false) } catch (_: Exception) {}
+
         nav.setOnItemSelectedListener { index, _ ->
             if (index == selectedIndex) return@setOnItemSelectedListener
             val cls = when (index) {
@@ -37,11 +41,11 @@ object BottomNavHelper {
             } ?: return@setOnItemSelectedListener
 
             val open = {
-                val i = Intent(activity, cls).addFlags(
-                    Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
-                        Intent.FLAG_ACTIVITY_SINGLE_TOP or
-                        Intent.FLAG_ACTIVITY_NO_ANIMATION
-                )
+                // Highlight ngay tab đích trước khi chuyển (giảm cảm giác giật)
+                try { nav.selectIndex(index, animate = false) } catch (_: Exception) {}
+                val i = Intent(activity, cls)
+                    .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
                 activity.startActivity(i)
                 try { activity.overridePendingTransition(0, 0) } catch (_: Exception) {}
             }

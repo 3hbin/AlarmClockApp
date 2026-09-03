@@ -451,4 +451,10 @@ val name = when (style) {
             }
         } catch (_: Exception) {}
     }
+    override fun onResume() {
+        super.onResume()
+        try { binding.root.alpha = 1f } catch (_: Exception) {}
+        try { binding.curvedNav.selectIndex(5, animate = false) } catch (_: Exception) {}
+    }
+
 }

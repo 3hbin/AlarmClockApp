@@ -444,4 +444,10 @@ class WorldClockAdapter(private var cities: MutableList<CityTime>) :
         holder.tvDate.text = "${dateFmt.format(now)} · $gmt"
         holder.tvTime.text = timeFmt.format(now)
     }
+    override fun onResume() {
+        super.onResume()
+        try { binding.root.alpha = 1f } catch (_: Exception) {}
+        try { binding.curvedNav.selectIndex(1, animate = false) } catch (_: Exception) {}
+    }
+
 }

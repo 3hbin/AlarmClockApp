@@ -289,11 +289,14 @@ class MainActivity : AppCompatActivity() {
     
     override fun onResume() {
         super.onResume()
+        try { binding.root.alpha = 1f } catch (_: Exception) {}
+        try { binding.root.visibility = android.view.View.VISIBLE } catch (_: Exception) {}
         try { binding.curvedNav.selectIndex(0, animate = false) } catch (_: Exception) {}
         DynamicIconHelper.applySafe(this)
-        // Sau khi tắt báo thức / kêu xong → đồng bộ list + gỡ thông báo status
         try { reloadAlarmsFromDisk() } catch (_: Exception) {}
-        maybeRequireAppLock()
+        try { maybeRequireAppLock() } catch (_: Exception) {
+            try { binding.root.alpha = 1f } catch (_: Exception) {}
+        }
     }
 
     override fun onStop() {
@@ -313,7 +316,7 @@ class MainActivity : AppCompatActivity() {
         if (appLockDialogShowing) return
         appLockDialogShowing = true
         // Che nội dung khi đang khóa
-        try { binding.root.alpha = 0.15f } catch (_: Exception) {}
+        try { binding.root.alpha = 1f } catch (_: Exception) {}
         val input = EditText(this).apply {
             hint = "Nhập PIN mở app"
             inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD

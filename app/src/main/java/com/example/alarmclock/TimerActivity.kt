@@ -265,4 +265,10 @@ class TimerActivity : AppCompatActivity() {
         super.onDestroy()
         // Service tiếp tục chạy nếu đang đếm
     }
+    override fun onResume() {
+        super.onResume()
+        try { binding.root.alpha = 1f } catch (_: Exception) {}
+        try { binding.curvedNav.selectIndex(3, animate = false) } catch (_: Exception) {}
+    }
+
 }

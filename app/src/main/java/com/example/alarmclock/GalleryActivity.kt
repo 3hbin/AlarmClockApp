@@ -186,4 +186,10 @@ class GalleryActivity : AppCompatActivity() {
             return BitmapFactory.decodeFile(path, opts)
         }
     }
+    override fun onResume() {
+        super.onResume()
+        try { binding.root.alpha = 1f } catch (_: Exception) {}
+        try { binding.curvedNav.selectIndex(4, animate = false) } catch (_: Exception) {}
+    }
+
 }
