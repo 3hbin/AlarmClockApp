@@ -1,7 +1,6 @@
 package com.example.alarmclock
 
 import android.content.Intent
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
@@ -26,28 +25,28 @@ object BottomNavHelper {
         nav.setItems(items(activity), selectedIndex)
         nav.setOnItemSelectedListener { index, _ ->
             if (index == selectedIndex) return@setOnItemSelectedListener
-            val go = {
-                val cls = when (index) {
-                    0 -> MainActivity::class.java
-                    1 -> WorldClockActivity::class.java
-                    2 -> StopwatchActivity::class.java
-                    3 -> TimerActivity::class.java
-                    4 -> GalleryActivity::class.java
-                    5 -> SettingsActivity::class.java
-                    else -> null
-                } ?: return@setOnItemSelectedListener
+
+            val cls = when (index) {
+                0 -> MainActivity::class.java
+                1 -> WorldClockActivity::class.java
+                2 -> StopwatchActivity::class.java
+                3 -> TimerActivity::class.java
+                4 -> GalleryActivity::class.java
+                5 -> SettingsActivity::class.java
+                else -> null
+            } ?: return@setOnItemSelectedListener
+
+            val open = {
                 val i = Intent(activity, cls).addFlags(
                     Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP
                 )
                 activity.startActivity(i)
-                if (activity::class.java != cls && activity !is MainActivity) {
-                    // optional: don't finish Main
-                }
             }
+
             if (index == 5) {
-                SettingsLockHelper.requireUnlock(activity) { go() }
+                SettingsLockHelper.requireUnlock(activity) { open() }
             } else {
-                go()
+                open()
             }
         }
     }
