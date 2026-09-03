@@ -287,16 +287,40 @@ class MainActivity : AppCompatActivity() {
     }
 
     
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        try { forceShowUi() } catch (_: Exception) {}
+    }
+
     override fun onResume() {
         super.onResume()
-        try { binding.root.alpha = 1f } catch (_: Exception) {}
-        try { binding.root.visibility = android.view.View.VISIBLE } catch (_: Exception) {}
+        try { forceShowUi() } catch (_: Exception) {}
         try { binding.curvedNav.selectIndex(0, animate = false) } catch (_: Exception) {}
         DynamicIconHelper.applySafe(this)
         try { reloadAlarmsFromDisk() } catch (_: Exception) {}
         try { maybeRequireAppLock() } catch (_: Exception) {
-            try { binding.root.alpha = 1f } catch (_: Exception) {}
+            try { forceShowUi() } catch (_: Exception) {}
         }
+    }
+
+    private fun forceShowUi() {
+        try {
+            window.setBackgroundDrawableResource(R.color.surface)
+            window.decorView.setBackgroundColor(0xFFF5F5F5.toInt())
+        } catch (_: Exception) {}
+        try {
+            binding.root.alpha = 1f
+            binding.root.visibility = android.view.View.VISIBLE
+            binding.root.setBackgroundColor(0xFFF5F5F5.toInt())
+            binding.root.post {
+                try {
+                    binding.root.requestLayout()
+                    binding.root.invalidate()
+                    binding.recyclerView.invalidate()
+                } catch (_: Exception) {}
+            }
+        } catch (_: Exception) {}
     }
 
     override fun onStop() {

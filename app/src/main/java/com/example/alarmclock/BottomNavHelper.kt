@@ -25,7 +25,6 @@ object BottomNavHelper {
             else -> CurvedBottomNavView.Style.GOOGLE
         }
         nav.setItems(items(activity), selectedIndex)
-        // Ép highlight đúng tab hiện tại (không animate → hết giật)
         try { nav.selectIndex(selectedIndex, animate = false) } catch (_: Exception) {}
 
         nav.setOnItemSelectedListener { index, _ ->
@@ -41,11 +40,15 @@ object BottomNavHelper {
             } ?: return@setOnItemSelectedListener
 
             val open = {
-                // Highlight ngay tab đích trước khi chuyển (giảm cảm giác giật)
                 try { nav.selectIndex(index, animate = false) } catch (_: Exception) {}
                 val i = Intent(activity, cls)
-                    .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                    .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                if (index == 0) {
+                    // Báo thức: CLEAR_TOP để tái tạo UI sạch — tránh màn đen Huawei/Samsung
+                    i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                } else {
+                    i.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                }
+                i.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
                 activity.startActivity(i)
                 try { activity.overridePendingTransition(0, 0) } catch (_: Exception) {}
             }
