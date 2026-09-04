@@ -41,18 +41,26 @@ class CurvedBottomNavView @JvmOverloads constructor(
         set(value) {
             if (field == value) return
             field = value
-            applyStyleChrome()
-            if (items.isNotEmpty()) {
-                buildItems()
-                post {
-                    animX = centerX(selectedIndex)
-                    styleItems(false)
+            try {
+                applyStyleChrome()
+                if (items.isNotEmpty()) {
+                    buildItems()
+                    post {
+                        try {
+                            animX = centerX(selectedIndex)
+                            styleItems(false)
+                            invalidate()
+                            requestLayout()
+                        } catch (_: Exception) {
+                            invalidate()
+                        }
+                    }
+                } else {
                     invalidate()
                     requestLayout()
                 }
-            } else {
-                invalidate()
-                requestLayout()
+            } catch (_: Exception) {
+                try { invalidate() } catch (_: Exception) {}
             }
         }
 
@@ -477,10 +485,14 @@ class CurvedBottomNavView @JvmOverloads constructor(
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val total = when (navStyle) {
-            Style.CURVED -> (flatBarH + btnR + dp(6f)).toInt()
-            else -> (flatBarH + dp(6f)).toInt()
+        val total = try {
+            when (navStyle) {
+                Style.CURVED -> (flatBarH + btnR + dp(6f)).toInt()
+                else -> (flatBarH + dp(6f)).toInt()
+            }
+        } catch (_: Exception) {
+            (dp(64f)).toInt()
         }
-        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(total, MeasureSpec.EXACTLY))
+        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(total.coerceAtLeast(1), MeasureSpec.EXACTLY))
     }
 }

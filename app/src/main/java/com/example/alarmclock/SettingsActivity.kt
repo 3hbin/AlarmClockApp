@@ -197,41 +197,50 @@ class SettingsActivity : AppCompatActivity() {
             try {
                 Toast.makeText(this, getString(R.string.dark_mode_changed), Toast.LENGTH_SHORT).show()
             } catch (_: Exception) {}
-            binding.root.post { recreate() }
+            binding.root.post {
+                try { recreate() } catch (_: Exception) {
+                    try { finish(); startActivity(intent) } catch (_: Exception) {}
+                }
+            }
         }
 
         // Kiểu thanh dưới: Curved / Persistent / Google Nav
+        // KHÔNG recreate — recreate gây màn đen / văng app (Huawei)
+        binding.rgNavStyle.setOnCheckedChangeListener(null)
         when (AppSettings.getBottomNavStyle(this)) {
             AppSettings.NAV_PERSISTENT -> binding.rbNavPersistent.isChecked = true
             AppSettings.NAV_GOOGLE -> binding.rbNavGoogle.isChecked = true
             else -> binding.rbNavCurved.isChecked = true
         }
         binding.rgNavStyle.setOnCheckedChangeListener { _, id ->
+            if (id == View.NO_ID) return@setOnCheckedChangeListener
             val style = when (id) {
                 R.id.rbNavPersistent -> AppSettings.NAV_PERSISTENT
                 R.id.rbNavGoogle -> AppSettings.NAV_GOOGLE
                 else -> AppSettings.NAV_CURVED
             }
             AppSettings.setBottomNavStyle(this, style)
-            // Apply ngay lên thanh hiện tại
             try {
-                binding.curvedNav.navStyle = when (style) {
+                val s = when (style) {
                     AppSettings.NAV_CURVED -> CurvedBottomNavView.Style.CURVED
                     AppSettings.NAV_PERSISTENT, AppSettings.NAV_GLASS -> CurvedBottomNavView.Style.PERSISTENT
                     else -> CurvedBottomNavView.Style.GOOGLE
                 }
-                BottomNavHelper.bind(this, binding.curvedNav, 5)
-            } catch (_: Exception) {}
+                binding.curvedNav.navStyle = s
+                binding.curvedNav.selectIndex(5, animate = false)
+            } catch (e: Exception) {
+                try {
+                    Toast.makeText(this, "Lỗi style: ${e.message}", Toast.LENGTH_SHORT).show()
+                } catch (_: Exception) {}
+            }
             val name = when (style) {
                 AppSettings.NAV_GOOGLE -> "Google Material 3"
                 AppSettings.NAV_PERSISTENT, AppSettings.NAV_GLASS -> "Persistent"
                 else -> "Android cong"
             }
             try {
-                Toast.makeText(this, "Thanh dưới: $name", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Thanh dưới: $name (áp dụng mọi tab)", Toast.LENGTH_SHORT).show()
             } catch (_: Exception) {}
-            // Recreate để mọi màn hình đồng bộ style
-            binding.root.postDelayed({ recreate() }, 250)
         }
 
         // 12/24h
