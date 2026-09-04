@@ -37,16 +37,21 @@ object BottomNavHelper {
         nav.setOnItemSelectedListener { index, _ ->
             if (index == selectedIndex) return@setOnItemSelectedListener
             val open = {
-                val cls = targetClass(index)
-                // Luôn finish activity hiện tại rồi mở mới — tránh màn đen Huawei khi REORDER
-                val i = Intent(activity, cls)
-                // MainActivity: CLEAR_TOP để tái dùng instance nếu còn
-                if (index == 0) {
-                    i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
-                }
-                activity.startActivity(i)
-                if (index != selectedIndex) {
-                    try { activity.finish() } catch (_: Exception) {}
+                try {
+                    val cls = targetClass(index)
+                    val i = Intent(activity, cls)
+                    // Giữ activity trong stack — KHÔNG finish → không văng ra launcher
+                    i.addFlags(
+                        Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
+                        Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    )
+                    activity.startActivity(i)
+                } catch (e: Exception) {
+                    android.widget.Toast.makeText(
+                        activity,
+                        "Không mở được tab: ${e.message}",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
             if (index == 5) SettingsLockHelper.requireUnlock(activity) { open() }

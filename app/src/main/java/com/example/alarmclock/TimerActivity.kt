@@ -54,8 +54,15 @@ class TimerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityTimerBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        try {
+            binding = ActivityTimerBinding.inflate(layoutInflater)
+            setContentView(binding.root)
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(this, "Lỗi tab: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+            startActivity(android.content.Intent(this, MainActivity::class.java).addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP))
+            finish()
+            return
+        }
         try { BottomNavHelper.bind(this, binding.curvedNav, 3) } catch (_: Exception) {}
 
         AlarmNotificationHelper.ensureChannels(this)

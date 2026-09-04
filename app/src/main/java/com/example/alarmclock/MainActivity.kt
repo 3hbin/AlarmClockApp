@@ -276,17 +276,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateCurrentTime() {
-        if (isFinishing || isDestroyed) return
-        try {
-            val now = Calendar.getInstance()
-            val timeFormat = SimpleDateFormat(if (AppSettings.isUse24h(this)) "HH:mm" else "hh:mm a", Locale.getDefault())
-            val dateFormat = SimpleDateFormat("EEEE, dd/MM/yyyy", Locale.getDefault())
-            binding.tvCurrentTime.text = timeFormat.format(now.time)
-            updateNextAlarmBanner()
-            binding.tvCurrentDate.text = dateFormat.format(now.time).replaceFirstChar {
-                if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-            }
-        } catch (_: Exception) {}
+        val now = Calendar.getInstance()
+        val timeFormat = SimpleDateFormat(if (AppSettings.isUse24h(this)) "HH:mm" else "hh:mm a", Locale.getDefault())
+        val dateFormat = SimpleDateFormat("EEEE, dd/MM/yyyy", Locale.getDefault())
+        binding.tvCurrentTime.text = timeFormat.format(now.time)
+        updateNextAlarmBanner()
+        binding.tvCurrentDate.text = dateFormat.format(now.time).replaceFirstChar {
+            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+        }
     }
 
     
@@ -304,9 +301,6 @@ class MainActivity : AppCompatActivity() {
         try { binding.curvedNav.selectIndex(0, animate = false) } catch (_: Exception) {}
         DynamicIconHelper.applySafe(this)
         try { reloadAlarmsFromDisk() } catch (_: Exception) {}
-        // Khởi động lại vòng lặp cập nhật giờ (đã bị dừng ở onStop)
-        handler.removeCallbacks(timeUpdater)
-        handler.post(timeUpdater)
         try { maybeRequireAppLock() } catch (_: Exception) {
             try { forceShowUi() } catch (_: Exception) {}
         }
@@ -315,27 +309,34 @@ class MainActivity : AppCompatActivity() {
     private fun forceShowUi() {
         try {
             window.setBackgroundDrawableResource(R.color.surface)
-            window.decorView.setBackgroundColor(0xFFF5F5F5.toInt())
+            window.decorView.setBackgroundColor(0xFFF7F8FC.toInt())
+            window.statusBarColor = 0xFF4F5BFF.toInt()
         } catch (_: Exception) {}
+        if (!::binding.isInitialized) return
         try {
             binding.root.alpha = 1f
             binding.root.visibility = android.view.View.VISIBLE
-            binding.root.setBackgroundColor(0xFFF5F5F5.toInt())
+            binding.root.setBackgroundColor(0xFFF7F8FC.toInt())
             binding.root.post {
                 try {
                     binding.root.requestLayout()
                     binding.root.invalidate()
+                    binding.recyclerView.requestLayout()
                     binding.recyclerView.invalidate()
                 } catch (_: Exception) {}
             }
+            // Huawei đôi khi cần invalidate lần 2 sau 50ms
+            binding.root.postDelayed({
+                try {
+                    binding.root.requestLayout()
+                    binding.root.invalidate()
+                } catch (_: Exception) {}
+            }, 50)
         } catch (_: Exception) {}
     }
 
     override fun onStop() {
         super.onStop()
-        // Dừng vòng lặp cập nhật giờ ngay khi Activity không còn hiển thị,
-        // tránh chạm vào binding sau khi chuyển tab / Activity đang bị hủy
-        handler.removeCallbacks(timeUpdater)
         // Rời app (Home / app khác) → khóa lại như ngân hàng
         if (AppSettings.isAppLockEnabled(this)) {
             AppSettings.appUnlockedThisSession = false

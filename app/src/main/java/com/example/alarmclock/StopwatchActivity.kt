@@ -65,11 +65,18 @@ class StopwatchActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityStopwatchBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        try {
+            binding = ActivityStopwatchBinding.inflate(layoutInflater)
+            setContentView(binding.root)
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(this, "Lỗi Bấm giờ: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+            startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP))
+            finish()
+            return
+        }
         try { BottomNavHelper.bind(this, binding.curvedNav, 2) } catch (_: Exception) {}
 
-        AlarmNotificationHelper.ensureChannels(this)
+        try { AlarmNotificationHelper.ensureChannels(this) } catch (_: Exception) {}
 
         binding.toolbar.setNavigationOnClickListener { Motion.finishFade(this) }
 

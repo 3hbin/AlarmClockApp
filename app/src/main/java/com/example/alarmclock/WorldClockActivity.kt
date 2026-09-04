@@ -44,25 +44,29 @@ class WorldClockActivity : AppCompatActivity() {
 
     private val updateRunnable = object : Runnable {
         override fun run() {
-            if (isFinishing || isDestroyed) return
-            try {
-                val lm = binding.recyclerView.layoutManager as? LinearLayoutManager
-                if (lm != null) {
-                    val first = lm.findFirstVisibleItemPosition()
-                    val last = lm.findLastVisibleItemPosition()
-                    if (first >= 0 && last >= first) {
-                        adapter.notifyItemRangeChanged(first, last - first + 1, PAYLOAD_TIME)
-                    }
+            val lm = binding.recyclerView.layoutManager as? LinearLayoutManager
+            if (lm != null) {
+                val first = lm.findFirstVisibleItemPosition()
+                val last = lm.findLastVisibleItemPosition()
+                if (first >= 0 && last >= first) {
+                    adapter.notifyItemRangeChanged(first, last - first + 1, PAYLOAD_TIME)
                 }
-            } catch (_: Exception) {}
+            }
             handler.postDelayed(this, 1000)
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityWorldClockBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        try {
+            binding = ActivityWorldClockBinding.inflate(layoutInflater)
+            setContentView(binding.root)
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(this, "Lỗi tab: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+            startActivity(android.content.Intent(this, MainActivity::class.java).addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP))
+            finish()
+            return
+        }
         try { BottomNavHelper.bind(this, binding.curvedNav, 1) } catch (_: Exception) {}
 
         binding.toolbar.setNavigationOnClickListener { Motion.finishFade(this) }
@@ -123,11 +127,6 @@ class WorldClockActivity : AppCompatActivity() {
         } else {
             "${filtered.size} kết quả cho \"$query\""
         }
-    }
-
-    override fun onStop() {
-        super.onStop()
-        handler.removeCallbacks(updateRunnable)
     }
 
     override fun onDestroy() {
@@ -399,8 +398,6 @@ class WorldClockActivity : AppCompatActivity() {
         super.onResume()
         try { binding.root.alpha = 1f } catch (_: Exception) {}
         try { binding.curvedNav.selectIndex(1, animate = false) } catch (_: Exception) {}
-        handler.removeCallbacks(updateRunnable)
-        handler.post(updateRunnable)
     }
 }
 
