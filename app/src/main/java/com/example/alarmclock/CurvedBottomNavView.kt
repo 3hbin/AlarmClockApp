@@ -58,16 +58,16 @@ class CurvedBottomNavView @JvmOverloads constructor(
 
     private val accentBlue = 0xFF4F5BFF.toInt()
     private val accentGoogle = 0xFFEA4335.toInt() // Google red
-    private val accent get() = if (navStyle == Style.GOOGLE) accentGoogle else accentBlue
+    private val accent: Int get() = if (navStyle == Style.GOOGLE) accentGoogle else accentBlue
     private fun isNight(): Boolean {
         val ui = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
         return ui == android.content.res.Configuration.UI_MODE_NIGHT_YES
     }
-    private val barBg get() = if (isNight()) 0xFF1A1C28.toInt() else Color.WHITE
-    private val pageBg get() = if (isNight()) 0xFF12131A.toInt() else 0xFFF7F8FC.toInt()
-    private val inactiveIcon get() = if (isNight()) 0xFF8B90A5.toInt() else inactiveIcon
-    private val labelInactive get() = if (isNight()) 0xFF8B90A5.toInt() else 0xFF9AA0B4.toInt()
-    private val labelActive get() = if (navStyle == Style.GOOGLE) accentGoogle else accentBlue
+    private val barBg: Int get() = if (isNight()) 0xFF1A1C28.toInt() else Color.WHITE
+    private val pageBg: Int get() = if (isNight()) 0xFF12131A.toInt() else 0xFFF7F8FC.toInt()
+    private val inactiveIcon: Int get() = if (isNight()) 0xFF8B90A5.toInt() else 0xFF6B7280.toInt()
+    private val labelInactive: Int get() = if (isNight()) 0xFF8B90A5.toInt() else 0xFF9AA0B4.toInt()
+    private val labelActive: Int get() = if (navStyle == Style.GOOGLE) accentGoogle else accentBlue
 
     private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
