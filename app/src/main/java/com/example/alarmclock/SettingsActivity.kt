@@ -27,6 +27,7 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
         try { BottomNavHelper.bind(this, binding.curvedNav, 5) } catch (_: Exception) {}
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         title = getString(R.string.settings_title)

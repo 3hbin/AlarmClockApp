@@ -42,17 +42,19 @@
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:theme="@style/Theme.AlarmClock" />
 
-        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop" android:hardwareAccelerated="true" android:theme="@style/Theme.AlarmClock" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+        <!-- Không gắn LAUNCHER ở đây — icon launcher do activity-alias quản lý.
+             MainActivity luôn enabled để Intent tab Báo hoạt động. -->
+        <activity android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.AlarmClock"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
 
         <!-- Icon launcher tự đổi: sáng / trưa / chiều / tối -->
         <activity-alias
             android:name=".MainAliasMorning"
-            android:enabled="false"
+            android:enabled="true"
             android:exported="true"
             android:icon="@mipmap/ic_launcher_morning"
             android:roundIcon="@mipmap/ic_launcher_morning_round"

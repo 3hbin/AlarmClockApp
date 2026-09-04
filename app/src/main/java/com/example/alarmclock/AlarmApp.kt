@@ -5,6 +5,7 @@ import android.app.Application
 class AlarmApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
         AppSettings.applyDarkMode(AppSettings.getDarkMode(this))
         // Chỉ English / system — migrate lựa chọn cũ
         val lang = AppSettings.getLanguage(this)

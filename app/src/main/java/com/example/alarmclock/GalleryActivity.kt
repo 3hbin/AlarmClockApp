@@ -32,6 +32,7 @@ class GalleryActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityGalleryBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
         try { BottomNavHelper.bind(this, binding.curvedNav, 4) } catch (_: Exception) {}
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         title = "Bộ sưu tập"

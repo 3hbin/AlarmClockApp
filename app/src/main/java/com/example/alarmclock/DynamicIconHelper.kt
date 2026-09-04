@@ -11,12 +11,12 @@ import java.util.Calendar
 
 /**
  * Icon launcher tự đổi theo buổi (sáng / trưa / chiều / tối).
- * Class name dùng namespace (com.example.alarmclock), không dùng applicationId.
+ * QUAN TRỌNG: MainActivity luôn ENABLED — chỉ alias đổi icon launcher.
+ * Nếu tắt MainActivity → Intent tab Báo lỗi "Unable to find activity class".
  */
 object DynamicIconHelper {
 
     private const val TAG = "DynamicIcon"
-    /** Namespace = package của class, khác applicationId */
     private const val CLASS_PKG = "com.example.alarmclock"
 
     enum class Period(val alias: String, val faceRes: Int) {
@@ -39,11 +39,11 @@ object DynamicIconHelper {
     fun applySafe(context: Context) {
         try {
             val pm = context.packageManager
-            val appId = context.packageName // applicationId = com.alarmclock.dongho
+            val appId = context.packageName
             val target = currentPeriod()
             Log.i(TAG, "apply icon period=$target hour=${Calendar.getInstance().get(Calendar.HOUR_OF_DAY)}")
 
-            // Bật alias đúng buổi, tắt các alias khác
+            // Bật alias đúng buổi, tắt alias khác (chỉ ảnh hưởng icon launcher)
             Period.values().forEach { p ->
                 val cn = ComponentName(appId, CLASS_PKG + p.alias)
                 val state = if (p == target)
@@ -52,21 +52,20 @@ object DynamicIconHelper {
                     PackageManager.COMPONENT_ENABLED_STATE_DISABLED
                 try {
                     pm.setComponentEnabledSetting(cn, state, PackageManager.DONT_KILL_APP)
-                    Log.i(TAG, "alias ${p.alias} -> $state")
                 } catch (e: Exception) {
                     Log.e(TAG, "fail alias ${p.alias}", e)
                 }
             }
-            // Tắt MAIN trên MainActivity để chỉ còn 1 icon (alias)
+
+            // MainActivity LUÔN bật — để Intent tab Báo / REORDER hoạt động
             val main = ComponentName(appId, "$CLASS_PKG.MainActivity")
             pm.setComponentEnabledSetting(
                 main,
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
                 PackageManager.DONT_KILL_APP
             )
         } catch (e: Exception) {
             Log.e(TAG, "applySafe failed", e)
-            // Nếu lỗi, bật lại MainActivity để app không mất icon
             try {
                 val main = ComponentName(context.packageName, "$CLASS_PKG.MainActivity")
                 context.packageManager.setComponentEnabledSetting(
@@ -76,6 +75,18 @@ object DynamicIconHelper {
                 )
             } catch (_: Exception) {}
         }
+    }
+
+    /** Gọi 1 lần khi mở app: nếu MainActivity bị tắt từ bản cũ → bật lại ngay. */
+    fun ensureMainEnabled(context: Context) {
+        try {
+            val main = ComponentName(context.packageName, "$CLASS_PKG.MainActivity")
+            context.packageManager.setComponentEnabledSetting(
+                main,
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                PackageManager.DONT_KILL_APP
+            )
+        } catch (_: Exception) {}
     }
 
     fun scheduleHourly(context: Context) {

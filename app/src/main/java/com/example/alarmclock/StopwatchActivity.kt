@@ -68,6 +68,7 @@ class StopwatchActivity : AppCompatActivity() {
         try {
             binding = ActivityStopwatchBinding.inflate(layoutInflater)
             setContentView(binding.root)
+        try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
         } catch (e: Exception) {
             android.widget.Toast.makeText(this, "Lỗi Bấm giờ: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
             startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP))

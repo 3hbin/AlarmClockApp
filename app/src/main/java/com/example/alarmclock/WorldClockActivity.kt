@@ -61,6 +61,7 @@ class WorldClockActivity : AppCompatActivity() {
         try {
             binding = ActivityWorldClockBinding.inflate(layoutInflater)
             setContentView(binding.root)
+        try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
         } catch (e: Exception) {
             android.widget.Toast.makeText(this, "Lỗi tab: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
             startActivity(android.content.Intent(this, MainActivity::class.java).addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP))
