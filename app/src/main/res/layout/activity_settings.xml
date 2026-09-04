@@ -147,26 +147,13 @@
                     android:textColor="?android:attr/textColorSecondary"/>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-
-
-        <!-- Kiểu thanh dưới -->
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="@string/nav_style_title" android:textStyle="bold"
-            android:layout_marginTop="12dp" android:layout_marginBottom="4dp"/>
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="@string/nav_style_hint"
-            android:textSize="12sp" android:textColor="?android:attr/textColorSecondary"
-            android:layout_marginBottom="6dp"/>
-        <RadioGroup android:id="@+id/rgNavStyle" android:layout_width="match_parent"
-            android:layout_height="wrap_content" android:orientation="vertical"
-            android:layout_marginBottom="16dp">
-            <RadioButton android:id="@+id/rbNavCurved" android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:text="@string/nav_style_curved"/>
-            <RadioButton android:id="@+id/rbNavPersistent" android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:text="@string/nav_style_persistent"/>
-            <RadioButton android:id="@+id/rbNavGoogle" android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:text="@string/nav_style_google"/>
+        <!-- Kiểu thanh dưới đã bỏ — mặc định Google Nav -->
+        <RadioGroup android:id="@+id/rgNavStyle" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone">
+            <RadioButton android:id="@+id/rbNavCurved" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+            <RadioButton android:id="@+id/rbNavPersistent" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+            <RadioButton android:id="@+id/rbNavGoogle" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
         </RadioGroup>
+
 
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="@string/volume_alarm" android:textStyle="bold" android:layout_marginBottom="4dp"/>

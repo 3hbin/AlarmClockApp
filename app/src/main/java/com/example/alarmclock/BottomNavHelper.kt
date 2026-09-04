@@ -25,14 +25,14 @@ object BottomNavHelper {
     }
 
     fun bind(activity: AppCompatActivity, nav: CurvedBottomNavView, selectedIndex: Int) {
-        val style = AppSettings.getBottomNavStyle(activity)
-        nav.navStyle = when (style) {
-            AppSettings.NAV_CURVED -> CurvedBottomNavView.Style.CURVED
-            AppSettings.NAV_GLASS, AppSettings.NAV_PERSISTENT -> CurvedBottomNavView.Style.PERSISTENT
-            else -> CurvedBottomNavView.Style.GOOGLE
-        }
-        nav.setItems(items(activity), selectedIndex)
-        try { nav.selectIndex(selectedIndex, animate = false) } catch (_: Exception) {}
+        // Chỉ 1 kiểu mặc định ổn định (Google Nav) — bỏ chọn 3 kiểu
+        try {
+            nav.navStyle = CurvedBottomNavView.Style.GOOGLE
+        } catch (_: Exception) {}
+        try {
+            nav.setItems(items(activity), selectedIndex)
+            nav.selectIndex(selectedIndex, animate = false)
+        } catch (_: Exception) {}
 
         nav.setOnItemSelectedListener { index, _ ->
             if (index == selectedIndex) return@setOnItemSelectedListener
@@ -40,7 +40,6 @@ object BottomNavHelper {
                 try {
                     val cls = targetClass(index)
                     val i = Intent(activity, cls)
-                    // Giữ activity trong stack — KHÔNG finish → không văng ra launcher
                     i.addFlags(
                         Intent.FLAG_ACTIVITY_REORDER_TO_FRONT or
                         Intent.FLAG_ACTIVITY_SINGLE_TOP
