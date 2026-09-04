@@ -228,19 +228,26 @@ class SettingsActivity : AppCompatActivity() {
                 R.id.rbNavGoogle -> AppSettings.NAV_GOOGLE
                 else -> AppSettings.NAV_CURVED
             }
-            AppSettings.setBottomNavStyle(this, style)
             try {
-                val s = when (style) {
-                    AppSettings.NAV_CURVED -> CurvedBottomNavView.Style.CURVED
-                    AppSettings.NAV_PERSISTENT, AppSettings.NAV_GLASS -> CurvedBottomNavView.Style.PERSISTENT
-                    else -> CurvedBottomNavView.Style.GOOGLE
-                }
-                binding.curvedNav.navStyle = s
-                binding.curvedNav.selectIndex(5, animate = false)
-            } catch (e: Exception) {
+                AppSettings.setBottomNavStyle(this, style)
+            } catch (_: Exception) {}
+            // Đổi style trên UI hiện tại — post để tránh re-entrant layout crash
+            binding.root.post {
                 try {
-                    Toast.makeText(this, "Lỗi style: ${e.message}", Toast.LENGTH_SHORT).show()
-                } catch (_: Exception) {}
+                    val s = when (style) {
+                        AppSettings.NAV_CURVED -> CurvedBottomNavView.Style.CURVED
+                        AppSettings.NAV_PERSISTENT, AppSettings.NAV_GLASS -> CurvedBottomNavView.Style.PERSISTENT
+                        else -> CurvedBottomNavView.Style.GOOGLE
+                    }
+                    binding.curvedNav.navStyle = s
+                    binding.curvedNav.selectIndex(5, animate = false)
+                    binding.curvedNav.requestLayout()
+                    binding.curvedNav.invalidate()
+                } catch (e: Exception) {
+                    try {
+                        Toast.makeText(this, "Lỗi style: ${e.javaClass.simpleName}: ${e.message}", Toast.LENGTH_LONG).show()
+                    } catch (_: Exception) {}
+                }
             }
             val name = when (style) {
                 AppSettings.NAV_GOOGLE -> "Google Material 3"
