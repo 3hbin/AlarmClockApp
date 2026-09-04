@@ -377,6 +377,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
 
     /** Lõm sâu + nút tròn trắng nổi — giống curved_labeled_navigation_bar */
     private fun drawCurved(canvas: Canvas) {
+        if (width <= 0 || height <= 0) return
         val w = width.toFloat()
         val h = height.toFloat()
         val top = h - flatBarH

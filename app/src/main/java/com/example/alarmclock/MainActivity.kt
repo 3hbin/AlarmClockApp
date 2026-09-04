@@ -309,15 +309,28 @@ class MainActivity : AppCompatActivity() {
 
     private fun forceShowUi() {
         try {
+            val surface = androidx.core.content.ContextCompat.getColor(this, R.color.surface)
+            val primary = androidx.core.content.ContextCompat.getColor(this, R.color.primary)
             window.setBackgroundDrawableResource(R.color.surface)
-            window.decorView.setBackgroundColor(0xFFF7F8FC.toInt())
-            window.statusBarColor = 0xFF4F5BFF.toInt()
+            window.decorView.setBackgroundColor(surface)
+            window.statusBarColor = primary
+            // Dark mode: status bar icons sáng
+            val night = (resources.configuration.uiMode and
+                android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
+                android.content.res.Configuration.UI_MODE_NIGHT_YES
+            if (android.os.Build.VERSION.SDK_INT >= 23) {
+                var flags = window.decorView.systemUiVisibility
+                flags = if (night) flags and android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+                else flags or android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                window.decorView.systemUiVisibility = flags
+            }
         } catch (_: Exception) {}
         if (!::binding.isInitialized) return
         try {
+            val surface = androidx.core.content.ContextCompat.getColor(this, R.color.surface)
             binding.root.alpha = 1f
             binding.root.visibility = android.view.View.VISIBLE
-            binding.root.setBackgroundColor(0xFFF7F8FC.toInt())
+            binding.root.setBackgroundColor(surface)
             binding.root.post {
                 try {
                     binding.root.requestLayout()
@@ -326,7 +339,6 @@ class MainActivity : AppCompatActivity() {
                     binding.recyclerView.invalidate()
                 } catch (_: Exception) {}
             }
-            // Huawei đôi khi cần invalidate lần 2 sau 50ms
             binding.root.postDelayed({
                 try {
                     binding.root.requestLayout()

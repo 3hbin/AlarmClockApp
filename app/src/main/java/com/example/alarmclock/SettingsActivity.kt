@@ -187,21 +187,30 @@ class SettingsActivity : AppCompatActivity() {
             else -> binding.rbDarkSystem.isChecked = true
         }
         binding.rgDarkMode.setOnCheckedChangeListener { _, id ->
+            if (id == View.NO_ID) return@setOnCheckedChangeListener
             val mode = when (id) {
                 R.id.rbDarkOn -> 1
                 R.id.rbDarkOff -> 2
                 else -> 0
             }
             AppSettings.setDarkMode(this, mode)
-            // Áp dụng ngay — recreate để theme + colors-night load lại
             try {
                 Toast.makeText(this, getString(R.string.dark_mode_changed), Toast.LENGTH_SHORT).show()
             } catch (_: Exception) {}
-            binding.root.post {
-                try { recreate() } catch (_: Exception) {
-                    try { finish(); startActivity(intent) } catch (_: Exception) {}
+            // Huawei: recreate() → màn đen. Restart sạch task.
+            binding.root.postDelayed({
+                try {
+                    val i = android.content.Intent(this, MainActivity::class.java)
+                    i.addFlags(
+                        android.content.Intent.FLAG_ACTIVITY_NEW_TASK or
+                        android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    )
+                    startActivity(i)
+                    finishAffinity()
+                } catch (_: Exception) {
+                    try { finish() } catch (_: Exception) {}
                 }
-            }
+            }, 200)
         }
 
         // Kiểu thanh dưới: Curved / Persistent / Google Nav

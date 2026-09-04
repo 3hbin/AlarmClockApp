@@ -57,7 +57,7 @@ class MainTabActivity : AppCompatActivity() {
         try { DynamicIconHelper.applySafe(this) } catch (_: Exception) {}
         try {
             window.setBackgroundDrawableResource(R.color.surface)
-            window.decorView.setBackgroundColor(0xFFF5F5F5.toInt())
+            window.decorView.setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.surface))
         } catch (_: Exception) {}
     }
 
@@ -196,7 +196,7 @@ class MainTabActivity : AppCompatActivity() {
         try { DynamicIconHelper.applySafe(this) } catch (_: Exception) {}
         try {
             window.setBackgroundDrawableResource(R.color.surface)
-            window.decorView.setBackgroundColor(0xFFF5F5F5.toInt())
+            window.decorView.setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.surface))
         } catch (_: Exception) {}
     }
 
