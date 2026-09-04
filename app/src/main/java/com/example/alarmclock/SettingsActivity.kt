@@ -193,7 +193,11 @@ class SettingsActivity : AppCompatActivity() {
                 else -> 0
             }
             AppSettings.setDarkMode(this, mode)
-            Toast.makeText(this, getString(R.string.dark_mode_changed), Toast.LENGTH_SHORT).show()
+            // Áp dụng ngay — recreate để theme + colors-night load lại
+            try {
+                Toast.makeText(this, getString(R.string.dark_mode_changed), Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) {}
+            binding.root.post { recreate() }
         }
 
         // Kiểu thanh dưới: Curved / Persistent / Google Nav
@@ -209,15 +213,25 @@ class SettingsActivity : AppCompatActivity() {
                 else -> AppSettings.NAV_CURVED
             }
             AppSettings.setBottomNavStyle(this, style)
+            // Apply ngay lên thanh hiện tại
             try {
-val name = when (style) {
-                    AppSettings.NAV_GOOGLE -> "Google Material 3"
-                    AppSettings.NAV_GLASS, AppSettings.NAV_PERSISTENT -> "Glassmorphism"
-                    else -> "Curved"
+                binding.curvedNav.navStyle = when (style) {
+                    AppSettings.NAV_CURVED -> CurvedBottomNavView.Style.CURVED
+                    AppSettings.NAV_PERSISTENT, AppSettings.NAV_GLASS -> CurvedBottomNavView.Style.PERSISTENT
+                    else -> CurvedBottomNavView.Style.GOOGLE
                 }
-                android.widget.Toast.makeText(this, "Thanh dưới: $name", android.widget.Toast.LENGTH_SHORT).show()
+                BottomNavHelper.bind(this, binding.curvedNav, 5)
             } catch (_: Exception) {}
-            Toast.makeText(this, getString(R.string.nav_style_changed), Toast.LENGTH_SHORT).show()
+            val name = when (style) {
+                AppSettings.NAV_GOOGLE -> "Google Material 3"
+                AppSettings.NAV_PERSISTENT, AppSettings.NAV_GLASS -> "Persistent"
+                else -> "Android cong"
+            }
+            try {
+                Toast.makeText(this, "Thanh dưới: $name", Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) {}
+            // Recreate để mọi màn hình đồng bộ style
+            binding.root.postDelayed({ recreate() }, 250)
         }
 
         // 12/24h

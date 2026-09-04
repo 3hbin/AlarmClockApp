@@ -26,4 +26,7 @@
     <color name="ic_launcher_noon_bg">#FF4BA3F0</color>
     <color name="ic_launcher_evening_bg">#FFFFB070</color>
     <color name="ic_launcher_night_bg">#FF1A1A4A</color>
+    <color name="nav_bar_bg">#FFFFFF</color>
+    <color name="nav_icon_inactive">#9AA0B4</color>
 </resources>
+

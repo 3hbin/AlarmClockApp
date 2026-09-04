@@ -59,8 +59,15 @@ class CurvedBottomNavView @JvmOverloads constructor(
     private val accentBlue = 0xFF4F5BFF.toInt()
     private val accentGoogle = 0xFFEA4335.toInt() // Google red
     private val accent get() = if (navStyle == Style.GOOGLE) accentGoogle else accentBlue
-    private val labelInactive = 0xFF9AA0B4.toInt()
-    private val labelActive = 0xFF4F5BFF.toInt()
+    private fun isNight(): Boolean {
+        val ui = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
+        return ui == android.content.res.Configuration.UI_MODE_NIGHT_YES
+    }
+    private val barBg get() = if (isNight()) 0xFF1A1C28.toInt() else Color.WHITE
+    private val pageBg get() = if (isNight()) 0xFF12131A.toInt() else 0xFFF7F8FC.toInt()
+    private val inactiveIcon get() = if (isNight()) 0xFF8B90A5.toInt() else inactiveIcon
+    private val labelInactive get() = if (isNight()) 0xFF8B90A5.toInt() else 0xFF9AA0B4.toInt()
+    private val labelActive get() = if (navStyle == Style.GOOGLE) accentGoogle else accentBlue
 
     private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
@@ -112,16 +119,27 @@ class CurvedBottomNavView @JvmOverloads constructor(
     private fun applyStyleChrome() {
         when (navStyle) {
             Style.CURVED -> {
-                setBackgroundColor(0xFFF7F8FC.toInt())
-                barPaint.color = Color.WHITE
-                barPaint.setShadowLayer(14f, 0f, -2f, 0x30000000)
+                setBackgroundColor(pageBg)
+                barPaint.color = barBg
+                barPaint.setShadowLayer(14f, 0f, -2f, if (isNight()) 0x60000000 else 0x30000000)
             }
-            Style.PERSISTENT, Style.GOOGLE -> {
+            Style.PERSISTENT -> {
                 setBackgroundColor(Color.TRANSPARENT)
-                barPaint.color = Color.WHITE
-                barPaint.setShadowLayer(10f, 0f, -1f, 0x22000000)
+                barPaint.color = if (isNight()) 0xE61A1C28.toInt() else 0xE6FFFFFF.toInt()
+                barPaint.setShadowLayer(10f, 0f, -1f, if (isNight()) 0x50000000 else 0x20000000)
+            }
+            Style.GOOGLE -> {
+                setBackgroundColor(Color.TRANSPARENT)
+                barPaint.color = barBg
+                barPaint.setShadowLayer(8f, 0f, -2f, if (isNight()) 0x60000000 else 0x22000000)
             }
         }
+        buttonPaint.color = barBg
+        ringPaint.color = accent
+        pillPaint.color = if (navStyle == Style.GOOGLE) 0x22EA4335.toInt()
+            else if (isNight()) 0x334F5BFF.toInt() else 0x1A4F5BFF.toInt()
+        topLine.color = if (isNight()) 0x22FFFFFF.toInt() else 0x14000000
+        invalidate()
     }
 
     fun setItems(list: List<Item>, initial: Int = 0) {
@@ -225,7 +243,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
                     scaleType = ImageView.ScaleType.CENTER_INSIDE
                     layoutParams = LinearLayout.LayoutParams(dp(24f).toInt(), dp(24f).toInt())
                     setColorFilter(
-                        if (index == selectedIndex) accent else 0xFF6B7280.toInt(),
+                        if (index == selectedIndex) accent else inactiveIcon,
                         android.graphics.PorterDuff.Mode.SRC_IN
                     )
                 }
@@ -269,7 +287,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
             val selected = i == selectedIndex
             tv.animate().cancel()
             if (tv is ImageView) {
-                val c = if (selected) accent else 0xFF6B7280.toInt()
+                val c = if (selected) accent else inactiveIcon
                 tv.setColorFilter(c, android.graphics.PorterDuff.Mode.SRC_IN)
             }
             when (navStyle) {
@@ -315,15 +333,19 @@ class CurvedBottomNavView @JvmOverloads constructor(
                     }
                 }
                 Style.GOOGLE -> {
-                    tv.alpha = 1f
+                    // Icon/label tab chọn ẩn — drawGoogle vẽ pill + icon + text
+                    tv.alpha = if (selected) 0f else 1f
                     tv.scaleX = 1f
                     tv.scaleY = 1f
                     tv.translationY = 0f
+                    if (tv is ImageView) {
+                        tv.setColorFilter(inactiveIcon, android.graphics.PorterDuff.Mode.SRC_IN)
+                    }
                     labelViews.getOrNull(i)?.apply {
                         visibility = VISIBLE
-                        alpha = 1f
-                        setTextColor(if (selected) accentGoogle else labelInactive)
-                        paint.isFakeBoldText = selected
+                        alpha = if (selected) 0f else 1f
+                        setTextColor(labelInactive)
+                        paint.isFakeBoldText = false
                     }
                 }
             }
@@ -374,9 +396,10 @@ class CurvedBottomNavView @JvmOverloads constructor(
 
         // Nút tròn nổi
         val cy = top
-        buttonPaint.color = Color.WHITE
-        buttonPaint.setShadowLayer(dp(12f), 0f, dp(3f), 0x45000000)
+        buttonPaint.color = barBg
+        buttonPaint.setShadowLayer(dp(12f), 0f, dp(3f), if (isNight()) 0x80000000 else 0x45000000)
         canvas.drawCircle(cx, cy, btnR, buttonPaint)
+        ringPaint.color = accent
         canvas.drawCircle(cx, cy, btnR - dp(1.5f), ringPaint)
     }
 
@@ -412,7 +435,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
         val pillW = dp(100f) * pillExpand
         val pillTop = top + (flatBarH - pillH) / 2f - dp(2f)
         rect.set(cx - pillW / 2f, pillTop, cx + pillW / 2f, pillTop + pillH)
-        pillPaint.color = 0x224F5BFF.toInt()
+        pillPaint.color = if (isNight()) 0x33EA4335.toInt() else 0x22EA4335.toInt()
         canvas.drawRoundRect(rect, dp(20f), dp(20f), pillPaint)
 
         val tp = Paint(Paint.ANTI_ALIAS_FLAG).apply {
