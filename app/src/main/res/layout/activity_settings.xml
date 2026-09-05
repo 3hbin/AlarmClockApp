@@ -234,6 +234,35 @@
                 android:layout_width="52dp" android:layout_height="32dp"/>
         </LinearLayout>
 
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Chế độ tập trung khi báo thức" android:textStyle="bold"
+            android:fontFamily="@font/noto_sans"
+            android:layout_marginBottom="4dp" android:layout_marginTop="8dp"/>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Khi báo thức kêu: bật DND (chỉ chuông báo thức), ẩn thanh hệ thống. Cần cấp quyền Không làm phiền."
+            android:textSize="12sp" android:textColor="?android:attr/textColorSecondary"
+            android:fontFamily="@font/noto_sans"
+            android:layout_marginBottom="8dp"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Bật chế độ tập trung"
+                android:fontFamily="@font/noto_sans" android:textSize="16sp"/>
+            <com.example.alarmclock.LoadSwitchView
+                android:id="@+id/switchFocusMode"
+                android:layout_width="52dp" android:layout_height="32dp"/>
+        </LinearLayout>
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnGrantDnd"
+            style="@style/Button.Soft.Outline"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cấp quyền Không làm phiền"
+            android:fontFamily="@font/noto_sans"
+            android:layout_marginBottom="12dp"/>
+
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="@string/anti_troll_title" android:textStyle="bold"
             android:layout_marginBottom="4dp" android:layout_marginTop="8dp"/>

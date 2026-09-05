@@ -43,6 +43,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="BÁO THỨC"
+            android:fontFamily="@font/noto_sans"
             android:textAllCaps="true"
             android:letterSpacing="0.18"
             android:textSize="13sp"
@@ -66,6 +67,7 @@
 
         <TextView
             android:id="@+id/tvRingTime"
+            android:fontFamily="@font/noto_sans"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="07:00"
@@ -77,6 +79,7 @@
 
         <TextView
             android:id="@+id/tvLabel"
+            android:fontFamily="@font/noto_sans"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Báo thức"
@@ -107,6 +110,7 @@
 
             <TextView
                 android:id="@+id/tvMathQuestion"
+            android:fontFamily="@font/noto_sans"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="12 + 15 = ?"

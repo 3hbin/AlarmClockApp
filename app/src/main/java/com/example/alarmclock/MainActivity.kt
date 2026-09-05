@@ -832,6 +832,7 @@ class MainActivity : AppCompatActivity() {
         repo.saveAlarms(alarms)
         AlarmScheduler.schedule(this, alarm)
         adapter.notifyDataSetChanged()
+        updateOngoingNotification()
         val timeStr = String.format("%02d:%02d", hour, minute)
         com.google.android.material.snackbar.Snackbar.make(
             binding.root,

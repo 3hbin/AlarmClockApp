@@ -69,6 +69,12 @@ object AlarmScheduler {
             )
             val info = android.app.AlarmManager.AlarmClockInfo(calendar.timeInMillis, showPi)
             alarmManager.setAlarmClock(info, pendingIntent)
+            // Thông báo hệ thống: logo đồng hồ + giờ đã đặt
+            try {
+                AlarmNotificationHelper.showAlarmSetNotification(
+                    context, alarm.hour, alarm.minute, alarm.label
+                )
+            } catch (_: Exception) {}
         } catch (e: Exception) {
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

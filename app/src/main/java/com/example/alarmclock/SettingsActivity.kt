@@ -279,7 +279,38 @@ class SettingsActivity : AppCompatActivity() {
             }, 280)
         }
 
-        binding.switchAntiTroll.setCheckedSilent(AppSettings.isAntiTroll(this))
+        
+        try {
+            binding.switchFocusMode.setCheckedSilent(AppSettings.isFocusModeOnAlarm(this))
+            binding.switchFocusMode.setOnCheckedChangeListener { sw, on ->
+                sw.setLoading(true)
+                sw.postDelayed({
+                    AppSettings.setFocusModeOnAlarm(this, on)
+                    sw.setLoading(false)
+                    if (on) {
+                        // Gợi ý cấp quyền DND nếu chưa có
+                        try {
+                            val nm = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M
+                                && !nm.isNotificationPolicyAccessGranted) {
+                                Toast.makeText(this, "Cần cấp quyền Không làm phiền (nút bên dưới)", Toast.LENGTH_LONG).show()
+                            }
+                        } catch (_: Exception) {}
+                    }
+                }, 200)
+            }
+            binding.btnGrantDnd.setOnClickListener {
+                try {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                        startActivity(android.content.Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+                    }
+                } catch (e: Exception) {
+                    Toast.makeText(this, "Không mở được cài đặt: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (_: Exception) {}
+
+binding.switchAntiTroll.setCheckedSilent(AppSettings.isAntiTroll(this))
         binding.switchAntiTroll.setOnCheckedChangeListener { sw, on ->
             if (on && !AppSettings.hasAntiTrollPin(this)) {
                 Toast.makeText(this, getString(R.string.anti_troll_pin_need), Toast.LENGTH_LONG).show()

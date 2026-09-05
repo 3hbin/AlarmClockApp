@@ -178,6 +178,11 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         binding = ActivityAlarmRingBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Chế độ tập trung khi báo thức (DND + ẩn thanh hệ thống)
+        try {
+            if (AppSettings.isFocusModeOnAlarm(this)) enableFocusMode()
+        } catch (_: Exception) {}
+
         alarmId = intent.getIntExtra("ALARM_ID", -1)
         val label = intent.getStringExtra("ALARM_LABEL") ?: getString(R.string.app_name)
         currentLabel = label
@@ -194,6 +199,19 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         shakeTargetCount = intent.getIntExtra("SHAKE_TARGET_COUNT", 10)
 
         binding.tvLabel.text = label
+        try {
+            val tf = resources.getFont(R.font.noto_sans_regular)
+            val tfBold = resources.getFont(R.font.noto_sans_bold)
+            binding.tvLabel.typeface = tf
+            binding.tvRingTime.typeface = tfBold
+            try { binding.tvMathQuestion.typeface = tfBold } catch (_: Exception) {}
+            try { binding.btnMathA.typeface = tf } catch (_: Exception) {}
+            try { binding.btnMathB.typeface = tf } catch (_: Exception) {}
+            try { binding.btnMathC.typeface = tf } catch (_: Exception) {}
+            try { binding.btnMathD.typeface = tf } catch (_: Exception) {}
+            try { binding.btnDismiss.typeface = tfBold } catch (_: Exception) {}
+            try { binding.btnSnooze.typeface = tf } catch (_: Exception) {}
+        } catch (_: Exception) {}
         val h = intent.getIntExtra("ALARM_HOUR", -1)
         val m = intent.getIntExtra("ALARM_MINUTE", -1)
         if (h in 0..23 && m in 0..59) {
@@ -948,6 +966,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private fun dismissAlarm(repo: AlarmRepository) {
+        try { restoreFocusMode() } catch (_: Exception) {}
         try {
             AlarmHistory.add(this, intent.getStringExtra("ALARM_LABEL") ?: "",
                 intent.getIntExtra("ALARM_HOUR", 0),
@@ -974,6 +993,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private fun snoozeAlarm(label: String) {
+        try { restoreFocusMode() } catch (_: Exception) {}
         try {
             AlarmHistory.add(this, label,
                 intent.getIntExtra("ALARM_HOUR", 0),
@@ -1194,6 +1214,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     override fun onDestroy() {
+        try { restoreFocusMode() } catch (_: Exception) {}
         try { RippleRingsEffect.stop(this) } catch (_: Exception) {}
         stopReadTimer()
 

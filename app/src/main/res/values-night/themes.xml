@@ -19,5 +19,7 @@
         <item name="android:windowDisablePreview">true</item>
         <item name="materialCardViewStyle">@style/Card.Soft</item>
         <item name="materialButtonStyle">@style/Button.Soft</item>
+        <item name="android:fontFamily">@font/noto_sans</item>
+        <item name="fontFamily">@font/noto_sans</item>
     </style>
 </resources>

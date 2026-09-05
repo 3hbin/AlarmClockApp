@@ -93,6 +93,12 @@ object AppSettings {
         prefs(context).edit().putBoolean("anti_troll", on).apply()
     fun isAntiTroll(context: Context) = prefs(context).getBoolean("anti_troll", false)
 
+    /** Chế độ tập trung (DND) khi báo thức kêu — ẩn thông báo khác */
+    fun setFocusModeOnAlarm(context: Context, on: Boolean) =
+        prefs(context).edit().putBoolean("focus_mode_on_alarm", on).apply()
+    fun isFocusModeOnAlarm(context: Context) =
+        prefs(context).getBoolean("focus_mode_on_alarm", true)
+
     fun setAntiTrollPin(context: Context, pin: String) =
         prefs(context).edit().putString("anti_troll_pin", pin).apply()
     fun getAntiTrollPin(context: Context) =

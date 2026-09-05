@@ -19,6 +19,8 @@ import androidx.core.app.NotificationManagerCompat
 object AlarmNotificationHelper {
 
     const val CHANNEL_RINGING = "alarm_ringing_v5"
+    const val CHANNEL_SCHEDULED = "alarm_scheduled_v1"
+    const val NOTIF_ID_SCHEDULED = 1002
     const val CHANNEL_CHRONO = "chrono_running"
     const val NOTIF_ID_RINGING = 2001
     const val NOTIF_ID_TIMER = 2002
@@ -157,6 +159,51 @@ object AlarmNotificationHelper {
         try {
             NotificationManagerCompat.from(context).notify(NOTIF_ID_RINGING, builder.build())
         } catch (_: SecurityException) {
+        }
+    }
+
+
+    /**
+     * Thông báo kiểu hệ thống khi tạo/bật báo thức — icon đồng hồ báo thức.
+     * Hiện vài giây rồi tự ẩn (giống Clock app).
+     */
+    fun showAlarmSetNotification(
+        context: Context,
+        hour: Int,
+        minute: Int,
+        label: String? = null
+    ) {
+        try {
+            ensureChannels(context)
+            val timeStr = String.format("%02d:%02d", hour, minute)
+            val title = "Báo thức đã đặt"
+            val text = if (!label.isNullOrBlank()) "$timeStr · $label" else timeStr
+
+            val open = Intent(context, MainActivity::class.java)
+            val pi = PendingIntent.getActivity(
+                context, NOTIF_ID_SCHEDULED, open,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            // Icon đồng hồ báo thức hệ thống
+            val icon = android.R.drawable.ic_lock_idle_alarm
+
+            val builder = NotificationCompat.Builder(context, CHANNEL_SCHEDULED)
+                .setSmallIcon(icon)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setSubText("Báo thức")
+                .setContentIntent(pi)
+                .setAutoCancel(true)
+                .setOnlyAlertOnce(true)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setTimeoutAfter(12_000L) // tự ẩn sau 12s
+                .setColor(0xFF4F5BFF.toInt())
+
+            NotificationManagerCompat.from(context).notify(NOTIF_ID_SCHEDULED, builder.build())
+        } catch (_: Exception) {
         }
     }
 
