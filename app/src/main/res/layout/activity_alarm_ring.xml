@@ -109,7 +109,7 @@
 
             <TextView
                 android:id="@+id/tvMathQuestion"
-            android:fontFamily="@font/noto_sans"
+                android:fontFamily="@font/noto_sans"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="12 + 15 = ?"
