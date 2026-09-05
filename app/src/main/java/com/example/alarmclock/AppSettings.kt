@@ -168,8 +168,7 @@ object AppSettings {
         prefs(context).contains("bottom_nav_style")
 
     fun getBottomNavStyle(context: Context): Int {
-        val s = prefs(context).getInt("bottom_nav_style", NAV_GOOGLE)
-        // map old liquid glass -> persistent
-        return if (s !in 0..2) NAV_CURVED else s
+        // Cố định Persistent — mượt, không lag/crash
+        return NAV_PERSISTENT
     }
 }

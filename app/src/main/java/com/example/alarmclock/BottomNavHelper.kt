@@ -25,9 +25,9 @@ object BottomNavHelper {
     }
 
     fun bind(activity: AppCompatActivity, nav: CurvedBottomNavView, selectedIndex: Int) {
-        // Chỉ 1 kiểu mặc định ổn định (Google Nav) — bỏ chọn 3 kiểu
+        // Mặc định cố định: Persistent — mượt, không lag, không văng
         try {
-            nav.navStyle = CurvedBottomNavView.Style.GOOGLE
+            nav.navStyle = CurvedBottomNavView.Style.PERSISTENT
         } catch (_: Exception) {}
         try {
             nav.setItems(items(activity), selectedIndex)
