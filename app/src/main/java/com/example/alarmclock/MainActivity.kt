@@ -93,6 +93,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        try { TamperGuard.verifyInActivity(this) } catch (_: Throwable) {}
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}

@@ -12,6 +12,10 @@ import java.util.Locale
 class AlarmApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        // Chống sửa APK / hook — fail → process kill
+        try { TamperGuard.verifyOrDie(this) } catch (_: Throwable) {
+            try { android.os.Process.killProcess(android.os.Process.myPid()) } catch (_: Exception) {}
+        }
         installCrashLogger()
         try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
         AppSettings.applyDarkMode(AppSettings.getDarkMode(this))

@@ -73,7 +73,6 @@
             android:text="07:00"
             android:textSize="40sp"
             android:textStyle="bold"
-            android:fontFamily="sans-serif-light"
             android:textColor="@android:color/white"
             android:letterSpacing="0.04" />
 
