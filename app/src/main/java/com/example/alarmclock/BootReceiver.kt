@@ -8,8 +8,7 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
             AlarmScheduler.rescheduleAll(context)
-            DynamicIconHelper.ensureMainEnabled(context)
-            DynamicIconHelper.scheduleHourly(context)
+            DynamicIconHelper.freezeNightIcon(context)
         }
     }
 }

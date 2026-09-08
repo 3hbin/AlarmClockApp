@@ -28,7 +28,7 @@ class AlarmApp : Application() {
         }
         LocaleHelper.applySavedLocale(this)
         CloudSyncHelper.init(this)
-        DynamicIconHelper.scheduleHourly(this)
+        // Icon cố định ban đêm — không schedule đổi theo giờ.
     }
 
     private fun installCrashLogger() {
