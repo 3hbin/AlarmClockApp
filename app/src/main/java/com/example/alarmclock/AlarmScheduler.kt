@@ -39,7 +39,15 @@ object AlarmScheduler {
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
 
-            if (timeInMillis <= System.currentTimeMillis()) {
+            if (alarm.repeatMode == Alarm.REPEAT_YEARLY || alarm.id == BirthdayHelper.ALARM_ID) {
+                val month = AppSettings.getBirthdayMonth(context)
+                val day = AppSettings.getBirthdayDay(context)
+                if (month in 1..12 && day in 1..31) {
+                    timeInMillis = BirthdayHelper.nextOccurrenceMillis(month, day, alarm.hour, alarm.minute)
+                } else if (timeInMillis <= System.currentTimeMillis()) {
+                    add(Calendar.YEAR, 1)
+                }
+            } else if (timeInMillis <= System.currentTimeMillis()) {
                 add(Calendar.DAY_OF_YEAR, 1)
             }
 

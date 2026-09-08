@@ -94,6 +94,24 @@ object AppSettings {
     fun getGoogleDisplayName(context: Context) =
         prefs(context).getString("google_display_name", "") ?: ""
 
+    fun setBirthday(context: Context, year: Int, month: Int, day: Int, source: String) {
+        prefs(context).edit()
+            .putInt("bday_year", year)
+            .putInt("bday_month", month)
+            .putInt("bday_day", day)
+            .putString("bday_source", source)
+            .apply()
+    }
+    fun getBirthdayYear(context: Context) = prefs(context).getInt("bday_year", 0)
+    fun getBirthdayMonth(context: Context) = prefs(context).getInt("bday_month", 0)
+    fun getBirthdayDay(context: Context) = prefs(context).getInt("bday_day", 0)
+    fun getBirthdaySource(context: Context) = prefs(context).getString("bday_source", "") ?: ""
+    fun clearBirthday(context: Context) {
+        prefs(context).edit()
+            .remove("bday_year").remove("bday_month").remove("bday_day").remove("bday_source")
+            .apply()
+    }
+
     // Anti-troll: chống người khác tắt báo thức
     fun setAntiTroll(context: Context, on: Boolean) =
         prefs(context).edit().putBoolean("anti_troll", on).apply()

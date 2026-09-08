@@ -261,6 +261,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         )
 
         startRinging()
+        try { MusicRingtoneHelper.playForAlarm(this, ringtoneUri) } catch (_: Exception) {}
         enforceAntiTroll()
         setupChallengeUi()
 
@@ -1090,6 +1091,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                     ringtoneUri!!.endsWith("/soft_chime") -> R.raw.soft_chime
                 ringtoneUri == "app:soft_bell" ||
                     ringtoneUri!!.endsWith("/soft_bell") -> R.raw.soft_bell
+                MusicRingtoneHelper.isStreaming(ringtoneUri) -> R.raw.soft_chime
                 else -> 0
             }
             if (rawId != 0) {

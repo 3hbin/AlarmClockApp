@@ -67,6 +67,7 @@ class MainActivity : AppCompatActivity() {
             selectedRingtoneUri = uri?.toString()
             repo.setGlobalRingtone(selectedRingtoneUri)
             Toast.makeText(this, getString(R.string.choose_ringtone) + " OK", Toast.LENGTH_SHORT).show()
+            tvRingtoneRefresh?.invoke()
         }
     }
 
@@ -76,6 +77,7 @@ class MainActivity : AppCompatActivity() {
             val account = GoogleSignInHelper.handleResult(this, result.data)
             if (account != null) {
                 Toast.makeText(this, "Đã đăng nhập: ${account.email}", Toast.LENGTH_LONG).show()
+                try { BirthdayHelper.syncFromSignedInAccount(this, account) } catch (_: Exception) {}
                 return@registerForActivityResult
             }
             // 2) AccountPicker fallback
@@ -524,21 +526,12 @@ class MainActivity : AppCompatActivity() {
             selectedRingtoneUri = existing.ringtoneUri
         }
 
-        tvRingtoneStatus.text = if (selectedRingtoneUri != null) {
-            getString(R.string.choose_ringtone) + " ✓"
-        } else {
-            getString(R.string.default_ringtone)
-        }
+        tvRingtoneStatus.text = MusicRingtoneHelper.statusText(this, selectedRingtoneUri)
 
         btnChooseRingtone.setOnClickListener {
-            pickRingtone()
-            tvRingtoneStatus.postDelayed({
-                tvRingtoneStatus.text = if (selectedRingtoneUri != null) {
-                    getString(R.string.choose_ringtone) + " ✓"
-                } else {
-                    getString(R.string.default_ringtone)
-                }
-            }, 500)
+            pickRingtone {
+                tvRingtoneStatus.text = MusicRingtoneHelper.statusText(this, selectedRingtoneUri)
+            }
         }
 
         MaterialAlertDialogBuilder(this)
@@ -659,11 +652,13 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun pickRingtone() {
+    private fun pickRingtone(onPicked: () -> Unit = {}) {
         val choices = arrayOf(
-            "Chuông êm (trong app)",
-            "Chuông nhẹ chuông (trong app)",
-            "Chọn nhạc hệ thống…"
+            getString(R.string.ringtone_soft_chime),
+            getString(R.string.ringtone_soft_bell),
+            getString(R.string.ringtone_spotify),
+            getString(R.string.ringtone_ytm),
+            getString(R.string.ringtone_system)
         )
         MaterialAlertDialogBuilder(this)
             .setTitle(getString(R.string.choose_ringtone))
@@ -671,11 +666,31 @@ class MainActivity : AppCompatActivity() {
                 when (which) {
                     0 -> {
                         selectedRingtoneUri = "app:soft_chime"
-                        Toast.makeText(this, "Chuông êm", Toast.LENGTH_SHORT).show()
+                        repo.setGlobalRingtone(selectedRingtoneUri)
+                        Toast.makeText(this, getString(R.string.ringtone_soft_chime), Toast.LENGTH_SHORT).show()
+                        onPicked()
                     }
                     1 -> {
                         selectedRingtoneUri = "app:soft_bell"
-                        Toast.makeText(this, "Chuông nhẹ", Toast.LENGTH_SHORT).show()
+                        repo.setGlobalRingtone(selectedRingtoneUri)
+                        Toast.makeText(this, getString(R.string.ringtone_soft_bell), Toast.LENGTH_SHORT).show()
+                        onPicked()
+                    }
+                    2 -> askMusicQuery(
+                        title = getString(R.string.ringtone_spotify),
+                        hint = getString(R.string.ringtone_spotify_hint)
+                    ) { q ->
+                        selectedRingtoneUri = MusicRingtoneHelper.encodeSpotify(q)
+                        repo.setGlobalRingtone(selectedRingtoneUri)
+                        onPicked()
+                    }
+                    3 -> askMusicQuery(
+                        title = getString(R.string.ringtone_ytm),
+                        hint = getString(R.string.ringtone_ytm_hint)
+                    ) { q ->
+                        selectedRingtoneUri = MusicRingtoneHelper.encodeYoutubeMusic(q)
+                        repo.setGlobalRingtone(selectedRingtoneUri)
+                        onPicked()
                     }
                     else -> {
                         val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
@@ -688,9 +703,35 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
                         ringtonePicker.launch(intent)
+                        tvRingtoneRefresh = onPicked
                     }
                 }
             }
+            .show()
+    }
+
+    private var tvRingtoneRefresh: (() -> Unit)? = null
+
+    private fun askMusicQuery(title: String, hint: String, onOk: (String) -> Unit) {
+        val input = EditText(this).apply {
+            this.hint = hint
+            inputType = InputType.TYPE_CLASS_TEXT
+            setPadding(48, 36, 48, 36)
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle(title)
+            .setMessage(getString(R.string.ringtone_stream_note))
+            .setView(input)
+            .setPositiveButton(getString(R.string.confirm)) { _, _ ->
+                val q = input.text?.toString()?.trim().orEmpty()
+                if (q.isBlank()) {
+                    Toast.makeText(this, getString(R.string.ringtone_need_query), Toast.LENGTH_SHORT).show()
+                } else {
+                    onOk(q)
+                    Toast.makeText(this, title, Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton(getString(R.string.cancel), null)
             .show()
     }
 
