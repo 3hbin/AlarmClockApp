@@ -39,15 +39,7 @@ object AlarmScheduler {
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
 
-            if (alarm.repeatMode == Alarm.REPEAT_YEARLY || alarm.id == BirthdayHelper.ALARM_ID) {
-                val month = AppSettings.getBirthdayMonth(context)
-                val day = AppSettings.getBirthdayDay(context)
-                if (month in 1..12 && day in 1..31) {
-                    timeInMillis = BirthdayHelper.nextOccurrenceMillis(month, day, alarm.hour, alarm.minute)
-                } else if (timeInMillis <= System.currentTimeMillis()) {
-                    add(Calendar.YEAR, 1)
-                }
-            } else if (timeInMillis <= System.currentTimeMillis()) {
+            if (timeInMillis <= System.currentTimeMillis()) {
                 add(Calendar.DAY_OF_YEAR, 1)
             }
 
@@ -59,42 +51,29 @@ object AlarmScheduler {
                 }
             }
 
-            // Vietnam Holiday Auto-Skip
             if (alarm.skipHolidays) {
                 while (VietnamHolidays.isHoliday(this)) {
                     add(Calendar.DAY_OF_YEAR, 1)
-                    // also avoid weekend if weekdays mode already handled, but safe
                 }
             }
         }
 
+        // Không dùng setAlarmClock (icon đồng hồ + bảng Hoãn hệ thống → OEM buộc dừng).
         try {
-            // setAlarmClock: ưu tiên cao trên Samsung/OEM, hiện icon đồng hồ trên status bar
-            val showIntent = Intent(context, MainActivity::class.java)
-            val showPi = PendingIntent.getActivity(
-                context, alarm.id + 30000, showIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            val info = android.app.AlarmManager.AlarmClockInfo(calendar.timeInMillis, showPi)
-            alarmManager.setAlarmClock(info, pendingIntent)
-            // Thông báo hệ thống: logo đồng hồ + giờ đã đặt
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent
+                )
+            } else {
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
+            }
             try {
                 AlarmNotificationHelper.showAlarmSetNotification(
                     context, alarm.hour, alarm.minute, alarm.label
                 )
             } catch (_: Exception) {}
-        } catch (e: Exception) {
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    alarmManager.setExactAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent
-                    )
-                } else {
-                    alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
-                }
-            } catch (se: SecurityException) {
-                alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
-            }
+        } catch (se: SecurityException) {
+            alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
         }
     }
 

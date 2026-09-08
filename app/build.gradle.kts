@@ -13,8 +13,8 @@ android {
         applicationId = "com.alarmclock.dongho"
         minSdk = 28
         targetSdk = 34
-        versionCode = 132
-        versionName = "4.17.7"
+        versionCode = 133
+        versionName = "4.17.8"
         buildConfigField("String", "SPOTIFY_CLIENT_ID", "\"d0d25405fe2640608a6611b6cfdf1b44\"")
         buildConfigField("String", "YOUTUBE_API_KEY", "\"AIzaSyDeh5FsoNyVKEURsSLeSmx4DNp_rJfdD5M\"")
         buildConfigField("String", "WEATHER_API_KEY", "\"82b5a70ad1ea5e93d8482e0c17712f93\"")
@@ -86,4 +86,5 @@ dependencies {
     implementation("com.google.mlkit:face-detection:16.1.6")
     implementation("androidx.biometric:biometric:1.1.0")
     implementation("com.google.android.gms:play-services-auth:21.2.0")
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
 }

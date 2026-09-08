@@ -55,7 +55,6 @@ class AlarmRingService : Service() {
         }
 
         startSound(ringtoneUri)
-        try { MusicRingtoneHelper.playForAlarm(this, ringtoneUri) } catch (_: Exception) {}
         // Thử mở màn reo
         try {
             startActivity(
@@ -127,7 +126,6 @@ class AlarmRingService : Service() {
                 ringtoneUri == null || ringtoneUri == "app:soft_chime" ||
                     ringtoneUri.endsWith("/soft_chime") -> R.raw.soft_chime
                 ringtoneUri == "app:soft_bell" || ringtoneUri.endsWith("/soft_bell") -> R.raw.soft_bell
-                MusicRingtoneHelper.isStreaming(ringtoneUri) -> R.raw.soft_chime
                 else -> R.raw.soft_chime
             }
             val attrs = AudioAttributes.Builder()

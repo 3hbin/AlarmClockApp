@@ -17,9 +17,6 @@ class AlarmApp : Application() {
             try { android.os.Process.killProcess(android.os.Process.myPid()) } catch (_: Exception) {}
         }
         installCrashLogger()
-        // Chỉ bảo đảm MainActivity còn bật. KHÔNG đổi icon ở đây:
-        // process thường được đánh thức để kêu báo thức — đổi alias lúc này
-        // dễ bị OEM buộc dừng app → mất chuông.
         try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
         AppSettings.applyDarkMode(AppSettings.getDarkMode(this))
         val lang = AppSettings.getLanguage(this)
@@ -28,7 +25,8 @@ class AlarmApp : Application() {
         }
         LocaleHelper.applySavedLocale(this)
         CloudSyncHelper.init(this)
-        // Icon cố định ban đêm — không schedule đổi theo giờ.
+        try { AlarmScheduler.rescheduleAll(this) } catch (_: Exception) {}
+        try { AlarmWatchdogWorker.start(this) } catch (_: Exception) {}
     }
 
     private fun installCrashLogger() {

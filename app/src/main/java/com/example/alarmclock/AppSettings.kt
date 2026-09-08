@@ -9,12 +9,6 @@ object AppSettings {
     fun prefs(context: Context) =
         context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
 
-    fun hasAcceptedWelcome(context: Context) =
-        prefs(context).getBoolean("welcome_privacy_ok", false)
-
-    fun setWelcomeAccepted(context: Context, accepted: Boolean) =
-        prefs(context).edit().putBoolean("welcome_privacy_ok", accepted).apply()
-
     // Pure alarm
     fun setPureAlarmOnly(context: Context, enabled: Boolean) =
         prefs(context).edit().putBoolean("pure_alarm", enabled).apply()
@@ -93,24 +87,6 @@ object AppSettings {
         prefs(context).edit().putString("google_display_name", name).apply()
     fun getGoogleDisplayName(context: Context) =
         prefs(context).getString("google_display_name", "") ?: ""
-
-    fun setBirthday(context: Context, year: Int, month: Int, day: Int, source: String) {
-        prefs(context).edit()
-            .putInt("bday_year", year)
-            .putInt("bday_month", month)
-            .putInt("bday_day", day)
-            .putString("bday_source", source)
-            .apply()
-    }
-    fun getBirthdayYear(context: Context) = prefs(context).getInt("bday_year", 0)
-    fun getBirthdayMonth(context: Context) = prefs(context).getInt("bday_month", 0)
-    fun getBirthdayDay(context: Context) = prefs(context).getInt("bday_day", 0)
-    fun getBirthdaySource(context: Context) = prefs(context).getString("bday_source", "") ?: ""
-    fun clearBirthday(context: Context) {
-        prefs(context).edit()
-            .remove("bday_year").remove("bday_month").remove("bday_day").remove("bday_source")
-            .apply()
-    }
 
     // Anti-troll: chống người khác tắt báo thức
     fun setAntiTroll(context: Context, on: Boolean) =
