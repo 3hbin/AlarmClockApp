@@ -301,7 +301,7 @@ class MainActivity : AppCompatActivity() {
         try { binding.root.alpha = 1f } catch (_: Exception) {}
         try { BottomNavHelper.bind(this, binding.curvedNav, 0) } catch (_: Exception) {}
         try { binding.curvedNav.selectIndex(0, animate = false) } catch (_: Exception) {}
-        DynamicIconHelper.applySafe(this)
+        DynamicIconHelper.applySafe(this, fromUserUi = true)
         try { reloadAlarmsFromDisk() } catch (_: Exception) {}
         try { maybeRequireAppLock() } catch (_: Exception) {
             try { forceShowUi() } catch (_: Exception) {}

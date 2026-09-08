@@ -1,0 +1,30 @@
+Bản vá 4.17.2 — đổi icon không làm mất báo thức
+==============================================
+
+Vấn đề
+- App đổi icon bằng cách bật/tắt activity-alias launcher.
+- Nhiều máy (Xiaomi, Oppo, Vivo, Samsung) khi đổi component launcher
+  sẽ buộc dừng app. App bị buộc dừng thì AlarmManager bị hủy → không kêu.
+
+Đã sửa
+1. DynamicIconHelper.kt
+   - Chỉ gọi setComponentEnabledSetting khi alias đang SAI buổi.
+   - Đổi icon thật sự chỉ khi user đang mở giao diện (fromUserUi = true).
+   - Chạy nền chỉ ghi nhớ buổi, không đụng launcher.
+   - Sau khi đổi icon: reschedule lại toàn bộ báo thức.
+
+2. AlarmApp.kt
+   - Không đổi icon lúc process vừa khởi động (lúc này có thể đang kêu báo thức).
+
+3. IconUpdateReceiver.kt + BootReceiver.kt
+   - Receiver nền không đổi alias.
+
+4. MainActivity.kt + MainTabActivity.kt
+   - applySafe(..., fromUserUi = true) khi user mở app.
+
+Cách dùng
+- Build APK: ./gradlew assembleRelease
+- Cài đè bản cũ (cùng keystore) hoặc gỡ rồi cài lại.
+- Mở app 1 lần để gỡ trạng thái "buộc dừng" và đặt lại báo thức.
+- Icon sẽ đổi vào lần mở app ở buổi mới (sáng/trưa/chiều/tối),
+  không đổi âm thầm lúc nửa đêm.
