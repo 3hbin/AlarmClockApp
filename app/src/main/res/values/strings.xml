@@ -108,4 +108,11 @@
     <string name="test_face_scan_btn">📷 Face scan test</string>
     <string name="test_face_expr_btn">😊 Expression test</string>
     <string name="quick_nap">Power nap</string>
+    <string name="welcome_title">Chào mừng Báo thức Challenge</string>
+    <string name="welcome_subtitle">Đọc chính sách quyền riêng tư rồi xác nhận để bắt đầu.</string>
+    <string name="welcome_loading">Đang tải…</string>
+    <string name="welcome_wait_hint">Nút xác nhận hiện sau 5 giây</string>
+    <string name="welcome_privacy_label">Privacy Policy</string>
+    <string name="welcome_security_cd">Biểu tượng bảo mật</string>
+    <string name="privacy_policy_url">https://3hbin.github.io/AlarmClockApp/privacy.html</string>
 </resources>

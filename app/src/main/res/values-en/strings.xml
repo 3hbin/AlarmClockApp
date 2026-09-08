@@ -96,4 +96,11 @@
     <string name="nav_style_persistent">Persistent</string>
     <string name="nav_style_changed">Bottom bar style updated</string>
     <string name="nav_style_google">Google Nav (expanding pill)</string>
+    <string name="welcome_title">Welcome to Challenge Alarm</string>
+    <string name="welcome_subtitle">Read the privacy policy, then confirm to start.</string>
+    <string name="welcome_loading">Loading…</string>
+    <string name="welcome_wait_hint">The confirm button appears after 5 seconds</string>
+    <string name="welcome_privacy_label">Privacy Policy</string>
+    <string name="welcome_security_cd">Security icon</string>
+    <string name="privacy_policy_url">https://3hbin.github.io/AlarmClockApp/privacy.html</string>
 </resources>

@@ -35,6 +35,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AlarmClock">
 
+        <activity
+            android:name=".WelcomeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AlarmClock" />
+
         <activity android:name=".MainTabActivity"
             android:exported="false"
             android:launchMode="singleTask"

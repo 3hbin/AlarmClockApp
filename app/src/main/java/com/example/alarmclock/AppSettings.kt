@@ -9,6 +9,12 @@ object AppSettings {
     fun prefs(context: Context) =
         context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
 
+    fun hasAcceptedWelcome(context: Context) =
+        prefs(context).getBoolean("welcome_privacy_ok", false)
+
+    fun setWelcomeAccepted(context: Context, accepted: Boolean) =
+        prefs(context).edit().putBoolean("welcome_privacy_ok", accepted).apply()
+
     // Pure alarm
     fun setPureAlarmOnly(context: Context, enabled: Boolean) =
         prefs(context).edit().putBoolean("pure_alarm", enabled).apply()
