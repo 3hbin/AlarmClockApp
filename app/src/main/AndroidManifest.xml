@@ -198,5 +198,52 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="stopwatch" />
         </service>
+
+        <receiver
+            android:name=".AlarmWidget1x1Provider"
+            android:exported="true"
+            android:label="Báo thức 1x1"
+            android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_alarm_1x1_info" />
+        </receiver>
+        <receiver
+            android:name=".AlarmWidget2x2Provider"
+            android:exported="true"
+            android:label="Báo thức 2x2"
+            android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_alarm_2x2_info" />
+        </receiver>
+        <receiver
+            android:name=".AlarmWidget4x2Provider"
+            android:exported="true"
+            android:label="Báo thức 4x2"
+            android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_alarm_4x2_info" />
+        </receiver>
+        <receiver android:name=".WidgetClickReceiver" android:exported="false" android:directBootAware="true">
+            <intent-filter>
+                <action android:name="com.alarmclock.dongho.widget.TOGGLE" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".WidgetTickReceiver" android:exported="false" android:directBootAware="true">
+            <intent-filter>
+                <action android:name="com.alarmclock.dongho.widget.TICK" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

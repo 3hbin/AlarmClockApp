@@ -850,11 +850,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
-        // Cập nhật dòng phiên bản
         try {
-            val pInfo = packageManager.getPackageInfo(packageName, 0)
-            val ver = pInfo.versionName ?: "3.87"
-            menu.findItem(R.id.menu_version)?.title = "Phiên bản v$ver"
+            if (menu is androidx.appcompat.view.menu.MenuBuilder) {
+                @Suppress("RestrictedApi")
+                menu.setOptionalIconsVisible(true)
+            }
+        } catch (_: Exception) {}
+        try {
+            menu.findItem(R.id.menu_version)?.title = "Cập nhật ứng dụng"
         } catch (_: Exception) {}
         return true
     }
@@ -878,7 +881,7 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
             R.id.menu_version -> {
-                showVersionDialog()
+                showUpdateDialog()
                 return true
             }
         }
@@ -1127,6 +1130,23 @@ class MainActivity : AppCompatActivity() {
             .setTitle("ℹ️ Phiên bản")
             .setMessage("Báo thức Challenge\nPhiên bản: v$ver\nMã bản dựng: $code\n\nQuét mặt · Thử thách · App lock · Lịch lễ")
             .setPositiveButton("OK", null)
+            .show()
+    }
+
+
+    private fun showUpdateDialog() {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Cập nhật ứng dụng")
+            .setMessage("Bạn có muốn mở trang APKPure để tải bản cập nhật mới nhất không?")
+            .setPositiveButton("Mở APKPure") { _, _ ->
+                try {
+                    val uri = android.net.Uri.parse("https://apkpure.com/p/com.alarmclock.dongho")
+                    startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, uri))
+                } catch (_: Exception) {
+                    android.widget.Toast.makeText(this, "Không mở được trình duyệt", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Hủy", null)
             .show()
     }
 

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layoutWidget2x2"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0D1B4C"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="12dp">
+    <TextView
+        android:id="@+id/tvWidget2x2Clock"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="00:00"
+        android:textColor="#FFFFFF"
+        android:textSize="28sp"
+        android:textStyle="bold" />
+    <TextView
+        android:id="@+id/tvWidget2x2Next"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_marginTop="6dp"
+        android:text="Báo tiếp theo"
+        android:textColor="#DDFFFFFF"
+        android:textSize="13sp" />
+    <TextView
+        android:id="@+id/tvWidget2x2Count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="—"
+        android:textColor="#90CAF9"
+        android:textSize="12sp" />
+</LinearLayout>
