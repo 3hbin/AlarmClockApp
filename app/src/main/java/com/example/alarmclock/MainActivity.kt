@@ -713,41 +713,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateOngoingNotification() {
-        val enabledCount = alarms.count { it.isEnabled }
-        val nmCompat = NotificationManagerCompat.from(this)
-        val nm = getSystemService(NotificationManager::class.java)
-
-        if (enabledCount == 0) {
-            // Tắt hẳn thông báo "Báo thức đang bật"
-            try { nmCompat.cancel(1001) } catch (_: Exception) {}
-            try { nm?.cancel(1001) } catch (_: Exception) {}
-            try { nmCompat.cancel(AlarmNotificationHelper.NOTIF_ID_RINGING) } catch (_: Exception) {}
-            try { nm?.cancel(AlarmNotificationHelper.NOTIF_ID_RINGING) } catch (_: Exception) {}
-            return
-        }
-
-        val intent = Intent(this, MainActivity::class.java)
-        val pending = PendingIntent.getActivity(
-            this, 0, intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val notification = NotificationCompat.Builder(this, "alarm_status")
-            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-            .setContentTitle(getString(R.string.notification_title))
-            .setContentText(getString(R.string.notification_text, enabledCount))
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setContentIntent(pending)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setSilent(true)
-            .build()
-
-        try {
-            nmCompat.notify(1001, notification)
-        } catch (e: SecurityException) {
-            // Permission not granted
-        }
+        try { AlarmKeepAliveService.sync(this) } catch (_: Exception) {}
     }
 
     /** Đồng bộ lại list từ đĩa (sau khi báo thức kêu / tắt ở màn khác). */

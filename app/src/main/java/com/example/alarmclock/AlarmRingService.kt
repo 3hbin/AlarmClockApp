@@ -164,8 +164,10 @@ class AlarmRingService : Service() {
         try {
             val pm = getSystemService(POWER_SERVICE) as PowerManager
             @Suppress("DEPRECATION")
+            @Suppress("DEPRECATION")
             wakeLock = pm.newWakeLock(
-                PowerManager.PARTIAL_WAKE_LOCK,
+                PowerManager.PARTIAL_WAKE_LOCK or
+                    PowerManager.ACQUIRE_CAUSES_WAKEUP,
                 "AlarmClock:RingService"
             ).apply {
                 setReferenceCounted(false)

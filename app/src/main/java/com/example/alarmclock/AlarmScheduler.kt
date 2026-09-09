@@ -38,28 +38,28 @@ object AlarmScheduler {
             set(Calendar.MINUTE, alarm.minute)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
-
-            if (timeInMillis <= System.currentTimeMillis()) {
-                add(Calendar.DAY_OF_YEAR, 1)
-            }
-
+            if (timeInMillis <= System.currentTimeMillis()) add(Calendar.DAY_OF_YEAR, 1)
             if (alarm.repeatMode == Alarm.REPEAT_WEEKDAYS) {
                 while (get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY ||
                     get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY
-                ) {
-                    add(Calendar.DAY_OF_YEAR, 1)
-                }
+                ) add(Calendar.DAY_OF_YEAR, 1)
             }
-
             if (alarm.skipHolidays) {
-                while (VietnamHolidays.isHoliday(this)) {
-                    add(Calendar.DAY_OF_YEAR, 1)
-                }
+                while (VietnamHolidays.isHoliday(this)) add(Calendar.DAY_OF_YEAR, 1)
             }
         }
 
-        // Không dùng setAlarmClock (icon đồng hồ + bảng Hoãn hệ thống → OEM buộc dừng).
         try {
+            val show = PendingIntent.getActivity(
+                context, alarm.id + 30000,
+                Intent(context, MainActivity::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            alarmManager.setAlarmClock(
+                AlarmManager.AlarmClockInfo(calendar.timeInMillis, show),
+                pendingIntent
+            )
+        } catch (se: SecurityException) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent
@@ -67,14 +67,8 @@ object AlarmScheduler {
             } else {
                 alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
             }
-            try {
-                AlarmNotificationHelper.showAlarmSetNotification(
-                    context, alarm.hour, alarm.minute, alarm.label
-                )
-            } catch (_: Exception) {}
-        } catch (se: SecurityException) {
-            alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
         }
+        try { AlarmKeepAliveService.sync(context) } catch (_: Exception) {}
     }
 
     fun cancel(context: Context, alarmId: Int) {
@@ -85,11 +79,13 @@ object AlarmScheduler {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         alarmManager.cancel(pendingIntent)
+        try { AlarmKeepAliveService.sync(context) } catch (_: Exception) {}
     }
 
     fun rescheduleAll(context: Context) {
         val repo = AlarmRepository(context)
         repo.getAlarms().filter { it.isEnabled }.forEach { schedule(context, it) }
+        try { AlarmKeepAliveService.sync(context) } catch (_: Exception) {}
     }
 
     fun scheduleSnooze(context: Context, alarmId: Int, minutes: Int, extras: Intent) {
@@ -103,10 +99,19 @@ object AlarmScheduler {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val trigger = System.currentTimeMillis() + minutes * 60_000L
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pendingIntent)
-        } else {
-            alarmManager.setExact(AlarmManager.RTC_WAKEUP, trigger, pendingIntent)
+        try {
+            val show = PendingIntent.getActivity(
+                context, alarmId + 40000,
+                Intent(context, MainActivity::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            alarmManager.setAlarmClock(AlarmManager.AlarmClockInfo(trigger, show), pendingIntent)
+        } catch (_: Exception) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pendingIntent)
+            } else {
+                alarmManager.setExact(AlarmManager.RTC_WAKEUP, trigger, pendingIntent)
+            }
         }
     }
 }

@@ -27,6 +27,7 @@ class AlarmApp : Application() {
         CloudSyncHelper.init(this)
         try { AlarmScheduler.rescheduleAll(this) } catch (_: Exception) {}
         try { AlarmWatchdogWorker.start(this) } catch (_: Exception) {}
+        try { AlarmKeepAliveService.sync(this) } catch (_: Exception) {}
     }
 
     private fun installCrashLogger() {
