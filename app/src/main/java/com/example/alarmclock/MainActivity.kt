@@ -77,12 +77,14 @@ class MainActivity : AppCompatActivity() {
             if (account != null) {
                 Toast.makeText(this, "Đã đăng nhập: ${account.email}", Toast.LENGTH_LONG).show()
                 try { BirthdayHelper.syncFromSignedInAccount(this, account) } catch (_: Exception) {}
+                try { CloudSyncHelper.syncOnLogin(this) } catch (_: Exception) {}
                 return@registerForActivityResult
             }
             // 2) AccountPicker fallback
             val email = GoogleSignInHelper.handleAccountPicker(this, result.data)
             if (!email.isNullOrBlank()) {
                 Toast.makeText(this, "Đã đăng nhập: $email", Toast.LENGTH_LONG).show()
+                try { CloudSyncHelper.syncOnLogin(this) } catch (_: Exception) {}
                 return@registerForActivityResult
             }
             if (result.resultCode == android.app.Activity.RESULT_CANCELED) {
@@ -852,7 +854,7 @@ class MainActivity : AppCompatActivity() {
         try {
             val pInfo = packageManager.getPackageInfo(packageName, 0)
             val ver = pInfo.versionName ?: "3.87"
-            menu.findItem(R.id.menu_version)?.title = "ℹ️ Phiên bản v$ver"
+            menu.findItem(R.id.menu_version)?.title = "Phiên bản v$ver"
         } catch (_: Exception) {}
         return true
     }

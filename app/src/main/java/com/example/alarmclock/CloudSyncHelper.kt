@@ -4,72 +4,84 @@ import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import org.json.JSONArray
-import org.json.JSONObject
+import com.google.firebase.firestore.SetOptions
 
 /**
- * Đồng bộ báo thức lên Firestore (collection "alarms").
- * Cần bật Firestore trong Firebase Console (test mode hoặc rules phù hợp).
+ * Sao lưu theo tài khoản Google: users/{uid}/backup
+ * Gồm danh sách báo thức + email.
  */
 object CloudSyncHelper {
     private const val TAG = "CloudSync"
-    private const val COLLECTION = "alarms"
 
     fun init(context: Context) {
         try {
-            if (FirebaseApp.getApps(context).isEmpty()) {
-                FirebaseApp.initializeApp(context)
-            }
+            if (FirebaseApp.getApps(context).isEmpty()) FirebaseApp.initializeApp(context)
         } catch (e: Exception) {
             Log.e(TAG, "Firebase init failed", e)
         }
     }
 
-    fun pushAlarms(context: Context, alarms: List<Alarm>, onDone: (Boolean) -> Unit = {}) {
+    private fun uid(context: Context): String? {
+        val fromAuth = try { FirebaseAuth.getInstance().currentUser?.uid } catch (_: Exception) { null }
+        if (!fromAuth.isNullOrBlank()) return fromAuth
+        val email = AppSettings.getRecoveryEmail(context).ifBlank { null } ?: return null
+        return email.replace(".", "_").replace("@", "_at_")
+    }
+
+    private fun doc(context: Context) =
+        FirebaseFirestore.getInstance().collection("users").document(uid(context) ?: "anon")
+            .collection("data").document("backup")
+
+    fun syncOnLogin(context: Context) {
+        init(context)
+        if (uid(context) == null) {
+            Toast.makeText(context, "Chưa có tài khoản Google để sao lưu", Toast.LENGTH_SHORT).show()
+            return
+        }
+        pullThenMerge(context)
+    }
+
+    fun pushAlarms(context: Context, alarms: List<Alarm> = AlarmRepository(context).getAlarms(), onDone: (Boolean) -> Unit = {}) {
         try {
             init(context)
-            val db = FirebaseFirestore.getInstance()
-            val batch = db.batch()
-            val col = db.collection(COLLECTION)
-
-            // Xóa cũ rồi ghi mới (đơn giản cho demo)
-            col.get().addOnSuccessListener { snap ->
-                snap.documents.forEach { batch.delete(it.reference) }
-                alarms.forEach { alarm ->
-                    val ref = col.document(alarm.id.toString())
-                    val data = hashMapOf(
-                        "id" to alarm.id,
-                        "hour" to alarm.hour,
-                        "minute" to alarm.minute,
-                        "label" to alarm.label,
-                        "isEnabled" to alarm.isEnabled,
-                        "repeatMode" to alarm.repeatMode,
-                        "snoozeMinutes" to alarm.snoozeMinutes,
-                        "challengeType" to alarm.challengeType,
-                        "skipHolidays" to alarm.skipHolidays,
-                        "isStrictAntiSnooze" to alarm.isStrictAntiSnooze,
-                        "voiceNote" to (alarm.voiceNote ?: ""),
-                        "useCrescendo" to alarm.useCrescendo,
-                        "ringtoneUri" to (alarm.ringtoneUri ?: "")
-                    )
-                    batch.set(ref, data)
-                }
-                batch.commit()
-                    .addOnSuccessListener {
-                        Toast.makeText(context, "Đã đồng bộ ${alarms.size} báo thức lên Cloud", Toast.LENGTH_SHORT).show()
-                        onDone(true)
-                    }
-                    .addOnFailureListener { e ->
-                        Log.e(TAG, "push failed", e)
-                        Toast.makeText(context, "Lỗi sync: ${e.message}", Toast.LENGTH_LONG).show()
-                        onDone(false)
-                    }
-            }.addOnFailureListener { e ->
-                Log.e(TAG, "read failed", e)
-                Toast.makeText(context, "Lỗi Firestore: ${e.message}. Hãy bật Firestore trên Console.", Toast.LENGTH_LONG).show()
+            if (uid(context) == null) {
                 onDone(false)
+                return
             }
+            val payload = hashMapOf(
+                "email" to AppSettings.getRecoveryEmail(context),
+                "updatedAt" to System.currentTimeMillis(),
+                "alarms" to alarms.map { a ->
+                    hashMapOf(
+                        "id" to a.id,
+                        "hour" to a.hour,
+                        "minute" to a.minute,
+                        "label" to a.label,
+                        "isEnabled" to a.isEnabled,
+                        "repeatMode" to a.repeatMode,
+                        "snoozeMinutes" to a.snoozeMinutes,
+                        "challengeType" to a.challengeType,
+                        "shakeTargetCount" to a.shakeTargetCount,
+                        "skipHolidays" to a.skipHolidays,
+                        "isStrictAntiSnooze" to a.isStrictAntiSnooze,
+                        "voiceNote" to (a.voiceNote ?: ""),
+                        "useCrescendo" to a.useCrescendo,
+                        "ringtoneUri" to (a.ringtoneUri ?: "")
+                    )
+                }
+            )
+            doc(context).set(payload, SetOptions.merge())
+                .addOnSuccessListener {
+                    Toast.makeText(context, "Đã sao lưu ${alarms.size} báo thức lên Google", Toast.LENGTH_SHORT).show()
+                    onDone(true)
+                }
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "push failed", e)
+                    Toast.makeText(context, "Lỗi sao lưu: ${e.message}", Toast.LENGTH_LONG).show()
+                    onDone(false)
+                }
         } catch (e: Exception) {
             Toast.makeText(context, "Firebase chưa sẵn sàng: ${e.message}", Toast.LENGTH_LONG).show()
             onDone(false)
@@ -79,35 +91,57 @@ object CloudSyncHelper {
     fun pullAlarms(context: Context, onResult: (List<Alarm>) -> Unit) {
         try {
             init(context)
-            FirebaseFirestore.getInstance().collection(COLLECTION).get()
+            if (uid(context) == null) {
+                onResult(emptyList()); return
+            }
+            doc(context).get()
                 .addOnSuccessListener { snap ->
-                    val list = snap.documents.mapNotNull { doc ->
+                    val raw = snap.get("alarms") as? List<*>
+                    val list = raw?.mapNotNull { item ->
+                        val m = item as? Map<*, *> ?: return@mapNotNull null
                         try {
                             Alarm(
-                                id = (doc.getLong("id") ?: return@mapNotNull null).toInt(),
-                                hour = (doc.getLong("hour") ?: 0).toInt(),
-                                minute = (doc.getLong("minute") ?: 0).toInt(),
-                                isEnabled = doc.getBoolean("isEnabled") ?: true,
-                                label = doc.getString("label") ?: "Báo thức",
-                                repeatMode = (doc.getLong("repeatMode") ?: 1).toInt(),
-                                snoozeMinutes = (doc.getLong("snoozeMinutes") ?: 5).toInt(),
-                                ringtoneUri = doc.getString("ringtoneUri")?.takeIf { it.isNotBlank() },
-                                challengeType = (doc.getLong("challengeType") ?: 0).toInt(),
-                                skipHolidays = doc.getBoolean("skipHolidays") ?: false,
-                                isStrictAntiSnooze = doc.getBoolean("isStrictAntiSnooze") ?: false,
-                                voiceNote = doc.getString("voiceNote")?.takeIf { it.isNotBlank() },
-                                useCrescendo = doc.getBoolean("useCrescendo") ?: true
+                                id = (m["id"] as? Number)?.toInt() ?: return@mapNotNull null,
+                                hour = (m["hour"] as? Number)?.toInt() ?: 0,
+                                minute = (m["minute"] as? Number)?.toInt() ?: 0,
+                                isEnabled = m["isEnabled"] as? Boolean ?: true,
+                                label = m["label"] as? String ?: "Báo thức",
+                                repeatMode = (m["repeatMode"] as? Number)?.toInt() ?: 1,
+                                snoozeMinutes = (m["snoozeMinutes"] as? Number)?.toInt() ?: 5,
+                                ringtoneUri = (m["ringtoneUri"] as? String)?.takeIf { it.isNotBlank() },
+                                challengeType = (m["challengeType"] as? Number)?.toInt() ?: 0,
+                                shakeTargetCount = (m["shakeTargetCount"] as? Number)?.toInt() ?: 10,
+                                skipHolidays = m["skipHolidays"] as? Boolean ?: false,
+                                isStrictAntiSnooze = m["isStrictAntiSnooze"] as? Boolean ?: false,
+                                voiceNote = (m["voiceNote"] as? String)?.takeIf { it.isNotBlank() },
+                                useCrescendo = m["useCrescendo"] as? Boolean ?: true
                             )
                         } catch (_: Exception) { null }
-                    }
+                    } ?: emptyList()
                     onResult(list)
                 }
                 .addOnFailureListener {
-                    Toast.makeText(context, "Pull lỗi: ${it.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Tải cloud lỗi: ${it.message}", Toast.LENGTH_SHORT).show()
                     onResult(emptyList())
                 }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             onResult(emptyList())
+        }
+    }
+
+    private fun pullThenMerge(context: Context) {
+        pullAlarms(context) { cloud ->
+            val repo = AlarmRepository(context)
+            val local = repo.getAlarms()
+            when {
+                cloud.isNotEmpty() -> {
+                    repo.saveAlarms(cloud)
+                    AlarmScheduler.rescheduleAll(context)
+                    Toast.makeText(context, "Đã khôi phục ${cloud.size} báo từ Google", Toast.LENGTH_LONG).show()
+                }
+                local.isNotEmpty() -> pushAlarms(context, local)
+                else -> Toast.makeText(context, "Google đã liên kết — chưa có báo để sao lưu", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }
