@@ -46,6 +46,13 @@ class AlarmReceiver : BroadcastReceiver() {
                     !AppSettings.isAntiTroll(context) &&
                     !isStrict
 
+            // Lưu trạng thái trước khi khởi động service. Notification bền vững
+            // không phụ thuộc vòng đời của AlarmRingService.
+            AlarmNotificationHelper.saveRingingState(
+                context, alarmId, label, hour, minute, snoozeMinutes, repeatMode,
+                ringtoneUri, challengeType, shakeTargetCount, isStrict, voiceNote, useCrescendo
+            )
+
             // 1) Full-screen intent notification (quan trọng trên Samsung khi khóa màn)
             AlarmNotificationHelper.showRingingNotification(
                 context = context,

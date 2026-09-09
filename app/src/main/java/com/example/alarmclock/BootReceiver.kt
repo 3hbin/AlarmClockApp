@@ -11,6 +11,9 @@ class BootReceiver : BroadcastReceiver() {
         val pending = goAsync()
         try {
             AlarmScheduler.rescheduleAll(context)
+            // Notification đang kêu được lưu riêng nên khôi phục lại sau reboot,
+            // không phụ thuộc việc foreground service có được Android phục hồi hay không.
+            try { AlarmNotificationHelper.restoreRingingNotification(context) } catch (_: Exception) {}
             AlarmKeepAliveService.sync(context)
             try { AlarmWatchdogWorker.start(context) } catch (_: Exception) {}
             try { WidgetUpdateHelper.refreshAll(context) } catch (_: Exception) {}

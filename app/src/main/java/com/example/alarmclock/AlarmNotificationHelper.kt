@@ -19,12 +19,13 @@ import androidx.core.app.NotificationManagerCompat
 object AlarmNotificationHelper {
 
     const val CHANNEL_RINGING = "alarm_ringing_v5"
+    const val CHANNEL_RINGING_FGS = "alarm_ringing_fgs_v1"
     const val CHANNEL_SCHEDULED = "alarm_scheduled_v1"
     const val NOTIF_ID_SCHEDULED = 1002
     const val CHANNEL_CHRONO = "chrono_running"
     const val NOTIF_ID_RINGING = 2001
-    // Thông báo bền vững, độc lập với foreground service. Không tự biến mất.
-    const val NOTIF_ID_PERSISTENT_ALARM = 2004
+    // Notification bền vững, tách khỏi foreground-service notification.
+    const val NOTIF_ID_RINGING_FGS = 2099
     const val NOTIF_ID_TIMER = 2002
     const val NOTIF_ID_STOPWATCH = 2003
 
@@ -63,6 +64,20 @@ object AlarmNotificationHelper {
             )
         }
         nm.createNotificationChannel(ringing)
+
+        // Notification bắt buộc của foreground service: tách riêng và để LOW
+        // để không tạo thêm một notification báo thức nổi bật/trùng lặp.
+        val fgs = NotificationChannel(
+            CHANNEL_RINGING_FGS,
+            "Dịch vụ báo thức",
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = "Dịch vụ nền hỗ trợ báo thức đang kêu"
+            setShowBadge(false)
+            setSound(null, null)
+            enableVibration(false)
+        }
+        nm.createNotificationChannel(fgs)
 
         val chrono = NotificationChannel(
             CHANNEL_CHRONO,
@@ -165,77 +180,6 @@ object AlarmNotificationHelper {
 
 
     /**
-     * Thông báo báo thức bền vững.
-     *
-     * Đây là notification riêng, không phụ thuộc vào foreground service.
-     * Vì vậy nếu OEM/Android dừng service sau vài giờ, thông báo vẫn còn
-     * cho tới khi người dùng bấm Tắt hoặc Hoãn.
-     */
-    fun showPersistentAlarmNotification(
-        context: Context,
-        alarmId: Int,
-        label: String,
-        hour: Int = -1,
-        minute: Int = -1,
-        challengeType: Int = Alarm.CHALLENGE_NONE,
-        snoozeMinutes: Int = 5,
-        repeatMode: Int = Alarm.REPEAT_DAILY
-    ) {
-        try {
-            ensureChannels(context)
-
-            val openIntent = Intent(context, AlarmRingActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                    Intent.FLAG_ACTIVITY_SINGLE_TOP
-                putExtra("ALARM_ID", alarmId)
-                putExtra("ALARM_LABEL", label)
-                putExtra("ALARM_HOUR", hour)
-                putExtra("ALARM_MINUTE", minute)
-                putExtra("CHALLENGE_TYPE", challengeType)
-                putExtra("SNOOZE_MINUTES", snoozeMinutes)
-                putExtra("REPEAT_MODE", repeatMode)
-                action = ACTION_OPEN_RING + "_persistent_$alarmId"
-            }
-            val openPi = PendingIntent.getActivity(
-                context, alarmId + 72000, openIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-
-            val dismissIntent = Intent(context, AlarmActionReceiver::class.java).apply {
-                action = ACTION_DISMISS
-                putExtra("ALARM_ID", alarmId)
-            }
-            val dismissPi = PendingIntent.getBroadcast(
-                context, alarmId + 52000, dismissIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-
-            val builder = NotificationCompat.Builder(context, CHANNEL_RINGING)
-                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-                .setContentTitle("⏰ $label")
-                .setContentText("Báo thức đã reo — thông báo sẽ được giữ lại cho đến khi bạn tắt.")
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setCategory(NotificationCompat.CATEGORY_ALARM)
-                .setOngoing(true)
-                .setAutoCancel(false)
-                .setOnlyAlertOnce(true)
-                .setContentIntent(openPi)
-                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-                .addAction(
-                    android.R.drawable.ic_menu_close_clear_cancel,
-                    "Tắt",
-                    dismissPi
-                )
-
-            // Không gọi setTimeoutAfter(): notification không có thời điểm tự hết hạn.
-            NotificationManagerCompat.from(context)
-                .notify(NOTIF_ID_PERSISTENT_ALARM, builder.build())
-        } catch (_: Exception) {
-        }
-    }
-
-    /**
      * Thông báo kiểu hệ thống khi tạo/bật báo thức — icon đồng hồ báo thức.
      * Hiện vài giây rồi tự ẩn (giống Clock app).
      */
@@ -280,8 +224,70 @@ object AlarmNotificationHelper {
     }
 
     fun cancelRinging(context: Context) {
-        val nm = NotificationManagerCompat.from(context)
-        nm.cancel(NOTIF_ID_RINGING)
-        nm.cancel(NOTIF_ID_PERSISTENT_ALARM)
+        NotificationManagerCompat.from(context).cancel(NOTIF_ID_RINGING)
+        clearRingingState(context)
     }
+
+    /** Lưu trạng thái để notification có thể được khôi phục sau reboot/process death. */
+    fun saveRingingState(
+        context: Context,
+        alarmId: Int,
+        label: String,
+        hour: Int,
+        minute: Int,
+        snoozeMinutes: Int,
+        repeatMode: Int,
+        ringtoneUri: String?,
+        challengeType: Int,
+        shakeTargetCount: Int,
+        isStrict: Boolean,
+        voiceNote: String?,
+        useCrescendo: Boolean
+    ) {
+        context.getSharedPreferences(PREFS_RINGING, Context.MODE_PRIVATE).edit()
+            .putBoolean("active", true)
+            .putInt("alarmId", alarmId)
+            .putString("label", label)
+            .putInt("hour", hour)
+            .putInt("minute", minute)
+            .putInt("snooze", snoozeMinutes)
+            .putInt("repeat", repeatMode)
+            .putString("ringtone", ringtoneUri)
+            .putInt("challenge", challengeType)
+            .putInt("shake", shakeTargetCount)
+            .putBoolean("strict", isStrict)
+            .putString("voice", voiceNote)
+            .putBoolean("crescendo", useCrescendo)
+            .apply()
+    }
+
+    fun clearRingingState(context: Context) {
+        context.getSharedPreferences(PREFS_RINGING, Context.MODE_PRIVATE).edit().clear().apply()
+    }
+
+    /** Khôi phục notification độc lập với foreground service sau khi Android khởi động lại. */
+    fun restoreRingingNotification(context: Context) {
+        val p = context.getSharedPreferences(PREFS_RINGING, Context.MODE_PRIVATE)
+        if (!p.getBoolean("active", false)) return
+        showRingingNotification(
+            context = context,
+            alarmId = p.getInt("alarmId", -1),
+            label = p.getString("label", "Báo thức") ?: "Báo thức",
+            allowDirectDismiss = p.getInt("challenge", Alarm.CHALLENGE_NONE) == Alarm.CHALLENGE_NONE &&
+                !p.getBoolean("strict", false) && !AppSettings.isAntiTroll(context),
+            hour = p.getInt("hour", -1),
+            minute = p.getInt("minute", -1),
+            snoozeMinutes = p.getInt("snooze", 5),
+            repeatMode = p.getInt("repeat", Alarm.REPEAT_DAILY),
+            ringtoneUri = p.getString("ringtone", null),
+            challengeType = p.getInt("challenge", Alarm.CHALLENGE_NONE),
+            shakeTargetCount = p.getInt("shake", 10),
+            isStrict = p.getBoolean("strict", false),
+            voiceNote = p.getString("voice", null),
+            useCrescendo = p.getBoolean("crescendo", true)
+        )
+    }
+
+    private const val PREFS_RINGING = "persistent_ringing_notification"
+
 }

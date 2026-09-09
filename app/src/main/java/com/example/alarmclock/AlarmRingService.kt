@@ -46,26 +46,13 @@ class AlarmRingService : Service() {
         try {
             if (Build.VERSION.SDK_INT >= 34) {
                 // 1073741824 = FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-                startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING, notif, 1073741824)
+                startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING_FGS, notif, 1073741824)
             } else {
-                startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING, notif)
+                startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING_FGS, notif)
             }
         } catch (_: Exception) {
-            try { startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING, notif) } catch (_: Exception) {}
+            try { startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING_FGS, notif) } catch (_: Exception) {}
         }
-
-        // Notification riêng, không phụ thuộc vòng đời foreground service.
-        // Nếu service bị OEM dừng sau vài giờ, thông báo vẫn nằm trong khay.
-        AlarmNotificationHelper.showPersistentAlarmNotification(
-            this,
-            alarmId,
-            label,
-            hour,
-            minute,
-            challenge,
-            snooze,
-            repeat
-        )
 
         startSound(ringtoneUri)
         // Thử mở màn reo
@@ -118,7 +105,7 @@ class AlarmRingService : Service() {
             this, alarmId + 71000, open,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        return NotificationCompat.Builder(this, AlarmNotificationHelper.CHANNEL_RINGING)
+        return NotificationCompat.Builder(this, AlarmNotificationHelper.CHANNEL_RINGING_FGS)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle("⏰ $label")
             .setContentText("Báo thức đang kêu — chạm để mở")
