@@ -323,6 +323,34 @@
             android:layout_height="wrap_content" android:text="@string/recovery_email_save"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_marginTop="8dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/birthday_section"
+            android:textStyle="bold"
+            android:textSize="16sp" />
+        <TextView
+            android:id="@+id/tvBirthdayStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/birthday_empty"
+            android:textSize="14sp" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSyncBirthday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/birthday_sync_google" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSetBirthday"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/birthday_pick_manual"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_marginTop="8dp" />
     </LinearLayout>
 </ScrollView>
     <com.example.alarmclock.CurvedBottomNavView

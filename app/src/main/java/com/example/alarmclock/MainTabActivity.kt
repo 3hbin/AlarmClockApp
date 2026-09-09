@@ -29,6 +29,7 @@ class MainTabActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (WelcomeActivity.launchIfNeeded(this)) return
         try { overridePendingTransition(0, 0) } catch (_: Exception) {}
 
         try {

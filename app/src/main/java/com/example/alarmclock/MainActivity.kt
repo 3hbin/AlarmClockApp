@@ -76,6 +76,7 @@ class MainActivity : AppCompatActivity() {
             val account = GoogleSignInHelper.handleResult(this, result.data)
             if (account != null) {
                 Toast.makeText(this, "Đã đăng nhập: ${account.email}", Toast.LENGTH_LONG).show()
+                try { BirthdayHelper.syncFromSignedInAccount(this, account) } catch (_: Exception) {}
                 return@registerForActivityResult
             }
             // 2) AccountPicker fallback
@@ -93,6 +94,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (WelcomeActivity.launchIfNeeded(this)) return
         try { TamperGuard.verifyInActivity(this) } catch (_: Throwable) {}
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)

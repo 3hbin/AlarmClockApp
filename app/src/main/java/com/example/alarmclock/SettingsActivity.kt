@@ -350,6 +350,24 @@ binding.switchAntiTroll.setCheckedSilent(AppSettings.isAntiTroll(this))
             AppSettings.setRecoveryEmail(this, email)
             Toast.makeText(this, getString(R.string.recovery_email_saved), Toast.LENGTH_SHORT).show()
         }
+
+        fun refreshBirthday() {
+            val shown = try { BirthdayHelper.formatStored(this) } catch (_: Exception) { "" }
+            binding.tvBirthdayStatus.text = if (shown.isBlank()) {
+                getString(R.string.birthday_empty)
+            } else {
+                val src = if (AppSettings.getBirthdaySource(this) == "google")
+                    getString(R.string.birthday_source_google) else getString(R.string.birthday_source_manual)
+                getString(R.string.birthday_status, shown, src)
+            }
+        }
+        try { refreshBirthday() } catch (_: Exception) {}
+        binding.btnSyncBirthday.setOnClickListener {
+            try { BirthdayHelper.syncNow(this) { refreshBirthday() } } catch (_: Exception) {}
+        }
+        binding.btnSetBirthday.setOnClickListener {
+            try { BirthdayHelper.pickManual(this) { refreshBirthday() } } catch (_: Exception) {}
+        }
         binding.btnSetGalleryPw.setOnClickListener {
             val pw = binding.etGalleryPw.text?.toString() ?: ""
             if (pw.length < 4) {
