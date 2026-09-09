@@ -5,7 +5,12 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 class AlarmRepository(context: Context) {
-    private val prefs = context.getSharedPreferences("alarms_prefs", Context.MODE_PRIVATE)
+    private val appContext = context.applicationContext
+    private val prefs = devicePrefs(appContext)
+
+    init {
+        migrateFromCredentialStorage(appContext)
+    }
 
     fun getAlarms(): MutableList<Alarm> {
         val json = prefs.getString("alarms", "[]") ?: "[]"
@@ -71,7 +76,6 @@ class AlarmRepository(context: Context) {
     fun isFlashEnabled(): Boolean = prefs.getBoolean("flash_enabled", false)
     fun setFlashEnabled(enabled: Boolean) = prefs.edit().putBoolean("flash_enabled", enabled).apply()
 
-    // Sleep Habits Tracker (simple)
     fun logSleep(startMs: Long, endMs: Long) {
         val key = "sleep_log"
         val arr = JSONArray(prefs.getString(key, "[]"))
@@ -80,7 +84,6 @@ class AlarmRepository(context: Context) {
             put("end", endMs)
             put("durationMin", (endMs - startMs) / 60000)
         })
-        // Keep last 30 entries
         while (arr.length() > 30) arr.remove(0)
         prefs.edit().putString(key, arr.toString()).apply()
     }
@@ -93,5 +96,28 @@ class AlarmRepository(context: Context) {
             list.add(Triple(o.getLong("start"), o.getLong("end"), o.getLong("durationMin")))
         }
         return list
+    }
+
+    companion object {
+        private const val PREF = "alarms_prefs"
+
+        fun devicePrefs(context: Context) =
+            context.createDeviceProtectedStorageContext()
+                .getSharedPreferences(PREF, Context.MODE_PRIVATE)
+
+        private fun migrateFromCredentialStorage(context: Context) {
+            try {
+                val dest = devicePrefs(context)
+                if ((dest.getString("alarms", "[]") ?: "[]") != "[]") return
+                val src = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
+                val json = src.getString("alarms", null) ?: return
+                dest.edit()
+                    .putString("alarms", json)
+                    .putInt("next_id", src.getInt("next_id", 1))
+                    .putString("global_ringtone", src.getString("global_ringtone", null))
+                    .putBoolean("flash_enabled", src.getBoolean("flash_enabled", false))
+                    .apply()
+            } catch (_: Exception) {}
+        }
     }
 }
