@@ -4,13 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 
-/**
- * Đặt lại toàn bộ báo thức khi:
- * - máy vừa bật (kể cả chưa mở khóa)
- * - cài đè APK
- * - đổi giờ / múi giờ
- * - HTC/Huawei QuickBoot
- */
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
         val action = intent?.action ?: return
@@ -18,7 +11,9 @@ class BootReceiver : BroadcastReceiver() {
         val pending = goAsync()
         try {
             AlarmScheduler.rescheduleAll(context)
+            AlarmKeepAliveService.sync(context)
             try { AlarmWatchdogWorker.start(context) } catch (_: Exception) {}
+            try { WidgetUpdateHelper.refreshAll(context) } catch (_: Exception) {}
         } catch (_: Exception) {
         } finally {
             try { pending.finish() } catch (_: Exception) {}

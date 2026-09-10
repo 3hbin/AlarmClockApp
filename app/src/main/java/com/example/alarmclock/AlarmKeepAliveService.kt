@@ -1,6 +1,8 @@
 package com.example.alarmclock
 
 import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
@@ -9,10 +11,6 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 
-/**
- * Giữ thông báo "Báo thức đang bật" bằng Foreground Service.
- * Huawei hay hủy notification thường sau ~1 giờ — FGS + START_STICKY khó bị quét hơn.
- */
 class AlarmKeepAliveService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -21,24 +19,6 @@ class AlarmKeepAliveService : Service() {
         super.onCreate()
         ensureChannel()
         startForegroundSafe(buildNotification(enabledCount(this)))
-    }
-
-    private fun ensureChannel() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-        try {
-            val nm = getSystemService(android.app.NotificationManager::class.java) ?: return
-            if (nm.getNotificationChannel(CHANNEL) != null) return
-            nm.createNotificationChannel(
-                android.app.NotificationChannel(
-                    CHANNEL, "Báo thức đang bật",
-                    android.app.NotificationManager.IMPORTANCE_LOW
-                ).apply {
-                    setShowBadge(false)
-                    setSound(null, null)
-                    enableVibration(false)
-                }
-            )
-        } catch (_: Exception) {}
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -53,8 +33,41 @@ class AlarmKeepAliveService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        ensureChannel()
         startForegroundSafe(buildNotification(count))
         return START_STICKY
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        if (enabledCount(this) > 0) {
+            try {
+                val restart = Intent(applicationContext, AlarmKeepAliveService::class.java)
+                if (Build.VERSION.SDK_INT >= 26) startForegroundService(restart) else startService(restart)
+            } catch (_: Exception) {}
+        }
+    }
+
+    private fun ensureChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        try {
+            val nm = getSystemService(NotificationManager::class.java) ?: return
+            try { nm.deleteNotificationChannel("alarm_status") } catch (_: Exception) {}
+            if (nm.getNotificationChannel(CHANNEL) != null) return
+            nm.createNotificationChannel(
+                NotificationChannel(
+                    CHANNEL,
+                    "Báo thức đang bật",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "Giữ báo thức chạy nền"
+                    setShowBadge(false)
+                    setSound(null, null)
+                    enableVibration(false)
+                    setBypassDnd(true)
+                }
+            )
+        } catch (_: Exception) {}
     }
 
     private fun startForegroundSafe(n: Notification) {
@@ -75,16 +88,21 @@ class AlarmKeepAliveService : Service() {
             Intent(this, MainActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+        val icon = try {
+            R.drawable.ic_notification_alarm
+        } catch (_: Exception) {
+            android.R.drawable.ic_lock_idle_alarm
+        }
         return NotificationCompat.Builder(this, CHANNEL)
-            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setSmallIcon(icon)
             .setContentTitle(getString(R.string.notification_title))
             .setContentText(getString(R.string.notification_text, count))
             .setOngoing(true)
             .setSilent(true)
             .setOnlyAlertOnce(true)
             .setAutoCancel(false)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setCategory(NotificationCompat.CATEGORY_SERVICE)
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .setContentIntent(open)
             .build()
@@ -92,7 +110,7 @@ class AlarmKeepAliveService : Service() {
 
     companion object {
         const val NOTIF_ID = 1001
-        const val CHANNEL = "alarm_status"
+        const val CHANNEL = "alarm_status_v2"
         const val ACTION_STOP = "keepalive_stop"
 
         fun enabledCount(context: Context): Int =
