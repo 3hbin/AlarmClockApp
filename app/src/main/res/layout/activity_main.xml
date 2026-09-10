@@ -154,6 +154,10 @@
 
     </LinearLayout>
 
+    <include
+        android:id="@+id/eventBannerInclude"
+        layout="@layout/layout_event_banner" />
+
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipeRefresh"
         android:layout_width="match_parent"

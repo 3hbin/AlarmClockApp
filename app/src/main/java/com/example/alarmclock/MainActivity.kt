@@ -96,10 +96,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // first-launch guide after layout
         if (WelcomeActivity.launchIfNeeded(this)) return
         try { TamperGuard.verifyInActivity(this) } catch (_: Throwable) {}
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        try { EventManager.bind(findViewById(R.id.eventBanner), this) } catch (_: Exception) {}
+        binding.root.post { try { FirstLaunchDialog.show(this) } catch (_: Exception) {} }
         try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
         try {
             setSupportActionBar(binding.toolbar)
@@ -853,6 +856,10 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.menu_google -> {
                 showGoogleLoginMenu()
+                return true
+            }
+            R.id.menu_guide -> {
+                FirstLaunchDialog.show(this, force = true)
                 return true
             }
             R.id.menu_history -> {

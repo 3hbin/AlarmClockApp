@@ -27,6 +27,12 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        try {
+            binding.swEventTheme.isChecked = EventManager.isThemeEnabled(this)
+            binding.swEventTheme.setOnCheckedChangeListener { _, on ->
+                EventManager.setThemeEnabled(this, on)
+            }
+        } catch (_: Exception) {}
         try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
         try { BottomNavHelper.bind(this, binding.curvedNav, 5) } catch (_: Exception) {}
         supportActionBar?.setDisplayHomeAsUpEnabled(true)

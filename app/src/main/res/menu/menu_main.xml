@@ -22,6 +22,11 @@
         android:title="Nhật ký báo thức"
         app:showAsAction="never" />
     <item
+        android:id="@+id/menu_guide"
+        android:icon="@drawable/ic_help_outline"
+        android:title="Hướng dẫn sử dụng"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/menu_version"
         android:icon="@drawable/ic_menu_info"
         android:title="Cập nhật ứng dụng"

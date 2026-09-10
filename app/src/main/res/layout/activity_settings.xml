@@ -351,6 +351,13 @@
             android:text="@string/birthday_pick_manual"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_marginTop="8dp" />
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/swEventTheme"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Chủ đề sự kiện"
+            android:checked="true"
+            android:layout_marginTop="12dp"/>
     </LinearLayout>
 </ScrollView>
     <com.example.alarmclock.CurvedBottomNavView
