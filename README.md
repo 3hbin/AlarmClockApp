@@ -1,41 +1,74 @@
-# AlarmClockApp v3.7 – Báo thức nâng cao + API
+# AlarmClockApp 4.19.9 — Báo thức Challenge
 
-## Keys đã gắn
+App báo thức Android: reo đúng giờ khi khóa máy, thử thách tắt chuông, sao lưu Google, widget màn hình chính.
+
+Package: `com.alarmclock.dongho`  
+Phiên bản hiện tại: **4.19.9** (`versionCode` 145)
+
+## Tính năng chính
+
+- Đặt báo, lặp 1 lần / mỗi ngày / T2–T6, hoãn, thử thách tắt chuông
+- Reo khi khóa màn (`setShowWhenLocked`, FullScreenIntent, WakeLock)
+- `AlarmManager.setAlarmClock` + `BootReceiver` (`BOOT_COMPLETED`, `LOCKED_BOOT_COMPLETED`, cài đè APK)
+- `AlarmKeepAliveService` giữ thông báo “Báo thức đang bật” (`START_STICKY`, icon `ic_notification_alarm`)
+- Xin tắt tối ưu hóa pin (`BatteryOptHelper`)
+- Dialog thêm/sửa báo thức (không dùng màn full-screen)
+- Hướng dẫn người mới + banner sự kiện (Tết / Halloween / Giáng sinh)
+- Widget 1×1, 2×2, 4×2 — nền bo góc trong suốt, cập nhật từng phút
+- Menu cập nhật: đọc GitHub Release, hiện “vX • Cập nhật ngay” khi có bản mới (APKPure)
+- Đăng nhập Google: sinh nhật + sao lưu Firestore `users/{uid}/data/backup`
+- Spotify / YouTube Music: mở app chọn nhạc
+- Thời tiết TTS (OpenWeatherMap)
+- SMS cứu viện + GPS (nếu đã cấp quyền)
+
+## Dịch vụ / API
+
 | Dịch vụ | Trạng thái |
 |---------|------------|
-| Spotify Client ID | ✅ Intent mở Spotify |
-| YouTube Music API | ✅ Intent / search |
-| OpenWeatherMap | ✅ TTS thời tiết |
-| Firebase (google-services.json) | ✅ Cloud Sync Firestore |
-| Smart Home | ❌ Chưa có token |
+| Spotify | Intent mở app |
+| YouTube Music | Intent / search |
+| OpenWeatherMap | TTS thời tiết |
+| Firebase `alarmclockapp-8984a` | Cloud Sync Firestore |
+| GitHub Releases | Kiểm tra bản mới |
+| APKPure | `https://apkpure.com/p/com.alarmclock.dongho` |
+| Smart Home | Chưa có token |
 
-## Cách dùng tính năng mới
-1. Nhấn **giữ** nút **+** → màn hình Tính năng nâng cao
-2. **Thời tiết (TTS)** – đọc thời tiết Hà Nội
-3. **Phát Spotify** – mở app Spotify
-4. **Phát YouTube Music** – mở YT Music
-5. **Cloud Sync** – đẩy / kéo danh sách báo thức (cần bật Firestore trên Firebase Console)
+## Cloud Sync (Firestore)
 
-## Bật Firestore (bắt buộc cho Cloud Sync)
-1. Vào https://console.firebase.google.com → project `alarmclockapp-8984a`
+1. https://console.firebase.google.com → project `alarmclockapp-8984a`
 2. Build → Firestore Database → Create database
-3. Chọn **Start in test mode** (chỉ để thử, sau này siết rules)
-4. Chọn region gần (asia-southeast1)
+3. Test mode khi thử, siết rules khi phát hành
+4. Region gần: `asia-southeast1`
+5. Trong app: menu **Đăng nhập Google** — lần đầu đẩy báo lên cloud; máy mới thì kéo về
 
-## Cảnh báo bảo mật
-Các API key đang nằm trong `BuildConfig`. Nếu repo **public**, hãy:
+## Báo thức không bị mất trên Huawei / EMUI
+
+1. Cài đặt → Ứng dụng → Báo thức Challenge → Pin → **Không tối ưu hóa**
+2. Cho phép thông báo + hiện trên màn khóa
+3. Không vuốt đóng thông báo đang bật (ongoing)
+4. Sau reboot, BootReceiver đặt lại lịch + KeepAlive
+
+## Bảo mật
+
+Key đang có thể nằm trong `BuildConfig`. Repo public thì:
+
 - Regenerate key trên từng console
-- Chuyển sang `local.properties` + không commit
+- Đưa vào `local.properties`, không commit
 
 ## Build
+
 ```bash
 ./gradlew assembleDebug
 ```
 
-## Emergency SMS + GPS (v3.7)
-- **Đặt số cứu viện** → lưu số điện thoại
-- **Gửi SMS cứu viện + GPS** → gửi tin kèm link Google Maps vị trí hiện tại
-- **Lưu vị trí hiện tại** → lưu làm “nhà/cơ quan”
-- **Kiểm tra gần vị trí đã lưu** → báo khoảng cách
+Hoặc GitHub Actions trên repo `3hbin/AlarmClockApp`.
 
-Cần cấp quyền SMS + Vị trí khi hệ thống hỏi.
+## Cấu trúc bổ sung gần đây
+
+| Bản | Nội dung |
+|-----|----------|
+| 4.19.5 | Trả dialog thêm/sửa báo cũ |
+| 4.19.6 | Hướng dẫn lần đầu + banner sự kiện |
+| 4.19.7 | Widget bo góc, tick từng phút |
+| 4.19.8 | Icon thông báo đơn sắc |
+| 4.19.9 | Boot + KeepAlive ưu tiên cao, xin tắt tối ưu pin |

@@ -23,6 +23,8 @@ object AlarmNotificationHelper {
     const val NOTIF_ID_SCHEDULED = 1002
     const val CHANNEL_CHRONO = "chrono_running"
     const val NOTIF_ID_RINGING = 2001
+    // Thông báo bền vững, độc lập với foreground service. Không tự biến mất.
+    const val NOTIF_ID_PERSISTENT_ALARM = 2004
     const val NOTIF_ID_TIMER = 2002
     const val NOTIF_ID_STOPWATCH = 2003
 
@@ -131,7 +133,6 @@ object AlarmNotificationHelper {
             .setContentIntent(openPi)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setFullScreenIntent(openPi, true)
-            .setTimeoutAfter(0)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
 
         if (allowDirectDismiss) {
@@ -162,6 +163,77 @@ object AlarmNotificationHelper {
         }
     }
 
+
+    /**
+     * Thông báo báo thức bền vững.
+     *
+     * Đây là notification riêng, không phụ thuộc vào foreground service.
+     * Vì vậy nếu OEM/Android dừng service sau vài giờ, thông báo vẫn còn
+     * cho tới khi người dùng bấm Tắt hoặc Hoãn.
+     */
+    fun showPersistentAlarmNotification(
+        context: Context,
+        alarmId: Int,
+        label: String,
+        hour: Int = -1,
+        minute: Int = -1,
+        challengeType: Int = Alarm.CHALLENGE_NONE,
+        snoozeMinutes: Int = 5,
+        repeatMode: Int = Alarm.REPEAT_DAILY
+    ) {
+        try {
+            ensureChannels(context)
+
+            val openIntent = Intent(context, AlarmRingActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra("ALARM_ID", alarmId)
+                putExtra("ALARM_LABEL", label)
+                putExtra("ALARM_HOUR", hour)
+                putExtra("ALARM_MINUTE", minute)
+                putExtra("CHALLENGE_TYPE", challengeType)
+                putExtra("SNOOZE_MINUTES", snoozeMinutes)
+                putExtra("REPEAT_MODE", repeatMode)
+                action = ACTION_OPEN_RING + "_persistent_$alarmId"
+            }
+            val openPi = PendingIntent.getActivity(
+                context, alarmId + 72000, openIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val dismissIntent = Intent(context, AlarmActionReceiver::class.java).apply {
+                action = ACTION_DISMISS
+                putExtra("ALARM_ID", alarmId)
+            }
+            val dismissPi = PendingIntent.getBroadcast(
+                context, alarmId + 52000, dismissIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            val builder = NotificationCompat.Builder(context, CHANNEL_RINGING)
+                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setContentTitle("⏰ $label")
+                .setContentText("Báo thức đã reo — thông báo sẽ được giữ lại cho đến khi bạn tắt.")
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_ALARM)
+                .setOngoing(true)
+                .setAutoCancel(false)
+                .setOnlyAlertOnce(true)
+                .setContentIntent(openPi)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .addAction(
+                    android.R.drawable.ic_menu_close_clear_cancel,
+                    "Tắt",
+                    dismissPi
+                )
+
+            // Không gọi setTimeoutAfter(): notification không có thời điểm tự hết hạn.
+            NotificationManagerCompat.from(context)
+                .notify(NOTIF_ID_PERSISTENT_ALARM, builder.build())
+        } catch (_: Exception) {
+        }
+    }
 
     /**
      * Thông báo kiểu hệ thống khi tạo/bật báo thức — icon đồng hồ báo thức.
@@ -208,6 +280,8 @@ object AlarmNotificationHelper {
     }
 
     fun cancelRinging(context: Context) {
-        NotificationManagerCompat.from(context).cancel(NOTIF_ID_RINGING)
+        val nm = NotificationManagerCompat.from(context)
+        nm.cancel(NOTIF_ID_RINGING)
+        nm.cancel(NOTIF_ID_PERSISTENT_ALARM)
     }
 }

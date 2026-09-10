@@ -54,6 +54,19 @@ class AlarmRingService : Service() {
             try { startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING, notif) } catch (_: Exception) {}
         }
 
+        // Notification riêng, không phụ thuộc vòng đời foreground service.
+        // Nếu service bị OEM dừng sau vài giờ, thông báo vẫn nằm trong khay.
+        AlarmNotificationHelper.showPersistentAlarmNotification(
+            this,
+            alarmId,
+            label,
+            hour,
+            minute,
+            challenge,
+            snooze,
+            repeat
+        )
+
         startSound(ringtoneUri)
         // Thử mở màn reo
         try {
