@@ -474,13 +474,9 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showAddDialog() {
-        startActivity(Intent(this, AddEditAlarmActivity::class.java))
-    }
+    private fun showAddDialog() = showAlarmEditor(null)
 
-    private fun showEditDialog(alarm: Alarm) {
-        startActivity(Intent(this, AddEditAlarmActivity::class.java).putExtra("ALARM_ID", alarm.id))
-    }
+    private fun showEditDialog(alarm: Alarm) = showAlarmEditor(alarm)
 
     /** null = thêm mới; có alarm = sửa. */
     private fun showAlarmEditor(existing: Alarm?) {
