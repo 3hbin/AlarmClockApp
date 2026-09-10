@@ -1159,7 +1159,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             window.addFlags(
                 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
                     WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
-                    WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+                    WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
             )
         }
         window.addFlags(
@@ -1167,12 +1167,14 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                 WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
         )
         // Samsung / khóa màn: yêu cầu bỏ keyguard để hiện activity
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val km = getSystemService(android.app.KeyguardManager::class.java)
-                km?.requestDismissKeyguard(this, null)
-            }
-        } catch (_: Exception) {
+        binding.root.setOnLongClickListener {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val km = getSystemService(android.app.KeyguardManager::class.java)
+                    km?.requestDismissKeyguard(this, null)
+                }
+            } catch (_: Exception) {}
+            true
         }
         // Đánh thức màn hình
         try {

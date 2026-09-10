@@ -474,9 +474,13 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showAddDialog() = showAlarmEditor(null)
+    private fun showAddDialog() {
+        startActivity(Intent(this, AddEditAlarmActivity::class.java))
+    }
 
-    private fun showEditDialog(alarm: Alarm) = showAlarmEditor(alarm)
+    private fun showEditDialog(alarm: Alarm) {
+        startActivity(Intent(this, AddEditAlarmActivity::class.java).putExtra("ALARM_ID", alarm.id))
+    }
 
     /** null = thêm mới; có alarm = sửa. */
     private fun showAlarmEditor(existing: Alarm?) {
@@ -814,6 +818,8 @@ class MainActivity : AppCompatActivity() {
 
 
 
+    private var pendingUpdateTag: String? = null
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_main, menu)
         try {
@@ -822,9 +828,20 @@ class MainActivity : AppCompatActivity() {
                 menu.setOptionalIconsVisible(true)
             }
         } catch (_: Exception) {}
-        try {
-            menu.findItem(R.id.menu_version)?.title = "Cập nhật ứng dụng"
-        } catch (_: Exception) {}
+        val updateItem = menu.findItem(R.id.menu_version)
+        updateItem?.isVisible = false
+        val current = try { packageManager.getPackageInfo(packageName, 0).versionName ?: "" } catch (_: Exception) { "" }
+        UpdateCheckHelper.check(current) { info ->
+            if (info != null && info.newer) {
+                pendingUpdateTag = info.tag
+                updateItem?.isVisible = true
+                updateItem?.title = "${info.tag} • Cập nhật ngay"
+                try { updateItem?.setIcon(R.drawable.ic_system_update) } catch (_: Exception) {}
+            } else {
+                pendingUpdateTag = null
+                updateItem?.isVisible = false
+            }
+        }
         return true
     }
 
