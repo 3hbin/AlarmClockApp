@@ -5,6 +5,8 @@ App báo thức Android: reo đúng giờ khi khóa máy, thử thách tắt chu
 Package: `com.alarmclock.dongho`  
 Phiên bản hiện tại: **4.19.9** (`versionCode` 145)
 
+**Tải APK:** https://github.com/3hbin/AlarmClockApp/releases/tag/4.19.9
+
 ## Tính năng chính
 
 - Đặt báo, lặp 1 lần / mỗi ngày / T2–T6, hoãn, thử thách tắt chuông
@@ -56,6 +58,9 @@ Key đang có thể nằm trong `BuildConfig`. Repo public thì:
 - Đưa vào `local.properties`, không commit
 
 ## Build
+
+Tải sẵn: https://github.com/3hbin/AlarmClockApp/releases/tag/4.19.9
+
 
 ```bash
 ./gradlew assembleDebug
