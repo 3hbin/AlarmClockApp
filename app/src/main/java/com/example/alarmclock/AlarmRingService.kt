@@ -105,7 +105,7 @@ class AlarmRingService : Service() {
             this, alarmId + 71000, open,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        return NotificationCompat.Builder(this, AlarmNotificationHelper.CHANNEL_RINGING)
+        return NotificationCompat.Builder(this, AlarmNotificationHelper.CHANNEL_RINGING_FGS)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle("⏰ $label")
             .setContentText("Báo thức đang kêu — bấm Tắt trên màn hình")

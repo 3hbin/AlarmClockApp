@@ -1092,61 +1092,20 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private fun startRinging() {
+        // Chỉ rung — nhạc do AlarmRingService phát 1 lần, tránh 2 chuông.
         try {
-            val vol = AppSettings.getAlarmVolume(this) / 100f
-            val rawId = if (
-                ringtoneUri.isNullOrEmpty() ||
-                ringtoneUri!!.startsWith("app:") ||
-                !ringtoneUri!!.startsWith("content")
-            ) AppRingtones.rawOf(ringtoneUri) else 0
-            if (rawId != 0) {
-                // Chuông trong app — create() ổn định hơn setDataSource(resource)
-                mediaPlayer = MediaPlayer.create(this, rawId)?.apply {
-                    isLooping = true
-                    setVolume(vol, vol)
-                    start()
-                }
-                if (mediaPlayer == null) throw IllegalStateException("MediaPlayer.create failed")
-            } else {
-                val uri = android.net.Uri.parse(ringtoneUri)
-                mediaPlayer = MediaPlayer().apply {
-                    setDataSource(this@AlarmRingActivity, uri)
-                    setAudioAttributes(
-                        AudioAttributes.Builder()
-                            .setUsage(AudioAttributes.USAGE_ALARM)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                            .build()
-                    )
-                    isLooping = true
-                    prepare()
-                    setVolume(vol, vol)
-                    start()
+            if (AppSettings.isVibrate(this)) {
+                val v = getSystemService(VIBRATOR_SERVICE) as android.os.Vibrator
+                if (android.os.Build.VERSION.SDK_INT >= 26) {
+                    v.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 400, 400), 0))
+                } else {
+                    @Suppress("DEPRECATION")
+                    v.vibrate(longArrayOf(0, 400, 400), 0)
                 }
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            try {
-                mediaPlayer = MediaPlayer.create(this@AlarmRingActivity, R.raw.soft_chime)?.apply {
-                    isLooping = true
-                    val vol = AppSettings.getAlarmVolume(this@AlarmRingActivity) / 100f
-                    setVolume(vol, vol)
-                    start()
-                }
-            } catch (ex: Exception) {
-                ex.printStackTrace()
-            }
-        }
-
-        if (AppSettings.isVibrate(this)) {
-            vibrator = getSystemService(VIBRATOR_SERVICE) as Vibrator
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 500, 500), 0))
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator?.vibrate(longArrayOf(0, 500, 500), 0)
-            }
-        }
+        } catch (_: Exception) {}
     }
+
 
     private fun stopRinging() {
         mediaPlayer?.stop()

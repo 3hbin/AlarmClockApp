@@ -18,7 +18,7 @@ import androidx.core.app.NotificationManagerCompat
  */
 object AlarmNotificationHelper {
 
-    const val CHANNEL_RINGING = "alarm_ringing_v5"
+    const val CHANNEL_RINGING = "alarm_ringing_v6"
     const val CHANNEL_RINGING_FGS = "alarm_ringing_fgs_v1"
     const val CHANNEL_SCHEDULED = "alarm_scheduled_v1"
     const val NOTIF_ID_SCHEDULED = 1002
@@ -38,30 +38,22 @@ object AlarmNotificationHelper {
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
 
         // Xóa channel cũ (có tiếng hệ thống) — tránh kêu 2 chuông
-        for (oldId in listOf("alarm_ringing", "alarm_ringing_v2", "alarm_ringing_v3", "alarm_ringing_v4")) {
+        for (oldId in listOf("alarm_ringing", "alarm_ringing_v2", "alarm_ringing_v3", "alarm_ringing_v4", "alarm_ringing_v5")) {
             try { nm.deleteNotificationChannel(oldId) } catch (_: Exception) {}
         }
 
-        val softUri = Uri.parse("android.resource://${context.packageName}/${R.raw.soft_chime}")
         val ringing = NotificationChannel(
             CHANNEL_RINGING,
             "Báo thức đang kêu",
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = "Full-screen khi báo thức reo"
+            description = "Full-screen khi báo thức reo — không phát nhạc trên channel"
             setBypassDnd(true)
-            enableVibration(true)
+            enableVibration(false)
             enableLights(true)
             setShowBadge(true)
             lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
-            // Chuông êm trong app — KHÔNG dùng chuông hệ thống
-            setSound(
-                softUri,
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ALARM)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build()
-            )
+            setSound(null, null)
         }
         nm.createNotificationChannel(ringing)
 
