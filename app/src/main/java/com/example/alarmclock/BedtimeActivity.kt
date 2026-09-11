@@ -25,5 +25,10 @@ class BedtimeActivity : AppCompatActivity() {
         findViewById<android.view.View>(R.id.rowEvents).setOnClickListener {
             startActivity(Intent(this, CalendarAgendaActivity::class.java))
         }
+        findViewById<android.view.View>(R.id.rowSleepSound).setOnLongClickListener {
+            startActivity(Intent(this, SleepSoundActivity::class.java))
+            startActivity(Intent(this, ScreensaverActivity::class.java))
+            true
+        }
     }
 }

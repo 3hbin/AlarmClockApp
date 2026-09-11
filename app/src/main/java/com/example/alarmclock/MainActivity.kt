@@ -101,6 +101,10 @@ class MainActivity : AppCompatActivity() {
         try { TamperGuard.verifyInActivity(this) } catch (_: Throwable) {}
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        try {
+            val name = AppSettings.getGoogleDisplayName(this)
+            if (name.isNotBlank()) binding.toolbar.subtitle = name
+        } catch (_: Exception) {}
         try { EventManager.bind(findViewById(R.id.eventBanner), this) } catch (_: Exception) {}
         binding.root.post { try { FirstLaunchDialog.show(this) } catch (_: Exception) {} }
         try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}

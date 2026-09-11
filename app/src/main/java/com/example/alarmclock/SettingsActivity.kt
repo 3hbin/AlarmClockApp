@@ -28,6 +28,14 @@ class SettingsActivity : AppCompatActivity() {
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
         try {
+            GoogleProfile.bind(
+                this,
+                findViewById(R.id.tvGoogleName),
+                findViewById(R.id.tvGoogleEmail),
+                findViewById(R.id.imgGoogleAvatar)
+            )
+        } catch (_: Exception) {}
+        try {
             binding.swStatusNotif.isChecked = AlarmKeepAliveService.isWanted(this)
             binding.swStatusNotif.setOnCheckedChangeListener { _, on ->
                 AlarmKeepAliveService.setWanted(this, on)

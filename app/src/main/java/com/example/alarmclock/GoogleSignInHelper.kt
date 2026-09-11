@@ -47,6 +47,11 @@ object GoogleSignInHelper {
                     activity,
                     account.displayName?.takeIf { it.isNotBlank() } ?: email
                 )
+                GoogleProfile.saveFromAccount(
+                    activity, email,
+                    account.displayName,
+                    account.photoUrl?.toString()
+                )
             }
             // Firebase Auth (tùy chọn)
             try {

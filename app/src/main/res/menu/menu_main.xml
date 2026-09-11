@@ -9,5 +9,5 @@
     <item android:id="@+id/menu_calendar" android:icon="@drawable/ic_menu_calendar" android:title="Lịch &amp; ngày lễ" app:showAsAction="never" />
     <item android:id="@+id/menu_google" android:icon="@drawable/ic_menu_google" android:title="Đăng nhập Google" app:showAsAction="never" />
     <item android:id="@+id/menu_history" android:icon="@drawable/ic_menu_history" android:title="Nhật ký báo thức" app:showAsAction="never" />
-    <item android:id="@+id/menu_version" android:icon="@drawable/ic_menu_info" android:title="Cập nhật ứng dụng" app:showAsAction="never" />
+    <item android:id="@+id/menu_version" android:icon="@drawable/ic_menu_info" android:title="Phiên bản" app:showAsAction="never" />
 </menu>
