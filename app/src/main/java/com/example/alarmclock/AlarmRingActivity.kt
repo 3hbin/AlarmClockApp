@@ -177,6 +177,17 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
 
         binding = ActivityAlarmRingBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        try {
+            binding.root.setOnLongClickListener {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val km = getSystemService(android.app.KeyguardManager::class.java)
+                        km?.requestDismissKeyguard(this, null)
+                    }
+                } catch (_: Exception) {}
+                true
+            }
+        } catch (_: Exception) {}
 
         // Chế độ tập trung khi báo thức (DND + ẩn thanh hệ thống)
         try {
@@ -1166,16 +1177,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
                 WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
         )
-        // Samsung / khóa màn: yêu cầu bỏ keyguard để hiện activity
-        binding.root.setOnLongClickListener {
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    val km = getSystemService(android.app.KeyguardManager::class.java)
-                    km?.requestDismissKeyguard(this, null)
-                }
-            } catch (_: Exception) {}
-            true
-        }
+        // Không gọi requestDismissKeyguard ở đây — tránh chặn bàn phím PIN.
         // Đánh thức màn hình
         try {
             val pm = getSystemService(POWER_SERVICE) as android.os.PowerManager
