@@ -1035,10 +1035,9 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     private fun resolveAlarmUri(uriStr: String?): android.net.Uri {
         if (!uriStr.isNullOrEmpty()) {
             when {
-                uriStr == "app:soft_chime" || uriStr.endsWith("/soft_chime") ->
-                    return android.net.Uri.parse("android.resource://${packageName}/${R.raw.soft_chime}")
-                uriStr == "app:soft_bell" || uriStr.endsWith("/soft_bell") ->
-                    return android.net.Uri.parse("android.resource://${packageName}/${R.raw.soft_bell}")
+                uriStr.startsWith("app:") || uriStr.contains("ringtone_") || uriStr.endsWith("/soft_chime") || uriStr.endsWith("/soft_bell") ->
+                    return android.net.Uri.parse("android.resource://${packageName}/${AppRingtones.rawOf(uriStr)}")
+
                 else -> return android.net.Uri.parse(uriStr)
             }
         }
@@ -1095,14 +1094,11 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     private fun startRinging() {
         try {
             val vol = AppSettings.getAlarmVolume(this) / 100f
-            val rawId = when {
+            val rawId = if (
                 ringtoneUri.isNullOrEmpty() ||
-                    ringtoneUri == "app:soft_chime" ||
-                    ringtoneUri!!.endsWith("/soft_chime") -> R.raw.soft_chime
-                ringtoneUri == "app:soft_bell" ||
-                    ringtoneUri!!.endsWith("/soft_bell") -> R.raw.soft_bell
-                else -> 0
-            }
+                ringtoneUri!!.startsWith("app:") ||
+                !ringtoneUri!!.startsWith("content")
+            ) AppRingtones.rawOf(ringtoneUri) else 0
             if (rawId != 0) {
                 // Chuông trong app — create() ổn định hơn setDataSource(resource)
                 mediaPlayer = MediaPlayer.create(this, rawId)?.apply {

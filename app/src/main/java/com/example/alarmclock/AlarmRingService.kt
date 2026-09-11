@@ -125,12 +125,7 @@ class AlarmRingService : Service() {
         try { player?.release() } catch (_: Exception) {}
         player = null
         try {
-            val raw = when {
-                ringtoneUri == null || ringtoneUri == "app:soft_chime" ||
-                    ringtoneUri.endsWith("/soft_chime") -> R.raw.soft_chime
-                ringtoneUri == "app:soft_bell" || ringtoneUri.endsWith("/soft_bell") -> R.raw.soft_bell
-                else -> R.raw.soft_chime
-            }
+            val raw = AppRingtones.rawOf(ringtoneUri)
             val attrs = AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_ALARM)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
