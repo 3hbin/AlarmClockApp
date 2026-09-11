@@ -147,9 +147,6 @@
             android:theme="@style/Theme.AlarmClock.FullScreen" />
         <activity android:name=".CalendarAgendaActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".AddEditAlarmActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
-        <activity android:name=".BedtimeActivity" android:exported="false" />
-        <activity android:name=".SleepSoundActivity" android:exported="false" />
-        <activity android:name=".ScreensaverActivity" android:exported="false" />
         <activity android:name=".SettingsActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".GalleryActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".FeaturesActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
@@ -178,6 +175,10 @@
                 android:value="alarm_ringing" />
         </service>
         <receiver android:name=".AlarmActionReceiver" android:exported="false" android:directBootAware="true" />
+        <receiver
+            android:name=".NotificationRefreshReceiver"
+            android:exported="false"
+            android:directBootAware="true" />
         <receiver android:name=".IconUpdateReceiver" android:exported="false" />
         <receiver
             android:name=".BootReceiver"

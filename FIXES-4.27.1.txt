@@ -1,0 +1,42 @@
+AlarmClockApp 4.27.1 — audit notification 2001
+==============================================
+
+IDs
+- 2001 ALARM_NOTIFICATION_ID / NOTIF_ID_RINGING  = đang kêu
+- 2099 FOREGROUND_NOTIFICATION_ID / NOTIF_ID_RINGING_FGS = FGS lúc reo
+- 1001 KeepAlive = "đang bật" (không đụng 2001)
+
+Chỗ DUY NHẤT cancel 2001
+- AlarmNotificationHelper.cancelRinging()
+  gọi từ:
+  1) AlarmRingActivity dismiss
+  2) AlarmRingActivity snooze
+  3) AlarmActionReceiver ACTION_DISMISS (nút Tắt trên notif)
+
+KHÔNG cancel 2001
+- Watchdog (15 phút): chỉ rescheduleAll + restore 2001 nếu state active
+- KeepAlive stopForeground: ID 1001
+- RingService stopForeground: ID 2099
+- AlarmListFragment cancel(1001) khi hết báo bật
+- Timer/Stopwatch cancel 2002/2003
+- AlarmRingActivity.onDestroy: không cancel 2001
+- setTimeoutAfter(12s): chỉ notif 1002 "đã đặt báo" — KHÔNG phải 2001
+- Không có cancelAll()
+- Không timeout 5 phút / 30 phút / 1 giờ trên 2001
+
+Reboot
+- BootReceiver: rescheduleAll + restoreRingingNotification + KeepAlive
+- restore: nếu prefs active=false thì return, không crash
+- notify lại cùng ID 2001 → không nhân bản
+
+Android
+- 8+: channel v6 HIGH, ongoing, no sound, no timeout
+- 12+: FLAG_IMMUTABLE
+- 13+: POST_NOTIFICATIONS
+- 14+: FGS specialUse trên Ring/KeepAlive
+- minSdk 28, target 34, AGP 8.2.2, Kotlin 1.9.22, Gradle 8.2
+
+Build
+- Môi trường agent KHÔNG có Android SDK
+- CI: .github/workflows/build.yml assembleDebug
+- CHƯA XÁC NHẬN BUILD / CHƯA CHẠY CI trong audit này

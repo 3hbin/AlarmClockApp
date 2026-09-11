@@ -1,13 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-    <item android:id="@+id/menu_settings" android:icon="@drawable/ic_menu_lock" android:title="Cài đặt" app:showAsAction="never" />
-    <item android:id="@+id/menu_screensaver" android:icon="@drawable/ic_menu_info" android:title="Trình bảo vệ màn hình" app:showAsAction="never" />
-    <item android:id="@+id/menu_guide" android:icon="@drawable/ic_help_outline" android:title="Trợ giúp" app:showAsAction="never" />
-    <item android:id="@+id/menu_privacy" android:icon="@drawable/ic_menu_info" android:title="Chính sách quyền riêng tư" app:showAsAction="never" />
-    <item android:id="@+id/menu_app_lock" android:icon="@drawable/ic_menu_lock" android:title="App lock" app:showAsAction="never" />
-    <item android:id="@+id/menu_calendar" android:icon="@drawable/ic_menu_calendar" android:title="Lịch &amp; ngày lễ" app:showAsAction="never" />
-    <item android:id="@+id/menu_google" android:icon="@drawable/ic_menu_google" android:title="Đăng nhập Google" app:showAsAction="never" />
-    <item android:id="@+id/menu_history" android:icon="@drawable/ic_menu_history" android:title="Nhật ký báo thức" app:showAsAction="never" />
-    <item android:id="@+id/menu_version" android:icon="@drawable/ic_menu_info" android:title="Phiên bản" app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_app_lock"
+        android:icon="@drawable/ic_menu_lock"
+        android:title="App lock"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_calendar"
+        android:icon="@drawable/ic_menu_calendar"
+        android:title="Lịch &amp; ngày lễ"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_google"
+        android:icon="@drawable/ic_menu_google"
+        android:title="Đăng nhập Google"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_history"
+        android:icon="@drawable/ic_menu_history"
+        android:title="Nhật ký báo thức"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_guide"
+        android:icon="@drawable/ic_help_outline"
+        android:title="Hướng dẫn sử dụng"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_version"
+        android:icon="@drawable/ic_menu_info"
+        android:title="Cập nhật ứng dụng"
+        app:showAsAction="never" />
 </menu>

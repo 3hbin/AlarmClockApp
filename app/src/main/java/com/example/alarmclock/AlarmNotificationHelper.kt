@@ -1,5 +1,6 @@
 package com.example.alarmclock
 
+import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -24,6 +25,8 @@ object AlarmNotificationHelper {
     const val NOTIF_ID_SCHEDULED = 1002
     const val CHANNEL_CHRONO = "chrono_running"
     const val NOTIF_ID_RINGING = 2001
+    const val ALARM_NOTIFICATION_ID = 2001
+    const val FOREGROUND_NOTIFICATION_ID = 2099
     // Notification bền vững, tách khỏi foreground-service notification.
     const val NOTIF_ID_RINGING_FGS = 2099
     const val NOTIF_ID_TIMER = 2002
@@ -47,7 +50,7 @@ object AlarmNotificationHelper {
             "Báo thức đang kêu",
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = "Full-screen khi báo thức reo — không phát nhạc trên channel"
+            description = "Full-screen khi báo thức reo — nhạc do AlarmRingService"
             setBypassDnd(true)
             enableVibration(false)
             enableLights(true)
@@ -216,6 +219,7 @@ object AlarmNotificationHelper {
     }
 
     fun cancelRinging(context: Context) {
+        cancelRingingRefresh(context)
         NotificationManagerCompat.from(context).cancel(NOTIF_ID_RINGING)
         NotificationManagerCompat.from(context).cancel(NOTIF_ID_RINGING_FGS)
         clearRingingState(context)
@@ -252,6 +256,7 @@ object AlarmNotificationHelper {
             .putString("voice", voiceNote)
             .putBoolean("crescendo", useCrescendo)
             .apply()
+        scheduleRingingRefresh(context)
     }
 
     fun clearRingingState(context: Context) {
@@ -279,8 +284,48 @@ object AlarmNotificationHelper {
             voiceNote = p.getString("voice", null),
             useCrescendo = p.getBoolean("crescendo", true)
         )
+        scheduleRingingRefresh(context)
     }
 
     private const val PREFS_RINGING = "persistent_ringing_notification"
 
+    fun scheduleRingingRefresh(context: Context) {
+        val p = context.getSharedPreferences(PREFS_RINGING, Context.MODE_PRIVATE)
+        if (!p.getBoolean("active", false)) {
+            cancelRingingRefresh(context)
+            return
+        }
+        try {
+            val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val trigger = System.currentTimeMillis() + REFRESH_INTERVAL_MS
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, refreshPending(context))
+            } else {
+                am.setExact(AlarmManager.RTC_WAKEUP, trigger, refreshPending(context))
+            }
+        } catch (_: Exception) {
+        }
+    }
+
+    fun cancelRingingRefresh(context: Context) {
+        try {
+            val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            am.cancel(refreshPending(context))
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun refreshPending(context: Context): PendingIntent {
+        val i = Intent(context, NotificationRefreshReceiver::class.java).setAction(ACTION_REFRESH_2001)
+        return PendingIntent.getBroadcast(
+            context, REQ_REFRESH,
+            i, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+    }
+
+    const val ACTION_REFRESH_2001 = "com.example.alarmclock.ACTION_REFRESH_2001"
+    private const val REQ_REFRESH = 88001
+    private const val REFRESH_INTERVAL_MS = 10 * 60 * 1000L
+
 }
+

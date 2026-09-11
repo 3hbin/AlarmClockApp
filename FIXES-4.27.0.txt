@@ -1,0 +1,13 @@
+AlarmClockApp 4.27.0 FIXED
+==========================
+- Notification đang kêu: ID 2001 (ALARM_NOTIFICATION_ID)
+- Foreground ring service: ID 2099 (FOREGROUND_NOTIFICATION_ID)
+- KeepAlive trạng thái: ID 1001 (không ghi đè 2001)
+- Channel ringing v6: không phát nhạc (tránh 2 chuông)
+- Channel FGS: LOW + silent
+- Màn AlarmRingActivity không MediaPlayer; chỉ Service phát
+- cancelRinging() xóa 2001 + 2099 khi Dismiss
+- Không setTimeoutAfter trên notification đang kêu
+- BootReceiver: rescheduleAll + restoreRingingNotification + KeepAlive + Watchdog
+- setAlarmClock + FLAG_IMMUTABLE giữ nguyên
+- POST_NOTIFICATIONS / FGS specialUse / directBootAware giữ nguyên

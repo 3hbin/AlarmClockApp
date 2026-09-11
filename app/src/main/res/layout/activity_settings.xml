@@ -3,7 +3,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
-    <include layout="@layout/layout_google_profile" />
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -352,13 +351,6 @@
             android:text="@string/birthday_pick_manual"
             style="@style/Widget.Material3.Button.OutlinedButton"
             android:layout_marginTop="8dp" />
-        <com.google.android.material.switchmaterial.SwitchMaterial
-            android:id="@+id/swStatusNotif"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Thông báo đang bật (dễ bị máy tắt)"
-            android:checked="false"
-            android:layout_marginTop="12dp"/>
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/swEventTheme"
             android:layout_width="match_parent"

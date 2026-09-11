@@ -46,12 +46,12 @@ class AlarmRingService : Service() {
         try {
             if (Build.VERSION.SDK_INT >= 34) {
                 // 1073741824 = FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-                startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING, notif, 1073741824)
+                startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING_FGS, notif, 1073741824)
             } else {
-                startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING, notif)
+                startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING_FGS, notif)
             }
         } catch (_: Exception) {
-            try { startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING, notif) } catch (_: Exception) {}
+            try { startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING_FGS, notif) } catch (_: Exception) {}
         }
 
         startSound(ringtoneUri)
@@ -108,7 +108,7 @@ class AlarmRingService : Service() {
         return NotificationCompat.Builder(this, AlarmNotificationHelper.CHANNEL_RINGING_FGS)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle("⏰ $label")
-            .setContentText("Báo thức đang kêu — bấm Tắt trên màn hình")
+            .setContentText("Báo thức đang kêu — chạm để mở")
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setOngoing(true)
@@ -125,7 +125,12 @@ class AlarmRingService : Service() {
         try { player?.release() } catch (_: Exception) {}
         player = null
         try {
-            val raw = AppRingtones.rawOf(ringtoneUri)
+            val raw = when {
+                ringtoneUri == null || ringtoneUri == "app:soft_chime" ||
+                    ringtoneUri.endsWith("/soft_chime") -> R.raw.soft_chime
+                ringtoneUri == "app:soft_bell" || ringtoneUri.endsWith("/soft_bell") -> R.raw.soft_bell
+                else -> R.raw.soft_chime
+            }
             val attrs = AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_ALARM)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)

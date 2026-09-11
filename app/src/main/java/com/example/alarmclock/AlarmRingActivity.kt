@@ -177,17 +177,6 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
 
         binding = ActivityAlarmRingBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        try {
-            binding.root.setOnLongClickListener {
-                try {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        val km = getSystemService(android.app.KeyguardManager::class.java)
-                        km?.requestDismissKeyguard(this, null)
-                    }
-                } catch (_: Exception) {}
-                true
-            }
-        } catch (_: Exception) {}
 
         // Chế độ tập trung khi báo thức (DND + ẩn thanh hệ thống)
         try {
@@ -1035,9 +1024,10 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     private fun resolveAlarmUri(uriStr: String?): android.net.Uri {
         if (!uriStr.isNullOrEmpty()) {
             when {
-                uriStr.startsWith("app:") || uriStr.contains("ringtone_") || uriStr.endsWith("/soft_chime") || uriStr.endsWith("/soft_bell") ->
-                    return android.net.Uri.parse("android.resource://${packageName}/${AppRingtones.rawOf(uriStr)}")
-
+                uriStr == "app:soft_chime" || uriStr.endsWith("/soft_chime") ->
+                    return android.net.Uri.parse("android.resource://${packageName}/${R.raw.soft_chime}")
+                uriStr == "app:soft_bell" || uriStr.endsWith("/soft_bell") ->
+                    return android.net.Uri.parse("android.resource://${packageName}/${R.raw.soft_bell}")
                 else -> return android.net.Uri.parse(uriStr)
             }
         }
@@ -1092,7 +1082,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     }
 
     private fun startRinging() {
-        // Chỉ rung — nhạc do AlarmRingService phát 1 lần, tránh 2 chuông.
+        // Nhạc chỉ phát từ AlarmRingService (tránh 2 chuông).
         try {
             if (AppSettings.isVibrate(this)) {
                 val v = getSystemService(VIBRATOR_SERVICE) as android.os.Vibrator
@@ -1105,7 +1095,6 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             }
         } catch (_: Exception) {}
     }
-
 
     private fun stopRinging() {
         mediaPlayer?.stop()
@@ -1132,7 +1121,16 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
                 WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
         )
-        // Không gọi requestDismissKeyguard ở đây — tránh chặn bàn phím PIN.
+        // Samsung / khóa màn: yêu cầu bỏ keyguard để hiện activity
+        binding.root.setOnLongClickListener {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val km = getSystemService(android.app.KeyguardManager::class.java)
+                    km?.requestDismissKeyguard(this, null)
+                }
+            } catch (_: Exception) {}
+            true
+        }
         // Đánh thức màn hình
         try {
             val pm = getSystemService(POWER_SERVICE) as android.os.PowerManager

@@ -1,0 +1,39 @@
+AlarmClockApp 4.27.2 — Watchdog + AlarmManager giữ notif 2001
+============================================================
+
+KẾT LUẬN AUDIT WATCHDOG (WorkManager)
+1. Có được schedule: AlarmApp.onCreate + BootReceiver → PeriodicWork 15 phút, KEEP, KHÔNG constraint.
+2. Process bị kill (swipe khỏi recent): WorkManager CÓ THỂ đánh thức process mới.
+3. Worker KHÔNG cần UI đang sống. Cần process WorkManager được hệ thống tạo lại.
+4. Constraint: không có (mạng/pin/idle). Vẫn bị EMUI trì hoãn.
+5. Huawei/EMUI: PowerGenie / “Bảo vệ ứng dụng” / tối ưu pin / force-stop
+   → WorkManager thường không chạy cho đến khi user mở lại app.
+   → KHÔNG đủ để giữ 2001 nhiều giờ trên Huawei.
+
+THAY ĐỔI 4.27.2
+- NotificationRefreshReceiver + AlarmManager.setExactAndAllowWhileIdle mỗi 10 phút
+  khi prefs ringing active=true.
+- Receiver chỉ gọi restoreRingingNotification() → notify(2001) cùng ID.
+- Dismiss / Báo lại: cancelRinging() hủy cả AlarmManager refresh.
+- Watchdog WM giữ nguyên (lưới phụ), không đổi ID.
+
+LIFECYCLE
+AlarmManager (báo đúng giờ)
+  → AlarmReceiver: saveRingingState + notify(2001) + start RingService(2099)
+    + scheduleRingingRefresh(+10 phút)
+  → process kill: 2001 có thể còn (ongoing) hoặc bị OEM nuốt
+  → idle/Doze: ExactAndAllowWhileIdle vẫn có cửa sổ ~10–15 phút
+  → NotificationRefreshReceiver: restore 2001 + hẹn 10 phút tiếp
+  → Watchdog 15 phút: restore 2001 nếu còn active
+
+2001 CHỈ BỊ CANCEL KHI
+- Tắt / Báo lại / nút Tắt trên notif
+Không timeout trên 2001.
+
+GIỚI HẠN ANDROID / HUAWEI (không giả vờ hết)
+- Force-stop / “Đóng hết”: AlarmManager + WorkManager đều chết cho đến khi user mở app hoặc reboot (BOOT khôi phục).
+- User tắt kênh thông báo / không cấp POST_NOTIFICATIONS: không hiện được.
+- EMUI vẫn có thể ẩn ongoing sau nhiều giờ dù app repost; fallback tốt nhất là repost đúng 2001 bằng AlarmManager.
+- Không dùng setAlarmClock cho refresh (tránh cướp icon đồng hồ hệ thống của báo thật).
+
+BUILD: CHƯA XÁC NHẬN (không có SDK / chưa chạy CI).

@@ -101,10 +101,6 @@ class MainActivity : AppCompatActivity() {
         try { TamperGuard.verifyInActivity(this) } catch (_: Throwable) {}
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        try {
-            val name = AppSettings.getGoogleDisplayName(this)
-            if (name.isNotBlank()) binding.toolbar.subtitle = name
-        } catch (_: Exception) {}
         try { EventManager.bind(findViewById(R.id.eventBanner), this) } catch (_: Exception) {}
         binding.root.post { try { FirstLaunchDialog.show(this) } catch (_: Exception) {} }
         try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
@@ -118,9 +114,9 @@ class MainActivity : AppCompatActivity() {
         } catch (_: Exception) {}
 
         repo = AlarmRepository(this)
-        selectedRingtoneUri = repo.getGlobalRingtone() ?: AppRingtones.DEFAULT_ALARM
+        selectedRingtoneUri = repo.getGlobalRingtone() ?: "app:soft_chime"
         alarms.addAll(repo.getAlarms().onEach {
-            if (it.ringtoneUri.isNullOrEmpty()) it.ringtoneUri = AppRingtones.DEFAULT_ALARM
+            if (it.ringtoneUri.isNullOrEmpty()) it.ringtoneUri = "app:soft_chime"
         })
 
         createNotificationChannel()
@@ -605,7 +601,7 @@ class MainActivity : AppCompatActivity() {
                             existing.label = label
                             existing.repeatMode = repeatMode
                             existing.snoozeMinutes = snoozeMinutes
-                            existing.ringtoneUri = selectedRingtoneUri ?: AppRingtones.DEFAULT_ALARM
+                            existing.ringtoneUri = selectedRingtoneUri ?: "app:soft_chime"
                             existing.challengeType = challengeType
                             existing.shakeTargetCount = shakeTarget
                             existing.skipHolidays = skipHolidays
@@ -626,7 +622,7 @@ class MainActivity : AppCompatActivity() {
                                 label = label,
                                 repeatMode = repeatMode,
                                 snoozeMinutes = snoozeMinutes,
-                                ringtoneUri = selectedRingtoneUri ?: AppRingtones.DEFAULT_ALARM,
+                                ringtoneUri = selectedRingtoneUri ?: "app:soft_chime",
                                 challengeType = challengeType,
                                 shakeTargetCount = shakeTarget,
                                 skipHolidays = skipHolidays,
@@ -670,15 +666,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun pickRingtone() {
-        val builtIn = AppRingtones.alarms
-        val choices = builtIn.map { it.label }.toMutableList().also { it.add("Chọn nhạc hệ thống…") }.toTypedArray()
+        val choices = arrayOf(
+            "Chuông êm (trong app)",
+            "Chuông nhẹ chuông (trong app)",
+            "Chọn nhạc hệ thống…"
+        )
         MaterialAlertDialogBuilder(this)
-            .setTitle("Nhạc báo thức")
+            .setTitle(getString(R.string.choose_ringtone))
             .setItems(choices) { _, which ->
-                when {
-                    which in builtIn.indices -> {
-                        selectedRingtoneUri = AppRingtones.uriOf(builtIn[which].id)
-                        Toast.makeText(this, builtIn[which].label, Toast.LENGTH_SHORT).show()
+                when (which) {
+                    0 -> {
+                        selectedRingtoneUri = "app:soft_chime"
+                        Toast.makeText(this, "Chuông êm", Toast.LENGTH_SHORT).show()
+                    }
+                    1 -> {
+                        selectedRingtoneUri = "app:soft_bell"
+                        Toast.makeText(this, "Chuông nhẹ", Toast.LENGTH_SHORT).show()
                     }
                     else -> {
                         val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
@@ -720,7 +723,7 @@ class MainActivity : AppCompatActivity() {
     private fun reloadAlarmsFromDisk() {
         alarms.clear()
         alarms.addAll(repo.getAlarms().onEach {
-            if (it.ringtoneUri.isNullOrEmpty()) it.ringtoneUri = AppRingtones.DEFAULT_ALARM
+            if (it.ringtoneUri.isNullOrEmpty()) it.ringtoneUri = "app:soft_chime"
         })
         try { adapter.notifyDataSetChanged() } catch (_: Exception) {}
         updateNextAlarmBanner()
@@ -796,7 +799,7 @@ class MainActivity : AppCompatActivity() {
             label = "Ngủ gật +$minutes phút",
             repeatMode = Alarm.REPEAT_ONCE,
             challengeType = Alarm.CHALLENGE_NONE,
-            ringtoneUri = AppRingtones.DEFAULT_ALARM,
+            ringtoneUri = "app:soft_chime",
             useCrescendo = true
         )
         alarms.add(alarm)
@@ -843,22 +846,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.menu_settings -> {
-                SettingsLockHelper.requireUnlock(this) {
-                    startActivity(Intent(this, SettingsActivity::class.java))
-                }
-                return true
-            }
-            R.id.menu_screensaver -> {
-                startActivity(Intent(this, ScreensaverActivity::class.java))
-                return true
-            }
-            R.id.menu_privacy -> {
-                try {
-                    startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://3hbin.github.io/AlarmClockApp/privacy.html")))
-                } catch (_: Exception) {}
-                return true
-            }
             R.id.menu_app_lock -> {
                 showAppLockMenu()
                 return true
