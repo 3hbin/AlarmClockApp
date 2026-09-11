@@ -14,37 +14,40 @@ class SleepSoundActivity : AppCompatActivity() {
     private var minutes = 30
     private var rawId = R.raw.sleep_delta
 
-    private val tracks = listOf(
-        "Sóng não Delta (ru ngủ)" to R.raw.sleep_delta,
-        "Chuông êm lặp" to R.raw.soft_chime
-    )
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val root = android.widget.LinearLayout(this).apply {
             orientation = android.widget.LinearLayout.VERTICAL
             setPadding(40, 40, 40, 40)
         }
-        val tvTitle = TextView(this).apply { text = "Âm thanh ru ngủ"; textSize = 20f }
-        val tvTrack = TextView(this).apply { text = tracks[0].first; textSize = 16f }
-        val tvTimer = TextView(this).apply { text = "Hẹn tắt: $minutes phút"; textSize = 16f }
-        val btnPick = MaterialButton(this).apply { text = "Chọn nhạc" }
+        val tvTitle = TextView(this).apply { text = "Nhạc ru ngủ (không dùng lúc báo thức)"; textSize = 18f }
+        val tvTrack = TextView(this).apply { text = AppRingtones.sleep.first().label; textSize = 16f }
+        val tvTimer = TextView(this).apply { text = "Hẹn tắt: $minutes phút" }
+        val btnPick = MaterialButton(this).apply { text = "Chọn nhạc ru ngủ" }
         val btnPlay = MaterialButton(this).apply { text = "Phát" }
         val btnStop = MaterialButton(this).apply { text = "Dừng" }
-        val btnDur = MaterialButton(this).apply { text = "Đổi hẹn giờ tắt" }
-        root.addView(tvTitle); root.addView(tvTrack); root.addView(tvTimer)
-        root.addView(btnPick); root.addView(btnPlay); root.addView(btnStop); root.addView(btnDur)
+        val btnDur = MaterialButton(this).apply { text = "Hẹn giờ tắt" }
+        listOf(tvTitle, tvTrack, tvTimer, btnPick, btnPlay, btnStop, btnDur).forEach { root.addView(it) }
         setContentView(root)
-        title = "Âm thanh ru ngủ"
+        title = "Nhạc ru ngủ"
 
         btnPick.setOnClickListener {
             MaterialAlertDialogBuilder(this)
-                .setItems(tracks.map { it.first }.toTypedArray()) { _, w ->
-                    rawId = tracks[w].second
-                    tvTrack.text = tracks[w].first
+                .setTitle("Nhạc ru ngủ")
+                .setItems(AppRingtones.sleep.map { it.label }.toTypedArray()) { _, w ->
+                    rawId = AppRingtones.sleep[w].raw
+                    tvTrack.text = AppRingtones.sleep[w].label
                 }.show()
         }
-        btnPlay.setOnClickListener { play(); startTimer(tvTimer) }
+        btnPlay.setOnClickListener {
+            stopPlay()
+            try { player = MediaPlayer.create(this, rawId)?.apply { isLooping = true; start() } } catch (_: Exception) {}
+            timer?.cancel()
+            timer = object : CountDownTimer(minutes * 60_000L, 1000L) {
+                override fun onTick(ms: Long) { tvTimer.text = "Tắt sau ${ms / 60000} phút" }
+                override fun onFinish() { stopPlay(); tvTimer.text = "Đã tắt" }
+            }.start()
+        }
         btnStop.setOnClickListener { stopPlay(); tvTimer.text = "Đã dừng" }
         btnDur.setOnClickListener {
             MaterialAlertDialogBuilder(this)
@@ -53,26 +56,6 @@ class SleepSoundActivity : AppCompatActivity() {
                     tvTimer.text = "Hẹn tắt: $minutes phút"
                 }.show()
         }
-    }
-
-    private fun play() {
-        stopPlay()
-        try {
-            player = MediaPlayer.create(this, rawId)?.apply {
-                isLooping = true
-                start()
-            }
-        } catch (_: Exception) {}
-    }
-
-    private fun startTimer(tv: TextView) {
-        timer?.cancel()
-        timer = object : CountDownTimer(minutes * 60_000L, 1000L) {
-            override fun onTick(ms: Long) {
-                tv.text = "Tắt sau ${ms / 60000} phút ${(ms / 1000) % 60} giây"
-            }
-            override fun onFinish() { stopPlay(); tv.text = "Đã tắt" }
-        }.start()
     }
 
     private fun stopPlay() {
