@@ -12,7 +12,7 @@ object BottomNavHelper {
         CurvedBottomNavView.Item(2, "", ctx.getString(R.string.nav_stopwatch), R.drawable.ic_nav_stopwatch),
         CurvedBottomNavView.Item(3, "", ctx.getString(R.string.nav_timer), R.drawable.ic_nav_timer),
         CurvedBottomNavView.Item(4, "", ctx.getString(R.string.nav_gallery), R.drawable.ic_nav_gallery),
-        CurvedBottomNavView.Item(5, "", ctx.getString(R.string.nav_settings), R.drawable.ic_nav_settings)
+        CurvedBottomNavView.Item(5, "", "Ngủ", R.drawable.ic_nav_bed)
     )
 
     private fun targetClass(index: Int): Class<out AppCompatActivity> = when (index) {
@@ -21,7 +21,7 @@ object BottomNavHelper {
         2 -> StopwatchActivity::class.java
         3 -> TimerActivity::class.java
         4 -> GalleryActivity::class.java
-        else -> SettingsActivity::class.java
+        else -> BedtimeActivity::class.java
     }
 
     fun bind(activity: AppCompatActivity, nav: CurvedBottomNavView, selectedIndex: Int) {
@@ -53,8 +53,7 @@ object BottomNavHelper {
                     ).show()
                 }
             }
-            if (index == 5) SettingsLockHelper.requireUnlock(activity) { open() }
-            else open()
+            open()
         }
     }
 

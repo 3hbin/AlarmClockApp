@@ -846,6 +846,22 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
+            R.id.menu_settings -> {
+                SettingsLockHelper.requireUnlock(this) {
+                    startActivity(Intent(this, SettingsActivity::class.java))
+                }
+                return true
+            }
+            R.id.menu_screensaver -> {
+                startActivity(Intent(this, ScreensaverActivity::class.java))
+                return true
+            }
+            R.id.menu_privacy -> {
+                try {
+                    startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://3hbin.github.io/AlarmClockApp/privacy.html")))
+                } catch (_: Exception) {}
+                return true
+            }
             R.id.menu_app_lock -> {
                 showAppLockMenu()
                 return true

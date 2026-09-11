@@ -77,7 +77,7 @@ class MainTabActivity : AppCompatActivity() {
                     2 -> StopwatchFragment()
                     3 -> TimerFragment()
                     4 -> GalleryFragment()
-                    else -> SettingsFragment()
+                    else -> AlarmListFragment()
                 }
             } catch (_: Exception) {
                 AlarmListFragment()
@@ -112,8 +112,7 @@ class MainTabActivity : AppCompatActivity() {
                 if (suppressCallback) return@setOnItemSelectedListener true
                 val idx = menuIds.indexOf(item.itemId)
                 if (idx >= 0) {
-                    if (idx == 5) SettingsLockHelper.requireUnlock(this) { goToPage(idx) }
-                    else goToPage(idx)
+                    goToPage(idx)
                 }
                 true
             }
@@ -122,8 +121,7 @@ class MainTabActivity : AppCompatActivity() {
         try {
             glassIcons().forEachIndexed { index, iv ->
                 iv.setOnClickListener {
-                    if (index == 5) SettingsLockHelper.requireUnlock(this) { goToPage(index) }
-                    else goToPage(index)
+                    goToPage(index)
                 }
             }
         } catch (_: Exception) {}
@@ -133,8 +131,7 @@ class MainTabActivity : AppCompatActivity() {
             binding.curvedNav.setItems(BottomNavHelper.items(this), 0)
             binding.curvedNav.setOnItemSelectedListener { index, _ ->
                 if (suppressCallback) return@setOnItemSelectedListener
-                if (index == 5) SettingsLockHelper.requireUnlock(this) { goToPage(index) }
-                else goToPage(index)
+                goToPage(index)
             }
         } catch (_: Exception) {}
     }
