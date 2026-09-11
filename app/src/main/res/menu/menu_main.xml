@@ -22,6 +22,21 @@
         android:title="Nhật ký báo thức"
         app:showAsAction="never" />
     <item
+        android:id="@+id/menu_settings"
+        android:icon="@drawable/ic_nav_settings"
+        android:title="Cài đặt"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_screensaver"
+        android:icon="@drawable/ic_help_outline"
+        android:title="Trình bảo vệ màn hình"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_privacy"
+        android:icon="@drawable/ic_menu_lock"
+        android:title="Chính sách quyền riêng tư"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/menu_guide"
         android:icon="@drawable/ic_help_outline"
         android:title="Hướng dẫn sử dụng"

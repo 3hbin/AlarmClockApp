@@ -858,6 +858,18 @@ class MainActivity : AppCompatActivity() {
                 showGoogleLoginMenu()
                 return true
             }
+            R.id.menu_settings -> {
+                startActivity(Intent(this, SettingsActivity::class.java))
+                return true
+            }
+            R.id.menu_screensaver -> {
+                startActivity(Intent(this, ScreensaverActivity::class.java))
+                return true
+            }
+            R.id.menu_privacy -> {
+                startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://3hbin.github.io/AlarmClockApp/privacy.html")))
+                return true
+            }
             R.id.menu_guide -> {
                 FirstLaunchDialog.show(this, force = true)
                 return true

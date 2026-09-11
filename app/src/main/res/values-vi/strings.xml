@@ -6,6 +6,7 @@
     <string name="nav_timer">Đếm</string>
     <string name="nav_gallery">Ảnh</string>
     <string name="nav_settings">Cài</string>
+    <string name="nav_bedtime">Ngủ</string>
     <string name="test_face_scan">📷 Test quét mặt</string>
     <string name="test_face_expr">😊 Test biểu cảm</string>
     <string name="test_menu_title">Bạn muốn làm gì?</string>

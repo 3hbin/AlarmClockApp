@@ -148,6 +148,9 @@
         <activity android:name=".CalendarAgendaActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".AddEditAlarmActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".SettingsActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
+        <activity android:name=".BedtimeActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
+        <activity android:name=".SleepSoundActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
+        <activity android:name=".ScreensaverActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" android:showWhenLocked="true" android:turnScreenOn="true" />
         <activity android:name=".GalleryActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".FeaturesActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".StopwatchActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
