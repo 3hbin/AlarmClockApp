@@ -13,6 +13,15 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <include layout="@layout/layout_google_profile" />
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/swHideStatusNotif"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ẩn thông báo đang hoạt động"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="12dp"/>
+
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
             android:text="@string/lang_section" android:textStyle="bold" android:layout_marginBottom="4dp"/>
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"

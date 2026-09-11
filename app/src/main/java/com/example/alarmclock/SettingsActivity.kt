@@ -27,6 +27,16 @@ class SettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        bindGoogleProfileRow()
+        try {
+            val sw = findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.swHideStatusNotif)
+            sw.isChecked = !AppSettings.isStatusNotificationEnabled(this)
+            sw.setOnCheckedChangeListener { _, hide ->
+                AppSettings.setStatusNotificationEnabled(this, !hide)
+                AlarmKeepAliveService.sync(this)
+            }
+        } catch (_: Exception) {}
         try {
             binding.swEventTheme.isChecked = EventManager.isThemeEnabled(this)
             binding.swEventTheme.setOnCheckedChangeListener { _, on ->
@@ -550,6 +560,29 @@ binding.switchAntiTroll.setCheckedSilent(AppSettings.isAntiTroll(this))
         super.onResume()
         try { binding.root.alpha = 1f } catch (_: Exception) {}
         try { binding.curvedNav.selectIndex(-1, animate = false) } catch (_: Exception) {}
+    }
+
+
+    private fun bindGoogleProfileRow() {
+        val name = AppSettings.getGoogleDisplayName(this).ifBlank { "Chưa đăng nhập Google" }
+        val email = AppSettings.getRecoveryEmail(this)
+        findViewById<android.widget.TextView>(R.id.tvGoogleName)?.text = name
+        findViewById<android.widget.TextView>(R.id.tvGoogleEmail)?.text = email
+        val url = AppSettings.getGooglePhotoUrl(this)
+        val img = findViewById<android.widget.ImageView>(R.id.imgGoogleAvatar) ?: return
+        if (url.isBlank()) return
+        Thread {
+            try {
+                val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+                conn.connectTimeout = 8000
+                conn.readTimeout = 8000
+                conn.instanceFollowRedirects = true
+                conn.connect()
+                val bmp = android.graphics.BitmapFactory.decodeStream(conn.inputStream)
+                conn.disconnect()
+                if (bmp != null) runOnUiThread { img.setImageBitmap(bmp) }
+            } catch (_: Exception) {}
+        }.start()
     }
 
 }

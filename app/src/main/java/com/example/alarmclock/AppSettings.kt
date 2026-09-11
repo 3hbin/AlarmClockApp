@@ -87,6 +87,14 @@ object AppSettings {
         prefs(context).edit().putString("google_display_name", name).apply()
     fun getGoogleDisplayName(context: Context) =
         prefs(context).getString("google_display_name", "") ?: ""
+    fun setGooglePhotoUrl(context: Context, url: String) =
+        prefs(context).edit().putString("google_photo_url", url).apply()
+    fun getGooglePhotoUrl(context: Context) =
+        prefs(context).getString("google_photo_url", "") ?: ""
+    fun isStatusNotificationEnabled(context: Context) =
+        prefs(context).getBoolean("status_notif_enabled", true)
+    fun setStatusNotificationEnabled(context: Context, on: Boolean) =
+        prefs(context).edit().putBoolean("status_notif_enabled", on).apply()
 
     // Anti-troll: chống người khác tắt báo thức
     fun setAntiTroll(context: Context, on: Boolean) =

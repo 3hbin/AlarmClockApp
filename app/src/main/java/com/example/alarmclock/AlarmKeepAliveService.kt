@@ -120,7 +120,7 @@ class AlarmKeepAliveService : Service() {
             val ctx = context.applicationContext
             val count = enabledCount(ctx)
             val i = Intent(ctx, AlarmKeepAliveService::class.java)
-            if (count <= 0) {
+            if (count <= 0 || !AppSettings.isStatusNotificationEnabled(ctx)) {
                 try { ctx.startService(i.setAction(ACTION_STOP)) } catch (_: Exception) {}
                 return
             }

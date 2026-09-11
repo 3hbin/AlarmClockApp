@@ -47,6 +47,7 @@ object GoogleSignInHelper {
                     activity,
                     account.displayName?.takeIf { it.isNotBlank() } ?: email
                 )
+                AppSettings.setGooglePhotoUrl(activity, account.photoUrl?.toString().orEmpty())
             }
             // Firebase Auth (tùy chọn)
             try {
@@ -72,6 +73,7 @@ object GoogleSignInHelper {
         AppSettings.setRecoveryEmail(activity, email)
         val name = email.substringBefore("@").replace('.', ' ').replace('_', ' ')
         AppSettings.setGoogleDisplayName(activity, name)
+        AppSettings.setGooglePhotoUrl(activity, "")
         return email
     }
 
@@ -93,6 +95,7 @@ object GoogleSignInHelper {
             FirebaseAuth.getInstance().signOut()
         } catch (_: Exception) {}
         AppSettings.setGoogleDisplayName(activity, "")
+        AppSettings.setGooglePhotoUrl(activity, "")
         // Giữ recovery email trừ khi user muốn xóa — clear khi đăng xuất
         AppSettings.setRecoveryEmail(activity, "")
     }
