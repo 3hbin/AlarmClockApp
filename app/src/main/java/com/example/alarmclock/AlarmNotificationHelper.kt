@@ -225,6 +225,7 @@ object AlarmNotificationHelper {
 
     fun cancelRinging(context: Context) {
         NotificationManagerCompat.from(context).cancel(NOTIF_ID_RINGING)
+        NotificationManagerCompat.from(context).cancel(NOTIF_ID_RINGING_FGS)
         clearRingingState(context)
     }
 

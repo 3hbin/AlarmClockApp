@@ -46,12 +46,12 @@ class AlarmRingService : Service() {
         try {
             if (Build.VERSION.SDK_INT >= 34) {
                 // 1073741824 = FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-                startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING_FGS, notif, 1073741824)
+                startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING, notif, 1073741824)
             } else {
-                startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING_FGS, notif)
+                startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING, notif)
             }
         } catch (_: Exception) {
-            try { startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING_FGS, notif) } catch (_: Exception) {}
+            try { startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING, notif) } catch (_: Exception) {}
         }
 
         startSound(ringtoneUri)
@@ -105,10 +105,10 @@ class AlarmRingService : Service() {
             this, alarmId + 71000, open,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
-        return NotificationCompat.Builder(this, AlarmNotificationHelper.CHANNEL_RINGING_FGS)
+        return NotificationCompat.Builder(this, AlarmNotificationHelper.CHANNEL_RINGING)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle("⏰ $label")
-            .setContentText("Báo thức đang kêu — chạm để mở")
+            .setContentText("Báo thức đang kêu — bấm Tắt trên màn hình")
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setOngoing(true)

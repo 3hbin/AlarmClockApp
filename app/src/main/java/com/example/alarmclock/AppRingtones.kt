@@ -3,14 +3,15 @@ package com.example.alarmclock
 object AppRingtones {
     data class Item(val id: String, val label: String, val raw: Int)
 
-    /** Chỉ chuông báo thức — không lẫn nhạc ru ngủ. */
     val alarms = listOf(
         Item("ringtone_huawei", "Huawei — Alarm", R.raw.ringtone_huawei),
         Item("ringtone_mi", "Xiaomi — Official", R.raw.ringtone_mi),
         Item("ringtone_oppo_holiday", "OPPO — Holiday", R.raw.ringtone_oppo_holiday),
         Item("ringtone_samsung", "Samsung", R.raw.ringtone_samsung),
         Item("ringtone_samsung_s10", "Samsung Galaxy S10", R.raw.ringtone_samsung_s10),
-        Item("ringtone_morning_flower", "Morning Flower", R.raw.ringtone_morning_flower)
+        Item("ringtone_morning_flower", "Morning Flower", R.raw.ringtone_morning_flower),
+        Item("soft_chime", "Chuông êm", R.raw.soft_chime),
+        Item("soft_bell", "Chuông nhẹ", R.raw.soft_bell)
     )
 
     val sleep = listOf(
@@ -19,7 +20,7 @@ object AppRingtones {
         Item("soft_bell", "Chuông nhẹ", R.raw.soft_bell)
     )
 
-    val all get() = alarms + sleep
+    val all get() = (alarms + sleep).distinctBy { it.id }
 
     const val DEFAULT_ALARM = "app:ringtone_huawei"
 
