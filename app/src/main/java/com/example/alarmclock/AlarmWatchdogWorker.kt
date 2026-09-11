@@ -8,10 +8,7 @@ import androidx.work.Worker
 import androidx.work.WorkerParameters
 import java.util.concurrent.TimeUnit
 
-/**
- * Canh báo thức mỗi 15 phút: nếu hệ thống hủy AlarmManager thì đặt lại.
- * Không thay exact alarm — chỉ lưới an toàn (đúng gợi ý Gemini).
- */
+/** Mỗi 15 phút đặt lại toàn bộ setAlarmClock — lưới an toàn kiểu Đồng hồ Google. */
 class AlarmWatchdogWorker(
     context: Context,
     params: WorkerParameters
@@ -31,11 +28,10 @@ class AlarmWatchdogWorker(
 
         fun start(context: Context) {
             try {
-                val req = PeriodicWorkRequestBuilder<AlarmWatchdogWorker>(15, TimeUnit.MINUTES)
-                    .build()
+                val req = PeriodicWorkRequestBuilder<AlarmWatchdogWorker>(15, TimeUnit.MINUTES).build()
                 WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                     UNIQUE,
-                    ExistingPeriodicWorkPolicy.KEEP,
+                    ExistingPeriodicWorkPolicy.UPDATE,
                     req
                 )
             } catch (_: Exception) {}

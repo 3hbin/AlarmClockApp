@@ -28,7 +28,6 @@ class AlarmApp : Application() {
         try { AlarmScheduler.rescheduleAll(this) } catch (_: Exception) {}
         try { AlarmWatchdogWorker.start(this) } catch (_: Exception) {}
         try { AlarmKeepAliveService.sync(this) } catch (_: Exception) {}
-        try { android.os.Handler(mainLooper).postDelayed({ BatteryOptHelper.requestIgnore(this) }, 1500) } catch (_: Exception) {}
     }
 
     private fun installCrashLogger() {

@@ -28,6 +28,12 @@ class SettingsActivity : AppCompatActivity() {
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
         try {
+            binding.swStatusNotif.isChecked = AlarmKeepAliveService.isWanted(this)
+            binding.swStatusNotif.setOnCheckedChangeListener { _, on ->
+                AlarmKeepAliveService.setWanted(this, on)
+            }
+        } catch (_: Exception) {}
+        try {
             binding.swEventTheme.isChecked = EventManager.isThemeEnabled(this)
             binding.swEventTheme.setOnCheckedChangeListener { _, on ->
                 EventManager.setThemeEnabled(this, on)
