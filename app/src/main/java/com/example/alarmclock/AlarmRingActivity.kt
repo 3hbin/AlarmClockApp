@@ -1085,12 +1085,12 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         // Nhạc chỉ phát từ AlarmRingService (tránh 2 chuông).
         try {
             if (AppSettings.isVibrate(this)) {
-                val v = getSystemService(VIBRATOR_SERVICE) as android.os.Vibrator
+                vibrator = getSystemService(VIBRATOR_SERVICE) as android.os.Vibrator
                 if (android.os.Build.VERSION.SDK_INT >= 26) {
-                    v.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 400, 400), 0))
+                    vibrator?.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 400, 400), 0))
                 } else {
                     @Suppress("DEPRECATION")
-                    v.vibrate(longArrayOf(0, 400, 400), 0)
+                    vibrator?.vibrate(longArrayOf(0, 400, 400), 0)
                 }
             }
         } catch (_: Exception) {}
