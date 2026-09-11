@@ -114,9 +114,9 @@ class MainActivity : AppCompatActivity() {
         } catch (_: Exception) {}
 
         repo = AlarmRepository(this)
-        selectedRingtoneUri = repo.getGlobalRingtone() ?: "app:soft_chime"
+        selectedRingtoneUri = repo.getGlobalRingtone() ?: AppRingtones.DEFAULT_ALARM
         alarms.addAll(repo.getAlarms().onEach {
-            if (it.ringtoneUri.isNullOrEmpty()) it.ringtoneUri = "app:soft_chime"
+            if (it.ringtoneUri.isNullOrEmpty()) it.ringtoneUri = AppRingtones.DEFAULT_ALARM
         })
 
         createNotificationChannel()
@@ -601,7 +601,7 @@ class MainActivity : AppCompatActivity() {
                             existing.label = label
                             existing.repeatMode = repeatMode
                             existing.snoozeMinutes = snoozeMinutes
-                            existing.ringtoneUri = selectedRingtoneUri ?: "app:soft_chime"
+                            existing.ringtoneUri = selectedRingtoneUri ?: AppRingtones.DEFAULT_ALARM
                             existing.challengeType = challengeType
                             existing.shakeTargetCount = shakeTarget
                             existing.skipHolidays = skipHolidays
@@ -622,7 +622,7 @@ class MainActivity : AppCompatActivity() {
                                 label = label,
                                 repeatMode = repeatMode,
                                 snoozeMinutes = snoozeMinutes,
-                                ringtoneUri = selectedRingtoneUri ?: "app:soft_chime",
+                                ringtoneUri = selectedRingtoneUri ?: AppRingtones.DEFAULT_ALARM,
                                 challengeType = challengeType,
                                 shakeTargetCount = shakeTarget,
                                 skipHolidays = skipHolidays,
@@ -666,22 +666,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun pickRingtone() {
-        val choices = arrayOf(
-            "Chuông êm (trong app)",
-            "Chuông nhẹ chuông (trong app)",
-            "Chọn nhạc hệ thống…"
-        )
+        val builtIn = AppRingtones.alarms
+        val choices = builtIn.map { it.label }.toMutableList().also { it.add("Chọn nhạc hệ thống…") }.toTypedArray()
         MaterialAlertDialogBuilder(this)
-            .setTitle(getString(R.string.choose_ringtone))
+            .setTitle("Nhạc báo thức")
             .setItems(choices) { _, which ->
-                when (which) {
-                    0 -> {
-                        selectedRingtoneUri = "app:soft_chime"
-                        Toast.makeText(this, "Chuông êm", Toast.LENGTH_SHORT).show()
-                    }
-                    1 -> {
-                        selectedRingtoneUri = "app:soft_bell"
-                        Toast.makeText(this, "Chuông nhẹ", Toast.LENGTH_SHORT).show()
+                when {
+                    which in builtIn.indices -> {
+                        selectedRingtoneUri = AppRingtones.uriOf(builtIn[which].id)
+                        Toast.makeText(this, builtIn[which].label, Toast.LENGTH_SHORT).show()
                     }
                     else -> {
                         val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
@@ -723,7 +716,7 @@ class MainActivity : AppCompatActivity() {
     private fun reloadAlarmsFromDisk() {
         alarms.clear()
         alarms.addAll(repo.getAlarms().onEach {
-            if (it.ringtoneUri.isNullOrEmpty()) it.ringtoneUri = "app:soft_chime"
+            if (it.ringtoneUri.isNullOrEmpty()) it.ringtoneUri = AppRingtones.DEFAULT_ALARM
         })
         try { adapter.notifyDataSetChanged() } catch (_: Exception) {}
         updateNextAlarmBanner()
@@ -799,7 +792,7 @@ class MainActivity : AppCompatActivity() {
             label = "Ngủ gật +$minutes phút",
             repeatMode = Alarm.REPEAT_ONCE,
             challengeType = Alarm.CHALLENGE_NONE,
-            ringtoneUri = "app:soft_chime",
+            ringtoneUri = AppRingtones.DEFAULT_ALARM,
             useCrescendo = true
         )
         alarms.add(alarm)
@@ -856,18 +849,6 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.menu_google -> {
                 showGoogleLoginMenu()
-                return true
-            }
-            R.id.menu_settings -> {
-                startActivity(Intent(this, SettingsActivity::class.java))
-                return true
-            }
-            R.id.menu_screensaver -> {
-                startActivity(Intent(this, ScreensaverActivity::class.java))
-                return true
-            }
-            R.id.menu_privacy -> {
-                startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://3hbin.github.io/AlarmClockApp/privacy.html")))
                 return true
             }
             R.id.menu_guide -> {

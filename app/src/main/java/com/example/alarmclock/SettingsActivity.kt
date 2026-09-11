@@ -34,7 +34,7 @@ class SettingsActivity : AppCompatActivity() {
             }
         } catch (_: Exception) {}
         try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
-        try { BottomNavHelper.bind(this, binding.curvedNav, 5) } catch (_: Exception) {}
+        try { BottomNavHelper.bind(this, binding.curvedNav, -1) } catch (_: Exception) {}
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         title = getString(R.string.settings_title)
 
@@ -246,7 +246,7 @@ class SettingsActivity : AppCompatActivity() {
                         else -> CurvedBottomNavView.Style.GOOGLE
                     }
                     binding.curvedNav.navStyle = s
-                    binding.curvedNav.selectIndex(5, animate = false)
+                    binding.curvedNav.selectIndex(-1, animate = false)
                     binding.curvedNav.requestLayout()
                     binding.curvedNav.invalidate()
                 } catch (e: Exception) {
@@ -549,7 +549,7 @@ binding.switchAntiTroll.setCheckedSilent(AppSettings.isAntiTroll(this))
     override fun onResume() {
         super.onResume()
         try { binding.root.alpha = 1f } catch (_: Exception) {}
-        try { binding.curvedNav.selectIndex(5, animate = false) } catch (_: Exception) {}
+        try { binding.curvedNav.selectIndex(-1, animate = false) } catch (_: Exception) {}
     }
 
 }

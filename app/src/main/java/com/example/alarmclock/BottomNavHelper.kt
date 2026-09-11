@@ -53,8 +53,7 @@ object BottomNavHelper {
                     ).show()
                 }
             }
-            if (index == 5) SettingsLockHelper.requireUnlock(activity) { open() }
-            else open()
+            open()
         }
     }
 
