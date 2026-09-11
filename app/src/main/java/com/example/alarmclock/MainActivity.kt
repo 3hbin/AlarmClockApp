@@ -821,17 +821,19 @@ class MainActivity : AppCompatActivity() {
             }
         } catch (_: Exception) {}
         val updateItem = menu.findItem(R.id.menu_version)
-        updateItem?.isVisible = false
         val current = try { packageManager.getPackageInfo(packageName, 0).versionName ?: "" } catch (_: Exception) { "" }
+        updateItem?.isVisible = true
+        updateItem?.title = if (current.isNotBlank()) "v$current" else "Phiên bản"
         UpdateCheckHelper.check(current) { info ->
             if (info != null && info.newer) {
                 pendingUpdateTag = info.tag
                 updateItem?.isVisible = true
-                updateItem?.title = "${info.tag} • Cập nhật ngay"
+                updateItem?.title = "v$current → ${info.tag} • Cập nhật"
                 try { updateItem?.setIcon(R.drawable.ic_system_update) } catch (_: Exception) {}
             } else {
                 pendingUpdateTag = null
-                updateItem?.isVisible = false
+                updateItem?.isVisible = true
+                updateItem?.title = if (current.isNotBlank()) "v$current" else "Phiên bản"
             }
         }
         return true
@@ -851,6 +853,18 @@ class MainActivity : AppCompatActivity() {
                 showGoogleLoginMenu()
                 return true
             }
+            R.id.menu_settings -> {
+                openInternal(SettingsActivity::class.java, "Cài đặt")
+                return true
+            }
+            R.id.menu_screensaver -> {
+                openInternal(ScreensaverActivity::class.java, "Trình bảo vệ màn hình")
+                return true
+            }
+            R.id.menu_privacy -> {
+                openInternal(PrivacyPolicyActivity::class.java, "Chính sách quyền riêng tư")
+                return true
+            }
             R.id.menu_guide -> {
                 FirstLaunchDialog.show(this, force = true)
                 return true
@@ -865,6 +879,15 @@ class MainActivity : AppCompatActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+
+    private fun openInternal(cls: Class<*>, label: String) {
+        try {
+            startActivity(Intent(this, cls).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP))
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(this, "Không mở được $label: ${e.javaClass.simpleName}", android.widget.Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun showAppLockMenu() {

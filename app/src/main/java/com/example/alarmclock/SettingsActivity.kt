@@ -25,9 +25,18 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivitySettingsBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
+        try {
+            binding = ActivitySettingsBinding.inflate(layoutInflater)
+            setContentView(binding.root)
+        } catch (e: Exception) {
+            val tv = android.widget.TextView(this)
+            tv.text = "Cài đặt"
+            tv.textSize = 20f
+            tv.setPadding(48, 48, 48, 48)
+            setContentView(tv)
+            android.widget.Toast.makeText(this, "Lỗi giao diện cài đặt: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
+            return
+        }
         bindGoogleProfileRow()
         try {
             val sw = findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.swHideStatusNotif)
@@ -44,7 +53,7 @@ class SettingsActivity : AppCompatActivity() {
             }
         } catch (_: Exception) {}
         try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
-        try { BottomNavHelper.bind(this, binding.curvedNav, -1) } catch (_: Exception) {}
+        try { binding.curvedNav.visibility = android.view.View.GONE } catch (_: Exception) {}
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         title = getString(R.string.settings_title)
 
@@ -256,7 +265,7 @@ class SettingsActivity : AppCompatActivity() {
                         else -> CurvedBottomNavView.Style.GOOGLE
                     }
                     binding.curvedNav.navStyle = s
-                    binding.curvedNav.selectIndex(-1, animate = false)
+                    /* settings is not a tab */
                     binding.curvedNav.requestLayout()
                     binding.curvedNav.invalidate()
                 } catch (e: Exception) {
@@ -559,30 +568,31 @@ binding.switchAntiTroll.setCheckedSilent(AppSettings.isAntiTroll(this))
     override fun onResume() {
         super.onResume()
         try { binding.root.alpha = 1f } catch (_: Exception) {}
-        try { binding.curvedNav.selectIndex(-1, animate = false) } catch (_: Exception) {}
+        try { /* settings is not a tab */ } catch (_: Exception) {}
     }
 
 
     private fun bindGoogleProfileRow() {
-        val name = AppSettings.getGoogleDisplayName(this).ifBlank { "Chưa đăng nhập Google" }
-        val email = AppSettings.getRecoveryEmail(this)
-        findViewById<android.widget.TextView>(R.id.tvGoogleName)?.text = name
-        findViewById<android.widget.TextView>(R.id.tvGoogleEmail)?.text = email
-        val url = AppSettings.getGooglePhotoUrl(this)
-        val img = findViewById<android.widget.ImageView>(R.id.imgGoogleAvatar) ?: return
-        if (url.isBlank()) return
-        Thread {
-            try {
-                val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
-                conn.connectTimeout = 8000
-                conn.readTimeout = 8000
-                conn.instanceFollowRedirects = true
-                conn.connect()
-                val bmp = android.graphics.BitmapFactory.decodeStream(conn.inputStream)
-                conn.disconnect()
-                if (bmp != null) runOnUiThread { img.setImageBitmap(bmp) }
-            } catch (_: Exception) {}
-        }.start()
+        try {
+            val name = AppSettings.getGoogleDisplayName(this).ifBlank { "Chưa đăng nhập Google" }
+            val email = AppSettings.getRecoveryEmail(this)
+            findViewById<android.widget.TextView>(R.id.tvGoogleName)?.text = name
+            findViewById<android.widget.TextView>(R.id.tvGoogleEmail)?.text = email
+            val url = AppSettings.getGooglePhotoUrl(this)
+            val img = findViewById<android.widget.ImageView>(R.id.imgGoogleAvatar) ?: return
+            if (url.isBlank()) return
+            Thread {
+                try {
+                    val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+                    conn.connectTimeout = 8000
+                    conn.readTimeout = 8000
+                    conn.instanceFollowRedirects = true
+                    val bmp = android.graphics.BitmapFactory.decodeStream(conn.inputStream)
+                    conn.disconnect()
+                    if (bmp != null) runOnUiThread { img.setImageBitmap(bmp) }
+                } catch (_: Exception) {}
+            }.start()
+        } catch (_: Exception) {}
     }
 
 }

@@ -24,6 +24,16 @@
     <uses-feature android:name="android.hardware.camera.front" android:required="false" />
     <uses-feature android:name="android.hardware.camera.flash" android:required="false" />
 
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="http" />
+        </intent>
+    </queries>
     <application
         android:usesCleartextTraffic="false"
         android:networkSecurityConfig="@xml/network_security_config"
@@ -151,6 +161,7 @@
         <activity android:name=".BedtimeActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".SleepSoundActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".ScreensaverActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" android:showWhenLocked="true" android:turnScreenOn="true" />
+        <activity android:name=".PrivacyPolicyActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".GalleryActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".FeaturesActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".StopwatchActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
