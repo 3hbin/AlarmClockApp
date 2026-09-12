@@ -54,6 +54,7 @@ class AlarmRingService : Service() {
             try { startForeground(AlarmNotificationHelper.NOTIF_ID_RINGING_FGS, notif) } catch (_: Exception) {}
         }
 
+        useCrescendoNow = crescendo
         startSound(ringtoneUri)
         // Chỉ mở Activity tối đa 1 lần / 20s để tránh crash-loop khi RingActivity lỗi.
         val now = android.os.SystemClock.elapsedRealtime()
@@ -126,43 +127,64 @@ class AlarmRingService : Service() {
                         .build()
     }
 
+    private var crescendoHandler: android.os.Handler? = null
+    private var useCrescendoNow = true
+
     private fun startSound(ringtoneUri: String?) {
         try { player?.release() } catch (_: Exception) {}
         player = null
+        if (ringtoneUri == "silent:") return
         try {
-            val raw = when {
-                ringtoneUri == null || ringtoneUri == "app:soft_chime" ||
-                    ringtoneUri.endsWith("/soft_chime") -> R.raw.soft_chime
-                ringtoneUri == "app:soft_bell" || ringtoneUri.endsWith("/soft_bell") -> R.raw.soft_bell
-                else -> R.raw.soft_chime
-            }
             val attrs = AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_ALARM)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .build()
-            if (ringtoneUri != null && ringtoneUri.startsWith("content")) {
-                player = MediaPlayer().apply {
-                    setAudioAttributes(attrs)
-                    setDataSource(this@AlarmRingService, android.net.Uri.parse(ringtoneUri))
-                    isLooping = true
-                    prepare()
-                    start()
+            val mp = MediaPlayer()
+            mp.setAudioAttributes(attrs)
+            when {
+                ringtoneUri != null && (ringtoneUri.startsWith("content:") || ringtoneUri.startsWith("file:") || ringtoneUri.startsWith("android.resource:")) -> {
+                    mp.setDataSource(this, android.net.Uri.parse(ringtoneUri))
                 }
-            } else {
-                player = MediaPlayer.create(this, raw)?.apply {
-                    setAudioAttributes(attrs)
-                    isLooping = true
-                    start()
+                else -> {
+                    val afd = resources.openRawResourceFd(AppRingtones.rawOf(ringtoneUri))
+                    mp.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+                    afd.close()
                 }
             }
+            mp.isLooping = true
+            mp.prepare()
+            if (useCrescendoNow) {
+                mp.setVolume(0.08f, 0.08f)
+                startCrescendo(mp)
+            }
+            mp.start()
+            player = mp
         } catch (_: Exception) {
             try {
-                player = MediaPlayer.create(this, R.raw.soft_chime)?.apply {
+                player = MediaPlayer.create(this, R.raw.ringtone_huawei)?.apply {
                     isLooping = true
                     start()
                 }
             } catch (_: Exception) {}
         }
+    }
+
+    private fun startCrescendo(mp: MediaPlayer) {
+        crescendoHandler?.removeCallbacksAndMessages(null)
+        val h = android.os.Handler(mainLooper)
+        crescendoHandler = h
+        var step = 1
+        val run = object : Runnable {
+            override fun run() {
+                try {
+                    val v = (0.08f + step * 0.08f).coerceAtMost(1f)
+                    mp.setVolume(v, v)
+                    step++
+                    if (v < 1f && player === mp) h.postDelayed(this, 1500L)
+                } catch (_: Exception) {}
+            }
+        }
+        h.postDelayed(run, 1500L)
     }
 
     private fun acquireWake() {
@@ -182,6 +204,7 @@ class AlarmRingService : Service() {
     }
 
     private fun stopSelfSafe() {
+        crescendoHandler?.removeCallbacksAndMessages(null)
         try { player?.stop() } catch (_: Exception) {}
         try { player?.release() } catch (_: Exception) {}
         player = null

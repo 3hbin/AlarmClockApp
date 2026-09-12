@@ -10,6 +10,7 @@ object AppRingtones {
         Item("ringtone_samsung", "Samsung", R.raw.ringtone_samsung),
         Item("ringtone_samsung_s10", "Samsung Galaxy S10", R.raw.ringtone_samsung_s10),
         Item("ringtone_morning_flower", "Morning Flower", R.raw.ringtone_morning_flower),
+        Item("ringtone_oz", "Oz", R.raw.ringtone_oz),
         Item("soft_chime", "Chuông êm", R.raw.soft_chime),
         Item("soft_bell", "Chuông nhẹ", R.raw.soft_bell)
     )

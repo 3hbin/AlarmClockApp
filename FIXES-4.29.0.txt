@@ -1,0 +1,23 @@
+AlarmClockApp 4.29.0 — Bottom Sheet DeskClock + Ringtone Picker + Timer
+
+GIẢI NÉN đè lên source rồi build:
+  unzip -o AlarmClockApp-4.29.0.zip
+  ./gradlew assembleDebug
+
+FILE MỚI
+- AddEditAlarmActivity.kt + activity_add_edit_alarm.xml : sheet kiểu Google Clock
+  giờ lớn, Chỉnh sửa, chip T2–CN, Hẹn báo thức, thử thách, crescendo, TTS, Xoá/Lưu
+- RingtonePickerActivity.kt + layout item_tone* : nhạc của bạn / app / hệ thống / Im lặng
+- CustomRingtones.kt : lưu URI persistable
+- res/raw/ringtone_oz.ogg : nhạc Oz đính kèm
+
+FILE SỬA
+- AlarmRingService.kt : MediaPlayer USAGE_ALARM + loop + content URI + crescendo
+- TimerService.kt : ACTION_RESET + phát chuông khi hết giờ
+- AppRingtones.kt : thêm Oz
+- AndroidManifest.xml : READ_MEDIA_AUDIO + RingtonePickerActivity
+- build.gradle.kts : 4.29.0 / 170
+
+GIỚI HẠN
+- Chip thứ map sang 3 mode cũ: 1 lần / T2–T6 / Hàng ngày (scheduler chưa có custom bitmask).
+- CHƯA XÁC NHẬN BUILD trên máy này. Cần assembleDebug trên máy bạn / CI.

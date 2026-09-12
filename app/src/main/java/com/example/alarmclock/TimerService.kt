@@ -42,6 +42,16 @@ class TimerService : Service() {
                 stopEverything()
                 stopSelf()
             }
+            ACTION_RESET -> {
+                stopEverything()
+                remainingMs = 0
+                sendBroadcast(Intent(ACTION_UPDATE).apply {
+                    setPackage(packageName)
+                    putExtra(EXTRA_MS, 0L)
+                    putExtra(EXTRA_RUNNING, false)
+                })
+                stopSelf()
+            }
             ACTION_TICK_QUERY -> {
                 // no-op, notification already updated
             }
@@ -80,6 +90,7 @@ class TimerService : Service() {
                 isActive = false
                 updateNotification(0, false)
                 sendBroadcast(Intent(ACTION_FINISHED).setPackage(packageName))
+                playFinishSound()
                 // Không stopSelf ngay — để activity mở và reo; user bấm dừng sẽ stop
                 stopForeground(STOP_FOREGROUND_DETACH)
             }
@@ -172,6 +183,16 @@ class TimerService : Service() {
         else String.format("%02d:%02d", m, s)
     }
 
+    private fun playFinishSound() {
+        try {
+            val mp = android.media.MediaPlayer.create(this, R.raw.ringtone_huawei)
+            mp?.apply {
+                isLooping = true
+                start()
+            }
+        } catch (_: Exception) {}
+    }
+
     override fun onDestroy() {
         countDownTimer?.cancel()
         isActive = false
@@ -183,6 +204,7 @@ class TimerService : Service() {
         const val ACTION_PAUSE = "timer.PAUSE"
         const val ACTION_RESUME = "timer.RESUME"
         const val ACTION_STOP = "timer.STOP"
+        const val ACTION_RESET = "timer.RESET"
         const val ACTION_TICK_QUERY = "timer.QUERY"
         const val ACTION_UPDATE = "com.example.alarmclock.TIMER_UPDATE"
         const val ACTION_FINISHED = "com.example.alarmclock.TIMER_FINISHED"

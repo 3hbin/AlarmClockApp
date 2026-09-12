@@ -6,19 +6,34 @@
     android:orientation="vertical"
     android:background="@color/surface">
 
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbarEdit"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/primary"
-        app:navigationIcon="@drawable/ic_close"
-        app:title="Báo thức"
-        app:titleTextColor="@android:color/white"
-        app:menu="@menu/menu_add_edit_alarm" />
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:paddingStart="8dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="8dp">
+        <ImageButton
+            android:id="@+id/btnCloseSheet"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Đóng"
+            android:src="@drawable/ic_close" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Báo thức"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:textColor="@color/text_primary" />
+    </LinearLayout>
 
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:fillViewport="true">
         <LinearLayout
             android:layout_width="match_parent"
@@ -26,109 +41,137 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/tvBigTime"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:gravity="center"
-                android:orientation="horizontal"
+                android:text="07:00"
+                android:textSize="64sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-light"
+                android:textColor="@color/text_primary" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnEditTime"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="Chỉnh sửa" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipDays"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:paddingTop="8dp"
-                android:paddingBottom="16dp">
-                <NumberPicker
-                    android:id="@+id/npHour"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
+                app:chipSpacing="6dp"
+                app:singleLine="false">
+                <com.google.android.material.chip.Chip android:id="@+id/chipT2" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="T2" android:checked="true" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipT3" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="T3" android:checked="true" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipT4" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="T4" android:checked="true" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipT5" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="T5" android:checked="true" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipT6" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="T6" android:checked="true" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipT7" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="T7" android:checked="true" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipCN" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="CN" android:checked="true" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:paddingTop="12dp"
+                android:paddingBottom="8dp">
                 <TextView
+                    android:id="@+id/tvNextHint"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Chuông báo sắp tới: Ngày mai"
+                    android:textColor="@color/text_secondary" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSchedule"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:paddingLeft="8dp"
-                    android:paddingRight="8dp"
-                    android:text=":"
-                    android:textSize="28sp"
-                    android:textStyle="bold" />
-                <NumberPicker
-                    android:id="@+id/npMinute"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
+                    android:text="Hẹn báo thức" />
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/rowRepeat"
                 android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:text="Lặp lại" android:textSize="16sp" />
-                <TextView android:id="@+id/tvRepeatValue" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:text="Hàng ngày" android:textColor="@color/text_secondary" />
-                <ImageView android:layout_width="24dp" android:layout_height="24dp"
-                    android:src="@drawable/ic_chevron_right" />
-            </LinearLayout>
-            <LinearLayout
-                android:id="@+id/rowSound"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:text="Âm thanh" android:textSize="16sp" />
-                <TextView android:id="@+id/tvSoundValue" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:text="Mặc định" android:textColor="@color/text_secondary" />
-                <ImageView android:layout_width="24dp" android:layout_height="24dp"
-                    android:src="@drawable/ic_chevron_right" />
-            </LinearLayout>
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:text="Rung" android:textSize="16sp" />
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/swVibrate"
-                    android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/surface_card"
+                android:padding="12dp"
+                android:elevation="1dp">
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Tên chuông báo" android:textColor="@color/text_secondary" android:textSize="12sp" />
+                <EditText
+                    android:id="@+id/etLabelInline"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:checked="true" />
-            </LinearLayout>
-            <LinearLayout
-                android:id="@+id/rowLabel"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:text="Nhãn" android:textSize="16sp" />
-                <TextView android:id="@+id/tvLabelValue" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:text="Báo thức" android:textColor="@color/text_secondary" />
-                <ImageView android:layout_width="24dp" android:layout_height="24dp"
-                    android:src="@drawable/ic_chevron_right" />
-            </LinearLayout>
-            <LinearLayout
-                android:id="@+id/rowDuration"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:text="Thời lượng đổ chuông" android:textSize="16sp" />
-                <TextView android:id="@+id/tvDurationValue" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:text="5 phút" android:textColor="@color/text_secondary" />
-                <ImageView android:layout_width="24dp" android:layout_height="24dp"
-                    android:src="@drawable/ic_chevron_right" />
-            </LinearLayout>
-            <LinearLayout
-                android:id="@+id/rowSnooze"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content"
-                    android:layout_weight="1" android:text="Báo lại" android:textSize="16sp" />
-                <TextView android:id="@+id/tvSnoozeValue" android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" android:text="5 phút" android:textColor="@color/text_secondary" />
-                <ImageView android:layout_width="24dp" android:layout_height="24dp"
-                    android:src="@drawable/ic_chevron_right" />
+                    android:hint="Báo thức"
+                    android:inputType="text"
+                    android:background="@android:color/transparent"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="12dp"
+                    android:textColor="@color/text_primary" />
+
+                <LinearLayout android:id="@+id/rowSound" android:layout_width="match_parent" android:layout_height="52dp" android:gravity="center_vertical" android:orientation="horizontal">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Âm thanh" android:textSize="16sp" />
+                    <TextView android:id="@+id/tvSoundValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Mặc định" android:textColor="@color/text_secondary" />
+                </LinearLayout>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="52dp" android:gravity="center_vertical">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Rung" android:textSize="16sp" />
+                    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/swVibrate" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" />
+                </LinearLayout>
+
+                <LinearLayout android:id="@+id/rowChallenge" android:layout_width="match_parent" android:layout_height="52dp" android:gravity="center_vertical">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Thử thách" android:textSize="16sp" />
+                    <TextView android:id="@+id/tvChallengeValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Không" android:textColor="@color/text_secondary" />
+                </LinearLayout>
+
+                <LinearLayout android:id="@+id/rowSnooze" android:layout_width="match_parent" android:layout_height="52dp" android:gravity="center_vertical">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Báo lại" android:textSize="16sp" />
+                    <TextView android:id="@+id/tvSnoozeValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="5 phút" android:textColor="@color/text_secondary" />
+                </LinearLayout>
+
+                <LinearLayout android:id="@+id/rowLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:visibility="gone" />
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Tùy chọn nâng cao" android:textStyle="bold" android:paddingTop="8dp" android:paddingBottom="4dp" />
+                <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/cbAntiSnooze" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Chống báo lại" />
+                <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/cbSkipHoliday" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Bỏ qua ngày lễ" />
+                <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/cbCrescendo" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Chuông tăng dần" android:checked="true" />
+
+                <LinearLayout android:id="@+id/rowVoice" android:layout_width="match_parent" android:layout_height="52dp" android:gravity="center_vertical">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Ghi chú giọng nói" android:textSize="16sp" />
+                    <TextView android:id="@+id/tvVoiceValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Không" android:textColor="@color/text_secondary" />
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDelete"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Xoá"
+            android:textColor="@color/danger" />
+        <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Lưu"
+            android:paddingStart="28dp"
+            android:paddingEnd="28dp" />
+    </LinearLayout>
 </LinearLayout>
