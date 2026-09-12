@@ -82,18 +82,6 @@ class AddEditAlarmActivity : AppCompatActivity() {
                     refreshUi()
                 }.show()
         }
-        findViewById<android.view.View>(R.id.rowLabel).setOnClickListener {
-            val et = EditText(this).apply { setText(label); hint = "Tên chuông báo" }
-            MaterialAlertDialogBuilder(this)
-                .setTitle("Tên chuông báo")
-                .setView(et)
-                .setPositiveButton("OK") { _, _ ->
-                    label = et.text.toString().ifBlank { "Báo thức" }
-                    refreshUi()
-                }
-                .setNegativeButton("Hủy", null)
-                .show()
-        }
         findViewById<android.view.View>(R.id.rowVoice).setOnClickListener {
             val et = EditText(this).apply { setText(voiceNote ?: ""); hint = "Lời chào khi thức" }
             MaterialAlertDialogBuilder(this)
@@ -113,6 +101,17 @@ class AddEditAlarmActivity : AppCompatActivity() {
         findViewById<MaterialCheckBox>(R.id.cbAntiSnooze).setOnCheckedChangeListener { _, on -> strictAnti = on }
         findViewById<MaterialCheckBox>(R.id.cbSkipHoliday).setOnCheckedChangeListener { _, on -> skipHolidays = on }
         findViewById<MaterialCheckBox>(R.id.cbCrescendo).setOnCheckedChangeListener { _, on -> useCrescendo = on }
+
+        findViewById<EditText>(R.id.etLabelInline).addTextChangedListener(
+            object : android.text.TextWatcher {
+                override fun afterTextChanged(s: android.text.Editable?) {
+                    // Giữ nguyên chữ đang gõ, kể cả khi đang xóa trắng.
+                    label = s?.toString() ?: ""
+                }
+                override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+                override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            }
+        )
 
         findViewById<MaterialButton>(R.id.btnSchedule).setOnClickListener { save() }
         findViewById<MaterialButton>(R.id.btnSave).setOnClickListener { save() }
@@ -210,7 +209,11 @@ class AddEditAlarmActivity : AppCompatActivity() {
     private fun refreshUi() {
         findViewById<TextView>(R.id.tvBigTime).text = "%02d:%02d".format(hour, minute)
         findViewById<TextView>(R.id.tvNextHint).text = nextAlarmText()
-        findViewById<EditText>(R.id.etLabelInline).setText(label)
+        val etLabel = findViewById<EditText>(R.id.etLabelInline)
+        if (etLabel.text?.toString() != label) {
+            etLabel.setText(label)
+            etLabel.setSelection(etLabel.text?.length ?: 0)
+        }
         findViewById<TextView>(R.id.tvSoundValue).text = when {
             ringtoneUri == "silent:" -> "Im lặng"
             ringtoneUri?.startsWith("app:") == true -> AppRingtones.labelOf(ringtoneUri)

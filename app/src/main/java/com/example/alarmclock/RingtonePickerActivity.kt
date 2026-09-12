@@ -24,7 +24,6 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class RingtonePickerActivity : AppCompatActivity() {
 
-    private var player: MediaPlayer? = null
     private var selectedUri: String = "app:ringtone_huawei"
     private lateinit var adapter: ToneAdapter
 
@@ -33,7 +32,7 @@ class RingtonePickerActivity : AppCompatActivity() {
         val name = queryDisplayName(uri) ?: "Nhạc của bạn"
         CustomRingtones.add(this, uri, name)
         selectedUri = uri.toString()
-        preview(uri.toString())
+        RingtonePreview.play(this, uri.toString(), name)
         rebuild()
     }
 
@@ -63,7 +62,7 @@ class RingtonePickerActivity : AppCompatActivity() {
         rv.layoutManager = LinearLayoutManager(this)
         adapter = ToneAdapter { item ->
             selectedUri = item.uri
-            preview(item.uri)
+            RingtonePreview.play(this, item.uri, item.name)
             adapter.selected = item.uri
             adapter.notifyDataSetChanged()
         }
@@ -71,7 +70,7 @@ class RingtonePickerActivity : AppCompatActivity() {
         rebuild()
 
         findViewById<MaterialButton>(R.id.btnPickOk).setOnClickListener {
-            stopPreview()
+            RingtonePreview.stop()
             setResult(Activity.RESULT_OK, Intent().apply {
                 putExtra(EXTRA_URI, selectedUri)
                 putExtra(EXTRA_LABEL, labelOf(selectedUri))
@@ -110,38 +109,6 @@ class RingtonePickerActivity : AppCompatActivity() {
         adapter.submit(rows, selectedUri)
     }
 
-    private fun preview(uri: String) {
-        stopPreview()
-        if (uri == "silent:" || uri.isBlank()) return
-        try {
-            val attrs = AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ALARM)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build()
-            player = MediaPlayer().apply {
-                setAudioAttributes(attrs)
-                when {
-                    uri.startsWith("app:") -> {
-                        val afd = resources.openRawResourceFd(AppRingtones.rawOf(uri))
-                        setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
-                        afd.close()
-                    }
-                    else -> setDataSource(this@RingtonePickerActivity, Uri.parse(uri))
-                }
-                isLooping = false
-                prepare()
-                start()
-            }
-        } catch (_: Exception) {
-            Toast.makeText(this, "Không phát được file này", Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun stopPreview() {
-        try { player?.stop() } catch (_: Exception) {}
-        try { player?.release() } catch (_: Exception) {}
-        player = null
-    }
 
     private fun queryDisplayName(uri: Uri): String? {
         return try {
@@ -159,7 +126,7 @@ class RingtonePickerActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        stopPreview()
+        RingtonePreview.stop()
         super.onDestroy()
     }
 
