@@ -20,10 +20,6 @@ class AlarmRingService : Service() {
     private var player: MediaPlayer? = null
     private var wakeLock: PowerManager.WakeLock? = null
 
-    companion object {
-        @Volatile private var lastActivityLaunchAt = 0L
-    }
-
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -202,6 +198,7 @@ class AlarmRingService : Service() {
 
     companion object {
         const val ACTION_STOP = "com.example.alarmclock.STOP_RING_SERVICE"
+        @Volatile private var lastActivityLaunchAt = 0L
 
         fun start(ctx: Context, extras: Intent) {
             val i = Intent(ctx, AlarmRingService::class.java).apply {

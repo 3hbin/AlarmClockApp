@@ -1,0 +1,4 @@
+4.28.7 — CI compile fix
+- AlarmRingService.kt: merge 2 companion object thành 1.
+- Khôi phục ACTION_STOP, start(), stop().
+- Giữ lastActivityLaunchAt để chống crash-loop mở lại Activity.
