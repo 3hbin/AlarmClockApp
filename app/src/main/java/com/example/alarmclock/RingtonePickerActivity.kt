@@ -3,7 +3,6 @@ package com.example.alarmclock
 import android.app.Activity
 import android.content.Intent
 import android.media.AudioAttributes
-import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build

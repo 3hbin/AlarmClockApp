@@ -31,30 +31,28 @@ object RingtonePreview {
                 .setUsage(AudioAttributes.USAGE_MEDIA)
                 .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                 .build()
-            val mp = MediaPlayer()
-            mp.setAudioAttributes(attrs)
-            when {
-                uri.startsWith("app:") -> {
-                    val raw = AppRingtones.rawOf(uri)
-                    val created = MediaPlayer.create(app, raw)
-                    if (created != null) {
-                        created.setAudioAttributes(attrs)
-                        created.start()
-                        player = created
-                    } else {
-                        mp.release()
-                        Toast.makeText(context, "Không phát được chuông này", Toast.LENGTH_SHORT).show()
-                        return
-                    }
+
+            if (uri.startsWith("app:")) {
+                val raw = AppRingtones.rawOf(uri)
+                val created = MediaPlayer.create(app, raw)
+                if (created == null) {
+                    Toast.makeText(context, "Không phát được chuông này", Toast.LENGTH_SHORT).show()
+                    return
                 }
-                else -> {
-                    mp.setDataSource(app, Uri.parse(uri))
-                    mp.prepare()
-                    mp.start()
-                    player = mp
-                }
+                created.setAudioAttributes(attrs)
+                created.isLooping = false
+                created.start()
+                player = created
+            } else {
+                val mp = MediaPlayer()
+                mp.setAudioAttributes(attrs)
+                mp.setDataSource(app, Uri.parse(uri))
+                mp.prepare()
+                mp.start()
+                mp.isLooping = false
+                player = mp
             }
-            player?.isLooping = false
+
             val label = name ?: AppRingtones.labelOf(uri)
             Toast.makeText(context, "Đang nghe thử: $label", Toast.LENGTH_SHORT).show()
             handler.postDelayed(stopTask, 8000L)

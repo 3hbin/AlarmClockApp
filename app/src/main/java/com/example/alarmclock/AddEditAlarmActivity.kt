@@ -231,7 +231,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
 
     private fun collectLabel(): String {
         val typed = findViewById<EditText>(R.id.etLabelInline).text?.toString()?.trim()
-        return if (typed.isNullOrBlank()) label else typed
+        return if (typed.isNullOrBlank()) "Báo thức" else typed
     }
 
     private fun save() {
