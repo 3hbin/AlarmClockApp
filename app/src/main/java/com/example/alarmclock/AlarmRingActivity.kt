@@ -173,10 +173,27 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        showOnLockScreenAndTurnScreenOn()
+        try { showOnLockScreenAndTurnScreenOn() } catch (_: Exception) {}
 
-        binding = ActivityAlarmRingBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        try {
+            binding = ActivityAlarmRingBinding.inflate(layoutInflater)
+            setContentView(binding.root)
+        } catch (e: Exception) {
+            android.util.Log.e("AlarmRing", "inflate failed", e)
+            showFallbackRingUi()
+            return
+        }
+        try {
+            binding.root.setOnLongClickListener {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val km = getSystemService(android.app.KeyguardManager::class.java)
+                        km?.requestDismissKeyguard(this, null)
+                    }
+                } catch (_: Exception) {}
+                true
+            }
+        } catch (_: Exception) {}
 
         // Chế độ tập trung khi báo thức (DND + ẩn thanh hệ thống)
         try {
@@ -192,10 +209,12 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         challengeType = intent.getIntExtra("CHALLENGE_TYPE", Alarm.CHALLENGE_NONE)
         isStrictAntiSnooze = intent.getBooleanExtra("STRICT_ANTI_SNOOZE", false)
         voiceNote = intent.getStringExtra("VOICE_NOTE")
-        if (!AppSettings.isPureAlarmOnly(this)) {
-            ttsHelper = TtsHelper(this)
-            voiceNote?.let { ttsHelper?.speakVoiceNote(it) }
-        }
+        try {
+            if (!AppSettings.isPureAlarmOnly(this)) {
+                ttsHelper = TtsHelper(this)
+                voiceNote?.let { ttsHelper?.speakVoiceNote(it) }
+            }
+        } catch (_: Exception) {}
         shakeTargetCount = intent.getIntExtra("SHAKE_TARGET_COUNT", 10)
 
         binding.tvLabel.text = label
@@ -229,6 +248,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             binding.btnSnooze.visibility = View.GONE
         }
 
+        try {
         // Đăng ký nhận Tắt từ notification
         val filter = IntentFilter(AlarmActionReceiver.ACTION_FORCE_STOP_RING)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -288,6 +308,15 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                 return@setOnClickListener
             }
             snoozeAlarm(label)
+        }
+        } catch (e: Exception) {
+            android.util.Log.e("AlarmRing", "onCreate setup failed", e)
+            try {
+                binding.btnDismiss.setOnClickListener { finish() }
+                binding.btnSnooze.setOnClickListener { finish() }
+            } catch (_: Exception) {
+                showFallbackRingUi()
+            }
         }
     }
 
@@ -1105,6 +1134,49 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         sensorManager?.unregisterListener(this)
     }
 
+
+    private fun showFallbackRingUi() {
+        val root = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            gravity = android.view.Gravity.CENTER
+            setBackgroundColor(0xFF0D1B4A.toInt())
+            setPadding(48, 48, 48, 48)
+        }
+        val time = android.widget.TextView(this).apply {
+            text = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
+            textSize = 56f
+            setTextColor(0xFFFFFFFF.toInt())
+            gravity = android.view.Gravity.CENTER
+        }
+        val msg = android.widget.TextView(this).apply {
+            text = intent.getStringExtra("ALARM_LABEL") ?: "Báo thức"
+            textSize = 18f
+            setTextColor(0xFFA5B4FC.toInt())
+            gravity = android.view.Gravity.CENTER
+            setPadding(0, 16, 0, 48)
+        }
+        val dismiss = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Tắt"
+            setOnClickListener {
+                try { AlarmNotificationHelper.cancelRinging(this@AlarmRingActivity) } catch (_: Exception) {}
+                try { stopService(android.content.Intent(this@AlarmRingActivity, AlarmRingService::class.java)) } catch (_: Exception) {}
+                finish()
+            }
+        }
+        val snooze = com.google.android.material.button.MaterialButton(this).apply {
+            text = "Báo lại 5 phút"
+            setOnClickListener {
+                try { snoozeAlarm(intent.getStringExtra("ALARM_LABEL") ?: "Báo thức") } catch (_: Exception) { finish() }
+            }
+        }
+        root.addView(time)
+        root.addView(msg)
+        root.addView(dismiss)
+        root.addView(snooze)
+        setContentView(root)
+        try { startRinging() } catch (_: Exception) {}
+    }
+
     private fun showOnLockScreenAndTurnScreenOn() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
             setShowWhenLocked(true)
@@ -1121,16 +1193,6 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
                 WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
         )
-        // Samsung / khóa màn: yêu cầu bỏ keyguard để hiện activity
-        binding.root.setOnLongClickListener {
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    val km = getSystemService(android.app.KeyguardManager::class.java)
-                    km?.requestDismissKeyguard(this, null)
-                }
-            } catch (_: Exception) {}
-            true
-        }
         // Đánh thức màn hình
         try {
             val pm = getSystemService(POWER_SERVICE) as android.os.PowerManager

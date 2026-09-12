@@ -39,7 +39,7 @@
 
     <style name="Theme.AlarmClock.FullScreen" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowFullscreen">true</item>
-        <item name="android:windowBackground">#12131A</item>
+        <item name="android:windowBackground">#0D1B4A</item>
         <item name="colorPrimary">@color/primary</item>
         <item name="android:fontFamily">@font/noto_sans</item>
         <item name="fontFamily">@font/noto_sans</item>

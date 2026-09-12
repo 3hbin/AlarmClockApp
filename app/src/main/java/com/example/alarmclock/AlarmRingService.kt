@@ -20,6 +20,10 @@ class AlarmRingService : Service() {
     private var player: MediaPlayer? = null
     private var wakeLock: PowerManager.WakeLock? = null
 
+    companion object {
+        @Volatile private var lastActivityLaunchAt = 0L
+    }
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -55,7 +59,12 @@ class AlarmRingService : Service() {
         }
 
         startSound(ringtoneUri)
-        // Thử mở màn reo
+        // Chỉ mở Activity tối đa 1 lần / 20s để tránh crash-loop khi RingActivity lỗi.
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (now - lastActivityLaunchAt < 20_000L) {
+            return START_STICKY
+        }
+        lastActivityLaunchAt = now
         try {
             startActivity(
                 Intent(this, AlarmRingActivity::class.java).apply {
