@@ -186,6 +186,14 @@
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp">
+                <ImageView
+                    android:id="@+id/ivRoutineGemini"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginEnd="8dp"
+                    android:src="@drawable/ic_gemini_sparkle"
+                    android:contentDescription="Gemini"
+                    android:visibility="gone" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Quy trình Gemini" android:textSize="16sp" android:textColor="@color/text_primary" />
                 <TextView android:id="@+id/tvRoutineValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tắt" android:textColor="@color/text_secondary" android:textSize="15sp" />
             </LinearLayout>

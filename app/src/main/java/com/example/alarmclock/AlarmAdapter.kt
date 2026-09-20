@@ -26,6 +26,8 @@ class AlarmAdapter(
         holder.binding.tvTime.text = timeText
         holder.binding.tvLabel.text = alarm.label
         holder.binding.tvRepeat.text = alarm.getRepeatText()
+        holder.binding.ivGemini.visibility =
+            if (alarm.routineOn) android.view.View.VISIBLE else android.view.View.GONE
 
         holder.binding.switchEnabled.setOnCheckedChangeListener(null)
         holder.binding.switchEnabled.setCheckedSilent(alarm.isEnabled)

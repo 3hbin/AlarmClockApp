@@ -43,6 +43,16 @@ class AddEditAlarmActivity : AppCompatActivity() {
         refreshUi()
     }
 
+    private val pickRoutine = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        if (res.resultCode != RESULT_OK) return@registerForActivityResult
+        val d = res.data ?: return@registerForActivityResult
+        routineOn = d.getBooleanExtra("routineOn", routineOn)
+        routineWeather = d.getBooleanExtra("routineWeather", routineWeather)
+        routineCalendar = d.getBooleanExtra("routineCalendar", routineCalendar)
+        routineTasks = d.getBooleanExtra("routineTasks", routineTasks)
+        refreshUi()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_edit_alarm)
@@ -92,11 +102,13 @@ class AddEditAlarmActivity : AppCompatActivity() {
         findViewById<android.view.View>(R.id.rowRepeat).setOnClickListener { pickRepeat() }
         findViewById<android.view.View>(R.id.rowChallenge).setOnClickListener { pickChallenge() }
         findViewById<android.view.View>(R.id.rowRoutine).setOnClickListener {
-            if (!isEdit) {
-                android.widget.Toast.makeText(this, "Bấm Lưu báo thức trước, rồi mở lại để chỉnh quy trình", android.widget.Toast.LENGTH_LONG).show()
-                return@setOnClickListener
-            }
-            startActivity(android.content.Intent(this, GeminiRoutineActivity::class.java).putExtra("ALARM_ID", alarmId))
+            val i = android.content.Intent(this, GeminiRoutineActivity::class.java)
+                .putExtra("ALARM_ID", alarmId)
+                .putExtra("routineOn", routineOn)
+                .putExtra("routineWeather", routineWeather)
+                .putExtra("routineCalendar", routineCalendar)
+                .putExtra("routineTasks", routineTasks)
+            pickRoutine.launch(i)
         }
         findViewById<android.view.View>(R.id.rowSnooze).setOnClickListener {
             MaterialAlertDialogBuilder(this)
@@ -292,6 +304,8 @@ class AddEditAlarmActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.tvChallengeValue).text = Alarm.challengeLabel(challengeType)
         try {
             findViewById<TextView>(R.id.tvRoutineValue).text = if (routineOn) "Bật" else "Tắt"
+            findViewById<android.widget.ImageView>(R.id.ivRoutineGemini).visibility =
+                if (routineOn) android.view.View.VISIBLE else android.view.View.GONE
         } catch (_: Exception) {}
         findViewById<TextView>(R.id.tvSnoozeValue).text = "$snoozeMinutes phút"
         findViewById<SwitchMaterial>(R.id.swVibrate).isChecked = AppSettings.isVibrate(this)

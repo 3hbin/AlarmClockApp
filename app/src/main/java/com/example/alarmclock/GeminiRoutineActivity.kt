@@ -26,7 +26,11 @@ class GeminiRoutineActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         val alarmId = intent.getIntExtra("ALARM_ID", -1)
         val repo = AlarmRepository(this)
-        val alarm = repo.getAlarms().find { it.id == alarmId }
+        val alarm = if (alarmId >= 0) repo.getAlarms().find { it.id == alarmId } else null
+        val startOn = alarm?.routineOn ?: intent.getBooleanExtra("routineOn", false)
+        val startWeather = alarm?.routineWeather ?: intent.getBooleanExtra("routineWeather", true)
+        val startCal = alarm?.routineCalendar ?: intent.getBooleanExtra("routineCalendar", true)
+        val startTasks = alarm?.routineTasks ?: intent.getBooleanExtra("routineTasks", true)
 
         val pad = (16 * resources.displayMetrics.density).toInt()
         val root = LinearLayout(this).apply {
@@ -51,19 +55,19 @@ class GeminiRoutineActivity : AppCompatActivity() {
 
         val cbOn = MaterialCheckBox(this).apply {
             text = "Bật quy trình khi tắt chuông"
-            isChecked = alarm?.routineOn ?: false
+            isChecked = startOn
         }
         val cbWeather = MaterialCheckBox(this).apply {
             text = "Cho tôi biết thông tin thời tiết"
-            isChecked = alarm?.routineWeather ?: true
+            isChecked = startWeather
         }
         val cbCal = MaterialCheckBox(this).apply {
             text = "Cho tôi biết sự kiện trên lịch hôm nay"
-            isChecked = alarm?.routineCalendar ?: true
+            isChecked = startCal
         }
         val cbTask = MaterialCheckBox(this).apply {
             text = "Cho tôi biết những việc cần làm hôm nay"
-            isChecked = alarm?.routineTasks ?: true
+            isChecked = startTasks
         }
         listOf(cbOn, cbWeather, cbCal, cbTask).forEach { cb ->
             body.addView(MaterialCardView(this).apply {
@@ -116,10 +120,15 @@ class GeminiRoutineActivity : AppCompatActivity() {
                         a.routineTasks = cbTask.isChecked
                     }
                     repo.saveAlarms(list)
-                } else {
-                    AppSettings.setMorningBriefing(this@GeminiRoutineActivity, cbOn.isChecked)
                 }
-                setResult(Activity.RESULT_OK)
+                setResult(
+                    Activity.RESULT_OK,
+                    android.content.Intent()
+                        .putExtra("routineOn", cbOn.isChecked)
+                        .putExtra("routineWeather", cbWeather.isChecked)
+                        .putExtra("routineCalendar", cbCal.isChecked)
+                        .putExtra("routineTasks", cbTask.isChecked)
+                )
                 finish()
             }
         }
