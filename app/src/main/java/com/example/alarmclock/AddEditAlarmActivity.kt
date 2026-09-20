@@ -32,6 +32,10 @@ class AddEditAlarmActivity : AppCompatActivity() {
     private var weekendMinute = 0
     private var voiceNote: String? = null
     private var isEdit = false
+    private var routineOn = false
+    private var routineWeather = true
+    private var routineCalendar = true
+    private var routineTasks = true
 
     private val pickTone = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
         if (res.resultCode != RESULT_OK) return@registerForActivityResult
@@ -58,6 +62,10 @@ class AddEditAlarmActivity : AppCompatActivity() {
             strictAnti = existing.isStrictAntiSnooze
             useCrescendo = existing.useCrescendo
             groupName = existing.group.ifBlank { "Chung" }
+            routineOn = existing.routineOn
+            routineWeather = existing.routineWeather
+            routineCalendar = existing.routineCalendar
+            routineTasks = existing.routineTasks
             useWeekendSchedule = existing.useWeekendSchedule
             weekendHour = if (existing.weekendHour >= 0) existing.weekendHour else existing.hour
             weekendMinute = if (existing.weekendMinute >= 0) existing.weekendMinute else existing.minute
@@ -83,6 +91,13 @@ class AddEditAlarmActivity : AppCompatActivity() {
         }
         findViewById<android.view.View>(R.id.rowRepeat).setOnClickListener { pickRepeat() }
         findViewById<android.view.View>(R.id.rowChallenge).setOnClickListener { pickChallenge() }
+        findViewById<android.view.View>(R.id.rowRoutine).setOnClickListener {
+            if (!isEdit) {
+                android.widget.Toast.makeText(this, "Bấm Lưu báo thức trước, rồi mở lại để chỉnh quy trình", android.widget.Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
+            startActivity(android.content.Intent(this, GeminiRoutineActivity::class.java).putExtra("ALARM_ID", alarmId))
+        }
         findViewById<android.view.View>(R.id.rowSnooze).setOnClickListener {
             MaterialAlertDialogBuilder(this)
                 .setTitle("Thời gian báo lại")
@@ -145,6 +160,19 @@ class AddEditAlarmActivity : AppCompatActivity() {
         findViewById<android.view.View>(R.id.btnCloseSheet).setOnClickListener { finish() }
 
         refreshUi()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (isEdit && alarmId >= 0) {
+            AlarmRepository(this).getAlarms().find { it.id == alarmId }?.let { existing ->
+                routineOn = existing.routineOn
+                routineWeather = existing.routineWeather
+                routineCalendar = existing.routineCalendar
+                routineTasks = existing.routineTasks
+            }
+            refreshUi()
+        }
     }
 
     private fun showTimePicker() {
@@ -262,6 +290,9 @@ class AddEditAlarmActivity : AppCompatActivity() {
             else -> "Hàng ngày"
         }
         findViewById<TextView>(R.id.tvChallengeValue).text = Alarm.challengeLabel(challengeType)
+        try {
+            findViewById<TextView>(R.id.tvRoutineValue).text = if (routineOn) "Bật" else "Tắt"
+        } catch (_: Exception) {}
         findViewById<TextView>(R.id.tvSnoozeValue).text = "$snoozeMinutes phút"
         findViewById<SwitchMaterial>(R.id.swVibrate).isChecked = AppSettings.isVibrate(this)
         findViewById<MaterialCheckBox>(R.id.cbAntiSnooze).isChecked = strictAnti
@@ -327,6 +358,10 @@ class AddEditAlarmActivity : AppCompatActivity() {
             existing.useWeekendSchedule = useWeekendSchedule
             existing.weekendHour = if (useWeekendSchedule) weekendHour else -1
             existing.weekendMinute = if (useWeekendSchedule) weekendMinute else -1
+            existing.routineOn = routineOn
+            existing.routineWeather = routineWeather
+            existing.routineCalendar = routineCalendar
+            existing.routineTasks = routineTasks
             existing.voiceNote = voiceNote
             existing.isEnabled = true
             AlarmScheduler.schedule(this, existing)
@@ -348,6 +383,10 @@ class AddEditAlarmActivity : AppCompatActivity() {
                 useWeekendSchedule = useWeekendSchedule,
                 weekendHour = if (useWeekendSchedule) weekendHour else -1,
                 weekendMinute = if (useWeekendSchedule) weekendMinute else -1,
+                routineOn = routineOn,
+                routineWeather = routineWeather,
+                routineCalendar = routineCalendar,
+                routineTasks = routineTasks,
                 voiceNote = voiceNote
             )
             list.add(created)

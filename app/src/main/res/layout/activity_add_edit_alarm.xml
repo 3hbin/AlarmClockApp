@@ -172,11 +172,24 @@
                 android:gravity="center_vertical"
                 android:paddingStart="16dp"
                 android:paddingEnd="16dp">
-                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Quy trình" android:textSize="16sp" android:textColor="@color/text_primary" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Thử thách" android:textSize="16sp" android:textColor="@color/text_primary" />
                 <TextView android:id="@+id/tvChallengeValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Không" android:textColor="@color/text_secondary" android:textSize="15sp" />
             </LinearLayout>
 
             <!-- Snooze -->
+            <LinearLayout
+                android:id="@+id/rowRoutine"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_sheet_row"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Quy trình Gemini" android:textSize="16sp" android:textColor="@color/text_primary" />
+                <TextView android:id="@+id/tvRoutineValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tắt" android:textColor="@color/text_secondary" android:textSize="15sp" />
+            </LinearLayout>
+
             <LinearLayout
                 android:id="@+id/rowSnooze"
                 android:layout_width="match_parent"

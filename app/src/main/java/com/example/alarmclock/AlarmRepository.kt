@@ -37,7 +37,11 @@ class AlarmRepository(context: Context) {
                     group = obj.optString("group", "Chung"),
                     useWeekendSchedule = obj.optBoolean("useWeekendSchedule", false),
                     weekendHour = obj.optInt("weekendHour", -1),
-                    weekendMinute = obj.optInt("weekendMinute", -1)
+                    weekendMinute = obj.optInt("weekendMinute", -1),
+                    routineOn = obj.optBoolean("routineOn", false),
+                    routineWeather = obj.optBoolean("routineWeather", true),
+                    routineCalendar = obj.optBoolean("routineCalendar", true),
+                    routineTasks = obj.optBoolean("routineTasks", true)
                 )
             )
         }
@@ -66,6 +70,10 @@ class AlarmRepository(context: Context) {
                 put("useWeekendSchedule", alarm.useWeekendSchedule)
                 put("weekendHour", alarm.weekendHour)
                 put("weekendMinute", alarm.weekendMinute)
+                put("routineOn", alarm.routineOn)
+                put("routineWeather", alarm.routineWeather)
+                put("routineCalendar", alarm.routineCalendar)
+                put("routineTasks", alarm.routineTasks)
             }
             array.put(obj)
         }

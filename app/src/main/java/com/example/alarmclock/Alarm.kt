@@ -18,7 +18,11 @@ data class Alarm(
     var group: String = "Chung",
     var useWeekendSchedule: Boolean = false,
     var weekendHour: Int = -1,
-    var weekendMinute: Int = -1
+    var weekendMinute: Int = -1,
+    var routineOn: Boolean = false,
+    var routineWeather: Boolean = true,
+    var routineCalendar: Boolean = true,
+    var routineTasks: Boolean = true
 ) {
     companion object {
         const val REPEAT_ONCE = 0

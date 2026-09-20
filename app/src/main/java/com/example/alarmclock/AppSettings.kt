@@ -181,6 +181,11 @@ object AppSettings {
     fun hasExplicitNavStyle(context: Context): Boolean =
         prefs(context).contains("bottom_nav_style")
 
+    fun setRoutineTasksText(context: Context, text: String) =
+        prefs(context).edit().putString("routine_tasks", text).apply()
+    fun getRoutineTasksText(context: Context) =
+        prefs(context).getString("routine_tasks", "") ?: ""
+
     fun setMorningBriefing(context: Context, on: Boolean) =
         prefs(context).edit().putBoolean("morning_briefing", on).apply()
     fun isMorningBriefing(context: Context) =
