@@ -14,7 +14,11 @@ data class Alarm(
     var skipHolidays: Boolean = false,
     var isStrictAntiSnooze: Boolean = false,
     var voiceNote: String? = null,
-    var useCrescendo: Boolean = true
+    var useCrescendo: Boolean = true,
+    var group: String = "Chung",
+    var useWeekendSchedule: Boolean = false,
+    var weekendHour: Int = -1,
+    var weekendMinute: Int = -1
 ) {
     companion object {
         const val REPEAT_ONCE = 0
@@ -52,11 +56,25 @@ data class Alarm(
         }
     }
 
-    fun getRepeatText(): String = when (repeatMode) {
-        REPEAT_ONCE -> "Chỉ 1 lần"
-        REPEAT_DAILY -> "Hàng ngày"
-        REPEAT_WEEKDAYS -> "Thứ 2 - Thứ 6"
-        else -> "Hàng ngày"
+    fun hourFor(cal: java.util.Calendar): Pair<Int, Int> {
+        val dow = cal.get(java.util.Calendar.DAY_OF_WEEK)
+        val weekend = dow == java.util.Calendar.SATURDAY || dow == java.util.Calendar.SUNDAY
+        return if (useWeekendSchedule && weekend && weekendHour >= 0)
+            weekendHour to weekendMinute.coerceIn(0, 59)
+        else hour to minute
+    }
+
+    fun getRepeatText(): String {
+        val base = when (repeatMode) {
+            REPEAT_ONCE -> "Chỉ 1 lần"
+            REPEAT_DAILY -> "Hàng ngày"
+            REPEAT_WEEKDAYS -> "Thứ 2 - Thứ 6"
+            else -> "Hàng ngày"
+        }
+        val g = group.trim().ifBlank { "Chung" }
+        val we = if (useWeekendSchedule && weekendHour >= 0)
+            " · CN ${"%02d:%02d".format(weekendHour, weekendMinute)}" else ""
+        return if (g != "Chung") "$g · $base$we" else "$base$we"
     }
 
     fun getChallengeText(): String = challengeLabel(challengeType)

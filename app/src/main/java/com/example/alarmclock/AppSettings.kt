@@ -181,6 +181,11 @@ object AppSettings {
     fun hasExplicitNavStyle(context: Context): Boolean =
         prefs(context).contains("bottom_nav_style")
 
+    fun setMorningBriefing(context: Context, on: Boolean) =
+        prefs(context).edit().putBoolean("morning_briefing", on).apply()
+    fun isMorningBriefing(context: Context) =
+        prefs(context).getBoolean("morning_briefing", true)
+
     fun getBottomNavStyle(context: Context): Int {
         // Cố định Persistent — mượt, không lag/crash
         return NAV_PERSISTENT

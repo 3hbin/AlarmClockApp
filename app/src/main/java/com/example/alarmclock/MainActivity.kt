@@ -1099,10 +1099,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun showAlarmHistoryDialog() {
         val lines = AlarmHistory.formatLines(this)
-        val msg = if (lines.isEmpty()) "Chưa có nhật ký.\nBáo thức tắt/báo lại sẽ được ghi tại đây."
-        else lines.take(40).joinToString("\n")
+        val summary = AlarmHistory.weekSummary(this)
+        val msg = if (lines.isEmpty()) "$summary\n\nChưa có nhật ký.\nBáo thức tắt/báo lại sẽ được ghi tại đây."
+        else "$summary\n\n" + lines.take(40).joinToString("\n")
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("📋 Nhật ký báo thức")
+            .setTitle("Nhật ký báo thức")
             .setMessage(msg)
             .setPositiveButton("Đóng", null)
             .setNeutralButton("Xóa nhật ký") { _, _ ->

@@ -33,7 +33,11 @@ class AlarmRepository(context: Context) {
                     skipHolidays = obj.optBoolean("skipHolidays", false),
                     isStrictAntiSnooze = obj.optBoolean("isStrictAntiSnooze", false),
                     voiceNote = if (obj.has("voiceNote") && !obj.isNull("voiceNote")) obj.getString("voiceNote") else null,
-                    useCrescendo = obj.optBoolean("useCrescendo", true)
+                    useCrescendo = obj.optBoolean("useCrescendo", true),
+                    group = obj.optString("group", "Chung"),
+                    useWeekendSchedule = obj.optBoolean("useWeekendSchedule", false),
+                    weekendHour = obj.optInt("weekendHour", -1),
+                    weekendMinute = obj.optInt("weekendMinute", -1)
                 )
             )
         }
@@ -58,6 +62,10 @@ class AlarmRepository(context: Context) {
                 put("isStrictAntiSnooze", alarm.isStrictAntiSnooze)
                 put("voiceNote", alarm.voiceNote)
                 put("useCrescendo", alarm.useCrescendo)
+                put("group", alarm.group)
+                put("useWeekendSchedule", alarm.useWeekendSchedule)
+                put("weekendHour", alarm.weekendHour)
+                put("weekendMinute", alarm.weekendMinute)
             }
             array.put(obj)
         }

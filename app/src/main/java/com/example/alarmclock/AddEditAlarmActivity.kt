@@ -26,6 +26,10 @@ class AddEditAlarmActivity : AppCompatActivity() {
     private var skipHolidays = false
     private var strictAnti = false
     private var useCrescendo = true
+    private var groupName = "Chung"
+    private var useWeekendSchedule = false
+    private var weekendHour = 8
+    private var weekendMinute = 0
     private var voiceNote: String? = null
     private var isEdit = false
 
@@ -53,6 +57,10 @@ class AddEditAlarmActivity : AppCompatActivity() {
             skipHolidays = existing.skipHolidays
             strictAnti = existing.isStrictAntiSnooze
             useCrescendo = existing.useCrescendo
+            groupName = existing.group.ifBlank { "Chung" }
+            useWeekendSchedule = existing.useWeekendSchedule
+            weekendHour = if (existing.weekendHour >= 0) existing.weekendHour else existing.hour
+            weekendMinute = if (existing.weekendMinute >= 0) existing.weekendMinute else existing.minute
             voiceNote = existing.voiceNote
         } else {
             val now = Calendar.getInstance()
@@ -101,6 +109,20 @@ class AddEditAlarmActivity : AppCompatActivity() {
         findViewById<MaterialCheckBox>(R.id.cbAntiSnooze).setOnCheckedChangeListener { _, on -> strictAnti = on }
         findViewById<MaterialCheckBox>(R.id.cbSkipHoliday).setOnCheckedChangeListener { _, on -> skipHolidays = on }
         findViewById<MaterialCheckBox>(R.id.cbCrescendo).setOnCheckedChangeListener { _, on -> useCrescendo = on }
+        findViewById<android.view.View>(R.id.rowGroup).setOnClickListener { pickGroup() }
+        findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbWeekend).setOnCheckedChangeListener { _, on ->
+            useWeekendSchedule = on
+            refreshUi()
+        }
+        findViewById<android.view.View>(R.id.rowWeekendTime).setOnClickListener {
+            if (!useWeekendSchedule) {
+                android.widget.Toast.makeText(this, "Bật giờ cuối tuần trước", android.widget.Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            android.app.TimePickerDialog(this, { _, h, m ->
+                weekendHour = h; weekendMinute = m; refreshUi()
+            }, weekendHour, weekendMinute, true).show()
+        }
 
         findViewById<EditText>(R.id.etLabelInline).addTextChangedListener(
             object : android.text.TextWatcher {
@@ -226,7 +248,37 @@ class AddEditAlarmActivity : AppCompatActivity() {
         findViewById<MaterialCheckBox>(R.id.cbAntiSnooze).isChecked = strictAnti
         findViewById<MaterialCheckBox>(R.id.cbSkipHoliday).isChecked = skipHolidays
         findViewById<MaterialCheckBox>(R.id.cbCrescendo).isChecked = useCrescendo
+        try { findViewById<android.widget.TextView>(R.id.tvGroupValue).text = groupName } catch (_: Exception) {}
+        try { findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbWeekend).isChecked = useWeekendSchedule } catch (_: Exception) {}
+        try {
+            findViewById<android.widget.TextView>(R.id.tvWeekendValue).text =
+                if (useWeekendSchedule) "%02d:%02d".format(weekendHour, weekendMinute) else "Giống ngày thường"
+        } catch (_: Exception) {}
         findViewById<TextView>(R.id.tvVoiceValue).text = voiceNote ?: "Không"
+    }
+
+    private fun pickGroup() {
+        val options = arrayOf("Chung", "Học", "Tập", "Làm việc", "Khác")
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("Nhóm báo thức")
+            .setItems(options) { _, which ->
+                if (options[which] == "Khác") {
+                    val et = android.widget.EditText(this).apply { setText(groupName); hint = "Tên nhóm" }
+                    com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                        .setTitle("Tên nhóm")
+                        .setView(et)
+                        .setPositiveButton("OK") { _, _ ->
+                            groupName = et.text.toString().trim().ifBlank { "Chung" }
+                            refreshUi()
+                        }
+                        .setNegativeButton("Hủy", null)
+                        .show()
+                } else {
+                    groupName = options[which]
+                    refreshUi()
+                }
+            }
+            .show()
     }
 
     private fun collectLabel(): String {
@@ -252,6 +304,10 @@ class AddEditAlarmActivity : AppCompatActivity() {
             existing.skipHolidays = skipHolidays
             existing.isStrictAntiSnooze = strictAnti
             existing.useCrescendo = useCrescendo
+            existing.group = groupName
+            existing.useWeekendSchedule = useWeekendSchedule
+            existing.weekendHour = if (useWeekendSchedule) weekendHour else -1
+            existing.weekendMinute = if (useWeekendSchedule) weekendMinute else -1
             existing.voiceNote = voiceNote
             existing.isEnabled = true
             AlarmScheduler.schedule(this, existing)
@@ -269,6 +325,10 @@ class AddEditAlarmActivity : AppCompatActivity() {
                 skipHolidays = skipHolidays,
                 isStrictAntiSnooze = strictAnti,
                 useCrescendo = useCrescendo,
+                group = groupName,
+                useWeekendSchedule = useWeekendSchedule,
+                weekendHour = if (useWeekendSchedule) weekendHour else -1,
+                weekendMinute = if (useWeekendSchedule) weekendMinute else -1,
                 voiceNote = voiceNote
             )
             list.add(created)
@@ -276,6 +336,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
         }
         repo.saveAlarms(list)
         try { CloudSyncHelper.pushAlarms(this, list) {} } catch (_: Exception) {}
+        try { WidgetUpdateHelper.refreshAll(this) } catch (_: Exception) {}
         finish()
     }
 

@@ -68,6 +68,10 @@ object CloudSyncHelper {
                         "isStrictAntiSnooze" to a.isStrictAntiSnooze,
                         "voiceNote" to (a.voiceNote ?: ""),
                         "useCrescendo" to a.useCrescendo,
+                        "group" to a.group,
+                        "useWeekendSchedule" to a.useWeekendSchedule,
+                        "weekendHour" to a.weekendHour,
+                        "weekendMinute" to a.weekendMinute,
                         "ringtoneUri" to (a.ringtoneUri ?: "")
                     )
                 }
@@ -114,7 +118,7 @@ object CloudSyncHelper {
                                 skipHolidays = m["skipHolidays"] as? Boolean ?: false,
                                 isStrictAntiSnooze = m["isStrictAntiSnooze"] as? Boolean ?: false,
                                 voiceNote = (m["voiceNote"] as? String)?.takeIf { it.isNotBlank() },
-                                useCrescendo = m["useCrescendo"] as? Boolean ?: true
+                                useCrescendo = m["useCrescendo"] as? Boolean ?: true, group = m["group"] as? String ?: "Chung", useWeekendSchedule = m["useWeekendSchedule"] as? Boolean ?: false, weekendHour = (m["weekendHour"] as? Number)?.toInt() ?: -1, weekendMinute = (m["weekendMinute"] as? Number)?.toInt() ?: -1
                             )
                         } catch (_: Exception) { null }
                     } ?: emptyList()

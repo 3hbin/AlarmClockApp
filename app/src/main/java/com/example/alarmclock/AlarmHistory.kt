@@ -51,6 +51,17 @@ object AlarmHistory {
         context.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().putString(KEY, "[]").apply()
     }
 
+    fun weekSummary(context: Context): String {
+        val weekMs = 7L * 24 * 60 * 60 * 1000
+        val now = System.currentTimeMillis()
+        val week = load(context).filter { now - it.timeMs <= weekMs }
+        val dismiss = week.count { it.action == "dismiss" }
+        val snooze = week.count { it.action == "snooze" }
+        val total = dismiss + snooze
+        val pct = if (total == 0) 0 else dismiss * 100 / total
+        return "Tuần này: tắt đúng $dismiss lần · báo lại $snooze lần · đúng giờ $pct%"
+    }
+
     fun formatLines(context: Context): List<String> {
         val fmt = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault())
         return load(context).map { e ->

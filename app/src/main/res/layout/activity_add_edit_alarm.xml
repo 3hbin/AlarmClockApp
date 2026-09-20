@@ -139,6 +139,15 @@
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:text="Tùy chọn nâng cao" android:textStyle="bold" android:paddingTop="8dp" android:paddingBottom="4dp" />
+                <LinearLayout android:id="@+id/rowGroup" android:layout_width="match_parent" android:layout_height="52dp" android:gravity="center_vertical">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Nhóm" android:textSize="16sp" />
+                    <TextView android:id="@+id/tvGroupValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Chung" android:textColor="@color/text_secondary" />
+                </LinearLayout>
+                <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/cbWeekend" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Giờ khác cho T7 / CN" />
+                <LinearLayout android:id="@+id/rowWeekendTime" android:layout_width="match_parent" android:layout_height="52dp" android:gravity="center_vertical">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Giờ cuối tuần" android:textSize="16sp" />
+                    <TextView android:id="@+id/tvWeekendValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Giống ngày thường" android:textColor="@color/text_secondary" />
+                </LinearLayout>
                 <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/cbAntiSnooze" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Chống báo lại" />
                 <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/cbSkipHoliday" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Bỏ qua ngày lễ" />
                 <com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/cbCrescendo" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Chuông tăng dần" android:checked="true" />

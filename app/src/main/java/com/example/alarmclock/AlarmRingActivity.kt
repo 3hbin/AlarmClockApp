@@ -1001,6 +1001,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                 intent.getIntExtra("ALARM_HOUR", 0),
                 intent.getIntExtra("ALARM_MINUTE", 0), "dismiss")
         } catch (_: Exception) {}
+        try { MorningBriefing.speakAfterDismiss(this) } catch (_: Exception) {}
         try { RippleRingsEffect.stop(this) } catch (_: Exception) {}
         stopRinging()
         AlarmNotificationHelper.cancelRinging(this)

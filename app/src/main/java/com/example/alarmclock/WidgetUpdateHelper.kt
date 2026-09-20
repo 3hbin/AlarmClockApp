@@ -50,15 +50,25 @@ object WidgetUpdateHelper {
 
     fun nextTrigger(alarm: Alarm): Long {
         val cal = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, alarm.hour)
-            set(Calendar.MINUTE, alarm.minute)
             set(Calendar.SECOND, 0)
             set(Calendar.MILLISECOND, 0)
-            if (timeInMillis <= System.currentTimeMillis()) add(Calendar.DAY_OF_YEAR, 1)
+            fun applyHour() {
+                val (h, m) = alarm.hourFor(this)
+                set(Calendar.HOUR_OF_DAY, h)
+                set(Calendar.MINUTE, m)
+            }
+            applyHour()
+            if (timeInMillis <= System.currentTimeMillis()) {
+                add(Calendar.DAY_OF_YEAR, 1)
+                applyHour()
+            }
             if (alarm.repeatMode == Alarm.REPEAT_WEEKDAYS) {
                 while (get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY ||
                     get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY
-                ) add(Calendar.DAY_OF_YEAR, 1)
+                ) {
+                    add(Calendar.DAY_OF_YEAR, 1)
+                    applyHour()
+                }
             }
         }
         return cal.timeInMillis
