@@ -4,14 +4,26 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.speech.tts.Voice
 import java.util.Locale
 
 class TtsHelper(context: Context) : TextToSpeech.OnInitListener {
     private val app = context.applicationContext
-    private var tts: TextToSpeech? = TextToSpeech(app, this)
+    private val main = Handler(Looper.getMainLooper())
+    private var tts: TextToSpeech? = null
     private var ready = false
+    private val pending = ArrayDeque<String>()
+    var onDone: (() -> Unit)? = null
+
+    init {
+        main.post {
+            tts = TextToSpeech(app, this)
+        }
+    }
 
     override fun onInit(status: Int) {
         if (status != TextToSpeech.SUCCESS) return
@@ -29,7 +41,13 @@ class TtsHelper(context: Context) : TextToSpeech.OnInitListener {
                 .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                 .build()
         )
+        engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {}
+            override fun onError(utteranceId: String?) { main.post { onDone?.invoke() } }
+            override fun onDone(utteranceId: String?) { main.post { onDone?.invoke() } }
+        })
         ready = true
+        flush()
     }
 
     private fun pickMaleVoice(engine: TextToSpeech) {
@@ -45,28 +63,36 @@ class TtsHelper(context: Context) : TextToSpeech.OnInitListener {
             val n = v.name.lowercase()
             !n.contains("female") && !n.contains("nu") && !n.contains("vid")
         }
-        if (male != null) {
-            try { engine.voice = male } catch (_: Exception) {}
-        }
+        if (male != null) try { engine.voice = male } catch (_: Exception) {}
     }
 
     fun speak(text: String) {
-        if (!ready || text.isBlank()) return
-        try {
-            val am = app.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            val max = am.getStreamMaxVolume(AudioManager.STREAM_ALARM)
-            if (max > 0) {
-                val now = am.getStreamVolume(AudioManager.STREAM_ALARM)
-                if (now < (max * 3) / 4) {
-                    am.setStreamVolume(AudioManager.STREAM_ALARM, max, 0)
-                }
-            }
-        } catch (_: Exception) {}
-        val params = Bundle().apply {
-            putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
-            putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_ALARM)
+        if (text.isBlank()) return
+        main.post {
+            pending.addLast(text)
+            flush()
         }
-        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, params, "alarm_tts")
+    }
+
+    private fun flush() {
+        if (!ready) return
+        val engine = tts ?: return
+        while (pending.isNotEmpty()) {
+            val text = pending.removeFirst()
+            try {
+                val am = app.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                val max = am.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+                if (max > 0) {
+                    val now = am.getStreamVolume(AudioManager.STREAM_ALARM)
+                    if (now < (max * 3) / 4) am.setStreamVolume(AudioManager.STREAM_ALARM, max, 0)
+                }
+            } catch (_: Exception) {}
+            val params = Bundle().apply {
+                putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
+                putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_ALARM)
+            }
+            engine.speak(text, TextToSpeech.QUEUE_ADD, params, "alarm_tts_${System.currentTimeMillis()}")
+        }
     }
 
     fun speakVoiceNote(note: String?) {
@@ -74,8 +100,11 @@ class TtsHelper(context: Context) : TextToSpeech.OnInitListener {
     }
 
     fun shutdown() {
-        tts?.stop()
-        tts?.shutdown()
-        tts = null
+        main.post {
+            tts?.stop()
+            tts?.shutdown()
+            tts = null
+            ready = false
+        }
     }
 }

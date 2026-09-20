@@ -1,6 +1,8 @@
 package com.example.alarmclock
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.provider.CalendarContract
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -14,41 +16,40 @@ object MorningBriefing {
         val alarm = if (alarmId >= 0) {
             try { AlarmRepository(app).getAlarms().find { it.id == alarmId } } catch (_: Exception) { null }
         } else null
-        val on = alarm?.routineOn == true || (alarm == null && AppSettings.isMorningBriefing(app))
+        val on = alarm?.routineOn == true || AppSettings.isMorningBriefing(app)
         if (!on) return
+
         val wantWeather = alarm?.routineWeather ?: true
         val wantCal = alarm?.routineCalendar ?: true
         val wantTasks = alarm?.routineTasks ?: true
+
         thread {
-            try {
-                val day = SimpleDateFormat("EEEE, dd/MM", Locale("vi", "VN")).format(Date())
-                val text = buildString {
-                    append("Xin chào. Hôm nay $day. ")
-                    if (wantWeather) {
-                        val w = try { WeatherHelper.fetchWeatherSummary("Hanoi") } catch (_: Exception) { "" }
-                        if (w.isNotBlank()) append(w).append(" ")
-                    }
-                    if (wantCal) {
-                        val ev = todayEvents(app)
-                        append(if (ev.isNotBlank()) "Lịch hôm nay: $ev. " else "Hôm nay không có sự kiện lịch. ")
-                    }
-                    if (wantTasks) {
-                        val tasks = AppSettings.getRoutineTasksText(app).trim()
-                        val note = alarm?.voiceNote?.trim().orEmpty()
-                        when {
-                            tasks.isNotBlank() -> append("Việc cần làm: $tasks. ")
-                            note.isNotBlank() -> append(note).append(" ")
-                            else -> append("Chưa đặt việc cần làm. ")
-                        }
-                    }
-                    append(nextAlarmText(app))
+            val day = SimpleDateFormat("EEEE, dd/MM", Locale("vi", "VN")).format(Date())
+            val text = buildString {
+                append("Xin chào. Hôm nay $day. ")
+                if (wantWeather) {
+                    val w = try { WeatherHelper.fetchWeatherSummary("Hanoi") } catch (_: Exception) { "" }
+                    if (w.isNotBlank()) append(w).append(" ")
+                    else append("Chưa lấy được thời tiết. ")
                 }
-                val tts = TtsHelper(app)
-                Thread.sleep(700)
-                tts.speak(text)
-                Thread.sleep(22_000)
-                tts.shutdown()
-            } catch (_: Exception) {}
+                if (wantCal) {
+                    val ev = todayEvents(app)
+                    append(if (ev.isNotBlank()) "Lịch hôm nay: $ev. " else "Hôm nay không có sự kiện lịch. ")
+                }
+                if (wantTasks) {
+                    val tasks = AppSettings.getRoutineTasksText(app).trim()
+                    val note = alarm?.voiceNote?.trim().orEmpty()
+                    when {
+                        tasks.isNotBlank() -> append("Việc cần làm: $tasks. ")
+                        note.isNotBlank() -> append(note).append(" ")
+                        else -> append("Chưa đặt việc cần làm. ")
+                    }
+                }
+                append(nextAlarmText(app))
+            }
+            Handler(Looper.getMainLooper()).post {
+                GeminiSpeakService.start(app, text)
+            }
         }
     }
 
@@ -58,9 +59,8 @@ object MorningBriefing {
                 set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0)
             }.timeInMillis
             val end = start + 24L * 60 * 60 * 1000
-            val uri = CalendarContract.Events.CONTENT_URI
             context.contentResolver.query(
-                uri,
+                CalendarContract.Events.CONTENT_URI,
                 arrayOf(CalendarContract.Events.TITLE, CalendarContract.Events.DTSTART),
                 "${CalendarContract.Events.DTSTART}>=? AND ${CalendarContract.Events.DTSTART}<? AND ${CalendarContract.Events.DELETED}=0",
                 arrayOf(start.toString(), end.toString()),
@@ -73,9 +73,7 @@ object MorningBriefing {
                 }
                 titles.joinToString(", ")
             } ?: ""
-        } catch (_: Exception) {
-            ""
-        }
+        } catch (_: Exception) { "" }
     }
 
     private fun nextAlarmText(context: Context): String {
