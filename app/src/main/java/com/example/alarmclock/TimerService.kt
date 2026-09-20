@@ -119,6 +119,7 @@ class TimerService : Service() {
         isActive = false
         remainingMs = 0
         timeLeftMs = 0
+        TonePlayer.stop()
         stopForeground(STOP_FOREGROUND_REMOVE)
         NotificationManagerCompat.from(this).cancel(AlarmNotificationHelper.NOTIF_ID_TIMER)
     }
@@ -184,18 +185,14 @@ class TimerService : Service() {
     }
 
     private fun playFinishSound() {
-        try {
-            val mp = android.media.MediaPlayer.create(this, R.raw.ringtone_huawei)
-            mp?.apply {
-                isLooping = true
-                start()
-            }
-        } catch (_: Exception) {}
+        // Một nguồn duy nhất (Oz). Không tạo MediaPlayer riêng — Tắt phải dừng được.
+        TonePlayer.playAppRaw(this, R.raw.ringtone_oz, loop = true)
     }
 
     override fun onDestroy() {
         countDownTimer?.cancel()
         isActive = false
+        TonePlayer.stop()
         super.onDestroy()
     }
 
