@@ -24,6 +24,7 @@ object AppRingtones {
     val all get() = (alarms + sleep).distinctBy { it.id }
 
     const val DEFAULT_ALARM = "app:ringtone_huawei"
+    const val DEFAULT_TIMER = "app:ringtone_oz"
 
     fun rawOf(uri: String?): Int {
         val key = uri?.removePrefix("app:")?.substringAfterLast('/') ?: return R.raw.ringtone_huawei

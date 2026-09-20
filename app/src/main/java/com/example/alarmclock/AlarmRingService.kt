@@ -133,7 +133,13 @@ class AlarmRingService : Service() {
     private fun startSound(ringtoneUri: String?) {
         try { player?.release() } catch (_: Exception) {}
         player = null
+        TonePlayer.stop()
         if (ringtoneUri == "silent:") return
+        val isApp = ringtoneUri.isNullOrBlank() || ringtoneUri.startsWith("app:")
+        if (!isApp) {
+            TonePlayer.playUri(this, ringtoneUri, loop = true, preview = false)
+            return
+        }
         try {
             val attrs = AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_ALARM)
@@ -141,16 +147,9 @@ class AlarmRingService : Service() {
                 .build()
             val mp = MediaPlayer()
             mp.setAudioAttributes(attrs)
-            when {
-                ringtoneUri != null && (ringtoneUri.startsWith("content:") || ringtoneUri.startsWith("file:") || ringtoneUri.startsWith("android.resource:")) -> {
-                    mp.setDataSource(this, android.net.Uri.parse(ringtoneUri))
-                }
-                else -> {
-                    val afd = resources.openRawResourceFd(AppRingtones.rawOf(ringtoneUri))
-                    mp.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
-                    afd.close()
-                }
-            }
+            val afd = resources.openRawResourceFd(AppRingtones.rawOf(ringtoneUri))
+            mp.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
+            afd.close()
             mp.isLooping = true
             mp.prepare()
             if (useCrescendoNow) {
@@ -160,12 +159,7 @@ class AlarmRingService : Service() {
             mp.start()
             player = mp
         } catch (_: Exception) {
-            try {
-                player = MediaPlayer.create(this, R.raw.ringtone_huawei)?.apply {
-                    isLooping = true
-                    start()
-                }
-            } catch (_: Exception) {}
+            TonePlayer.playAppRaw(this, R.raw.ringtone_oz, loop = true)
         }
     }
 
@@ -205,6 +199,7 @@ class AlarmRingService : Service() {
 
     private fun stopSelfSafe() {
         crescendoHandler?.removeCallbacksAndMessages(null)
+        TonePlayer.stop()
         try { player?.stop() } catch (_: Exception) {}
         try { player?.release() } catch (_: Exception) {}
         player = null

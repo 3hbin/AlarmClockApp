@@ -81,6 +81,8 @@ object AlarmNotificationHelper {
         ).apply {
             description = "Giữ chạy nền — có nút dừng"
             setShowBadge(false)
+            setSound(null, null)
+            enableVibration(false)
         }
         nm.createNotificationChannel(chrono)
     }

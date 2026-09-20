@@ -106,6 +106,7 @@ class TimerActivity : AppCompatActivity() {
         }
 
         binding.btnStopRing.setOnClickListener {
+            TonePlayer.stop()
             stopRinging()
             binding.ringLayout.visibility = android.view.View.GONE
             resetTimer()
@@ -146,12 +147,21 @@ class TimerActivity : AppCompatActivity() {
         val hourPicker = NumberPicker(this).apply { minValue = 0; maxValue = 23; value = 0 }
         val minPicker = NumberPicker(this).apply { minValue = 0; maxValue = 59; value = 5 }
         val secPicker = NumberPicker(this).apply { minValue = 0; maxValue = 59; value = 0 }
-        layout.addView(hourPicker)
-        layout.addView(android.widget.TextView(this).apply { text = " giờ " })
-        layout.addView(minPicker)
-        layout.addView(android.widget.TextView(this).apply { text = " phút " })
-        layout.addView(secPicker)
-        layout.addView(android.widget.TextView(this).apply { text = " giây" })
+        fun col(p: NumberPicker, label: String): android.widget.LinearLayout {
+            return android.widget.LinearLayout(this).apply {
+                orientation = android.widget.LinearLayout.VERTICAL
+                gravity = android.view.Gravity.CENTER
+                addView(android.widget.TextView(this@TimerActivity).apply {
+                    text = label
+                    gravity = android.view.Gravity.CENTER
+                    textSize = 12f
+                })
+                addView(p)
+            }
+        }
+        layout.addView(col(hourPicker, "Giờ"))
+        layout.addView(col(minPicker, "Phút"))
+        layout.addView(col(secPicker, "Giây"))
 
         MaterialAlertDialogBuilder(this)
             .setTitle("Chọn thời gian")
@@ -234,23 +244,8 @@ class TimerActivity : AppCompatActivity() {
     }
 
     private fun startRinging() {
-        try {
-            val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-            mediaPlayer = MediaPlayer().apply {
-                setDataSource(this@TimerActivity, uri)
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build()
-                )
-                isLooping = true
-                prepare()
-                start()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+        // Chỉ Oz trong app — không gọi chuông mặc định hệ thống (tránh kêu 2 lớp).
+        TonePlayer.playAppRaw(this, R.raw.ringtone_oz, loop = true)
         vibrator = getSystemService(VIBRATOR_SERVICE) as Vibrator
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             vibrator?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 500, 500), 0))
@@ -261,8 +256,9 @@ class TimerActivity : AppCompatActivity() {
     }
 
     private fun stopRinging() {
-        mediaPlayer?.stop()
-        mediaPlayer?.release()
+        TonePlayer.stop()
+        try { mediaPlayer?.stop() } catch (_: Exception) {}
+        try { mediaPlayer?.release() } catch (_: Exception) {}
         mediaPlayer = null
         vibrator?.cancel()
         flashHelper?.stopFlashing()
