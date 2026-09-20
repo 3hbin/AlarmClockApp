@@ -187,6 +187,46 @@
             android:layout_height="wrap_content"
             android:text="Chuông tăng dần (crescendo)" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nhóm"
+            android:textStyle="bold"
+            android:layout_marginTop="12dp" />
+        <RadioGroup
+            android:id="@+id/rgGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <RadioButton android:id="@+id/rbGroupChung" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Chung" android:checked="true" />
+            <RadioButton android:id="@+id/rbGroupHoc" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Học" />
+            <RadioButton android:id="@+id/rbGroupTap" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Tập" />
+            <RadioButton android:id="@+id/rbGroupWork" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Làm việc" />
+        </RadioGroup>
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/cbWeekend"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Giờ khác cho Thứ 7 / Chủ nhật" />
+        <LinearLayout
+            android:id="@+id/rowWeekendTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Giờ cuối tuần" />
+            <TextView
+                android:id="@+id/tvWeekendTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="08:00" />
+        </LinearLayout>
+
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

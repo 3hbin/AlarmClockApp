@@ -81,6 +81,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
         findViewById<SwitchMaterial>(R.id.swVibrate).setOnCheckedChangeListener { _, on ->
             AppSettings.setVibrate(this, on)
         }
+        findViewById<android.view.View>(R.id.rowRepeat).setOnClickListener { pickRepeat() }
         findViewById<android.view.View>(R.id.rowChallenge).setOnClickListener { pickChallenge() }
         findViewById<android.view.View>(R.id.rowSnooze).setOnClickListener {
             MaterialAlertDialogBuilder(this)
@@ -116,8 +117,8 @@ class AddEditAlarmActivity : AppCompatActivity() {
         }
         findViewById<android.view.View>(R.id.rowWeekendTime).setOnClickListener {
             if (!useWeekendSchedule) {
-                android.widget.Toast.makeText(this, "Bật giờ cuối tuần trước", android.widget.Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
+                useWeekendSchedule = true
+                findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbWeekend).isChecked = true
             }
             android.app.TimePickerDialog(this, { _, h, m ->
                 weekendHour = h; weekendMinute = m; refreshUi()
@@ -199,6 +200,19 @@ class AddEditAlarmActivity : AppCompatActivity() {
         }
     }
 
+    private fun pickRepeat() {
+        val labels = arrayOf("Chỉ 1 lần", "Hàng ngày", "Thứ 2 – Thứ 6")
+        val modes = intArrayOf(Alarm.REPEAT_ONCE, Alarm.REPEAT_DAILY, Alarm.REPEAT_WEEKDAYS)
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Lặp lại")
+            .setItems(labels) { _, which ->
+                repeatMode = modes[which]
+                applyChipsFromMode()
+                refreshUi()
+            }
+            .show()
+    }
+
     private fun pickChallenge() {
         val types = listOf(
             Alarm.CHALLENGE_NONE, Alarm.CHALLENGE_MATH, Alarm.CHALLENGE_SHAKE,
@@ -241,6 +255,11 @@ class AddEditAlarmActivity : AppCompatActivity() {
             ringtoneUri?.startsWith("app:") == true -> AppRingtones.labelOf(ringtoneUri)
             else -> CustomRingtones.list(this).find { it.uri == ringtoneUri }?.name
                 ?: "Nhạc chuông tùy chọn"
+        }
+        findViewById<TextView>(R.id.tvRepeatValue).text = when (repeatMode) {
+            Alarm.REPEAT_ONCE -> "Chỉ 1 lần"
+            Alarm.REPEAT_WEEKDAYS -> "Thứ 2 – Thứ 6"
+            else -> "Hàng ngày"
         }
         findViewById<TextView>(R.id.tvChallengeValue).text = Alarm.challengeLabel(challengeType)
         findViewById<TextView>(R.id.tvSnoozeValue).text = "$snoozeMinutes phút"

@@ -477,9 +477,16 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun showAddDialog() = showAlarmEditor(null)
+    private fun showAddDialog() {
+        startActivity(android.content.Intent(this, AddEditAlarmActivity::class.java))
+    }
 
-    private fun showEditDialog(alarm: Alarm) = showAlarmEditor(alarm)
+    private fun showEditDialog(alarm: Alarm) {
+        startActivity(
+            android.content.Intent(this, AddEditAlarmActivity::class.java)
+                .putExtra("ALARM_ID", alarm.id)
+        )
+    }
 
     /** null = thêm mới; có alarm = sửa. */
     private fun showAlarmEditor(existing: Alarm?) {
@@ -527,6 +534,18 @@ class MainActivity : AppCompatActivity() {
             dialogView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbStrictAntiSnooze).isChecked = existing.isStrictAntiSnooze
             dialogView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbCrescendo).isChecked = existing.useCrescendo
             dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etVoiceNote)?.setText(existing.voiceNote.orEmpty())
+            val rgG = dialogView.findViewById<RadioGroup>(R.id.rgGroup)
+            when (existing.group) {
+                "Học" -> rgG.check(R.id.rbGroupHoc)
+                "Tập" -> rgG.check(R.id.rbGroupTap)
+                "Làm việc" -> rgG.check(R.id.rbGroupWork)
+                else -> rgG.check(R.id.rbGroupChung)
+            }
+            dialogView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbWeekend).isChecked = existing.useWeekendSchedule
+            val wh = if (existing.weekendHour >= 0) existing.weekendHour else existing.hour
+            val wm = if (existing.weekendMinute >= 0) existing.weekendMinute else existing.minute
+            dialogView.findViewById<android.widget.TextView>(R.id.tvWeekendTime).text = "%02d:%02d".format(wh, wm)
+            dialogView.findViewById<android.widget.TextView>(R.id.tvWeekendTime).tag = intArrayOf(wh, wm)
             selectedRingtoneUri = existing.ringtoneUri
         }
 
@@ -545,6 +564,16 @@ class MainActivity : AppCompatActivity() {
                     getString(R.string.default_ringtone)
                 }
             }, 500)
+        }
+
+        val tvWe = dialogView.findViewById<android.widget.TextView>(R.id.tvWeekendTime)
+        if (tvWe.tag == null) tvWe.tag = intArrayOf(8, 0)
+        dialogView.findViewById<android.view.View>(R.id.rowWeekendTime).setOnClickListener {
+            val cur = tvWe.tag as? IntArray ?: intArrayOf(8, 0)
+            TimePickerDialog(this, { _, h, m ->
+                tvWe.tag = intArrayOf(h, m)
+                tvWe.text = "%02d:%02d".format(h, m)
+            }, cur[0], cur[1], true).show()
         }
 
         MaterialAlertDialogBuilder(this)
@@ -588,6 +617,14 @@ class MainActivity : AppCompatActivity() {
                     || challengeType == Alarm.CHALLENGE_ALL_EASY
                 val useCrescendo = dialogView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbCrescendo).isChecked
                 val voiceNote = dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etVoiceNote).text?.toString()?.takeIf { it.isNotBlank() }
+                val groupName = when (dialogView.findViewById<RadioGroup>(R.id.rgGroup).checkedRadioButtonId) {
+                    R.id.rbGroupHoc -> "Học"
+                    R.id.rbGroupTap -> "Tập"
+                    R.id.rbGroupWork -> "Làm việc"
+                    else -> "Chung"
+                }
+                val useWeekend = dialogView.findViewById<com.google.android.material.checkbox.MaterialCheckBox>(R.id.cbWeekend).isChecked
+                val weArr = (dialogView.findViewById<android.widget.TextView>(R.id.tvWeekendTime).tag as? IntArray) ?: intArrayOf(8, 0)
 
                 val initH = existing?.hour ?: 7
                 val initM = existing?.minute ?: 0
@@ -608,6 +645,10 @@ class MainActivity : AppCompatActivity() {
                             existing.isStrictAntiSnooze = isStrict
                             existing.voiceNote = voiceNote
                             existing.useCrescendo = useCrescendo
+                            existing.group = groupName
+                            existing.useWeekendSchedule = useWeekend
+                            existing.weekendHour = if (useWeekend) weArr[0] else -1
+                            existing.weekendMinute = if (useWeekend) weArr[1] else -1
                             if (existing.isEnabled) AlarmScheduler.schedule(this, existing)
                             repo.saveAlarms(alarms)
                             adapter.notifyDataSetChanged()
@@ -628,7 +669,11 @@ class MainActivity : AppCompatActivity() {
                                 skipHolidays = skipHolidays,
                                 isStrictAntiSnooze = isStrict,
                                 voiceNote = voiceNote,
-                                useCrescendo = useCrescendo
+                                useCrescendo = useCrescendo,
+                                group = groupName,
+                                useWeekendSchedule = useWeekend,
+                                weekendHour = if (useWeekend) weArr[0] else -1,
+                                weekendMinute = if (useWeekend) weArr[1] else -1
                             )
                             alarms.add(newAlarm)
                             repo.saveAlarms(alarms)
