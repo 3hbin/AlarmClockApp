@@ -1,17 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/surface">
+    android:background="#66000000">
 
-    <View
-        android:layout_width="36dp"
-        android:layout_height="4dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="10dp"
-        android:background="@color/outline" />
+<LinearLayout
+    android:id="@+id/sheetRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/surface"
+    android:clickable="true"
+    app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
+    app:behavior_hideable="true"
+    app:behavior_skipCollapsed="true"
+    app:behavior_draggable="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:paddingStart="4dp"
+        android:paddingEnd="12dp">
+        <ImageButton
+            android:id="@+id/btnCloseSheet"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_close"
+            android:contentDescription="Đóng"
+            android:padding="12dp" />
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Thoát"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary" />
+        <View
+            android:layout_width="36dp"
+            android:layout_height="4dp"
+            android:background="@color/outline" />
+    </LinearLayout>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -295,11 +326,7 @@
             android:minWidth="120dp"
             android:text="Lưu"
             android:textAllCaps="false" />
-        <ImageButton
-            android:id="@+id/btnCloseSheet"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone"
-            android:contentDescription="Đóng" />
+
     </LinearLayout>
 </LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

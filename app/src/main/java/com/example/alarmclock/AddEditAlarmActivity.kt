@@ -6,6 +6,7 @@ import android.widget.EditText
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.chip.Chip
@@ -55,7 +56,22 @@ class AddEditAlarmActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.setBackgroundDrawableResource(android.R.color.transparent)
         setContentView(R.layout.activity_add_edit_alarm)
+        try {
+            val sheet = findViewById<android.view.View>(R.id.sheetRoot)
+            val behavior = BottomSheetBehavior.from(sheet)
+            behavior.isHideable = true
+            behavior.skipCollapsed = true
+            behavior.isDraggable = true
+            behavior.state = BottomSheetBehavior.STATE_EXPANDED
+            behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+                override fun onStateChanged(bottomSheet: android.view.View, newState: Int) {
+                    if (newState == BottomSheetBehavior.STATE_HIDDEN) finish()
+                }
+                override fun onSlide(bottomSheet: android.view.View, slideOffset: Float) {}
+            })
+        } catch (_: Exception) {}
 
         alarmId = intent.getIntExtra("ALARM_ID", -1)
         val existing = if (alarmId >= 0) AlarmRepository(this).getAlarms().find { it.id == alarmId } else null
@@ -166,8 +182,13 @@ class AddEditAlarmActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.btnSchedule).setOnClickListener { save() }
         findViewById<MaterialButton>(R.id.btnSave).setOnClickListener { save() }
         findViewById<MaterialButton>(R.id.btnDelete).apply {
-            visibility = if (isEdit) android.view.View.VISIBLE else android.view.View.INVISIBLE
-            setOnClickListener { deleteAlarm() }
+            if (isEdit) {
+                text = "Xoá"
+                setOnClickListener { deleteAlarm() }
+            } else {
+                text = "Hủy"
+                setOnClickListener { finish() }
+            }
         }
         findViewById<android.view.View>(R.id.btnCloseSheet).setOnClickListener { finish() }
 
