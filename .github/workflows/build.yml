@@ -12,7 +12,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
+    env:
+      GRADLE_OPTS: "-Dorg.gradle.internal.http.connectionTimeout=120000 -Dorg.gradle.internal.http.socketTimeout=120000 -Dorg.gradle.wrapperTimeout=120000"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,8 +26,13 @@ jobs:
           java-version: '17'
           cache: 'gradle'
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-home-cache-cleanup: true
+
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v4
+        uses: android-actions/setup-android@v3
         with:
           packages: 'platform-tools'
 
@@ -33,7 +40,13 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --no-daemon
+        run: |
+          for i in 1 2 3; do
+            ./gradlew assembleDebug --stacktrace --no-daemon && exit 0
+            echo "Build attempt $i failed, retry..."
+            sleep 8
+          done
+          exit 1
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

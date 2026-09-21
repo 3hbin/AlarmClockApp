@@ -132,8 +132,7 @@
     <string name="font_large">Large</string>
     <string name="alarm_default_label">Alarm</string>
     <string name="repeat_daily_short">Every day</string>
-    <string name="app_name">Challenge Alarm</string>
-
+    
 
     <string name="menu_calendar">Calendar and holidays</string>
     <string name="menu_google">Google sign-in</string>
