@@ -10,15 +10,13 @@ object AppRingtones {
         Item("ringtone_samsung", "Samsung", R.raw.ringtone_samsung),
         Item("ringtone_samsung_s10", "Samsung Galaxy S10", R.raw.ringtone_samsung_s10),
         Item("ringtone_morning_flower", "Morning Flower", R.raw.ringtone_morning_flower),
-        Item("ringtone_oz", "Oz", R.raw.ringtone_oz),
-        Item("soft_chime", "Chuông êm", R.raw.soft_chime),
-        Item("soft_bell", "Chuông nhẹ", R.raw.soft_bell)
+        Item("ringtone_oz", "Oz", R.raw.ringtone_oz)
     )
 
     val sleep = listOf(
-        Item("sleep_delta", "Sóng não Delta", R.raw.sleep_delta),
-        Item("soft_chime", "Chuông êm", R.raw.soft_chime),
-        Item("soft_bell", "Chuông nhẹ", R.raw.soft_bell)
+        Item("sleep_rain", "Mưa nhẹ", R.raw.sleep_rain),
+        Item("sleep_forest", "Rừng đêm", R.raw.sleep_forest),
+        Item("sleep_ocean", "Sóng biển", R.raw.sleep_ocean)
     )
 
     val all get() = (alarms + sleep).distinctBy { it.id }

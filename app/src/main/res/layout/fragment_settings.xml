@@ -43,7 +43,7 @@
                 android:id="@+id/edtSettingsPin"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="PIN mới (≥4 số)"
+                android:hint="@string/pin_new_hint"
                 android:inputType="numberPassword"
                 android:maxLength="12"/>
         </com.google.android.material.textfield.TextInputLayout>

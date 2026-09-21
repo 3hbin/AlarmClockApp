@@ -21,7 +21,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Đếm ngược"
+            android:text="@string/title_timer"
             android:textSize="22sp"
             android:textStyle="bold"
             android:layout_marginTop="16dp"
@@ -82,7 +82,7 @@
             android:id="@+id/btnCustom"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Chọn giờ / phút / giây"
+            android:text="@string/pick_hms"
             android:layout_marginBottom="24dp"
             style="@style/Widget.Material3.Button.TonalButton" />
 

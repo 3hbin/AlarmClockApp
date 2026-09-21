@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
-        app:title="Giờ thế giới"
+        app:title="@string/title_world_clock"
         app:titleTextColor="@android:color/white"
         app:navigationIcon="@android:drawable/ic_menu_close_clear_cancel"
         app:navigationIconTint="@android:color/white" />
@@ -19,7 +19,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="12dp"
-        android:hint="Tìm thành phố, quốc gia, múi giờ…"
+        android:hint="@string/search_city_hint"
         app:startIconDrawable="@android:drawable/ic_menu_search"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
         <com.google.android.material.textfield.TextInputEditText

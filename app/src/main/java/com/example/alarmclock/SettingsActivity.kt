@@ -561,7 +561,7 @@ binding.switchAntiTroll.setCheckedSilent(AppSettings.isAntiTroll(this))
             binding.tvSettingsPinStatus.text = when {
                 has && email.isNotBlank() -> "✅ Đang khóa PIN · Gmail khôi phục: $email"
                 has -> "⚠️ Đang khóa PIN · Chưa có Gmail khôi phục — nên lưu email!"
-                else -> "Chưa khóa — ai cũng vào được Cài đặt"
+                else -> getString(R.string.pin_unlocked)
             }
         } catch (_: Exception) {}
     }

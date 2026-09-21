@@ -165,6 +165,14 @@ object AppSettings {
     fun setLanguage(context: Context, code: String) =
         prefs(context).edit().putString("app_language", code).apply()
 
+    fun isEnglishUi(context: Context): Boolean {
+        val code = getLanguage(context)
+        if (code.equals("en", true)) return true
+        if (code == LanguageCatalog.SYSTEM || code.isBlank())
+            return java.util.Locale.getDefault().language.equals("en", true)
+        return false
+    }
+
     fun getLanguage(context: Context): String =
         prefs(context).getString("app_language", LanguageCatalog.SYSTEM) ?: LanguageCatalog.SYSTEM
 

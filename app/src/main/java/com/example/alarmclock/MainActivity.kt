@@ -242,13 +242,13 @@ class MainActivity : AppCompatActivity() {
             val m = ((diff % 3_600_000) / 60_000).toInt()
             val timeStr = "%02d:%02d".format(best!!.hour, best.minute)
             val left = when {
-                h > 24 -> "còn ${h / 24} ngày"
-                h > 0 -> "còn ${h}giờ ${m}phút"
-                else -> "còn ${m} phút"
+                h > 24 -> getString(R.string.hours_minutes_fmt, h, m)
+                h > 0 -> getString(R.string.hours_minutes_fmt, h, m)
+                else -> getString(R.string.hours_minutes_fmt, 0, m)
             }
-            binding.tvNextAlarm.text = "⏰ Tiếp theo $timeStr · $left"
+            binding.tvNextAlarm.text = getString(R.string.next_alarm_fmt, timeStr, left)
         } catch (_: Exception) {
-            try { binding.tvNextAlarm.text = "⏰ Báo thức" } catch (_: Exception) {}
+            try { binding.tvNextAlarm.text = getString(R.string.alarm_default_label) } catch (_: Exception) {}
         }
     }
 
@@ -850,7 +850,7 @@ class MainActivity : AppCompatActivity() {
             hour = hour,
             minute = minute,
             isEnabled = true,
-            label = "Ngủ gật +$minutes phút",
+            label = getString(R.string.nap) + " +$minutes",
             repeatMode = Alarm.REPEAT_ONCE,
             challengeType = Alarm.CHALLENGE_NONE,
             ringtoneUri = AppRingtones.DEFAULT_ALARM,

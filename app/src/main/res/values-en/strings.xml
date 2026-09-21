@@ -96,4 +96,56 @@
     <string name="nav_style_persistent">Persistent</string>
     <string name="nav_style_changed">Bottom bar style updated</string>
     <string name="nav_style_google">Google Nav (expanding pill)</string>
+
+    <string name="hide_ongoing_notif">Hide ongoing notification</string>
+    <string name="pin_new_hint">New PIN (≥4 digits)</string>
+    <string name="pin_unlocked">Unlocked — anyone can open Settings</string>
+    <string name="pin_locked">Settings locked</string>
+    <string name="nap">Nap</string>
+    <string name="next_alarm_fmt">Next %1$s · %2$s</string>
+    <string name="hours_minutes_fmt">in %1$dh %2$dm</string>
+    <string name="title_world_clock">World clock</string>
+    <string name="title_stopwatch">Stopwatch</string>
+    <string name="title_timer">Timer</string>
+    <string name="title_bedtime">Bedtime</string>
+    <string name="search_city_hint">Search city, country, time zone…</string>
+    <string name="world_count_fmt">%1$d time zones / cities</string>
+    <string name="reset">Reset</string>
+    <string name="start">Start</string>
+    <string name="pick_hms">Choose hours / minutes / seconds</string>
+    <string name="schedule">Schedule</string>
+    <string name="sleep_sounds">Sleep sounds</string>
+    <string name="upcoming_events">Upcoming events</string>
+    <string name="sleep_playing">Playing · stops in</string>
+    <string name="sleep_stopped">Stopped</string>
+    <string name="sleep_done">Timer ended — music off</string>
+    <string name="sound">Sound</string>
+    <string name="auto_off_after">Stop after</string>
+    <string name="play">Play</string>
+    <string name="stop">Stop</string>
+    <string name="soft1">Soft 1</string>
+    <string name="soft2">Soft 2</string>
+    <string name="oz_soft">Soft Oz</string>
+    <string name="font_size">Text size</string>
+    <string name="font_small">Small</string>
+    <string name="font_medium">Medium</string>
+    <string name="font_large">Large</string>
+    <string name="alarm_default_label">Alarm</string>
+    <string name="repeat_daily_short">Every day</string>
+    <string name="app_name">Challenge Alarm</string>
+
+
+    <string name="sleep_rain">Light rain</string>
+    <string name="sleep_forest">Night forest</string>
+    <string name="sleep_ocean">Ocean waves</string>
+    <string name="menu_app_lock">App lock</string>
+    <string name="menu_calendar">Calendar &amp; holidays</string>
+    <string name="menu_google">Google sign-in</string>
+    <string name="menu_history">Alarm history</string>
+    <string name="menu_settings">Settings</string>
+    <string name="menu_screensaver">Screensaver</string>
+    <string name="menu_privacy">Privacy policy</string>
+    <string name="menu_guide">User guide</string>
+    <string name="menu_version">Version</string>
+
 </resources>

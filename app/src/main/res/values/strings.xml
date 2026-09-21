@@ -109,4 +109,55 @@
     <string name="test_face_scan_btn">📷 Face scan test</string>
     <string name="test_face_expr_btn">😊 Expression test</string>
     <string name="quick_nap">Power nap</string>
+
+    <string name="hide_ongoing_notif">Ẩn thông báo đang hoạt động</string>
+    <string name="pin_new_hint">PIN mới (≥4 số)</string>
+    <string name="pin_unlocked">Chưa khóa — ai cũng vào được Cài đặt</string>
+    <string name="pin_locked">Đã khóa Cài đặt</string>
+    <string name="nap">Ngủ gật</string>
+    <string name="next_alarm_fmt">Tiếp theo %1$s · %2$s</string>
+    <string name="hours_minutes_fmt">còn %1$d giờ %2$d phút</string>
+    <string name="title_world_clock">Giờ thế giới</string>
+    <string name="title_stopwatch">Bấm giờ</string>
+    <string name="title_timer">Đếm ngược</string>
+    <string name="title_bedtime">Giờ đi ngủ</string>
+    <string name="search_city_hint">Tìm thành phố, quốc gia, múi giờ…</string>
+    <string name="world_count_fmt">%1$d múi giờ / thành phố</string>
+    <string name="reset">Đặt lại</string>
+    <string name="start">Bắt đầu</string>
+    <string name="pick_hms">Chọn giờ / phút / giây</string>
+    <string name="schedule">Lịch biểu</string>
+    <string name="sleep_sounds">Âm thanh ru ngủ</string>
+    <string name="upcoming_events">Sự kiện sắp diễn ra</string>
+    <string name="sleep_playing">Đang phát · tự tắt sau</string>
+    <string name="sleep_stopped">Đã dừng</string>
+    <string name="sleep_done">Hết giờ — đã tắt nhạc</string>
+    <string name="sound">Âm thanh</string>
+    <string name="auto_off_after">Tự tắt sau</string>
+    <string name="play">Phát</string>
+    <string name="stop">Dừng</string>
+    <string name="soft1">Êm 1</string>
+    <string name="soft2">Êm 2</string>
+    <string name="oz_soft">Oz nhẹ</string>
+    <string name="font_size">Cỡ chữ</string>
+    <string name="font_small">Chữ bé</string>
+    <string name="font_medium">Vừa</string>
+    <string name="font_large">Chữ to</string>
+    <string name="alarm_default_label">Báo thức</string>
+    <string name="repeat_daily_short">Hàng ngày</string>
+
+
+    <string name="sleep_rain">Mưa nhẹ</string>
+    <string name="sleep_forest">Rừng đêm</string>
+    <string name="sleep_ocean">Sóng biển</string>
+    <string name="menu_app_lock">Khóa ứng dụng</string>
+    <string name="menu_calendar">Lịch và ngày lễ</string>
+    <string name="menu_google">Đăng nhập Google</string>
+    <string name="menu_history">Nhật ký báo thức</string>
+    <string name="menu_settings">Cài đặt</string>
+    <string name="menu_screensaver">Trình bảo vệ màn hình</string>
+    <string name="menu_privacy">Chính sách quyền riêng tư</string>
+    <string name="menu_guide">Hướng dẫn sử dụng</string>
+    <string name="menu_version">Phiên bản</string>
+
 </resources>

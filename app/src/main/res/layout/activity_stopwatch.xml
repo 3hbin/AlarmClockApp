@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
-        app:title="Bấm giờ"
+        app:title="@string/title_stopwatch"
         app:titleTextColor="@android:color/white"
         app:navigationIcon="@android:drawable/ic_menu_close_clear_cancel"
         app:navigationIconTint="@android:color/white" />
@@ -41,7 +41,7 @@
             android:layout_width="0dp"
             android:layout_height="56dp"
             android:layout_weight="1"
-            android:text="Đặt lại"
+            android:text="@string/reset"
             android:layout_marginEnd="8dp"
             style="@style/Widget.Material3.Button.OutlinedButton" />
 
@@ -50,7 +50,7 @@
             android:layout_width="0dp"
             android:layout_height="56dp"
             android:layout_weight="1"
-            android:text="Bắt đầu" />
+            android:text="@string/start" />
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView

@@ -18,7 +18,7 @@
             android:id="@+id/swHideStatusNotif"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Ẩn thông báo đang hoạt động"
+            android:text="@string/hide_ongoing_notif"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="12dp"/>
 
@@ -52,7 +52,7 @@
                 android:id="@+id/edtSettingsPin"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="PIN mới (≥4 số)"
+                android:hint="@string/pin_new_hint"
                 android:inputType="numberPassword"
                 android:maxLength="12"/>
         </com.google.android.material.textfield.TextInputLayout>
@@ -197,17 +197,17 @@
 
 
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="Cỡ chữ"
+            android:text="@string/font_size"
             android:textStyle="bold" android:layout_marginBottom="4dp"/>
         <RadioGroup android:id="@+id/rgFontScale" android:layout_width="match_parent"
             android:layout_height="wrap_content" android:orientation="horizontal"
             android:layout_marginBottom="12dp">
             <RadioButton android:id="@+id/rbFontSmall" android:layout_width="0dp"
-                android:layout_height="wrap_content" android:layout_weight="1" android:text="Chữ bé"/>
+                android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/font_small"/>
             <RadioButton android:id="@+id/rbFontNormal" android:layout_width="0dp"
-                android:layout_height="wrap_content" android:layout_weight="1" android:text="Vừa"/>
+                android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/font_medium"/>
             <RadioButton android:id="@+id/rbFontLarge" android:layout_width="0dp"
-                android:layout_height="wrap_content" android:layout_weight="1" android:text="Chữ to"/>
+                android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/font_large"/>
         </RadioGroup>
 
         <TextView android:layout_width="match_parent" android:layout_height="wrap_content"

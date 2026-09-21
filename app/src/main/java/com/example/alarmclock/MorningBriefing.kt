@@ -26,55 +26,69 @@ object MorningBriefing {
 
         thread {
             val now = Calendar.getInstance()
-            val timeStr = String.format(Locale.getDefault(), "%02d giờ %02d phút", now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE))
-            val day = SimpleDateFormat("EEEE, 'ngày' dd 'tháng' MM", Locale("vi", "VN")).format(Date())
+            val timeStr = if (en)
+                String.format(Locale.US, "%d:%02d", now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE))
+            else
+                String.format(Locale.getDefault(), "%02d giờ %02d phút", now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE))
+            val day = if (en) SimpleDateFormat("EEEE, MMMM d", Locale.US).format(Date())
+            else SimpleDateFormat("EEEE, 'ngày' dd 'tháng' MM", Locale("vi", "VN")).format(Date())
             val place = try { LocationPlaceHelper.resolve(app) } catch (_: Exception) { null }
             val label = alarm?.label?.trim().orEmpty()
 
             val text = buildString {
-                // 1 chào ngắn
-                append("Xin chào. Đã đến giờ dậy. ")
-                // 2 giờ + ngày
-                append("Bây giờ $timeStr, $day. ")
-                // vị trí xã / quận / thành phố
-                if (place != null) append(place.speakLine())
-                else append("Chưa có vị trí. Hãy mở app và cấp quyền vị trí. ")
-                // 3 thời tiết đúng chỗ
+                if (en) {
+                    append("Hello. Time to wake up. ")
+                    append("It is $timeStr, $day. ")
+                    if (place != null) append(place.speakLine(true))
+                    else append("Location is off. Open the app and allow location. ")
+                } else {
+                    append("Xin chào. Đã đến giờ dậy. ")
+                    append("Bây giờ $timeStr, $day. ")
+                    if (place != null) append(place.speakLine(false))
+                    else append("Chưa có vị trí. Hãy mở app và cấp quyền vị trí. ")
+                }
                 if (wantWeather) {
                     val w = try {
-                        if (place != null) WeatherHelper.fetchWeatherAt(place.lat, place.lon, place.shortCity())
-                        else WeatherHelper.fetchWeatherSummary("Hanoi")
+                        if (place != null) WeatherHelper.fetchWeatherAt(place.lat, place.lon, place.shortCity(), en)
+                        else WeatherHelper.fetchWeatherSummary("Hanoi", en)
                     } catch (_: Exception) { "" }
                     if (w.isNotBlank()) append(w)
-                    else append("Chưa lấy được thời tiết. ")
+                    else append(if (en) "Weather is unavailable. " else "Chưa lấy được thời tiết. ")
                 }
-                // 4 lịch
                 if (wantCal) {
                     val ev = eventsOn(app, 0)
-                    append(if (ev.isNotBlank()) "Lịch hôm nay: $ev. " else "Hôm nay không có sự kiện trên lịch. ")
+                    append(
+                        if (en) {
+                            if (ev.isNotBlank()) "Today's events: $ev. " else "No calendar events today. "
+                        } else {
+                            if (ev.isNotBlank()) "Lịch hôm nay: $ev. " else "Hôm nay không có sự kiện trên lịch. "
+                        }
+                    )
                 }
                 if (wantTomorrow) {
                     val ev = eventsOn(app, 1)
-                    append(if (ev.isNotBlank()) "Ngày mai có sự kiện: $ev. " else "Ngày mai không có sự kiện trên lịch. ")
+                    append(
+                        if (en) {
+                            if (ev.isNotBlank()) "Tomorrow you have: $ev. " else "No calendar events tomorrow. "
+                        } else {
+                            if (ev.isNotBlank()) "Ngày mai có sự kiện: $ev. " else "Ngày mai không có sự kiện trên lịch. "
+                        }
+                    )
                 }
-                // 5 việc cần làm
                 if (wantTasks) {
                     val tasks = AppSettings.getRoutineTasksText(app).trim()
                     val note = alarm?.voiceNote?.trim().orEmpty()
                     when {
-                        tasks.isNotBlank() -> append("Việc cần làm: $tasks. ")
+                        tasks.isNotBlank() -> append(if (en) "Tasks: $tasks. " else "Việc cần làm: $tasks. ")
                         note.isNotBlank() -> append(note).append(" ")
-                        else -> append("Chưa đặt việc cần làm. ")
+                        else -> append(if (en) "No tasks set. " else "Chưa đặt việc cần làm. ")
                     }
                 }
-                // 7 nhắc theo tên chuông
-                if (label.isNotBlank() && !label.equals("Báo thức", true)) {
-                    append("Đến giờ $label rồi. ")
+                if (label.isNotBlank() && !label.equals("Báo thức", true) && !label.equals("Alarm", true)) {
+                    append(if (en) "It is time for $label. " else "Đến giờ $label rồi. ")
                 }
-                // 8 động viên
-                append("Cố lên, một ngày mới bắt đầu. ")
-                // 10 gói đầy đủ: thêm chuông kế
-                append(nextAlarmText(app))
+                append(if (en) "Have a good day. " else "Cố lên, một ngày mới bắt đầu. ")
+                append(nextAlarmText(app, en))
             }
             Handler(Looper.getMainLooper()).post {
                 GeminiSpeakService.start(app, text)
@@ -106,9 +120,9 @@ object MorningBriefing {
         } catch (_: Exception) { "" }
     }
 
-    private fun nextAlarmText(context: Context): String {
+    private fun nextAlarmText(context: Context, en: Boolean = false): String {
         val enabled = AlarmRepository(context).getAlarms().filter { it.isEnabled }
-        if (enabled.isEmpty()) return "Không còn báo thức nào đang bật."
+        if (enabled.isEmpty()) return if (en) "No more alarms are on." else "Không còn báo thức nào đang bật."
         var best: Pair<Alarm, Long>? = null
         val now = System.currentTimeMillis()
         enabled.forEach { a ->
@@ -122,6 +136,6 @@ object MorningBriefing {
             if (best == null || t < best!!.second) best = a to t
         }
         val a = best!!.first
-        return "Báo thức tiếp theo ${a.label} lúc ${"%02d:%02d".format(a.hour, a.minute)}."
+        return if (en) "Next alarm ${a.label} at ${"%02d:%02d".format(a.hour, a.minute)}." else "Báo thức tiếp theo ${a.label} lúc ${"%02d:%02d".format(a.hour, a.minute)}."
     }
 }

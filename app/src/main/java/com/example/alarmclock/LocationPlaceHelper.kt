@@ -17,10 +17,11 @@ data class PlaceInfo(
     val district: String,
     val city: String
 ) {
-    fun speakLine(): String {
+    fun speakLine(english: Boolean = false): String {
         val parts = listOf(ward, district, city).filter { it.isNotBlank() }.distinct()
         if (parts.isEmpty()) return ""
-        return "Bạn đang ở ${parts.joinToString(", ")}. "
+        return if (english) "You are in ${parts.joinToString(", ")}. "
+        else "Bạn đang ở ${parts.joinToString(", ")}. "
     }
 
     fun shortCity(): String = city.ifBlank { district }.ifBlank { "vị trí hiện tại" }

@@ -151,7 +151,7 @@ object BirthdayHelper {
             label = label,
             repeatMode = Alarm.REPEAT_YEARLY,
             snoozeMinutes = existing?.snoozeMinutes ?: 5,
-            ringtoneUri = existing?.ringtoneUri ?: repo.getGlobalRingtone() ?: "app:soft_chime",
+            ringtoneUri = existing?.ringtoneUri ?: repo.getGlobalRingtone() ?: "app:ringtone_oz",
             challengeType = existing?.challengeType ?: Alarm.CHALLENGE_NONE,
             useCrescendo = existing?.useCrescendo ?: true
         )

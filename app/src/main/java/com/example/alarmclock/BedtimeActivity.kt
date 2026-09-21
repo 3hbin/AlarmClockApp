@@ -13,7 +13,7 @@ class BedtimeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_bedtime)
-        findViewById<MaterialToolbar>(R.id.toolbarBedtime).title = "Giờ đi ngủ"
+        findViewById<MaterialToolbar>(R.id.toolbarBedtime).title = getString(R.string.title_bedtime)
         try { BottomNavHelper.bind(this, findViewById(R.id.curvedNav), 5) } catch (_: Exception) {}
 
         findViewById<android.view.View>(R.id.rowSchedule).setOnClickListener {

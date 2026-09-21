@@ -28,9 +28,11 @@ class TtsHelper(context: Context) : TextToSpeech.OnInitListener {
     override fun onInit(status: Int) {
         if (status != TextToSpeech.SUCCESS) return
         val engine = tts ?: return
-        val lang = engine.setLanguage(Locale("vi", "VN"))
+        val wantEn = AppSettings.isEnglishUi(app)
+        val target = if (wantEn) Locale.US else Locale("vi", "VN")
+        val lang = engine.setLanguage(target)
         if (lang == TextToSpeech.LANG_MISSING_DATA || lang == TextToSpeech.LANG_NOT_SUPPORTED) {
-            engine.setLanguage(Locale.getDefault())
+            engine.setLanguage(if (wantEn) Locale.ENGLISH else Locale.getDefault())
         }
         applySavedVoice(engine)
         engine.setSpeechRate(0.92f)
