@@ -23,6 +23,7 @@ data class Alarm(
     var routineWeather: Boolean = true,
     var routineCalendar: Boolean = true,
     var routineTasks: Boolean = true,
+    var routineTomorrow: Boolean = true,
     var qrToken: String = ""
 ) {
     companion object {

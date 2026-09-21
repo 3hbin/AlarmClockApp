@@ -37,6 +37,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
     private var routineWeather = true
     private var routineCalendar = true
     private var routineTasks = true
+    private var routineTomorrow = true
 
     private val pickTone = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
         if (res.resultCode != RESULT_OK) return@registerForActivityResult
@@ -51,6 +52,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
         routineWeather = d.getBooleanExtra("routineWeather", routineWeather)
         routineCalendar = d.getBooleanExtra("routineCalendar", routineCalendar)
         routineTasks = d.getBooleanExtra("routineTasks", routineTasks)
+            routineTomorrow = d.getBooleanExtra("routineTomorrow", routineTomorrow)
         refreshUi()
     }
 
@@ -78,6 +80,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
             routineWeather = existing.routineWeather
             routineCalendar = existing.routineCalendar
             routineTasks = existing.routineTasks
+            routineTomorrow = existing.routineTomorrow
             useWeekendSchedule = existing.useWeekendSchedule
             weekendHour = if (existing.weekendHour >= 0) existing.weekendHour else existing.hour
             weekendMinute = if (existing.weekendMinute >= 0) existing.weekendMinute else existing.minute
@@ -110,6 +113,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
                 .putExtra("routineWeather", routineWeather)
                 .putExtra("routineCalendar", routineCalendar)
                 .putExtra("routineTasks", routineTasks)
+                .putExtra("routineTomorrow", routineTomorrow)
             pickRoutine.launch(i)
         }
         findViewById<android.view.View>(R.id.rowSnooze).setOnClickListener {
@@ -189,6 +193,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
                 routineWeather = existing.routineWeather
                 routineCalendar = existing.routineCalendar
                 routineTasks = existing.routineTasks
+            routineTomorrow = existing.routineTomorrow
             }
             refreshUi()
         }
@@ -405,6 +410,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
             existing.routineWeather = routineWeather
             existing.routineCalendar = routineCalendar
             existing.routineTasks = routineTasks
+            existing.routineTomorrow = routineTomorrow
             existing.voiceNote = voiceNote
             existing.isEnabled = true
             AlarmScheduler.schedule(this, existing)
@@ -430,6 +436,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
                 routineWeather = routineWeather,
                 routineCalendar = routineCalendar,
                 routineTasks = routineTasks,
+                routineTomorrow = routineTomorrow,
                 voiceNote = voiceNote
             )
             list.add(created)

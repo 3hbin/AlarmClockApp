@@ -22,6 +22,7 @@ object MorningBriefing {
         val wantWeather = alarm?.routineWeather ?: true
         val wantCal = alarm?.routineCalendar ?: true
         val wantTasks = alarm?.routineTasks ?: true
+        val wantTomorrow = alarm?.routineTomorrow ?: true
 
         thread {
             val now = Calendar.getInstance()
@@ -49,8 +50,12 @@ object MorningBriefing {
                 }
                 // 4 lịch
                 if (wantCal) {
-                    val ev = todayEvents(app)
-                    append(if (ev.isNotBlank()) "Lịch hôm nay: $ev. " else "Hôm nay không có sự kiện lịch. ")
+                    val ev = eventsOn(app, 0)
+                    append(if (ev.isNotBlank()) "Lịch hôm nay: $ev. " else "Hôm nay không có sự kiện trên lịch. ")
+                }
+                if (wantTomorrow) {
+                    val ev = eventsOn(app, 1)
+                    append(if (ev.isNotBlank()) "Ngày mai có sự kiện: $ev. " else "Ngày mai không có sự kiện trên lịch. ")
                 }
                 // 5 việc cần làm
                 if (wantTasks) {
@@ -77,9 +82,10 @@ object MorningBriefing {
         }
     }
 
-    private fun todayEvents(context: Context): String {
+    private fun eventsOn(context: Context, daysAhead: Int): String {
         return try {
             val start = Calendar.getInstance().apply {
+                add(Calendar.DAY_OF_YEAR, daysAhead)
                 set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0)
             }.timeInMillis
             val end = start + 24L * 60 * 60 * 1000

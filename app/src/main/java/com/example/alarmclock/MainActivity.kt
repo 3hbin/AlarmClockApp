@@ -798,7 +798,11 @@ class MainActivity : AppCompatActivity() {
         if (needFine || needCoarse) {
             ActivityCompat.requestPermissions(
                 this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.READ_CALENDAR
+                ),
                 210
             )
         } else {

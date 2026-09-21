@@ -31,6 +31,7 @@ class GeminiRoutineActivity : AppCompatActivity() {
         val startWeather = alarm?.routineWeather ?: intent.getBooleanExtra("routineWeather", true)
         val startCal = alarm?.routineCalendar ?: intent.getBooleanExtra("routineCalendar", true)
         val startTasks = alarm?.routineTasks ?: intent.getBooleanExtra("routineTasks", true)
+        val startTomorrow = alarm?.routineTomorrow ?: intent.getBooleanExtra("routineTomorrow", true)
 
         val pad = (16 * resources.displayMetrics.density).toInt()
         val root = LinearLayout(this).apply {
@@ -69,7 +70,11 @@ class GeminiRoutineActivity : AppCompatActivity() {
             text = "Cho tôi biết những việc cần làm hôm nay"
             isChecked = startTasks
         }
-        listOf(cbOn, cbWeather, cbCal, cbTask).forEach { cb ->
+        val cbTomorrow = MaterialCheckBox(this).apply {
+            text = "Cho tôi biết mai có sự kiện hay không"
+            isChecked = startTomorrow
+        }
+        listOf(cbOn, cbWeather, cbCal, cbTask, cbTomorrow).forEach { cb ->
             body.addView(MaterialCardView(this).apply {
                 radius = 16f * resources.displayMetrics.density
                 cardElevation = 0f
@@ -108,6 +113,16 @@ class GeminiRoutineActivity : AppCompatActivity() {
             }
         })
 
+        val tvVoice = TextView(this).apply {
+            text = "Giọng AI: " + AppSettings.getTtsVoiceLabel(this@GeminiRoutineActivity)
+            setPadding(0, pad / 2, 0, pad / 2)
+        }
+        body.addView(MaterialButton(this).apply {
+            text = "Chọn giọng nam / nữ"
+            setOnClickListener { pickVoice(tvVoice) }
+        })
+        body.addView(tvVoice)
+
         val btnSave = MaterialButton(this).apply {
             text = "Lưu"
             setOnClickListener {
@@ -118,6 +133,7 @@ class GeminiRoutineActivity : AppCompatActivity() {
                         a.routineWeather = cbWeather.isChecked
                         a.routineCalendar = cbCal.isChecked
                         a.routineTasks = cbTask.isChecked
+                        a.routineTomorrow = cbTomorrow.isChecked
                     }
                     repo.saveAlarms(list)
                 }
@@ -128,6 +144,7 @@ class GeminiRoutineActivity : AppCompatActivity() {
                         .putExtra("routineWeather", cbWeather.isChecked)
                         .putExtra("routineCalendar", cbCal.isChecked)
                         .putExtra("routineTasks", cbTask.isChecked)
+                        .putExtra("routineTomorrow", cbTomorrow.isChecked)
                 )
                 finish()
             }
@@ -135,5 +152,26 @@ class GeminiRoutineActivity : AppCompatActivity() {
         body.addView(btnSave)
         root.addView(body)
         setContentView(root)
+    }
+
+    private fun pickVoice(labelView: TextView) {
+        val engine = android.speech.tts.TextToSpeech(this) { }
+        labelView.postDelayed({
+            val voices = try { engine.voices } catch (_: Exception) { emptySet() }
+            val options = TtsVoiceCatalog.fromEngine(voices)
+            engine.shutdown()
+            val names = options.map { it.label }.toTypedArray()
+            MaterialAlertDialogBuilder(this)
+                .setTitle("Chọn giọng AI")
+                .setItems(names) { _, which ->
+                    val opt = options[which]
+                    TtsVoiceCatalog.apply(this, opt)
+                    labelView.text = "Giọng AI: " + opt.label
+                    val preview = TtsHelper(this)
+                    preview.onDone = { preview.shutdown() }
+                    preview.speak("Xin chào. Đây là giọng " + opt.label)
+                }
+                .show()
+        }, 700)
     }
 }

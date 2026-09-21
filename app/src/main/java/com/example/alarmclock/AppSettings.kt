@@ -186,6 +186,19 @@ object AppSettings {
     fun getRoutineTasksText(context: Context) =
         prefs(context).getString("routine_tasks", "") ?: ""
 
+    fun setTtsVoiceName(context: Context, name: String) =
+        prefs(context).edit().putString("tts_voice_name", name).apply()
+    fun getTtsVoiceName(context: Context) =
+        prefs(context).getString("tts_voice_name", "") ?: ""
+    fun setTtsPitch(context: Context, pitch: Float) =
+        prefs(context).edit().putFloat("tts_pitch", pitch).apply()
+    fun getTtsPitch(context: Context) =
+        prefs(context).getFloat("tts_pitch", 0.85f)
+    fun setTtsVoiceLabel(context: Context, label: String) =
+        prefs(context).edit().putString("tts_voice_label", label).apply()
+    fun getTtsVoiceLabel(context: Context) =
+        prefs(context).getString("tts_voice_label", "Nam vừa") ?: "Nam vừa"
+
     fun setMorningBriefing(context: Context, on: Boolean) =
         prefs(context).edit().putBoolean("morning_briefing", on).apply()
     fun isMorningBriefing(context: Context) =

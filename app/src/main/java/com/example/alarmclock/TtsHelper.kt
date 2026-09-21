@@ -32,8 +32,7 @@ class TtsHelper(context: Context) : TextToSpeech.OnInitListener {
         if (lang == TextToSpeech.LANG_MISSING_DATA || lang == TextToSpeech.LANG_NOT_SUPPORTED) {
             engine.setLanguage(Locale.getDefault())
         }
-        pickMaleVoice(engine)
-        engine.setPitch(0.78f)
+        applySavedVoice(engine)
         engine.setSpeechRate(0.92f)
         engine.setAudioAttributes(
             AudioAttributes.Builder()
@@ -50,20 +49,38 @@ class TtsHelper(context: Context) : TextToSpeech.OnInitListener {
         flush()
     }
 
-    private fun pickMaleVoice(engine: TextToSpeech) {
+    private fun applySavedVoice(engine: TextToSpeech) {
+        val name = AppSettings.getTtsVoiceName(app)
+        val pitch = AppSettings.getTtsPitch(app)
+        engine.setPitch(pitch.coerceIn(0.6f, 1.4f))
+        if (name.isBlank()) {
+            pickFallback(engine, preferMale = true)
+            return
+        }
+        val voices = try { engine.voices } catch (_: Exception) { emptySet<Voice>() }
+        val match = voices?.firstOrNull { it.name == name }
+        if (match != null) {
+            try { engine.voice = match } catch (_: Exception) { pickFallback(engine, true) }
+        } else pickFallback(engine, true)
+    }
+
+    private fun pickFallback(engine: TextToSpeech, preferMale: Boolean) {
         val voices = try { engine.voices } catch (_: Exception) { emptySet<Voice>() }
         if (voices.isNullOrEmpty()) return
         val vi = voices.filter { it.locale.language.equals("vi", true) }
         val pool = if (vi.isNotEmpty()) vi else voices.toList()
-        val male = pool.firstOrNull { v ->
-            val n = v.name.lowercase()
-            n.contains("male") || n.contains("nam") || n.contains("-m-") ||
-                n.contains("vif") || n.contains("x-vim")
-        } ?: pool.firstOrNull { v ->
-            val n = v.name.lowercase()
-            !n.contains("female") && !n.contains("nu") && !n.contains("vid")
+        val chosen = if (preferMale) {
+            pool.firstOrNull { v ->
+                val n = v.name.lowercase()
+                n.contains("male") || n.contains("nam") || n.contains("-m-") || n.contains("vif")
+            } ?: pool.firstOrNull()
+        } else {
+            pool.firstOrNull { v ->
+                val n = v.name.lowercase()
+                n.contains("female") || n.contains("nu") || n.contains("-f-") || n.contains("vid")
+            } ?: pool.firstOrNull()
         }
-        if (male != null) try { engine.voice = male } catch (_: Exception) {}
+        if (chosen != null) try { engine.voice = chosen } catch (_: Exception) {}
     }
 
     fun speak(text: String) {
