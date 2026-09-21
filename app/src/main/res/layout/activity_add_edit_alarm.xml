@@ -1,21 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#66000000">
-
-<LinearLayout
-    android:id="@+id/sheetRoot"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/surface"
-    android:clickable="true"
-    app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
-    app:behavior_hideable="true"
-    app:behavior_skipCollapsed="true"
-    app:behavior_draggable="true">
+    android:background="@color/surface">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -31,17 +20,6 @@
             android:src="@drawable/ic_close"
             android:contentDescription="Đóng"
             android:padding="12dp" />
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Thoát"
-            android:textSize="14sp"
-            android:textColor="@color/text_secondary" />
-        <View
-            android:layout_width="36dp"
-            android:layout_height="4dp"
-            android:background="@color/outline" />
     </LinearLayout>
 
     <ScrollView
@@ -329,4 +307,3 @@
 
     </LinearLayout>
 </LinearLayout>
-</androidx.coordinatorlayout.widget.CoordinatorLayout>

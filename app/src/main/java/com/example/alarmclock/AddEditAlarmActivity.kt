@@ -6,7 +6,6 @@ import android.widget.EditText
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.chip.Chip
@@ -24,6 +23,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
     private var ringtoneUri: String? = AppRingtones.DEFAULT_ALARM
     private var label = "Báo thức"
     private var challengeType = Alarm.CHALLENGE_NONE
+    private var qrToken = ""
     private var skipHolidays = false
     private var strictAnti = false
     private var useCrescendo = true
@@ -56,24 +56,9 @@ class AddEditAlarmActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.setBackgroundDrawableResource(android.R.color.transparent)
         setContentView(R.layout.activity_add_edit_alarm)
-        try {
-            val sheet = findViewById<android.view.View>(R.id.sheetRoot)
-            val behavior = BottomSheetBehavior.from(sheet)
-            behavior.isHideable = true
-            behavior.skipCollapsed = true
-            behavior.isDraggable = true
-            behavior.state = BottomSheetBehavior.STATE_EXPANDED
-            behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
-                override fun onStateChanged(bottomSheet: android.view.View, newState: Int) {
-                    if (newState == BottomSheetBehavior.STATE_HIDDEN) finish()
-                }
-                override fun onSlide(bottomSheet: android.view.View, slideOffset: Float) {}
-            })
-        } catch (_: Exception) {}
 
-        alarmId = intent.getIntExtra("ALARM_ID", -1)
+                alarmId = intent.getIntExtra("ALARM_ID", -1)
         val existing = if (alarmId >= 0) AlarmRepository(this).getAlarms().find { it.id == alarmId } else null
         if (existing != null) {
             isEdit = true
@@ -84,6 +69,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
             ringtoneUri = existing.ringtoneUri ?: AppRingtones.DEFAULT_ALARM
             label = existing.label
             challengeType = existing.challengeType
+            qrToken = existing.qrToken
             skipHolidays = existing.skipHolidays
             strictAnti = existing.isStrictAntiSnooze
             useCrescendo = existing.useCrescendo
@@ -274,9 +260,30 @@ class AddEditAlarmActivity : AppCompatActivity() {
             .show()
     }
 
+    private fun ensureQrToken(): String {
+        if (qrToken.isBlank()) qrToken = "AC-" + System.currentTimeMillis().toString(36).uppercase()
+        return qrToken
+    }
+
+    private fun showQrSetup() {
+        val token = ensureQrToken()
+        val bmp = QrEncoder.encode(token, 640)
+        val iv = android.widget.ImageView(this).apply {
+            setImageBitmap(bmp)
+            setPadding(32, 24, 32, 8)
+            adjustViewBounds = true
+        }
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("Mã QR thử thách")
+            .setMessage("Chụp hoặc lưu mã này, dán ra khỏi giường. Khi chuông reo phải quét đúng mã mới tắt được.\n\nMã: $token")
+            .setView(iv)
+            .setPositiveButton("Đã lưu") { _, _ -> }
+            .show()
+    }
+
     private fun pickChallenge() {
         val types = listOf(
-            Alarm.CHALLENGE_NONE, Alarm.CHALLENGE_MATH, Alarm.CHALLENGE_SHAKE,
+            Alarm.CHALLENGE_NONE, Alarm.CHALLENGE_QR, Alarm.CHALLENGE_MATH, Alarm.CHALLENGE_SHAKE,
             Alarm.CHALLENGE_READ, Alarm.CHALLENGE_FACE, Alarm.CHALLENGE_BIOMETRIC,
             Alarm.CHALLENGE_TAP200, Alarm.CHALLENGE_MATH10, Alarm.CHALLENGE_ALL_EASY
         )
@@ -286,6 +293,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
             .setTitle("Thử thách khi tắt báo thức")
             .setSingleChoiceItems(labels, cur) { d, which ->
                 challengeType = types[which]
+                if (challengeType == Alarm.CHALLENGE_QR) showQrSetup()
                 refreshUi(); d.dismiss()
             }.show()
     }

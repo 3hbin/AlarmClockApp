@@ -22,7 +22,8 @@ data class Alarm(
     var routineOn: Boolean = false,
     var routineWeather: Boolean = true,
     var routineCalendar: Boolean = true,
-    var routineTasks: Boolean = true
+    var routineTasks: Boolean = true,
+    var qrToken: String = ""
 ) {
     companion object {
         const val REPEAT_ONCE = 0
@@ -42,6 +43,7 @@ data class Alarm(
         const val CHALLENGE_FACE_EXPR = 10    // cười / giận / nhắm mắt / …
         const val CHALLENGE_ALL = 11         // tất cả thử thách (khó)
         const val CHALLENGE_ALL_EASY = 12    // tất cả — dễ, không mất ngủ
+        const val CHALLENGE_QR = 13          // quét mã QR
 
         fun challengeLabel(type: Int): String = when (type) {
             CHALLENGE_MATH -> "Giải toán (1 bài)"
@@ -56,6 +58,7 @@ data class Alarm(
             CHALLENGE_FACE_EXPR -> "10 biểu cảm dễ"
             CHALLENGE_ALL -> "TẤT CẢ thử thách (khó)"
             CHALLENGE_ALL_EASY -> "TẤT CẢ dễ (không mất ngủ)"
+            CHALLENGE_QR -> "Quét mã QR"
             else -> "Không"
         }
     }

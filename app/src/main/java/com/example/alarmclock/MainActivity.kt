@@ -177,10 +177,7 @@ class MainActivity : AppCompatActivity() {
             showAddDialog()
         }
 
-        binding.fabAdd.setOnLongClickListener {
-            startActivity(Intent(this, FeaturesActivity::class.java))
-            true
-        }
+        binding.fabAdd.setOnLongClickListener { true }
 
         setupCurvedNav()
 
@@ -303,6 +300,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onResume() {
+        if (LocationPlaceHelper.hasPermission(this)) {
+            Thread { try { LocationPlaceHelper.resolve(this) } catch (_: Exception) {} }.start()
+        }
         super.onResume()
         forceShowUi()
         try { binding.root.alpha = 1f } catch (_: Exception) {}
@@ -791,6 +791,18 @@ class MainActivity : AppCompatActivity() {
         // Camera for flash
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), 100)
+        }
+        // Vị trí để AI đọc đúng xã / quận / thành phố
+        val needFine = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+        val needCoarse = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+        if (needFine || needCoarse) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+                210
+            )
+        } else {
+            Thread { try { LocationPlaceHelper.resolve(this) } catch (_: Exception) {} }.start()
         }
         // Samsung/OEM: bỏ tối ưu pin để báo thức kêu khi khóa màn
         try {

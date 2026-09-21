@@ -104,7 +104,23 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             }
         }
 
-    private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
+    
+    private val qrLauncher = registerForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
+    ) { res ->
+        if (res.resultCode == RESULT_OK) dismissAlarm(AlarmRepository(this))
+        else android.widget.Toast.makeText(this, "Chưa quét đúng mã QR", android.widget.Toast.LENGTH_SHORT).show()
+    }
+
+    private fun launchQrChallenge() {
+        val token = try { AlarmRepository(this).getAlarms().find { it.id == alarmId }?.qrToken.orEmpty() } catch (_: Exception) { "" }
+        val i = android.content.Intent(this, QrChallengeActivity::class.java)
+            .putExtra(QrChallengeActivity.EXTRA_TOKEN, token)
+            .putExtra("ALARM_ID", alarmId)
+        qrLauncher.launch(i)
+    }
+
+private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
         try {
             FaceChallengeActivity.pendingResultOk = null
             val intent = android.content.Intent(this, FaceChallengeActivity::class.java).apply {
@@ -376,6 +392,15 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                 binding.btnDismiss.visibility = View.GONE
                 binding.btnSnooze.visibility = View.GONE
                 initTapChallenge()
+            }
+            Alarm.CHALLENGE_QR -> {
+                binding.btnSnooze.visibility = View.GONE
+                binding.btnDismiss.visibility = View.VISIBLE
+                binding.btnDismiss.text = "Quét mã QR để tắt"
+                binding.btnDismiss.setOnClickListener { launchQrChallenge() }
+                if (!isStrictAntiSnooze && !AppSettings.isAntiTroll(this)) {
+                    binding.btnSnooze.visibility = View.VISIBLE
+                }
             }
             Alarm.CHALLENGE_FACE, Alarm.CHALLENGE_FACE_EXPR -> {
                 // Không auto-mở camera (Huawei hay đen). Hiện nút bắt đầu.

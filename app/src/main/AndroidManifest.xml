@@ -151,6 +151,7 @@
 
         <activity android:name=".TimerActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".WorldClockActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
+        <activity android:name=".QrChallengeActivity" android:exported="false" android:showWhenLocked="true" android:turnScreenOn="true" />
         <activity android:name=".FaceChallengeActivity" android:exported="false"
             android:showWhenLocked="true" android:turnScreenOn="true"
             android:excludeFromRecents="true"

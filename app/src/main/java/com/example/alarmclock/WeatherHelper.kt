@@ -21,6 +21,28 @@ object WeatherHelper {
      * Lấy mô tả thời tiết ngắn cho TTS.
      * @param city ví dụ "Hanoi" hoặc "Ho Chi Minh"
      */
+    fun fetchWeatherAt(lat: Double, lon: Double, placeLabel: String): String {
+        return try {
+            val key = ApiConfig.weatherApiKey
+            val url = "https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lon&appid=$key&units=metric&lang=vi"
+            val request = Request.Builder().url(url).build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return fetchWeatherSummary(placeLabel.ifBlank { "Hanoi" })
+                val body = response.body?.string() ?: return fetchWeatherSummary(placeLabel)
+                val json = JSONObject(body)
+                val weather = json.getJSONArray("weather").getJSONObject(0)
+                val main = json.getJSONObject("main")
+                val desc = weather.getString("description")
+                val temp = main.getDouble("temp").toInt()
+                val feels = main.optDouble("feels_like", temp.toDouble()).toInt()
+                val where = placeLabel.ifBlank { "vị trí hiện tại" }
+                "Thời tiết tại $where: $desc, nhiệt độ $temp độ C, cảm giác như $feels độ. "
+            }
+        } catch (_: Exception) {
+            fetchWeatherSummary(placeLabel.ifBlank { "Hanoi" })
+        }
+    }
+
     fun fetchWeatherSummary(city: String = "Hanoi"): String {
         return try {
             val key = ApiConfig.weatherApiKey

@@ -24,18 +24,35 @@ object MorningBriefing {
         val wantTasks = alarm?.routineTasks ?: true
 
         thread {
-            val day = SimpleDateFormat("EEEE, dd/MM", Locale("vi", "VN")).format(Date())
+            val now = Calendar.getInstance()
+            val timeStr = String.format(Locale.getDefault(), "%02d giờ %02d phút", now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE))
+            val day = SimpleDateFormat("EEEE, 'ngày' dd 'tháng' MM", Locale("vi", "VN")).format(Date())
+            val place = try { LocationPlaceHelper.resolve(app) } catch (_: Exception) { null }
+            val label = alarm?.label?.trim().orEmpty()
+
             val text = buildString {
-                append("Xin chào. Hôm nay $day. ")
+                // 1 chào ngắn
+                append("Xin chào. Đã đến giờ dậy. ")
+                // 2 giờ + ngày
+                append("Bây giờ $timeStr, $day. ")
+                // vị trí xã / quận / thành phố
+                if (place != null) append(place.speakLine())
+                else append("Chưa có vị trí. Hãy mở app và cấp quyền vị trí. ")
+                // 3 thời tiết đúng chỗ
                 if (wantWeather) {
-                    val w = try { WeatherHelper.fetchWeatherSummary("Hanoi") } catch (_: Exception) { "" }
-                    if (w.isNotBlank()) append(w).append(" ")
+                    val w = try {
+                        if (place != null) WeatherHelper.fetchWeatherAt(place.lat, place.lon, place.shortCity())
+                        else WeatherHelper.fetchWeatherSummary("Hanoi")
+                    } catch (_: Exception) { "" }
+                    if (w.isNotBlank()) append(w)
                     else append("Chưa lấy được thời tiết. ")
                 }
+                // 4 lịch
                 if (wantCal) {
                     val ev = todayEvents(app)
                     append(if (ev.isNotBlank()) "Lịch hôm nay: $ev. " else "Hôm nay không có sự kiện lịch. ")
                 }
+                // 5 việc cần làm
                 if (wantTasks) {
                     val tasks = AppSettings.getRoutineTasksText(app).trim()
                     val note = alarm?.voiceNote?.trim().orEmpty()
@@ -45,6 +62,13 @@ object MorningBriefing {
                         else -> append("Chưa đặt việc cần làm. ")
                     }
                 }
+                // 7 nhắc theo tên chuông
+                if (label.isNotBlank() && !label.equals("Báo thức", true)) {
+                    append("Đến giờ $label rồi. ")
+                }
+                // 8 động viên
+                append("Cố lên, một ngày mới bắt đầu. ")
+                // 10 gói đầy đủ: thêm chuông kế
                 append(nextAlarmText(app))
             }
             Handler(Looper.getMainLooper()).post {

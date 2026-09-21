@@ -41,7 +41,8 @@ class AlarmRepository(context: Context) {
                     routineOn = obj.optBoolean("routineOn", false),
                     routineWeather = obj.optBoolean("routineWeather", true),
                     routineCalendar = obj.optBoolean("routineCalendar", true),
-                    routineTasks = obj.optBoolean("routineTasks", true)
+                    routineTasks = obj.optBoolean("routineTasks", true),
+                    qrToken = obj.optString("qrToken", "")
                 )
             )
         }
@@ -74,6 +75,7 @@ class AlarmRepository(context: Context) {
                 put("routineWeather", alarm.routineWeather)
                 put("routineCalendar", alarm.routineCalendar)
                 put("routineTasks", alarm.routineTasks)
+                put("qrToken", alarm.qrToken)
             }
             array.put(obj)
         }
