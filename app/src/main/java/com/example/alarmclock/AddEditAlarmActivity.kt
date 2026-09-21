@@ -118,14 +118,14 @@ class AddEditAlarmActivity : AppCompatActivity() {
         }
         findViewById<android.view.View>(R.id.rowSnooze).setOnClickListener {
             MaterialAlertDialogBuilder(this)
-                .setTitle("Thời gian báo lại")
+                .setTitle(Lang.t(this, "Thời gian báo lại", "Snooze time"))
                 .setItems(arrayOf("5 phút", "10 phút", "15 phút")) { _, which ->
                     snoozeMinutes = listOf(5, 10, 15)[which]
                     refreshUi()
                 }.show()
         }
         findViewById<android.view.View>(R.id.rowVoice).setOnClickListener {
-            val et = EditText(this).apply { setText(voiceNote ?: ""); hint = "Lời chào khi thức" }
+            val et = EditText(this).apply { setText(voiceNote ?: ""); hint = Lang.t(this, "Lời chào khi thức", "Wake-up note") }
             MaterialAlertDialogBuilder(this)
                 .setTitle("Ghi chú giọng nói (TTS)")
                 .setView(et)
@@ -381,7 +381,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
 
     private fun collectLabel(): String {
         val typed = findViewById<EditText>(R.id.etLabelInline).text?.toString()?.trim()
-        return if (typed.isNullOrBlank()) "Báo thức" else typed
+        return if (typed.isNullOrBlank()) Lang.t(this, "Báo thức", "Alarm") else typed
     }
 
     private fun save() {

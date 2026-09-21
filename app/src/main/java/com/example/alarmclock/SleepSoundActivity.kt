@@ -1,18 +1,18 @@
 package com.example.alarmclock
 
-import android.graphics.Color
 import android.os.Bundle
 import android.os.CountDownTimer
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 
 class SleepSoundActivity : AppCompatActivity() {
     private var timer: CountDownTimer? = null
-    private var leftMs = 0L
     private var playing = false
+    private var leftMs = 0L
     private var soundRaw = R.raw.sleep_rain
 
     override fun attachBaseContext(newBase: android.content.Context) {
@@ -21,60 +21,69 @@ class SleepSoundActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        title = getString(R.string.sleep_sounds)
-        val pad = (20 * resources.displayMetrics.density).toInt()
         val green = 0xFF2E7D32.toInt()
-        val greenLight = 0xFF81C784.toInt()
+        val greenLight = 0xFF43A047.toInt()
         val bg = 0xFF0A0A0A.toInt()
+        val pad = (16 * resources.displayMetrics.density).toInt()
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(bg)
+        }
+        val bar = MaterialToolbar(this).apply {
+            title = Lang.t(this@SleepSoundActivity, "Nhạc ru ngủ", "Sleep sounds")
+            setBackgroundColor(bg)
+            setTitleTextColor(0xFFFFFFFF.toInt())
+            setNavigationIcon(R.drawable.ic_close)
+            setNavigationOnClickListener { finish() }
+        }
+        root.addView(bar)
+
+        val body = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
             setPadding(pad, pad, pad, pad)
         }
+
         val tvStatus = TextView(this).apply {
-            text = getString(R.string.sleep_sounds)
-            textSize = 18f
-            setTextColor(Color.WHITE)
+            text = Lang.t(this@SleepSoundActivity, "Chọn tiếng mưa / suối / gió", "Pick rain, stream or wind")
+            textSize = 16f
+            setTextColor(0xFFFFFFFF.toInt())
         }
         val tvLeft = TextView(this).apply {
             text = "00:00"
-            textSize = 56f
-            setTextColor(Color.WHITE)
-            typeface = android.graphics.Typeface.MONOSPACE
+            textSize = 42f
+            setTextColor(0xFFFFFFFF.toInt())
+            setPadding(0, pad, 0, pad)
         }
 
         val grpSound = MaterialButtonToggleGroup(this).apply { isSingleSelection = true }
-        fun addSound(id: Int, name: String, raw: Int) {
+        data class Snd(val id: Int, val raw: Int, val vi: String, val en: String)
+        val sounds = listOf(
+            Snd(1001, R.raw.sleep_rain, "Mưa đêm", "Night rain"),
+            Snd(1002, R.raw.sleep_stream, "Suối", "Stream"),
+            Snd(1003, R.raw.sleep_wind, "Gió đêm", "Night wind")
+        )
+        sounds.forEach { s ->
             grpSound.addView(MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
-                this.id = id
-                text = name
-                setTextColor(Color.WHITE)
+                text = Lang.t(this@SleepSoundActivity, s.vi, s.en)
+                this.id = s.id
+                setTextColor(0xFFFFFFFF.toInt())
                 strokeColor = android.content.res.ColorStateList.valueOf(green)
-                tag = raw
             })
         }
-        addSound(1001, getString(R.string.sleep_rain), R.raw.sleep_rain)
-        addSound(1002, getString(R.string.sleep_forest), R.raw.sleep_forest)
-        addSound(1003, getString(R.string.sleep_ocean), R.raw.sleep_ocean)
         grpSound.check(1001)
-        grpSound.addOnButtonCheckedListener { _, cid, checked ->
+        grpSound.addOnButtonCheckedListener { _, id, checked ->
             if (!checked) return@addOnButtonCheckedListener
-            soundRaw = when (cid) {
-                1002 -> R.raw.sleep_forest
-                1003 -> R.raw.sleep_ocean
-                else -> R.raw.sleep_rain
-            }
+            soundRaw = sounds.first { it.id == id }.raw
             if (playing) TonePlayer.playAppRaw(this, soundRaw, loop = true)
         }
 
         val grpTime = MaterialButtonToggleGroup(this).apply { isSingleSelection = true }
         listOf(15 to 2001, 30 to 2002, 45 to 2003, 60 to 2004).forEach { (min, id) ->
             grpTime.addView(MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+                text = "${min}m"
                 this.id = id
-                text = "${min}p"
-                setTextColor(Color.WHITE)
+                setTextColor(0xFFFFFFFF.toInt())
                 strokeColor = android.content.res.ColorStateList.valueOf(green)
             })
         }
@@ -82,8 +91,8 @@ class SleepSoundActivity : AppCompatActivity() {
 
         val btnPlay = MaterialButton(this).apply {
             text = getString(R.string.play)
-            setBackgroundColor(green)
-            setTextColor(Color.WHITE)
+            setBackgroundColor(greenLight)
+            setTextColor(0xFFFFFFFF.toInt())
         }
         btnPlay.setOnClickListener {
             if (playing) {
@@ -117,20 +126,25 @@ class SleepSoundActivity : AppCompatActivity() {
             }
         }
 
-        val labelColor = 0xFFCCCCCC.toInt()
-        root.addView(tvStatus)
-        root.addView(tvLeft)
-        root.addView(TextView(this).apply {
-            text = getString(R.string.sound); setTextColor(labelColor); setPadding(0, pad, 0, 8)
+        body.addView(tvStatus)
+        body.addView(tvLeft)
+        body.addView(TextView(this).apply {
+            text = getString(R.string.sound)
+            setTextColor(0xFFFFFFFF.toInt())
+            setPadding(0, pad, 0, 8)
         })
-        root.addView(grpSound)
-        root.addView(TextView(this).apply {
-            text = getString(R.string.auto_off_after); setTextColor(labelColor); setPadding(0, pad, 0, 8)
+        body.addView(grpSound)
+        body.addView(TextView(this).apply {
+            text = getString(R.string.auto_off_after)
+            setTextColor(0xFFFFFFFF.toInt())
+            setPadding(0, pad, 0, 8)
         })
-        root.addView(grpTime)
-        root.addView(btnPlay)
-        window.statusBarColor = bg
+        body.addView(grpTime)
+        body.addView(btnPlay)
+        root.addView(body)
         setContentView(root)
+        window.statusBarColor = bg
+        window.navigationBarColor = bg
     }
 
     private fun stopAll() {

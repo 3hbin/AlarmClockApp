@@ -72,10 +72,6 @@
     <string name="repeat_daily_short">Hàng ngày</string>
 
 
-    <string name="sleep_rain">Mưa nhẹ</string>
-    <string name="sleep_forest">Rừng đêm</string>
-    <string name="sleep_ocean">Sóng biển</string>
-    <string name="menu_app_lock">Khóa ứng dụng</string>
     <string name="menu_calendar">Lịch và ngày lễ</string>
     <string name="menu_google">Đăng nhập Google</string>
     <string name="menu_history">Nhật ký báo thức</string>

@@ -47,20 +47,20 @@ data class Alarm(
         const val CHALLENGE_QR = 13          // quét mã QR
 
         fun challengeLabel(type: Int): String = when (type) {
-            CHALLENGE_MATH -> "Giải toán (1 bài)"
-            CHALLENGE_SHAKE -> "Lắc máy"
-            CHALLENGE_PHOTO -> "Chụp ảnh"
-            CHALLENGE_FACE -> "Quét mặt"
-            CHALLENGE_BIOMETRIC -> "Vân tay/Face hệ thống"
-            CHALLENGE_READ -> "Chọn từ nhanh (10s)"
-            CHALLENGE_MATH10 -> "Giải 10 bài toán"
-            CHALLENGE_SHAKE100 -> "Lắc máy 100 lần"
-            CHALLENGE_TAP200 -> "Bấm 200 lần"
-            CHALLENGE_FACE_EXPR -> "10 biểu cảm dễ"
-            CHALLENGE_ALL -> "TẤT CẢ thử thách (khó)"
-            CHALLENGE_ALL_EASY -> "TẤT CẢ dễ (không mất ngủ)"
-            CHALLENGE_QR -> "Quét mã QR"
-            else -> "Không"
+            CHALLENGE_MATH -> Lang.t(null, "Giải toán (1 bài)", "Math (1)")
+            CHALLENGE_SHAKE -> Lang.t(null, "Lắc máy", "Shake")
+            CHALLENGE_PHOTO -> Lang.t(null, "Chụp ảnh", "Photo")
+            CHALLENGE_FACE -> Lang.t(null, "Quét mặt", "Face scan")
+            CHALLENGE_BIOMETRIC -> Lang.t(null, "Vân tay/Face hệ thống", "Fingerprint / Face")
+            CHALLENGE_READ -> Lang.t(null, "Chọn từ nhanh (10s)", "Pick words (10s)")
+            CHALLENGE_MATH10 -> Lang.t(null, "Giải 10 bài toán", "10 math problems")
+            CHALLENGE_SHAKE100 -> Lang.t(null, "Lắc máy 100 lần", "Shake 100 times")
+            CHALLENGE_TAP200 -> Lang.t(null, "Bấm 200 lần", "Tap 200 times")
+            CHALLENGE_FACE_EXPR -> Lang.t(null, "10 biểu cảm dễ", "10 easy expressions")
+            CHALLENGE_ALL -> Lang.t(null, "TẤT CẢ thử thách (khó)", "ALL challenges (hard)")
+            CHALLENGE_ALL_EASY -> Lang.t(null, "TẤT CẢ dễ", "ALL easy")
+            CHALLENGE_QR -> Lang.t(null, "Quét mã QR", "Scan QR")
+            else -> Lang.t(null, "Không", "None")
         }
     }
 
@@ -74,15 +74,15 @@ data class Alarm(
 
     fun getRepeatText(): String {
         val base = when (repeatMode) {
-            REPEAT_ONCE -> "Chỉ 1 lần"
-            REPEAT_DAILY -> "Hàng ngày"
-            REPEAT_WEEKDAYS -> "Thứ 2 - Thứ 6"
-            else -> "Hàng ngày"
+            REPEAT_ONCE -> Lang.t(null, "Chỉ 1 lần", "Once")
+            REPEAT_DAILY -> Lang.t(null, "Hàng ngày", "Every day")
+            REPEAT_WEEKDAYS -> Lang.t(null, "Thứ 2 - Thứ 6", "Mon – Fri")
+            else -> Lang.t(null, "Hàng ngày", "Every day")
         }
-        val g = group.trim().ifBlank { "Chung" }
+        val g = group.trim().ifBlank { Lang.t(null, "Chung", "General") }
         val we = if (useWeekendSchedule && weekendHour >= 0)
             " · CN ${"%02d:%02d".format(weekendHour, weekendMinute)}" else ""
-        return if (g != "Chung") "$g · $base$we" else "$base$we"
+        return if (g != Lang.t(null, "Chung", "General")) "$g · $base$we" else "$base$we"
     }
 
     fun getChallengeText(): String = challengeLabel(challengeType)

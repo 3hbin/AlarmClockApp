@@ -1080,13 +1080,13 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
         if (!uriStr.isNullOrEmpty()) {
             when {
                 uriStr == "app:soft_chime" || uriStr.endsWith("/soft_chime") ->
-                    return android.net.Uri.parse("android.resource://${packageName}/${R.raw.ringtone_oz}")
+                    return android.net.Uri.parse("android.resource://${packageName}/${R.raw.soft_chime}")
                 uriStr == "app:soft_bell" || uriStr.endsWith("/soft_bell") ->
-                    return android.net.Uri.parse("android.resource://${packageName}/${R.raw.ringtone_oz}")
+                    return android.net.Uri.parse("android.resource://${packageName}/${R.raw.soft_bell}")
                 else -> return android.net.Uri.parse(uriStr)
             }
         }
-        return android.net.Uri.parse("android.resource://${packageName}/${R.raw.ringtone_oz}")
+        return android.net.Uri.parse("android.resource://${packageName}/${R.raw.soft_chime}")
     }
 
 

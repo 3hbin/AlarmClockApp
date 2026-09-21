@@ -135,17 +135,13 @@
     <string name="app_name">Challenge Alarm</string>
 
 
-    <string name="sleep_rain">Light rain</string>
-    <string name="sleep_forest">Night forest</string>
-    <string name="sleep_ocean">Ocean waves</string>
-    <string name="menu_app_lock">App lock</string>
-    <string name="menu_calendar">Calendar &amp; holidays</string>
+    <string name="menu_calendar">Calendar and holidays</string>
     <string name="menu_google">Google sign-in</string>
     <string name="menu_history">Alarm history</string>
     <string name="menu_settings">Settings</string>
-    <string name="menu_screensaver">Screensaver</string>
+    <string name="menu_screensaver">Screen saver</string>
     <string name="menu_privacy">Privacy policy</string>
-    <string name="menu_guide">User guide</string>
+    <string name="menu_guide">How to use</string>
     <string name="menu_version">Version</string>
 
 </resources>

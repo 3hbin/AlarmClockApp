@@ -38,7 +38,7 @@ class GeminiRoutineActivity : AppCompatActivity() {
             orientation = LinearLayout.VERTICAL
         }
         val bar = MaterialToolbar(this).apply {
-            title = "Quy trình Gemini"
+            title = Lang.t(this, "Quy trình Gemini", "Gemini routine")
             setNavigationIcon(R.drawable.ic_close)
             setNavigationOnClickListener { finish() }
         }
@@ -49,29 +49,29 @@ class GeminiRoutineActivity : AppCompatActivity() {
             setPadding(pad, pad, pad, pad)
         }
         body.addView(TextView(this).apply {
-            text = "Khi tôi tắt chuông báo, quy trình này sẽ"
+            text = Lang.t(this, "Khi tôi tắt chuông báo, quy trình này sẽ", "When I dismiss the alarm, this routine will")
             textSize = 16f
             setPadding(0, 0, 0, pad)
         })
 
         val cbOn = MaterialCheckBox(this).apply {
-            text = "Bật quy trình khi tắt chuông"
+            text = Lang.t(this, "Bật quy trình khi tắt chuông", "Run routine when alarm is dismissed")
             isChecked = startOn
         }
         val cbWeather = MaterialCheckBox(this).apply {
-            text = "Cho tôi biết thông tin thời tiết"
+            text = Lang.t(this, "Cho tôi biết thông tin thời tiết", "Tell me the weather")
             isChecked = startWeather
         }
         val cbCal = MaterialCheckBox(this).apply {
-            text = "Cho tôi biết sự kiện trên lịch hôm nay"
+            text = Lang.t(this, "Cho tôi biết sự kiện trên lịch hôm nay", "Tell me today's calendar events")
             isChecked = startCal
         }
         val cbTask = MaterialCheckBox(this).apply {
-            text = "Cho tôi biết những việc cần làm hôm nay"
+            text = Lang.t(this, "Cho tôi biết những việc cần làm hôm nay", "Tell me today's tasks")
             isChecked = startTasks
         }
         val cbTomorrow = MaterialCheckBox(this).apply {
-            text = "Cho tôi biết mai có sự kiện hay không"
+            text = Lang.t(this, "Cho tôi biết mai có sự kiện hay không", "Tell me if I have events tomorrow")
             isChecked = startTomorrow
         }
         listOf(cbOn, cbWeather, cbCal, cbTask, cbTomorrow).forEach { cb ->
@@ -90,25 +90,25 @@ class GeminiRoutineActivity : AppCompatActivity() {
         }
 
         val tvTasks = TextView(this).apply {
-            text = "Việc cần làm: " + AppSettings.getRoutineTasksText(this@GeminiRoutineActivity).ifBlank { "Chưa đặt" }
+            text = Lang.t(this@GeminiRoutineActivity, "Việc cần làm: ", "Tasks: ") + AppSettings.getRoutineTasksText(this@GeminiRoutineActivity).ifBlank { Lang.t(this@GeminiRoutineActivity, "Chưa đặt", "Not set") }
             setPadding(0, pad / 2, 0, pad)
         }
         body.addView(tvTasks)
         body.addView(MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
-            text = "+ Thêm việc cần làm"
+            text = Lang.t(this, "+ Thêm việc cần làm", "+ Add tasks")
             setOnClickListener {
                 val et = EditText(this@GeminiRoutineActivity).apply {
                     setText(AppSettings.getRoutineTasksText(this@GeminiRoutineActivity))
-                    hint = "Ví dụ: mang vở, tập 15 phút"
+                    hint = Lang.t(this, "Ví dụ: mang vở, tập 15 phút", "Example: pack bag, stretch 15 minutes")
                 }
                 MaterialAlertDialogBuilder(this@GeminiRoutineActivity)
-                    .setTitle("Việc cần làm hôm nay")
+                    .setTitle(Lang.t(this, "Việc cần làm hôm nay", "Today's tasks"))
                     .setView(et)
-                    .setPositiveButton("Lưu") { _, _ ->
+                    .setPositiveButton(Lang.t(this, "Lưu", "Save")) { _, _ ->
                         AppSettings.setRoutineTasksText(this@GeminiRoutineActivity, et.text.toString().trim())
-                        tvTasks.text = "Việc cần làm: " + et.text.toString().trim().ifBlank { "Chưa đặt" }
+                        tvTasks.text = Lang.t(this@GeminiRoutineActivity, "Việc cần làm: ", "Tasks: ") + et.text.toString().trim().ifBlank { Lang.t(this@GeminiRoutineActivity, "Chưa đặt", "Not set") }
                     }
-                    .setNegativeButton("Hủy", null)
+                    .setNegativeButton(Lang.t(this, "Hủy", "Cancel"), null)
                     .show()
             }
         })
@@ -118,13 +118,13 @@ class GeminiRoutineActivity : AppCompatActivity() {
             setPadding(0, pad / 2, 0, pad / 2)
         }
         body.addView(MaterialButton(this).apply {
-            text = "Chọn giọng nam / nữ"
+            text = Lang.t(this, "Chọn giọng nam / nữ", "Choose male / female voice")
             setOnClickListener { pickVoice(tvVoice) }
         })
         body.addView(tvVoice)
 
         val btnSave = MaterialButton(this).apply {
-            text = "Lưu"
+            text = Lang.t(this, "Lưu", "Save")
             setOnClickListener {
                 if (alarm != null) {
                     val list = repo.getAlarms()
@@ -162,7 +162,7 @@ class GeminiRoutineActivity : AppCompatActivity() {
             engine.shutdown()
             val names = options.map { it.label }.toTypedArray()
             MaterialAlertDialogBuilder(this)
-                .setTitle("Chọn giọng AI")
+                .setTitle(Lang.t(this, "Chọn giọng AI", "Choose AI voice"))
                 .setItems(names) { _, which ->
                     val opt = options[which]
                     TtsVoiceCatalog.apply(this, opt)

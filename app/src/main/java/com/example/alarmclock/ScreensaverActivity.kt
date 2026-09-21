@@ -1,80 +1,86 @@
 package com.example.alarmclock
 
-import android.app.NotificationManager
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
-import android.provider.Settings
 import android.view.View
-import android.view.WindowInsets
-import android.view.WindowInsetsController
 import android.view.WindowManager
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 /**
- * Màn hình ngủ: nền đen, chữ trắng, ẩn thanh hệ thống,
- * giảm sáng, bật Không làm phiền.
+ * Màn hình đen xì, chữ trắng, ẩn thanh hệ thống, giữ máy không ngủ, giảm sáng.
  */
 class ScreensaverActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var clock: TextView
     private lateinit var date: TextView
-    private var prevDnd = NotificationManager.INTERRUPTION_FILTER_ALL
-    private var changedDnd = false
+    private var wakeLock: PowerManager.WakeLock? = null
+    private var oldBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
 
     private val tick = object : Runnable {
         override fun run() {
-            val loc = if (AppSettings.isEnglishUi(this@ScreensaverActivity)) Locale.US else Locale("vi", "VN")
-            clock.text = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
-            date.text = SimpleDateFormat("EEEE, dd/MM", loc).format(Date())
+            val loc = if (Lang.isEn(this@ScreensaverActivity)) Locale.US else Locale("vi", "VN")
+            clock.text = SimpleDateFormat("HH:mm", loc).format(Date())
+            date.text = SimpleDateFormat(
+                if (Lang.isEn(this@ScreensaverActivity)) "EEEE, MMM d" else "EEEE, dd/MM",
+                loc
+            ).format(Date())
             handler.postDelayed(this, 1000)
         }
     }
 
-    override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(LocaleHelper.wrap(newBase))
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         window.addFlags(
             WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
-                WindowManager.LayoutParams.FLAG_FULLSCREEN
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
         )
         window.statusBarColor = 0xFF000000.toInt()
         window.navigationBarColor = 0xFF000000.toInt()
-        dimScreen()
+        if (Build.VERSION.SDK_INT >= 28) {
+            window.attributes.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
+        oldBrightness = window.attributes.screenBrightness
+        window.attributes = window.attributes.apply { screenBrightness = 0.04f }
+
         hideSystemBars()
-        enableFocusMode()
-        hintBatterySaver()
+
+        try {
+            val pm = getSystemService(POWER_SERVICE) as PowerManager
+            wakeLock = pm.newWakeLock(
+                PowerManager.SCREEN_DIM_WAKE_LOCK or PowerManager.ACQUIRE_CAUSES_WAKEUP,
+                "dongho:screensaver"
+            ).also { it.setReferenceCounted(false); it.acquire(6 * 60 * 60 * 1000L) }
+        } catch (_: Exception) {}
 
         clock = TextView(this).apply {
             textSize = 84f
             gravity = android.view.Gravity.CENTER
             setTextColor(0xFFFFFFFF.toInt())
-            typeface = android.graphics.Typeface.MONOSPACE
+            typeface = android.graphics.Typeface.SANS_SERIF
         }
         date = TextView(this).apply {
-            textSize = 16f
+            textSize = 18f
             gravity = android.view.Gravity.CENTER
             setTextColor(0xFFFFFFFF.toInt())
             setPadding(0, 24, 0, 0)
         }
         val hint = TextView(this).apply {
-            text = if (AppSettings.isEnglishUi(this@ScreensaverActivity))
-                "Tap to exit"
-            else
-                "Chạm để thoát"
+            text = Lang.t(this@ScreensaverActivity, "Chạm để thoát", "Tap to exit")
             textSize = 12f
             gravity = android.view.Gravity.CENTER
             setTextColor(0xFF888888.toInt())
@@ -88,9 +94,11 @@ class ScreensaverActivity : AppCompatActivity() {
             addView(date)
             addView(hint)
             setOnClickListener { finish() }
+            keepScreenOn = true
         }
         setContentView(root)
         handler.post(tick)
+        tryEnableBatterySaver()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -98,81 +106,44 @@ class ScreensaverActivity : AppCompatActivity() {
         if (hasFocus) hideSystemBars()
     }
 
+    override fun onResume() {
+        super.onResume()
+        hideSystemBars()
+    }
+
     private fun hideSystemBars() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            window.setDecorFitsSystemWindows(false)
-            window.insetsController?.let {
-                it.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
-                it.systemBarsBehavior =
-                    WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            }
-        } else {
-            @Suppress("DEPRECATION")
-            window.decorView.systemUiVisibility = (
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                    or View.SYSTEM_UI_FLAG_FULLSCREEN
-                    or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                    or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                )
-        }
+        val c = WindowInsetsControllerCompat(window, window.decorView)
+        c.hide(WindowInsetsCompat.Type.systemBars())
+        c.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        @Suppress("DEPRECATION")
+        window.decorView.systemUiVisibility = (
+            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                or View.SYSTEM_UI_FLAG_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            )
     }
 
-    private fun dimScreen() {
-        val lp = window.attributes
-        lp.screenBrightness = 0.04f
-        window.attributes = lp
-    }
-
-    private fun enableFocusMode() {
-        try {
-            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                if (!nm.isNotificationPolicyAccessGranted) {
-                    startActivity(Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
-                    return
-                }
-                prevDnd = nm.currentInterruptionFilter
-                nm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
-                changedDnd = true
-            }
-        } catch (_: Exception) {}
-    }
-
-    private fun hintBatterySaver() {
+    private fun tryEnableBatterySaver() {
         try {
             val pm = getSystemService(POWER_SERVICE) as PowerManager
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && !pm.isPowerSaveMode) {
-                val prefs = getSharedPreferences("app_settings", MODE_PRIVATE)
-                if (!prefs.getBoolean("asked_battery_saver", false)) {
-                    prefs.edit().putBoolean("asked_battery_saver", true).apply()
-                    try {
-                        startActivity(Intent(Settings.ACTION_BATTERY_SAVER_SETTINGS))
-                    } catch (_: Exception) {}
-                }
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !pm.isIgnoringBatteryOptimizations(packageName)) {
-                try {
-                    startActivity(
-                        Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-                            .setData(Uri.parse("package:$packageName"))
-                    )
-                } catch (_: Exception) {}
+            if (!pm.isPowerSaveMode) {
+                val i = android.content.Intent("android.settings.BATTERY_SAVER_SETTINGS")
+                i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                // không nhảy settings mỗi lần — chỉ ghi nhận; giữ sáng thấp để tiết kiệm
             }
         } catch (_: Exception) {}
     }
 
     override fun onDestroy() {
         handler.removeCallbacks(tick)
-        if (changedDnd) {
-            try {
-                val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && nm.isNotificationPolicyAccessGranted) {
-                    nm.setInterruptionFilter(prevDnd)
-                }
-            } catch (_: Exception) {}
-        }
+        try { if (wakeLock?.isHeld == true) wakeLock?.release() } catch (_: Exception) {}
+        try {
+            window.attributes = window.attributes.apply { screenBrightness = oldBrightness }
+        } catch (_: Exception) {}
         super.onDestroy()
     }
 }

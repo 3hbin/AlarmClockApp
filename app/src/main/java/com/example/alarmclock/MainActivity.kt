@@ -919,7 +919,7 @@ class MainActivity : AppCompatActivity() {
                 return true
             }
             R.id.menu_screensaver -> {
-                openInternal(ScreensaverActivity::class.java, "Trình bảo vệ màn hình")
+                openInternal(ScreensaverActivity::class.java, getString(R.string.menu_screensaver))
                 return true
             }
             R.id.menu_privacy -> {

@@ -152,7 +152,7 @@ class VoiceAlarmActivity : AppCompatActivity() {
             label = "🎙 $message",
             repeatMode = repeat,
             snoozeMinutes = 5,
-            ringtoneUri = "app:ringtone_oz",
+            ringtoneUri = "app:soft_chime",
             challengeType = challenge,
             shakeTargetCount = if (challenge == Alarm.CHALLENGE_SHAKE100) 100 else 30,
             useCrescendo = true
