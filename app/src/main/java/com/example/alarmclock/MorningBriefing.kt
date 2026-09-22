@@ -16,7 +16,8 @@ object MorningBriefing {
         val alarm = if (alarmId >= 0) {
             try { AlarmRepository(app).getAlarms().find { it.id == alarmId } } catch (_: Exception) { null }
         } else null
-        val on = alarm?.routineOn == true || AppSettings.isMorningBriefing(app)
+        // Chỉ đọc khi báo thức đó bật "Quy trình Gemini". Không đọc mặc định.
+        val on = alarm?.routineOn == true
         if (!on) return
 
         val wantWeather = alarm?.routineWeather ?: true

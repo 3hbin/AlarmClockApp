@@ -41,6 +41,27 @@ class AlarmReceiver : BroadcastReceiver() {
             val hour = intent.getIntExtra("ALARM_HOUR", -1)
             val minute = intent.getIntExtra("ALARM_MINUTE", -1)
 
+            // Sinh nhật chỉ được kêu đúng ngày/tháng đã lưu — không kêu mỗi ngày.
+            if (alarmId == BirthdayHelper.ALARM_ID || repeatMode == Alarm.REPEAT_YEARLY) {
+                val month = AppSettings.getBirthdayMonth(context)
+                val day = AppSettings.getBirthdayDay(context)
+                val now = java.util.Calendar.getInstance()
+                val isBirthdayToday = month in 1..12 && day in 1..31 &&
+                    now.get(java.util.Calendar.MONTH) + 1 == month &&
+                    now.get(java.util.Calendar.DAY_OF_MONTH) == day
+                if (!isBirthdayToday) {
+                    try {
+                        val repo = AlarmRepository(context)
+                        repo.getAlarms().find { it.id == alarmId }?.let {
+                            AlarmScheduler.schedule(context, it)
+                        }
+                    } catch (_: Exception) {}
+                    try { if (wakeLock.isHeld) wakeLock.release() } catch (_: Exception) {}
+                    pending.finish()
+                    return
+                }
+            }
+
             val allowDirectDismiss =
                 challengeType == Alarm.CHALLENGE_NONE &&
                     !AppSettings.isAntiTroll(context) &&

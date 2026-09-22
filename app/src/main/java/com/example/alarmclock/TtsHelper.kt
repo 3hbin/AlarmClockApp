@@ -18,6 +18,7 @@ class TtsHelper(context: Context) : TextToSpeech.OnInitListener {
     private var ready = false
     private val pending = ArrayDeque<String>()
     var onDone: (() -> Unit)? = null
+    var useMediaStream: Boolean = false
 
     init {
         main.post {
@@ -38,7 +39,10 @@ class TtsHelper(context: Context) : TextToSpeech.OnInitListener {
         engine.setSpeechRate(0.92f)
         engine.setAudioAttributes(
             AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ALARM)
+                .setUsage(
+                    if (useMediaStream) AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY
+                    else AudioAttributes.USAGE_ALARM
+                )
                 .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                 .build()
         )
@@ -99,16 +103,21 @@ class TtsHelper(context: Context) : TextToSpeech.OnInitListener {
         while (pending.isNotEmpty()) {
             val text = pending.removeFirst()
             try {
-                val am = app.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-                val max = am.getStreamMaxVolume(AudioManager.STREAM_ALARM)
-                if (max > 0) {
-                    val now = am.getStreamVolume(AudioManager.STREAM_ALARM)
-                    if (now < (max * 3) / 4) am.setStreamVolume(AudioManager.STREAM_ALARM, max, 0)
+                if (!useMediaStream) {
+                    val am = app.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                    val max = am.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+                    if (max > 0) {
+                        val now = am.getStreamVolume(AudioManager.STREAM_ALARM)
+                        if (now < (max * 3) / 4) am.setStreamVolume(AudioManager.STREAM_ALARM, max, 0)
+                    }
                 }
             } catch (_: Exception) {}
             val params = Bundle().apply {
                 putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f)
-                putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_ALARM)
+                putInt(
+                    TextToSpeech.Engine.KEY_PARAM_STREAM,
+                    if (useMediaStream) AudioManager.STREAM_MUSIC else AudioManager.STREAM_ALARM
+                )
             }
             engine.speak(text, TextToSpeech.QUEUE_ADD, params, "alarm_tts_${System.currentTimeMillis()}")
         }

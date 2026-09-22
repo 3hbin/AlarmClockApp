@@ -388,6 +388,9 @@ class AddEditAlarmActivity : AppCompatActivity() {
     private fun save() {
         label = collectLabel()
         repeatMode = modeFromChips()
+        if (alarmId == BirthdayHelper.ALARM_ID) {
+            repeatMode = Alarm.REPEAT_YEARLY
+        }
         val repo = AlarmRepository(this)
         val list = repo.getAlarms()
         if (isEdit) {

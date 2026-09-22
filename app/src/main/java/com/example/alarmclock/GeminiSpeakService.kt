@@ -23,6 +23,7 @@ class GeminiSpeakService : Service() {
         }
         tts?.shutdown()
         tts = TtsHelper(this).also { helper ->
+            helper.useMediaStream = true
             helper.onDone = {
                 helper.shutdown()
                 stopSelf()
@@ -44,12 +45,13 @@ class GeminiSpeakService : Service() {
 
     private fun buildNotif(): Notification {
         AlarmNotificationHelper.ensureChannels(this)
-        return NotificationCompat.Builder(this, AlarmNotificationHelper.CHANNEL_RINGING_FGS)
+        return NotificationCompat.Builder(this, AlarmNotificationHelper.CHANNEL_GEMINI)
             .setSmallIcon(R.drawable.ic_gemini_sparkle)
             .setContentTitle("Quy trình Gemini")
             .setContentText("Đang đọc lời nhắc…")
             .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setSilent(true)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
     }
 

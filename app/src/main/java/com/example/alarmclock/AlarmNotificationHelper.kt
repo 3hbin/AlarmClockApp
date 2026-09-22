@@ -24,6 +24,7 @@ object AlarmNotificationHelper {
     const val CHANNEL_SCHEDULED = "alarm_scheduled_v1"
     const val NOTIF_ID_SCHEDULED = 1002
     const val CHANNEL_CHRONO = "chrono_running"
+    const val CHANNEL_GEMINI = "gemini_briefing_v1"
     const val NOTIF_ID_RINGING = 2001
     const val ALARM_NOTIFICATION_ID = 2001
     const val FOREGROUND_NOTIFICATION_ID = 2099
@@ -85,6 +86,18 @@ object AlarmNotificationHelper {
             enableVibration(false)
         }
         nm.createNotificationChannel(chrono)
+
+        val gemini = NotificationChannel(
+            CHANNEL_GEMINI,
+            "Quy trình Gemini",
+            NotificationManager.IMPORTANCE_LOW
+        ).apply {
+            description = "Đọc lời nhắc sau khi tắt báo thức — không phát chuông"
+            setShowBadge(false)
+            setSound(null, null)
+            enableVibration(false)
+        }
+        nm.createNotificationChannel(gemini)
     }
 
     fun showRingingNotification(

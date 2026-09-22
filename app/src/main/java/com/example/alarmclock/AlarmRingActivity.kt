@@ -1026,11 +1026,12 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
                 intent.getIntExtra("ALARM_HOUR", 0),
                 intent.getIntExtra("ALARM_MINUTE", 0), "dismiss")
         } catch (_: Exception) {}
-        try { MorningBriefing.speakAfterDismiss(this, alarmId) } catch (_: Exception) {}
         try { RippleRingsEffect.stop(this) } catch (_: Exception) {}
         stopRinging()
         AlarmNotificationHelper.cancelRinging(this)
         try { AlarmRingService.stop(this) } catch (_: Exception) {}
+        try { TonePlayer.stop() } catch (_: Exception) {}
+        try { MorningBriefing.speakAfterDismiss(this, alarmId) } catch (_: Exception) {}
         val alarms = repo.getAlarms().toMutableList()
         val alarm = alarms.find { it.id == alarmId }
         if (alarm != null) {
@@ -1152,6 +1153,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
     }
 
     private fun stopRinging() {
+        try { TonePlayer.stop() } catch (_: Exception) {}
         mediaPlayer?.stop()
         mediaPlayer?.release()
         mediaPlayer = null

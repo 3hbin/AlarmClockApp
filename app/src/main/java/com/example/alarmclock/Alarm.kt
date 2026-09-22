@@ -30,6 +30,7 @@ data class Alarm(
         const val REPEAT_ONCE = 0
         const val REPEAT_DAILY = 1
         const val REPEAT_WEEKDAYS = 2
+        const val REPEAT_YEARLY = 3
 
         const val CHALLENGE_NONE = 0
         const val CHALLENGE_MATH = 1          // 1 bài (dễ)
@@ -77,6 +78,7 @@ data class Alarm(
             REPEAT_ONCE -> Lang.t(null, "Chỉ 1 lần", "Once")
             REPEAT_DAILY -> Lang.t(null, "Hàng ngày", "Every day")
             REPEAT_WEEKDAYS -> Lang.t(null, "Thứ 2 - Thứ 6", "Mon – Fri")
+            REPEAT_YEARLY -> Lang.t(null, "Hàng năm (sinh nhật)", "Yearly (birthday)")
             else -> Lang.t(null, "Hàng ngày", "Every day")
         }
         val rawG = group.trim()

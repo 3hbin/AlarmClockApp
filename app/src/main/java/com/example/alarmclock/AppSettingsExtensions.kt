@@ -29,5 +29,3 @@ fun AppSettings.clearBirthday(context: Context) {
         .remove("bday_year").remove("bday_month").remove("bday_day").remove("bday_source")
         .apply()
 }
-
-val Alarm.Companion.REPEAT_YEARLY: Int get() = 3

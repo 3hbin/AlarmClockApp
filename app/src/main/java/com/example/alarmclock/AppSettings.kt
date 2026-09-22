@@ -210,7 +210,7 @@ object AppSettings {
     fun setMorningBriefing(context: Context, on: Boolean) =
         prefs(context).edit().putBoolean("morning_briefing", on).apply()
     fun isMorningBriefing(context: Context) =
-        prefs(context).getBoolean("morning_briefing", true)
+        prefs(context).getBoolean("morning_briefing", false)
 
     fun getBottomNavStyle(context: Context): Int {
         // Cố định Persistent — mượt, không lag/crash
