@@ -66,7 +66,8 @@ class CurvedBottomNavView @JvmOverloads constructor(
 
     private val accentBlue = 0xFF4F5BFF.toInt()
     private val accentGoogle = 0xFFEA4335.toInt()
-    private val accent: Int get() = if (navStyle == Style.GOOGLE) accentGoogle else accentBlue
+    private val eventAccent: Int get() = try { EventManager.activeColor(context) } catch (_: Exception) { accentBlue }
+    private val accent: Int get() = eventAccent
 
     private fun isNight(): Boolean {
         val ui = resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK
@@ -77,7 +78,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
     private val pageBg: Int get() = if (isNight()) 0xFF12131A.toInt() else 0xFFF7F8FC.toInt()
     private val inactiveIcon: Int get() = if (isNight()) 0xFF8B90A5.toInt() else 0xFF6B7280.toInt()
     private val labelInactive: Int get() = if (isNight()) 0xFF8B90A5.toInt() else 0xFF9AA0B4.toInt()
-    private val labelActive: Int get() = if (navStyle == Style.GOOGLE) accentGoogle else accentBlue
+    private val labelActive: Int get() = if (navStyle == Style.GOOGLE) accentGoogle else eventAccent
 
     // Không setShadowLayer — gây crash trên Huawei khi kết hợp SOFTWARE layer
     private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {

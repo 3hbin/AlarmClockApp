@@ -123,6 +123,17 @@ object EventManager {
 
     fun currentName(): String = palette()?.title ?: ""
 
+    fun activeColor(context: Context): Int {
+        if (isThemeEnabled(context)) palette()?.primary?.let { return it }
+        return Color.parseColor("#4F5BFF")
+    }
+
+    fun surfaceColor(context: Context): Int {
+        if (isThemeEnabled(context)) palette()?.surface?.let { return it }
+        return Color.parseColor("#F7F8FC")
+    }
+
+
     fun isThemeEnabled(context: Context) =
         AppSettings.prefs(context).getBoolean("event_theme_on", true)
 

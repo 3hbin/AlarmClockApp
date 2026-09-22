@@ -318,13 +318,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun forceShowUi() {
         try {
-            val surface = androidx.core.content.ContextCompat.getColor(this, R.color.surface)
-            val primary = androidx.core.content.ContextCompat.getColor(this, R.color.primary)
-            window.setBackgroundDrawableResource(R.color.surface)
+            val ev = try { EventManager.palette().takeIf { EventManager.isThemeEnabled(this) } } catch (_: Exception) { null }
+            val surface = ev?.surface ?: androidx.core.content.ContextCompat.getColor(this, R.color.surface)
+            val primary = ev?.primary ?: androidx.core.content.ContextCompat.getColor(this, R.color.primary)
             window.decorView.setBackgroundColor(surface)
             window.statusBarColor = primary
-            // Dark mode: status bar icons sáng
-            val night = (resources.configuration.uiMode and
+            val night = ev != null || (resources.configuration.uiMode and
                 android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
                 android.content.res.Configuration.UI_MODE_NIGHT_YES
             if (android.os.Build.VERSION.SDK_INT >= 23) {
@@ -333,6 +332,8 @@ class MainActivity : AppCompatActivity() {
                 else flags or android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
                 window.decorView.systemUiVisibility = flags
             }
+            try { binding.tvNextAlarm.setTextColor(primary) } catch (_: Exception) {}
+            try { EventManager.applyChrome(this) } catch (_: Exception) {}
         } catch (_: Exception) {}
         if (!::binding.isInitialized) return
         try {
