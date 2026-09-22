@@ -9,6 +9,8 @@ object Lang {
         return Locale.getDefault().language.equals("en", true)
     }
 
+    fun t(vi: String, en: String): String = if (isEn()) en else vi
+
     fun t(context: Context?, vi: String, en: String): String =
         if (isEn(context)) en else vi
 }

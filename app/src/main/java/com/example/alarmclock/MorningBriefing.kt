@@ -23,6 +23,7 @@ object MorningBriefing {
         val wantCal = alarm?.routineCalendar ?: true
         val wantTasks = alarm?.routineTasks ?: true
         val wantTomorrow = alarm?.routineTomorrow ?: true
+        val en = AppSettings.isEnglishUi(app)
 
         thread {
             val now = Calendar.getInstance()
