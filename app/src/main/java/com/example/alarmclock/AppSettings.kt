@@ -212,6 +212,18 @@ object AppSettings {
     fun isMorningBriefing(context: Context) =
         prefs(context).getBoolean("morning_briefing", false)
 
+    /** Thời lượng đổ chuông tối đa (phút). Hết giờ tự tắt, không kêu 24/7. */
+    fun setRingDurationMinutes(context: Context, min: Int) =
+        prefs(context).edit().putInt("ring_duration_min", min.coerceIn(1, 30)).apply()
+    fun getRingDurationMinutes(context: Context) =
+        prefs(context).getInt("ring_duration_min", 10)
+
+    /** Khi ở nhà: tạm dừng toàn bộ lịch báo thức để máy khỏi thức 24/7. */
+    fun setPauseAlarmsAtHome(context: Context, on: Boolean) =
+        prefs(context).edit().putBoolean("pause_alarms_home", on).apply()
+    fun isPauseAlarmsAtHome(context: Context) =
+        prefs(context).getBoolean("pause_alarms_home", false)
+
     fun getBottomNavStyle(context: Context): Int {
         // Cố định Persistent — mượt, không lag/crash
         return NAV_PERSISTENT

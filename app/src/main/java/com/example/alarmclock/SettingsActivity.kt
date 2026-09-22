@@ -190,6 +190,56 @@ class SettingsActivity : AppCompatActivity() {
             15 -> binding.rbSnooze15.isChecked = true
             else -> binding.rbSnooze5.isChecked = true
         }
+        try {
+            binding.tvRingDurationTitle.text = Lang.t(this, "Thời lượng đổ chuông", "Ring duration")
+            binding.tvRingDurationHint.text = Lang.t(this, "Hết giờ tự tắt, không kêu suốt ngày", "Stops automatically — will not ring all day")
+            binding.tvPauseHome.text = Lang.t(this, "Đang ở nhà — tạm dừng báo thức", "I'm home — pause alarms")
+            when (AppSettings.getRingDurationMinutes(this)) {
+                1 -> binding.rbRing1.isChecked = true
+                5 -> binding.rbRing5.isChecked = true
+                15 -> binding.rbRing15.isChecked = true
+                30 -> binding.rbRing30.isChecked = true
+                else -> binding.rbRing10.isChecked = true
+            }
+            binding.rgRingDuration.setOnCheckedChangeListener { _, id ->
+                val min = when (id) {
+                    R.id.rbRing1 -> 1
+                    R.id.rbRing5 -> 5
+                    R.id.rbRing15 -> 15
+                    R.id.rbRing30 -> 30
+                    else -> 10
+                }
+                AppSettings.setRingDurationMinutes(this, min)
+            }
+            binding.switchPauseHome.setCheckedSilent(AppSettings.isPauseAlarmsAtHome(this))
+            binding.switchPauseHome.setOnCheckedChangeListener { _, on ->
+                AppSettings.setPauseAlarmsAtHome(this, on)
+                try {
+                    if (on) {
+                        AlarmRepository(this).getAlarms().forEach { AlarmScheduler.cancel(this, it.id) }
+                        AlarmNotificationHelper.cancelRinging(this)
+                        AlarmRingService.stop(this)
+                        TonePlayer.stop()
+                    } else {
+                        AlarmScheduler.rescheduleAll(this)
+                    }
+                } catch (_: Exception) {}
+                Toast.makeText(
+                    this,
+                    if (on) Lang.t(this, "Đã tạm dừng báo thức khi ở nhà", "Alarms paused while at home")
+                    else Lang.t(this, "Đã bật lại lịch báo thức", "Alarms scheduled again"),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            binding.btnAllowBackground.text = Lang.t(
+                this,
+                "Cho phép chạy nền / Tắt tối ưu pin",
+                "Allow background / Ignore battery opt."
+            )
+            binding.btnAllowBackground.setOnClickListener {
+                BatteryOptHelper.promptAllowBackground(this, force = true)
+            }
+        } catch (_: Exception) {}
         binding.rgSnoozeDefault.setOnCheckedChangeListener { _, id ->
             val m = when (id) {
                 R.id.rbSnooze10 -> 10

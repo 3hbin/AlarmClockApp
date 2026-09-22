@@ -28,6 +28,11 @@ class AlarmReceiver : BroadcastReceiver() {
         }
 
         try {
+            if (AppSettings.isPauseAlarmsAtHome(context)) {
+                try { if (wakeLock.isHeld) wakeLock.release() } catch (_: Exception) {}
+                try { pending.finish() } catch (_: Exception) {}
+                return
+            }
             val alarmId = intent.getIntExtra("ALARM_ID", -1)
             val label = intent.getStringExtra("ALARM_LABEL") ?: "Báo thức"
             val snoozeMinutes = intent.getIntExtra("SNOOZE_MINUTES", 5)

@@ -56,6 +56,7 @@ class AlarmRingService : Service() {
 
         useCrescendoNow = crescendo
         startSound(ringtoneUri)
+        scheduleAutoStop()
         // Chỉ mở Activity tối đa 1 lần / 20s để tránh crash-loop khi RingActivity lỗi.
         val now = android.os.SystemClock.elapsedRealtime()
         if (now - lastActivityLaunchAt < 20_000L) {
@@ -128,7 +129,19 @@ class AlarmRingService : Service() {
     }
 
     private var crescendoHandler: android.os.Handler? = null
+    private var autoStopHandler: android.os.Handler? = null
     private var useCrescendoNow = true
+
+    private fun scheduleAutoStop() {
+        autoStopHandler?.removeCallbacksAndMessages(null)
+        val h = android.os.Handler(mainLooper)
+        autoStopHandler = h
+        val cap = AppSettings.getRingDurationMinutes(this).coerceIn(1, 30) * 60_000L
+        h.postDelayed({
+            try { AlarmNotificationHelper.cancelRinging(this) } catch (_: Exception) {}
+            stopSelfSafe()
+        }, cap)
+    }
 
     private fun startSound(ringtoneUri: String?) {
         try { player?.release() } catch (_: Exception) {}
@@ -199,6 +212,7 @@ class AlarmRingService : Service() {
 
     private fun stopSelfSafe() {
         crescendoHandler?.removeCallbacksAndMessages(null)
+        autoStopHandler?.removeCallbacksAndMessages(null)
         TonePlayer.stop()
         try { player?.stop() } catch (_: Exception) {}
         try { player?.release() } catch (_: Exception) {}

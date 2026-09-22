@@ -32,7 +32,7 @@ class AlarmApp : Application() {
             AppSettings.setStatusNotificationEnabled(this, false)
             AlarmKeepAliveService.sync(this)
         } catch (_: Exception) {}
-        try { android.os.Handler(mainLooper).postDelayed({ BatteryOptHelper.requestIgnore(this) }, 1500) } catch (_: Exception) {}
+        // Không xin bỏ tối ưu pin lúc mở app — để máy ngủ khi ở nhà, tránh chai pin.
     }
 
     private fun installCrashLogger() {

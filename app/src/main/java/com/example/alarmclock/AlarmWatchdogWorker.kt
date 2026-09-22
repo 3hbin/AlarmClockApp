@@ -19,8 +19,9 @@ class AlarmWatchdogWorker(
 
     override fun doWork(): Result {
         return try {
-            AlarmScheduler.rescheduleAll(applicationContext)
-            // Nếu vẫn đang kêu: đăng lại 2001 (OEM có thể đã nuốt notif sau nhiều giờ).
+            if (!AppSettings.isPauseAlarmsAtHome(applicationContext)) {
+                AlarmScheduler.rescheduleAll(applicationContext)
+            }
             try { AlarmNotificationHelper.restoreRingingNotification(applicationContext) } catch (_: Exception) {}
             Result.success()
         } catch (_: Exception) {
@@ -33,11 +34,11 @@ class AlarmWatchdogWorker(
 
         fun start(context: Context) {
             try {
-                val req = PeriodicWorkRequestBuilder<AlarmWatchdogWorker>(15, TimeUnit.MINUTES)
+                val req = PeriodicWorkRequestBuilder<AlarmWatchdogWorker>(6, TimeUnit.HOURS)
                     .build()
                 WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                     UNIQUE,
-                    ExistingPeriodicWorkPolicy.KEEP,
+                    ExistingPeriodicWorkPolicy.UPDATE,
                     req
                 )
             } catch (_: Exception) {}

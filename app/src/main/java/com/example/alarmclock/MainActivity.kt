@@ -820,20 +820,11 @@ class MainActivity : AppCompatActivity() {
         } else {
             Thread { try { LocationPlaceHelper.resolve(this) } catch (_: Exception) {} }.start()
         }
-        // Samsung/OEM: bỏ tối ưu pin để báo thức kêu khi khóa màn
         try {
-            val pm = getSystemService(POWER_SERVICE) as android.os.PowerManager
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                !pm.isIgnoringBatteryOptimizations(packageName)
-            ) {
-                val intent = Intent(
-                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                    Uri.parse("package:$packageName")
-                )
-                startActivity(intent)
-            }
-        } catch (_: Exception) {
-        }
+            window.decorView.postDelayed({
+                if (!isFinishing) BatteryOptHelper.promptAllowBackground(this)
+            }, 900)
+        } catch (_: Exception) {}
         // Android 14+: full-screen intent permission
         if (Build.VERSION.SDK_INT >= 34) {
             try {

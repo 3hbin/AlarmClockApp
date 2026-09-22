@@ -270,8 +270,18 @@ object AlarmNotificationHelper {
             .putBoolean("strict", isStrict)
             .putString("voice", voiceNote)
             .putBoolean("crescendo", useCrescendo)
+            .putLong("startedAt", System.currentTimeMillis())
             .apply()
         scheduleRingingRefresh(context)
+    }
+
+    fun ringingTimedOut(context: Context): Boolean {
+        val p = context.getSharedPreferences(PREFS_RINGING, Context.MODE_PRIVATE)
+        if (!p.getBoolean("active", false)) return false
+        val started = p.getLong("startedAt", 0L)
+        if (started <= 0L) return true
+        val cap = AppSettings.getRingDurationMinutes(context).coerceIn(1, 30) * 60_000L
+        return System.currentTimeMillis() - started >= cap
     }
 
     fun clearRingingState(context: Context) {
@@ -282,6 +292,12 @@ object AlarmNotificationHelper {
     fun restoreRingingNotification(context: Context) {
         val p = context.getSharedPreferences(PREFS_RINGING, Context.MODE_PRIVATE)
         if (!p.getBoolean("active", false)) return
+        if (AppSettings.isPauseAlarmsAtHome(context) || ringingTimedOut(context)) {
+            cancelRinging(context)
+            try { AlarmRingService.stop(context) } catch (_: Exception) {}
+            try { TonePlayer.stop() } catch (_: Exception) {}
+            return
+        }
         showRingingNotification(
             context = context,
             alarmId = p.getInt("alarmId", -1),

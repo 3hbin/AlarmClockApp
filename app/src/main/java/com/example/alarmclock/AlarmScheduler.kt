@@ -10,6 +10,7 @@ import java.util.Calendar
 object AlarmScheduler {
 
     fun schedule(context: Context, alarm: Alarm) {
+        if (AppSettings.isPauseAlarmsAtHome(context)) return
         if (!alarm.isEnabled) return
 
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -108,6 +109,11 @@ object AlarmScheduler {
 
     fun rescheduleAll(context: Context) {
         val repo = AlarmRepository(context)
+        if (AppSettings.isPauseAlarmsAtHome(context)) {
+            repo.getAlarms().forEach { cancel(context, it.id) }
+            try { AlarmKeepAliveService.sync(context) } catch (_: Exception) {}
+            return
+        }
         repo.getAlarms().filter { it.isEnabled }.forEach { schedule(context, it) }
         try { AlarmKeepAliveService.sync(context) } catch (_: Exception) {}
     }

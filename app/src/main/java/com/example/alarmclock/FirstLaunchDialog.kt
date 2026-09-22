@@ -49,19 +49,7 @@ object FirstLaunchDialog {
             .setView(view)
             .setPositiveButton(Lang.t(activity, "Đã hiểu và bắt đầu", "Got it")) { _, _ ->
                 markDone(activity)
-                try {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                        val pm = activity.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
-                        if (!pm.isIgnoringBatteryOptimizations(activity.packageName)) {
-                            activity.startActivity(
-                                Intent(
-                                    Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-                                    Uri.parse("package:${activity.packageName}")
-                                )
-                            )
-                        }
-                    }
-                } catch (_: Exception) {}
+                try { BatteryOptHelper.promptAllowBackground(activity, force = true) } catch (_: Exception) {}
             }
             .setCancelable(false)
             .show()

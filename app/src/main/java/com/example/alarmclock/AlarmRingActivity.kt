@@ -82,6 +82,8 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
     private var readWordIndex = 0
     private var readWords: List<String> = emptyList()
     private var readTimerLeft = 10
+    private val ringTimeoutHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var ringTimeoutRunnable: Runnable? = null
     private val readTimerHandler = android.os.Handler(android.os.Looper.getMainLooper())
     private var readTimerRunnable: Runnable? = null
     private val readUsed = mutableSetOf<String>()
@@ -297,6 +299,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
         )
 
         startRinging()
+        scheduleRingTimeout()
         enforceAntiTroll()
         setupChallengeUi()
 
@@ -1019,6 +1022,48 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
         }
     }
 
+    private fun scheduleRingTimeout() {
+        ringTimeoutRunnable?.let { ringTimeoutHandler.removeCallbacks(it) }
+        val cap = AppSettings.getRingDurationMinutes(this).coerceIn(1, 30) * 60_000L
+        val run = Runnable { autoStopAfterDuration() }
+        ringTimeoutRunnable = run
+        ringTimeoutHandler.postDelayed(run, cap)
+    }
+
+    /** Hết thời lượng đổ chuông: tắt tiếng, không đọc Gemini, không kêu thêm. */
+    private fun autoStopAfterDuration() {
+        try { restoreFocusMode() } catch (_: Exception) {}
+        try {
+            AlarmHistory.add(
+                this,
+                intent.getStringExtra("ALARM_LABEL") ?: "",
+                intent.getIntExtra("ALARM_HOUR", 0),
+                intent.getIntExtra("ALARM_MINUTE", 0),
+                "timeout"
+            )
+        } catch (_: Exception) {}
+        try { RippleRingsEffect.stop(this) } catch (_: Exception) {}
+        stopRinging()
+        AlarmNotificationHelper.cancelRinging(this)
+        try { AlarmRingService.stop(this) } catch (_: Exception) {}
+        try { TonePlayer.stop() } catch (_: Exception) {}
+        try {
+            val repo = AlarmRepository(this)
+            val alarms = repo.getAlarms().toMutableList()
+            val alarm = alarms.find { it.id == alarmId }
+            if (alarm != null) {
+                if (repeatMode == Alarm.REPEAT_ONCE) {
+                    alarm.isEnabled = false
+                    repo.saveAlarms(alarms)
+                    AlarmScheduler.cancel(this, alarmId)
+                } else {
+                    AlarmScheduler.schedule(this, alarm)
+                }
+            }
+        } catch (_: Exception) {}
+        finish()
+    }
+
     private fun dismissAlarm(repo: AlarmRepository) {
         try { restoreFocusMode() } catch (_: Exception) {}
         try {
@@ -1264,6 +1309,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
         try { restoreFocusMode() } catch (_: Exception) {}
         try { RippleRingsEffect.stop(this) } catch (_: Exception) {}
         stopReadTimer()
+        ringTimeoutRunnable?.let { ringTimeoutHandler.removeCallbacks(it) }
 
         try {
             unregisterReceiver(forceStopReceiver)
