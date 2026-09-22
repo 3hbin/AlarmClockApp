@@ -61,6 +61,7 @@ class WorldClockActivity : AppCompatActivity() {
         try {
             binding = ActivityWorldClockBinding.inflate(layoutInflater)
             setContentView(binding.root)
+        try { EventManager.applyChrome(this) } catch (_: Exception) {}
         try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
         } catch (e: Exception) {
             android.widget.Toast.makeText(this, "Lỗi tab: ${e.message}", android.widget.Toast.LENGTH_LONG).show()

@@ -151,12 +151,25 @@ object EventManager {
             activity.window.statusBarColor = p.primary
             if (Build.VERSION.SDK_INT >= 21) activity.window.navigationBarColor = p.surface
         } catch (_: Exception) {}
-        listOf("toolbar").forEach { name ->
+        listOf("toolbar", "toolbarBedtime").forEach { name ->
             val id = activity.resources.getIdentifier(name, "id", activity.packageName)
             if (id != 0) {
                 try { activity.findViewById<View>(id)?.setBackgroundColor(p.primary) } catch (_: Exception) {}
             }
         }
+        try {
+            val content = activity.findViewById<View>(android.R.id.content)
+            fun walk(v: View) {
+                if (v is com.google.android.material.appbar.MaterialToolbar ||
+                    v is androidx.appcompat.widget.Toolbar) {
+                    v.setBackgroundColor(p.primary)
+                }
+                if (v is android.view.ViewGroup) {
+                    for (i in 0 until v.childCount) walk(v.getChildAt(i))
+                }
+            }
+            if (content != null) walk(content)
+        } catch (_: Exception) {}
         listOf("fabAdd", "fab", "fabAddEvent").forEach { name ->
             val id = activity.resources.getIdentifier(name, "id", activity.packageName)
             if (id == 0) return@forEach

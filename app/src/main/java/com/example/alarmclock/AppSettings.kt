@@ -91,10 +91,10 @@ object AppSettings {
         prefs(context).edit().putString("google_photo_url", url).apply()
     fun getGooglePhotoUrl(context: Context) =
         prefs(context).getString("google_photo_url", "") ?: ""
-    fun isStatusNotificationEnabled(context: Context) =
-        prefs(context).getBoolean("status_notif_enabled", false)
-    fun setStatusNotificationEnabled(context: Context, on: Boolean) =
-        prefs(context).edit().putBoolean("status_notif_enabled", on).apply()
+    fun isStatusNotificationEnabled(context: Context) = false
+    fun setStatusNotificationEnabled(context: Context, on: Boolean) {
+        prefs(context).edit().putBoolean("status_notif_enabled", false).apply()
+    }
 
     // Anti-troll: chống người khác tắt báo thức
     fun setAntiTroll(context: Context, on: Boolean) =

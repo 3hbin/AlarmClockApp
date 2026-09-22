@@ -29,6 +29,7 @@ class FeaturesActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityFeaturesBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        try { EventManager.applyChrome(this) } catch (_: Exception) {}
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         title = getString(R.string.features_menu)
         repo = AlarmRepository(this)

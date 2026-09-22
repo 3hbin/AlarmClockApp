@@ -59,6 +59,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_edit_alarm)
+        try { EventManager.applyChrome(this) } catch (_: Exception) {}
 
                 alarmId = intent.getIntExtra("ALARM_ID", -1)
         val existing = if (alarmId >= 0) AlarmRepository(this).getAlarms().find { it.id == alarmId } else null

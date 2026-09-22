@@ -28,6 +28,7 @@ class SettingsActivity : AppCompatActivity() {
         try {
             binding = ActivitySettingsBinding.inflate(layoutInflater)
             setContentView(binding.root)
+        try { EventManager.applyChrome(this) } catch (_: Exception) {}
         } catch (e: Exception) {
             val tv = android.widget.TextView(this)
             tv.text = "Cài đặt"
@@ -38,14 +39,6 @@ class SettingsActivity : AppCompatActivity() {
             return
         }
         bindGoogleProfileRow()
-        try {
-            val sw = findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.swHideStatusNotif)
-            sw.isChecked = !AppSettings.isStatusNotificationEnabled(this)
-            sw.setOnCheckedChangeListener { _, hide ->
-                AppSettings.setStatusNotificationEnabled(this, !hide)
-                AlarmKeepAliveService.sync(this)
-            }
-        } catch (_: Exception) {}
         try {
             binding.swEventTheme.isChecked = EventManager.isThemeEnabled(this)
             binding.swEventTheme.setOnCheckedChangeListener { _, on ->

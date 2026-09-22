@@ -38,6 +38,7 @@ class RingtonePickerActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_ringtone_picker)
+        try { EventManager.applyChrome(this) } catch (_: Exception) {}
 
         selectedUri = intent.getStringExtra(EXTRA_CURRENT) ?: AppRingtones.DEFAULT_ALARM
 
