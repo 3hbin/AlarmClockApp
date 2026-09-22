@@ -64,20 +64,22 @@ object StretchOverscroll {
         private fun applyStretch() {
             val h = host.height.coerceAtLeast(1).toFloat()
             when (direction) {
-                DIRECTION_TOP -> {
+                RecyclerView.EdgeEffectFactory.DIRECTION_TOP -> {
                     host.pivotX = host.width / 2f
                     host.pivotY = 0f
                     host.scaleY = 1f + pulled
                     host.translationY = 0f
                 }
-                DIRECTION_BOTTOM -> {
+                RecyclerView.EdgeEffectFactory.DIRECTION_BOTTOM -> {
                     host.pivotX = host.width / 2f
                     host.pivotY = h
                     host.scaleY = 1f + pulled
                     host.translationY = 0f
                 }
                 else -> {
-                    host.translationY = if (direction == DIRECTION_LEFT) pulled * 40f else -pulled * 40f
+                    host.translationY =
+                        if (direction == RecyclerView.EdgeEffectFactory.DIRECTION_LEFT) pulled * 40f
+                        else -pulled * 40f
                 }
             }
         }
