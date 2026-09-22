@@ -43,6 +43,7 @@ class SettingsActivity : AppCompatActivity() {
             binding.swEventTheme.isChecked = EventManager.isThemeEnabled(this)
             binding.swEventTheme.setOnCheckedChangeListener { _, on ->
                 EventManager.setThemeEnabled(this, on)
+                try { EventManager.applyChrome(this) } catch (_: Exception) {}
             }
         } catch (_: Exception) {}
         try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}

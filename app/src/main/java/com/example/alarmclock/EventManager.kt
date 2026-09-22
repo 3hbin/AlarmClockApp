@@ -156,42 +156,59 @@ object EventManager {
     }
 
     fun applyChrome(activity: Activity) {
-        if (!isThemeEnabled(activity)) return
-        val p = palette() ?: return
+        val evOn = isThemeEnabled(activity)
+        val pal = if (evOn) palette() else null
+        val primary = pal?.primary ?: Color.parseColor("#4F5BFF")
+        val surface = pal?.surface ?: Color.parseColor("#F7F8FC")
+        val accent = pal?.accent ?: primary
+        val fabIcon = pal?.primaryDark ?: Color.WHITE
         try {
-            activity.window.statusBarColor = p.primary
-            if (Build.VERSION.SDK_INT >= 21) activity.window.navigationBarColor = p.surface
-        } catch (_: Exception) {}
-        listOf("toolbar", "toolbarBedtime").forEach { name ->
-            val id = activity.resources.getIdentifier(name, "id", activity.packageName)
-            if (id != 0) {
-                try { activity.findViewById<View>(id)?.setBackgroundColor(p.primary) } catch (_: Exception) {}
+            activity.window.statusBarColor = primary
+            if (Build.VERSION.SDK_INT >= 21) activity.window.navigationBarColor = surface
+            if (Build.VERSION.SDK_INT >= 23) {
+                val d = activity.window.decorView
+                var flags = d.systemUiVisibility
+                flags = if (pal != null) flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+                else flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                d.systemUiVisibility = flags
             }
-        }
+        } catch (_: Exception) {}
+        try { activity.window.decorView.setBackgroundColor(surface) } catch (_: Exception) {}
         try {
             val content = activity.findViewById<View>(android.R.id.content)
-            fun walk(v: View) {
-                if (v is com.google.android.material.appbar.MaterialToolbar ||
-                    v is androidx.appcompat.widget.Toolbar) {
-                    v.setBackgroundColor(p.primary)
-                }
+            fun paint(v: View) {
+                try {
+                    if (v is com.google.android.material.appbar.MaterialToolbar ||
+                        v is androidx.appcompat.widget.Toolbar) {
+                        v.setBackgroundColor(primary)
+                        v.backgroundTintList = android.content.res.ColorStateList.valueOf(primary)
+                    }
+                    if (v is com.google.android.material.floatingactionbutton.FloatingActionButton) {
+                        v.backgroundTintList = android.content.res.ColorStateList.valueOf(accent)
+                        v.imageTintList = android.content.res.ColorStateList.valueOf(fabIcon)
+                    }
+                    if (v is com.google.android.material.button.MaterialButton) {
+                        val stroke = try { v.strokeWidth } catch (_: Exception) { 0 }
+                        if (stroke <= 0 && !v.isCheckable) {
+                            v.backgroundTintList = android.content.res.ColorStateList.valueOf(primary)
+                            v.setTextColor(Color.WHITE)
+                        }
+                    }
+                    if (v is com.example.alarmclock.CurvedBottomNavView) {
+                        v.invalidate()
+                    }
+                } catch (_: Exception) {}
                 if (v is android.view.ViewGroup) {
-                    for (i in 0 until v.childCount) walk(v.getChildAt(i))
+                    for (i in 0 until v.childCount) paint(v.getChildAt(i))
                 }
             }
-            if (content != null) walk(content)
+            if (content != null) paint(content)
         } catch (_: Exception) {}
-        listOf("fabAdd", "fab", "fabAddEvent").forEach { name ->
-            val id = activity.resources.getIdentifier(name, "id", activity.packageName)
-            if (id == 0) return@forEach
-            try {
-                activity.findViewById<FloatingActionButton>(id)?.apply {
-                    backgroundTintList = android.content.res.ColorStateList.valueOf(p.accent)
-                    imageTintList = android.content.res.ColorStateList.valueOf(p.primaryDark)
-                }
-            } catch (_: Exception) {}
-        }
-        try { activity.window.decorView.setBackgroundColor(p.surface) } catch (_: Exception) {}
+        try {
+            activity.findViewById<android.widget.TextView>(
+                activity.resources.getIdentifier("tvNextAlarm", "id", activity.packageName)
+            )?.setTextColor(primary)
+        } catch (_: Exception) {}
     }
 
     fun bind(banner: View, context: Context) {

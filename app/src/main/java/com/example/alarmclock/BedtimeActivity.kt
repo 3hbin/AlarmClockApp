@@ -32,4 +32,9 @@ class BedtimeActivity : AppCompatActivity() {
             true
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        try { EventManager.applyChrome(this) } catch (_: Exception) {}
+    }
 }

@@ -205,6 +205,7 @@ class StopwatchActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        try { EventManager.applyChrome(this) } catch (_: Exception) {}
         try { binding.root.alpha = 1f } catch (_: Exception) {}
         try { binding.curvedNav.selectIndex(2, animate = false) } catch (_: Exception) {}
     }
