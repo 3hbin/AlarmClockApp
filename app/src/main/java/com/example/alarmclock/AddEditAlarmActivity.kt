@@ -181,7 +181,11 @@ class AddEditAlarmActivity : AppCompatActivity() {
                 setOnClickListener { finish() }
             }
         }
-        findViewById<android.view.View>(R.id.btnCloseSheet).setOnClickListener { finish() }
+        findViewById<android.widget.ImageButton>(R.id.btnCloseSheet).apply {
+            setColorFilter(0xFF212121.toInt())
+            imageTintList = android.content.res.ColorStateList.valueOf(0xFF212121.toInt())
+            setOnClickListener { finish() }
+        }
 
         refreshUi()
     }

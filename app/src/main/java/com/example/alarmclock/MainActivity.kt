@@ -156,6 +156,7 @@ class MainActivity : AppCompatActivity() {
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
         binding.recyclerView.setHasFixedSize(true)
+        try { StretchOverscroll.attach(binding.recyclerView) } catch (_: Exception) {}
         binding.recyclerView.itemAnimator?.apply {
             addDuration = 180
             removeDuration = 160
@@ -163,7 +164,8 @@ class MainActivity : AppCompatActivity() {
             changeDuration = 120
         }
 
-        binding.swipeRefresh.setColorSchemeColors(0xFF3F51B5.toInt(), 0xFF7E57C2.toInt())
+        binding.swipeRefresh.setColorSchemeColors(0xFF9AA0B4.toInt())
+        binding.swipeRefresh.setProgressBackgroundColorSchemeColor(0x00FFFFFF)
         binding.swipeRefresh.setOnRefreshListener {
             alarms.clear()
             alarms.addAll(repo.getAlarms())

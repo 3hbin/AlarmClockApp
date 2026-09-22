@@ -197,6 +197,11 @@ object EventManager {
                     if (v is com.example.alarmclock.CurvedBottomNavView) {
                         v.invalidate()
                     }
+                    if (v is com.example.alarmclock.LoadSwitchView) {
+                        v.colorOn = primary
+                        v.spinColor = primary
+                        v.invalidate()
+                    }
                 } catch (_: Exception) {}
                 if (v is android.view.ViewGroup) {
                     for (i in 0 until v.childCount) paint(v.getChildAt(i))

@@ -30,6 +30,12 @@ class AlarmAdapter(
             if (alarm.routineOn) android.view.View.VISIBLE else android.view.View.GONE
 
         holder.binding.switchEnabled.setOnCheckedChangeListener(null)
+        try {
+            val c = EventManager.activeColor(holder.itemView.context)
+            holder.binding.switchEnabled.colorOn = c
+            holder.binding.switchEnabled.spinColor = c
+            holder.binding.switchEnabled.invalidate()
+        } catch (_: Exception) {}
         holder.binding.switchEnabled.setCheckedSilent(alarm.isEnabled)
         holder.binding.switchEnabled.setLoading(false)
 

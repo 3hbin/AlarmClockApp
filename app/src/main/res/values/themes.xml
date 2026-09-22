@@ -14,6 +14,7 @@
         <item name="android:statusBarColor">@color/primary</item>
         <item name="android:navigationBarColor">@color/surface</item>
         <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:colorEdgeEffect">@android:color/transparent</item>
         <item name="android:windowAnimationStyle">@null</item>
         <item name="android:windowDisablePreview">true</item>
         <item name="materialCardViewStyle">@style/Card.Soft</item>

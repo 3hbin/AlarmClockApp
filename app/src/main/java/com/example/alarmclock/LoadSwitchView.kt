@@ -31,7 +31,7 @@ class LoadSwitchView @JvmOverloads constructor(
     private var spinAngle = 0f
     private var listener: OnCheckedChangeListener? = null
 
-    var colorOn: Int = try { EventManager.activeColor(context) } catch (_: Exception) { 0xFFB71C1C.toInt() }
+    var colorOn: Int = try { EventManager.activeColor(context) } catch (_: Exception) { 0xFF4F5BFF.toInt() }
     var colorOff: Int = 0xFFBDBDBD.toInt()
     var thumbColor: Int = 0xFFFFFFFF.toInt()
     var spinColor: Int = colorOn
