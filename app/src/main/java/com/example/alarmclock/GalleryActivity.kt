@@ -73,6 +73,8 @@ class GalleryActivity : AppCompatActivity() {
             unlockByEmail(typed)
         }
 
+        binding.btnRefresh.text = Lang.t(this, "Làm mới", "Refresh")
+        try { binding.tvEmpty.text = Lang.t(this, "Chưa có ảnh nào", "No photos yet") } catch (_: Exception) {}
         binding.btnRefresh.setOnClickListener { if (unlocked) loadPhotos() }
         binding.swipeRefresh.setColorSchemeColors(0xFF3F51B5.toInt(), 0xFF7E57C2.toInt())
         binding.swipeRefresh.setOnRefreshListener {

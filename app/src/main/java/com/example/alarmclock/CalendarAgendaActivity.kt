@@ -27,13 +27,19 @@ class CalendarAgendaActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityCalendarAgendaBinding
     private val cursor = Calendar.getInstance()
-    private val monthNames = arrayOf(
-        "", "tháng 1", "tháng 2", "tháng 3", "tháng 4", "tháng 5", "tháng 6",
-        "tháng 7", "tháng 8", "tháng 9", "tháng 10", "tháng 11", "tháng 12"
+    private val monthNames: Array<String> get() = arrayOf(
+        "", Lang.t("tháng 1","January"), Lang.t("tháng 2","February"), Lang.t("tháng 3","March"),
+        Lang.t("tháng 4","April"), Lang.t("tháng 5","May"), Lang.t("tháng 6","June"),
+        Lang.t("tháng 7","July"), Lang.t("tháng 8","August"), Lang.t("tháng 9","September"),
+        Lang.t("tháng 10","October"), Lang.t("tháng 11","November"), Lang.t("tháng 12","December")
     )
-    private val vnDays = arrayOf(
-        "", "Chủ nhật", "Thứ hai", "Thứ ba", "Thứ tư", "Thứ năm", "Thứ sáu", "Thứ bảy"
-    )
+    private val vnDays: Array<String>
+        get() = arrayOf(
+            "",
+            Lang.t("Chủ nhật","Sunday"), Lang.t("Thứ hai","Monday"), Lang.t("Thứ ba","Tuesday"),
+            Lang.t("Thứ tư","Wednesday"), Lang.t("Thứ năm","Thursday"), Lang.t("Thứ sáu","Friday"),
+            Lang.t("Thứ bảy","Saturday")
+        )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,15 +47,16 @@ class CalendarAgendaActivity : AppCompatActivity() {
         binding = ActivityCalendarAgendaBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)
+        binding.toolbar.title = Lang.t(this, "Lịch", "Calendar")
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         binding.toolbar.setNavigationOnClickListener { finish() }
 
         refreshTitle()
 
-        binding.tabModes.addTab(binding.tabModes.newTab().setText("Tháng"))
-        binding.tabModes.addTab(binding.tabModes.newTab().setText("Tuần"))
-        binding.tabModes.addTab(binding.tabModes.newTab().setText("Ngày"))
-        binding.tabModes.addTab(binding.tabModes.newTab().setText("Kế hoạch"))
+        binding.tabModes.addTab(binding.tabModes.newTab().setText(Lang.t(this, "Tháng", "Month")))
+        binding.tabModes.addTab(binding.tabModes.newTab().setText(Lang.t(this, "Tuần", "Week")))
+        binding.tabModes.addTab(binding.tabModes.newTab().setText(Lang.t(this, "Ngày", "Day")))
+        binding.tabModes.addTab(binding.tabModes.newTab().setText(Lang.t(this, "Kế hoạch", "Agenda")))
         binding.tabModes.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
                 showMode(tab.position)
@@ -66,7 +73,7 @@ class CalendarAgendaActivity : AppCompatActivity() {
     private fun refreshTitle() {
         val m = cursor.get(Calendar.MONTH) + 1
         val y = cursor.get(Calendar.YEAR)
-        binding.tvMonth.text = "%s năm %d".format(monthNames[m], y)
+        binding.tvMonth.text = Lang.t(this, "%s năm %d".format(monthNames[m], y), "${monthNames[m]} $y")
     }
 
     private fun showMode(index: Int) {
@@ -247,7 +254,7 @@ class CalendarAgendaActivity : AppCompatActivity() {
         val d = cursor.get(Calendar.DAY_OF_MONTH)
         val m = cursor.get(Calendar.MONTH) + 1
         val y = cursor.get(Calendar.YEAR)
-        header.text = "%d tháng %d, %d".format(d, m, y)
+        header.text = Lang.t(this, "%d tháng %d, %d".format(d, m, y), "%d/%d/%d".format(d, m, y))
         binding.tvMonth.text = header.text
 
         val name = VietnamHolidays.holidayName(cursor)

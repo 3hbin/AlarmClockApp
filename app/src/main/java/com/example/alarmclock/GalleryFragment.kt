@@ -19,6 +19,8 @@ class GalleryFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         try {
+            binding.btnRefresh.text = Lang.t(requireContext(), "Làm mới", "Refresh")
+            try { binding.tvEmpty.text = Lang.t(requireContext(), "Chưa có ảnh nào", "No photos yet") } catch (_: Exception) {}
             binding.btnRefresh.setOnClickListener {
                 startActivity(android.content.Intent(requireContext(), GalleryActivity::class.java))
             }

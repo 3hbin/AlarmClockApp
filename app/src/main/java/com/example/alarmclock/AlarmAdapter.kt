@@ -24,7 +24,7 @@ class AlarmAdapter(
         val alarm = alarms[position]
         val timeText = String.format(Locale.getDefault(), "%02d:%02d", alarm.hour, alarm.minute)
         holder.binding.tvTime.text = timeText
-        holder.binding.tvLabel.text = alarm.label
+        holder.binding.tvLabel.text = Lang.displayLabel(alarm.label)
         holder.binding.tvRepeat.text = alarm.getRepeatText()
         holder.binding.ivGemini.visibility =
             if (alarm.routineOn) android.view.View.VISIBLE else android.view.View.GONE

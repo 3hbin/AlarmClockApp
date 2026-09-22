@@ -79,10 +79,11 @@ data class Alarm(
             REPEAT_WEEKDAYS -> Lang.t(null, "Thứ 2 - Thứ 6", "Mon – Fri")
             else -> Lang.t(null, "Hàng ngày", "Every day")
         }
-        val g = group.trim().ifBlank { Lang.t(null, "Chung", "General") }
+        val rawG = group.trim()
+        val g = Lang.groupName(rawG)
         val we = if (useWeekendSchedule && weekendHour >= 0)
-            " · CN ${"%02d:%02d".format(weekendHour, weekendMinute)}" else ""
-        return if (g != Lang.t(null, "Chung", "General")) "$g · $base$we" else "$base$we"
+            " · ${Lang.t("CN", "Sun")} ${"%02d:%02d".format(weekendHour, weekendMinute)}" else ""
+        return if (rawG.isNotBlank() && !rawG.equals("Chung", true)) "$g · $base$we" else "$base$we"
     }
 
     fun getChallengeText(): String = challengeLabel(challengeType)

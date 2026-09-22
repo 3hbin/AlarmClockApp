@@ -97,7 +97,7 @@ class WorldClockActivity : AppCompatActivity() {
                 allCities.clear()
                 allCities.addAll(cities)
                 adapter.update(allCities)
-                binding.tvCount.text = "${allCities.size} múi giờ / thành phố"
+                binding.tvCount.text = Lang.t(this, "${allCities.size} múi giờ / thành phố", "${allCities.size} time zones / cities")
                 binding.shimmer.hide()
                 binding.loadingAnim.stop()
                 binding.loadingAnim.visibility = android.view.View.GONE
@@ -125,9 +125,9 @@ class WorldClockActivity : AppCompatActivity() {
         }
         adapter.update(filtered)
         binding.tvCount.text = if (q.isEmpty()) {
-            "${allCities.size} múi giờ / thành phố"
+            Lang.t(this, "${allCities.size} múi giờ / thành phố", "${allCities.size} time zones / cities")
         } else {
-            "${filtered.size} kết quả cho \"$query\""
+            Lang.t(this, "${filtered.size} kết quả cho \"$query\"", "${filtered.size} results for \"$query\"")
         }
     }
 

@@ -100,7 +100,17 @@ class MainActivity : AppCompatActivity() {
         if (WelcomeActivity.launchIfNeeded(this)) return
         try { TamperGuard.verifyInActivity(this) } catch (_: Throwable) {}
         binding = ActivityMainBinding.inflate(layoutInflater)
+        try {
+            binding.btnQuick5.text = "+${Lang.minLabel(5).replace("5 ","")}" 
+        } catch (_: Exception) {}
+        try { Lang.sync(this) } catch (_: Exception) {}
         setContentView(binding.root)
+        try {
+            binding.btnQuick5.text = Lang.t(this, "+5 phút", "+5 min")
+            binding.btnQuick10.text = Lang.t(this, "+10 phút", "+10 min")
+            binding.btnQuick15.text = Lang.t(this, "+15 phút", "+15 min")
+            binding.btnQuick30.text = Lang.t(this, "+30 phút", "+30 min")
+        } catch (_: Exception) {}
         try { EventManager.bind(findViewById(R.id.eventBanner), this) } catch (_: Exception) {}
         try { EventManager.applyChrome(this) } catch (_: Exception) {}
         binding.root.post { try { FirstLaunchDialog.show(this) } catch (_: Exception) {} }
@@ -213,7 +223,7 @@ class MainActivity : AppCompatActivity() {
         try {
             val enabled = alarms.filter { it.isEnabled }
             if (enabled.isEmpty()) {
-                binding.tvNextAlarm.text = "Chưa có báo thức — bấm +"
+                binding.tvNextAlarm.text = Lang.t(this, "Chưa có báo thức — bấm +", "No alarm — tap +")
                 return
             }
             val now = java.util.Calendar.getInstance()
@@ -255,15 +265,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun showAlarmHistory() {
         val lines = AlarmHistory.formatLines(this)
-        val msg = if (lines.isEmpty()) "Chưa có lịch sử tắt/báo lại."
+        val msg = if (lines.isEmpty()) Lang.t(this, "Chưa có lịch sử tắt/báo lại.", "No dismiss/snooze history yet.")
         else lines.take(30).joinToString("\n")
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Lịch sử báo thức")
+            .setTitle(Lang.t(this, "Lịch sử báo thức", "Alarm history"))
             .setMessage(msg)
-            .setPositiveButton("Đóng", null)
-            .setNeutralButton("Xóa lịch sử") { _, _ ->
+            .setPositiveButton(Lang.t(this, "Đóng", "Close"), null)
+            .setNeutralButton(Lang.t(this, "Xóa lịch sử", "Clear history")) { _, _ ->
                 AlarmHistory.clear(this)
-                android.widget.Toast.makeText(this, "Đã xóa lịch sử", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(this, Lang.t(this, "Đã xóa lịch sử", "History cleared"), android.widget.Toast.LENGTH_SHORT).show()
             }
             .show()
     }
@@ -444,7 +454,7 @@ class MainActivity : AppCompatActivity() {
         view.post(update)
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setView(view)
-            .setPositiveButton("Đóng") { d, _ ->
+            .setPositiveButton(Lang.t(this, "Đóng", "Close")) { d, _ ->
                 view.removeCallbacks(update)
                 d.dismiss()
             }
@@ -852,7 +862,7 @@ class MainActivity : AppCompatActivity() {
             hour = hour,
             minute = minute,
             isEnabled = true,
-            label = getString(R.string.nap) + " +$minutes",
+            label = Lang.t(this, "Ngủ gật", "Nap") + " +$minutes",
             repeatMode = Alarm.REPEAT_ONCE,
             challengeType = Alarm.CHALLENGE_NONE,
             ringtoneUri = AppRingtones.DEFAULT_ALARM,
@@ -1082,6 +1092,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun showGoogleLoginMenu() {
         val view = layoutInflater.inflate(R.layout.dialog_google_sign_in, null)
+        fun walkG(v: android.view.View) {
+            if (v is android.widget.TextView) {
+                val cur = v.text?.toString().orEmpty()
+                if (cur.contains("Đăng nhập để lưu")) v.text = Lang.t(this, cur, "Sign in to save alarm history")
+                if (cur == "Đóng") v.text = Lang.t(this, "Đóng", "Close")
+                if (cur == "Đăng xuất") v.text = Lang.t(this, "Đăng xuất", "Sign out")
+                if (cur == "Nhập email") v.text = Lang.t(this, "Nhập email", "Enter email")
+            }
+            if (v is android.view.ViewGroup) for (i in 0 until v.childCount) walkG(v.getChildAt(i))
+        }
+        walkG(view)
         val status = view.findViewById<TextView>(R.id.tvGoogleStatus)
         val current = GoogleSignInHelper.lastSignedInEmail(this)
             ?: AppSettings.getRecoveryEmail(this)
@@ -1107,8 +1128,8 @@ class MainActivity : AppCompatActivity() {
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setView(view)
             .setPositiveButton("Đóng", null)
-            .setNeutralButton("Nhập email") { _, _ -> showGoogleEmailFallback() }
-            .setNegativeButton("Đăng xuất") { _, _ ->
+            .setNeutralButton(Lang.t(this, "Nhập email", "Enter email")) { _, _ -> showGoogleEmailFallback() }
+            .setNegativeButton(Lang.t(this, "Đăng xuất", "Sign out")) { _, _ ->
                 GoogleSignInHelper.signOut(this)
                 Toast.makeText(this, "Đã đăng xuất Google trên máy", Toast.LENGTH_SHORT).show()
             }
@@ -1202,9 +1223,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun showUpdateDialog() {
         androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Cập nhật ứng dụng")
-            .setMessage("Bạn có muốn mở trang APKPure để tải bản cập nhật mới nhất không?")
-            .setPositiveButton("Mở APKPure") { _, _ ->
+            .setTitle(Lang.t(this, "Cập nhật ứng dụng", "Update app"))
+            .setMessage(Lang.t(this, "Bạn có muốn mở trang APKPure để tải bản cập nhật mới nhất không?", "Open APKPure to download the latest version?"))
+            .setPositiveButton(Lang.t(this, "Mở APKPure", "Open APKPure")) { _, _ ->
                 try {
                     val uri = android.net.Uri.parse("https://apkpure.com/p/com.alarmclock.dongho")
                     startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, uri))

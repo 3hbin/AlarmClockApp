@@ -59,13 +59,13 @@ object AlarmHistory {
         val snooze = week.count { it.action == "snooze" }
         val total = dismiss + snooze
         val pct = if (total == 0) 0 else dismiss * 100 / total
-        return "Tuần này: tắt đúng $dismiss lần · báo lại $snooze lần · đúng giờ $pct%"
+        return Lang.t(context, "Tuần này: tắt đúng $dismiss lần · báo lại $snooze lần · đúng giờ $pct%", "This week: $dismiss on time · $snooze snoozes · $pct% on time")
     }
 
     fun formatLines(context: Context): List<String> {
         val fmt = SimpleDateFormat("dd/MM HH:mm", Locale.getDefault())
         return load(context).map { e ->
-            val act = if (e.action == "snooze") "Báo lại" else "Tắt"
+            val act = if (e.action == "snooze") Lang.t(context, "Báo lại", "Snooze") else Lang.t(context, "Tắt", "Dismiss")
             "${fmt.format(Date(e.timeMs))} · ${"%02d:%02d".format(e.hour, e.minute)} · $act · ${e.alarmLabel.ifBlank { "Báo thức" }}"
         }
     }
