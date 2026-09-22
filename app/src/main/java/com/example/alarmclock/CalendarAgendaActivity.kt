@@ -37,6 +37,7 @@ class CalendarAgendaActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.decorView.post { try { EventManager.applyChrome(this) } catch (_: Exception) {} }
         binding = ActivityCalendarAgendaBinding.inflate(layoutInflater)
         setContentView(binding.root)
         setSupportActionBar(binding.toolbar)

@@ -92,7 +92,7 @@ object AppSettings {
     fun getGooglePhotoUrl(context: Context) =
         prefs(context).getString("google_photo_url", "") ?: ""
     fun isStatusNotificationEnabled(context: Context) =
-        prefs(context).getBoolean("status_notif_enabled", true)
+        prefs(context).getBoolean("status_notif_enabled", false)
     fun setStatusNotificationEnabled(context: Context, on: Boolean) =
         prefs(context).edit().putBoolean("status_notif_enabled", on).apply()
 

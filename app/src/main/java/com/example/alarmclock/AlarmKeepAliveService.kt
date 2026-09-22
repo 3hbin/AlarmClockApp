@@ -122,6 +122,11 @@ class AlarmKeepAliveService : Service() {
             val i = Intent(ctx, AlarmKeepAliveService::class.java)
             if (count <= 0 || !AppSettings.isStatusNotificationEnabled(ctx)) {
                 try { ctx.startService(i.setAction(ACTION_STOP)) } catch (_: Exception) {}
+                try {
+                    val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+                    nm.cancel(NOTIF_ID)
+                    nm.cancel(2099)
+                } catch (_: Exception) {}
                 return
             }
             try {

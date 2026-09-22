@@ -102,6 +102,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         try { EventManager.bind(findViewById(R.id.eventBanner), this) } catch (_: Exception) {}
+        try { EventManager.applyChrome(this) } catch (_: Exception) {}
         binding.root.post { try { FirstLaunchDialog.show(this) } catch (_: Exception) {} }
         try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
         try {
