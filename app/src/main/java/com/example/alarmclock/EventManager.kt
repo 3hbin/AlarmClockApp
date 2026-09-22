@@ -95,7 +95,7 @@ object EventManager {
             "New Year's Eve", "New Year's Eve. Set tomorrow's alarm.")
     )
 
-    fun currentSpec(): Spec? {
+    private fun currentSpec(): Spec? {
         val cal = Calendar.getInstance()
         val m = cal.get(Calendar.MONTH) + 1
         val d = cal.get(Calendar.DAY_OF_MONTH)
