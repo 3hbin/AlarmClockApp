@@ -23,6 +23,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
     private var ringtoneUri: String? = AppRingtones.DEFAULT_ALARM
     private var label = "Báo thức"
     private var challengeType = Alarm.CHALLENGE_NONE
+    private var shakeTargetCount = 20
     private var qrToken = ""
     private var skipHolidays = false
     private var strictAnti = false
@@ -293,9 +294,20 @@ class AddEditAlarmActivity : AppCompatActivity() {
 
     private fun pickChallenge() {
         val types = listOf(
-            Alarm.CHALLENGE_NONE, Alarm.CHALLENGE_QR, Alarm.CHALLENGE_MATH, Alarm.CHALLENGE_SHAKE,
-            Alarm.CHALLENGE_READ, Alarm.CHALLENGE_FACE, Alarm.CHALLENGE_BIOMETRIC,
-            Alarm.CHALLENGE_TAP200, Alarm.CHALLENGE_MATH10, Alarm.CHALLENGE_ALL_EASY
+            Alarm.CHALLENGE_NONE,
+            Alarm.CHALLENGE_MATH,
+            Alarm.CHALLENGE_MATH10,
+            Alarm.CHALLENGE_READ,
+            Alarm.CHALLENGE_SHAKE,
+            Alarm.CHALLENGE_SHAKE100,
+            Alarm.CHALLENGE_TAP200,
+            Alarm.CHALLENGE_FACE,
+            Alarm.CHALLENGE_FACE_EXPR,
+            Alarm.CHALLENGE_BIOMETRIC,
+            Alarm.CHALLENGE_QR,
+            Alarm.CHALLENGE_PHOTO,
+            Alarm.CHALLENGE_ALL_EASY,
+            Alarm.CHALLENGE_ALL
         )
         val labels = types.map { Alarm.challengeLabel(it) }.toTypedArray()
         val cur = types.indexOf(challengeType).coerceAtLeast(0)
@@ -304,6 +316,11 @@ class AddEditAlarmActivity : AppCompatActivity() {
             .setSingleChoiceItems(labels, cur) { d, which ->
                 challengeType = types[which]
                 if (challengeType == Alarm.CHALLENGE_QR) showQrSetup()
+                shakeTargetCount = when (challengeType) {
+                    Alarm.CHALLENGE_SHAKE100 -> 100
+                    Alarm.CHALLENGE_SHAKE -> 20
+                    else -> shakeTargetCount
+                }
                 refreshUi(); d.dismiss()
             }.show()
     }
@@ -407,6 +424,8 @@ class AddEditAlarmActivity : AppCompatActivity() {
             existing.snoozeMinutes = snoozeMinutes
             existing.ringtoneUri = ringtoneUri
             existing.challengeType = challengeType
+            existing.shakeTargetCount = shakeTargetCount
+            existing.qrToken = qrToken
             existing.skipHolidays = skipHolidays
             existing.isStrictAntiSnooze = strictAnti
             existing.useCrescendo = useCrescendo
@@ -433,6 +452,8 @@ class AddEditAlarmActivity : AppCompatActivity() {
                 snoozeMinutes = snoozeMinutes,
                 ringtoneUri = ringtoneUri,
                 challengeType = challengeType,
+                shakeTargetCount = shakeTargetCount,
+                qrToken = qrToken,
                 skipHolidays = skipHolidays,
                 isStrictAntiSnooze = strictAnti,
                 useCrescendo = useCrescendo,

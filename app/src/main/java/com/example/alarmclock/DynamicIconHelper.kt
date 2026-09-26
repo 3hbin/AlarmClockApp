@@ -28,9 +28,9 @@ object DynamicIconHelper {
 
     fun currentPeriod(hour: Int = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)): Period =
         when (hour) {
-            in 5..8 -> Period.MORNING
-            in 9..14 -> Period.NOON
-            in 15..18 -> Period.EVENING
+            in 5..10 -> Period.MORNING
+            in 11..15 -> Period.NOON
+            in 16..18 -> Period.EVENING
             else -> Period.NIGHT
         }
 
