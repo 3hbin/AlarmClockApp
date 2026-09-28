@@ -43,19 +43,23 @@
         app:showAsAction="never" />
     <item
         android:id="@+id/menu_day_off"
-        android:title="Ngày nghỉ"
+        android:icon="@drawable/ic_menu_day_off"
+        android:title="Nghỉ"
         app:showAsAction="never" />
     <item
         android:id="@+id/menu_pause_today"
-        android:title="Tắt hết hôm nay"
+        android:icon="@drawable/ic_menu_pause"
+        android:title="Tắt hôm nay"
         app:showAsAction="never" />
     <item
         android:id="@+id/menu_water"
-        android:title="Nhắc uống nước"
+        android:icon="@drawable/ic_menu_water"
+        android:title="Nhắc nước"
         app:showAsAction="never" />
     <item
         android:id="@+id/menu_chat"
-        android:title="Chat trợ lý"
+        android:icon="@drawable/ic_menu_chat"
+        android:title="Chat"
         app:showAsAction="never" />
     <item
         android:id="@+id/menu_version"

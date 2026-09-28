@@ -20,7 +20,7 @@ import java.net.URL
 /** Trợ lý gọi Gemini model mới, giao diện nhắn tin có ảnh hồ sơ. */
 class ChatActivity : AppCompatActivity() {
     private val history = JSONArray()
-    private val models = listOf("gemini-flash-latest", "gemini-3.6-flash", "gemini-2.5-flash")
+    private val model = "gemini-3.6-flash"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -200,8 +200,7 @@ class ChatActivity : AppCompatActivity() {
 
     private fun askGemini(key: String, question: String): String {
         history.put(JSONObject().put("role", "user").put("parts", JSONArray().put(JSONObject().put("text", question))))
-        var lastError = "Không gọi được Gemini."
-        for (model in models) {
+        repeat(2) {
             try {
                 val body = JSONObject()
                     .put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put(
@@ -220,35 +219,29 @@ class ChatActivity : AppCompatActivity() {
                 conn.outputStream.use { it.write(body.toString().toByteArray()) }
                 val code = conn.responseCode
                 val raw = (if (code in 200..299) conn.inputStream else conn.errorStream)?.bufferedReader()?.readText().orEmpty()
-                if (code == 404) {
-                    lastError = "Model $model không còn. Đang thử model khác."
-                    continue
-                }
-                if (code !in 200..299) {
-                    history.remove(history.length() - 1)
-                    return "Gemini không trả lời được (mã $code). Kiểm tra lại khóa API."
-                }
-                val parts = JSONObject(raw)
-                    .getJSONArray("candidates")
-                    .getJSONObject(0)
-                    .getJSONObject("content")
-                    .getJSONArray("parts")
-                val text = buildString {
-                    for (i in 0 until parts.length()) {
-                        val part = parts.getJSONObject(i)
-                        if (part.has("text")) append(part.getString("text"))
+                if (code in 200..299) {
+                    val parts = JSONObject(raw)
+                        .getJSONArray("candidates")
+                        .getJSONObject(0)
+                        .getJSONObject("content")
+                        .getJSONArray("parts")
+                    val text = buildString {
+                        for (i in 0 until parts.length()) {
+                            val part = parts.getJSONObject(i)
+                            if (part.has("text")) append(part.getString("text"))
+                        }
+                    }.trim()
+                    if (text.isNotBlank()) {
+                        history.put(JSONObject().put("role", "model").put("parts", JSONArray().put(JSONObject().put("text", text))))
+                        return text
                     }
-                }.trim()
-                if (text.isBlank()) continue
-                history.put(JSONObject().put("role", "model").put("parts", JSONArray().put(JSONObject().put("text", text))))
-                return text
+                }
             } catch (_: Exception) {
-                lastError = "Không gọi được Gemini. Kiểm tra mạng hoặc khóa API."
             }
         }
         if (history.length() > 0 && history.getJSONObject(history.length() - 1).optString("role") == "user") {
             history.remove(history.length() - 1)
         }
-        return lastError
+        return "Gemini đang bận. Đợi một lát rồi gửi lại."
     }
 }
