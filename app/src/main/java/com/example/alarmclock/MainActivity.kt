@@ -27,6 +27,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.app.ActivityCompat
 import android.view.LayoutInflater
 import android.widget.EditText
+import android.widget.NumberPicker
 import android.widget.RadioGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -110,6 +111,9 @@ class MainActivity : AppCompatActivity() {
             binding.btnQuick10.text = Lang.t(this, "+10 phút", "+10 min")
             binding.btnQuick15.text = Lang.t(this, "+15 phút", "+15 min")
             binding.btnQuick30.text = Lang.t(this, "+30 phút", "+30 min")
+            binding.btnQuick60.text = Lang.t(this, "+1 giờ", "+1 hour")
+            binding.btnQuick120.text = Lang.t(this, "+2 giờ", "+2 hours")
+            binding.btnQuickCustom.text = Lang.t(this, "Chỉnh", "Custom")
         } catch (_: Exception) {}
         try { EventManager.bind(findViewById(R.id.eventBanner), this) } catch (_: Exception) {}
         try { EventManager.applyChrome(this) } catch (_: Exception) {}
@@ -184,6 +188,9 @@ class MainActivity : AppCompatActivity() {
         binding.btnQuick10.setOnClickListener { addQuickAlarm(10) }
         binding.btnQuick15.setOnClickListener { addQuickAlarm(15) }
         binding.btnQuick30.setOnClickListener { addQuickAlarm(30) }
+        binding.btnQuick60.setOnClickListener { addQuickAlarm(60) }
+        binding.btnQuick120.setOnClickListener { addQuickAlarm(120) }
+        binding.btnQuickCustom.setOnClickListener { pickCustomNap() }
 
 
         binding.fabAdd.setOnClickListener {
@@ -856,7 +863,7 @@ class MainActivity : AppCompatActivity() {
             hour = hour,
             minute = minute,
             isEnabled = true,
-            label = Lang.t(this, "Ngủ gật", "Nap") + " +$minutes",
+            label = Lang.t(this, "Ngủ gật", "Nap") + " " + napText(minutes),
             repeatMode = Alarm.REPEAT_ONCE,
             challengeType = Alarm.CHALLENGE_NONE,
             ringtoneUri = AppRingtones.DEFAULT_ALARM,
@@ -870,9 +877,54 @@ class MainActivity : AppCompatActivity() {
         val timeStr = String.format("%02d:%02d", hour, minute)
         com.google.android.material.snackbar.Snackbar.make(
             binding.root,
-            "Báo thức $timeStr (sau $minutes phút)",
+            "Báo thức $timeStr (sau ${napText(minutes)})",
             com.google.android.material.snackbar.Snackbar.LENGTH_LONG
         ).show()
+    }
+
+    private fun napText(minutes: Int): String {
+        val h = minutes / 60
+        val m = minutes % 60
+        return when {
+            h > 0 && m > 0 -> Lang.t(this, "${h} giờ ${m} phút", "${h}h ${m}m")
+            h > 0 -> Lang.t(this, "${h} giờ", "${h}h")
+            else -> Lang.t(this, "${m} phút", "${m} min")
+        }
+    }
+
+    private fun pickCustomNap() {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = android.view.Gravity.CENTER
+            setPadding(32, 16, 32, 8)
+        }
+        val hours = NumberPicker(this).apply {
+            minValue = 0
+            maxValue = 12
+            value = 1
+        }
+        val mins = NumberPicker(this).apply {
+            minValue = 0
+            maxValue = 180
+            value = 0
+        }
+        row.addView(hours)
+        row.addView(TextView(this).apply { text = "  giờ   " })
+        row.addView(mins)
+        row.addView(TextView(this).apply { text = "  phút" })
+        MaterialAlertDialogBuilder(this)
+            .setTitle(Lang.t(this, "Chỉnh ngủ gật", "Custom nap"))
+            .setView(row)
+            .setPositiveButton(Lang.t(this, "Đặt", "Set")) { _, _ ->
+                val total = hours.value * 60 + mins.value
+                if (total <= 0) {
+                    Toast.makeText(this, Lang.t(this, "Chọn giờ hoặc phút", "Pick hours or minutes"), Toast.LENGTH_SHORT).show()
+                } else {
+                    addQuickAlarm(total)
+                }
+            }
+            .setNegativeButton(Lang.t(this, "Hủy", "Cancel"), null)
+            .show()
     }
 
 
