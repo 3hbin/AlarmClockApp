@@ -1188,7 +1188,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
             if (AppSettings.isVibrate(this)) {
                 vibrator = getSystemService(VIBRATOR_SERVICE) as android.os.Vibrator
                 if (android.os.Build.VERSION.SDK_INT >= 26) {
-                    vibrator?.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 400, 400), 0))
+                    vibrator?.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 180, 120, 180, 120, 420, 280), 0))
                 } else {
                     @Suppress("DEPRECATION")
                     vibrator?.vibrate(longArrayOf(0, 400, 400), 0)

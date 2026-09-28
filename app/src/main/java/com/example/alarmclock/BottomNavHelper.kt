@@ -12,7 +12,8 @@ object BottomNavHelper {
         CurvedBottomNavView.Item(2, "", ctx.getString(R.string.nav_stopwatch), R.drawable.ic_nav_stopwatch),
         CurvedBottomNavView.Item(3, "", ctx.getString(R.string.nav_timer), R.drawable.ic_nav_timer),
         CurvedBottomNavView.Item(4, "", ctx.getString(R.string.nav_gallery), R.drawable.ic_nav_gallery),
-        CurvedBottomNavView.Item(5, "", ctx.getString(R.string.nav_bedtime), R.drawable.ic_nav_bed)
+        CurvedBottomNavView.Item(5, "", ctx.getString(R.string.nav_bedtime), R.drawable.ic_nav_bed),
+        CurvedBottomNavView.Item(6, "", "Chat", R.drawable.ic_help_outline)
     )
 
     private fun targetClass(index: Int): Class<out AppCompatActivity> = when (index) {
@@ -21,6 +22,7 @@ object BottomNavHelper {
         2 -> StopwatchActivity::class.java
         3 -> TimerActivity::class.java
         4 -> GalleryActivity::class.java
+        6 -> ChatActivity::class.java
         else -> BedtimeActivity::class.java
     }
 

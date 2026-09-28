@@ -1,79 +1,36 @@
-# AlarmClockApp 4.19.9 — Báo thức Challenge
+# Báo thức Challenge
 
-App báo thức Android: reo đúng giờ khi khóa máy, thử thách tắt chuông, sao lưu Google, widget màn hình chính.
+App đồng hồ báo thức cho điện thoại Android.
 
 Package: `com.alarmclock.dongho`  
-Phiên bản hiện tại: **4.19.9** (`versionCode` 145)
+Phiên bản: **4.38.1**
 
-**Tải APK:** https://github.com/3hbin/AlarmClockApp/releases/tag/4.19.9
+Tải app: https://apkpure.com/p/com.alarmclock.dongho  
+Mã nguồn: https://github.com/3hbin/AlarmClockApp
 
-## Tính năng chính
+## App làm được gì
 
-- Đặt báo, lặp 1 lần / mỗi ngày / T2–T6, hoãn, thử thách tắt chuông
-- Reo khi khóa màn (`setShowWhenLocked`, FullScreenIntent, WakeLock)
-- `AlarmManager.setAlarmClock` + `BootReceiver` (`BOOT_COMPLETED`, `LOCKED_BOOT_COMPLETED`, cài đè APK)
-- `AlarmKeepAliveService` giữ thông báo “Báo thức đang bật” (`START_STICKY`, icon `ic_notification_alarm`)
-- Xin tắt tối ưu hóa pin (`BatteryOptHelper`)
-- Dialog thêm/sửa báo thức (không dùng màn full-screen)
-- Hướng dẫn người mới + banner sự kiện (Tết / Halloween / Giáng sinh)
-- Widget 1×1, 2×2, 4×2 — nền bo góc trong suốt, cập nhật từng phút
-- Menu cập nhật: đọc GitHub Release, hiện “vX • Cập nhật ngay” khi có bản mới (APKPure)
-- Đăng nhập Google: sinh nhật + sao lưu Firestore `users/{uid}/data/backup`
-- Spotify / YouTube Music: mở app chọn nhạc
-- Thời tiết TTS (OpenWeatherMap)
-- SMS cứu viện + GPS (nếu đã cấp quyền)
+- Đặt báo thức, lặp lại, báo lại, ghi chú và chọn màu.
+- Kêu đúng giờ khi khóa màn hình.
+- Chọn chuông của máy, hoặc chọn chuông yêu thích trong app.
+- Có nhạc ru ngủ, giờ đi ngủ và đếm ngược.
+- Có thử thách khi tắt chuông, nếu bạn bật.
+- Có thể đăng nhập Google để lưu bản sao báo thức.
 
-## Dịch vụ / API
+## Cách cài
 
-| Dịch vụ | Trạng thái |
-|---------|------------|
-| Spotify | Intent mở app |
-| YouTube Music | Intent / search |
-| OpenWeatherMap | TTS thời tiết |
-| Firebase `alarmclockapp-8984a` | Cloud Sync Firestore |
-| GitHub Releases | Kiểm tra bản mới |
-| APKPure | `https://apkpure.com/p/com.alarmclock.dongho` |
-| Smart Home | Chưa có token |
+1. Tải file APK.
+2. Mở file và bấm cài.
+3. Cho phép thông báo và báo thức đúng giờ.
+4. Vào cài đặt pin, chọn không tối ưu hóa app này.
 
-## Cloud Sync (Firestore)
+## Liên hệ
 
-1. https://console.firebase.google.com → project `alarmclockapp-8984a`
-2. Build → Firestore Database → Create database
-3. Test mode khi thử, siết rules khi phát hành
-4. Region gần: `asia-southeast1`
-5. Trong app: menu **Đăng nhập Google** — lần đầu đẩy báo lên cloud; máy mới thì kéo về
+Nếu cần hỗ trợ hoặc muốn hỏi về quyền riêng tư, gửi email:
 
-## Báo thức không bị mất trên Huawei / EMUI
+- vn812013@gmail.com
+- vn797077@gmail.com
 
-1. Cài đặt → Ứng dụng → Báo thức Challenge → Pin → **Không tối ưu hóa**
-2. Cho phép thông báo + hiện trên màn khóa
-3. Không vuốt đóng thông báo đang bật (ongoing)
-4. Sau reboot, BootReceiver đặt lại lịch + KeepAlive
+## Chính sách quyền riêng tư
 
-## Bảo mật
-
-Key đang có thể nằm trong `BuildConfig`. Repo public thì:
-
-- Regenerate key trên từng console
-- Đưa vào `local.properties`, không commit
-
-## Build
-
-Tải sẵn: https://github.com/3hbin/AlarmClockApp/releases/tag/4.19.9
-
-
-```bash
-./gradlew assembleDebug
-```
-
-Hoặc GitHub Actions trên repo `3hbin/AlarmClockApp`.
-
-## Cấu trúc bổ sung gần đây
-
-| Bản | Nội dung |
-|-----|----------|
-| 4.19.5 | Trả dialog thêm/sửa báo cũ |
-| 4.19.6 | Hướng dẫn lần đầu + banner sự kiện |
-| 4.19.7 | Widget bo góc, tick từng phút |
-| 4.19.8 | Icon thông báo đơn sắc |
-| 4.19.9 | Boot + KeepAlive ưu tiên cao, xin tắt tối ưu pin |
+Xem file `privacy.html` hoặc trang: https://3hbin.github.io/AlarmClockApp/privacy.html

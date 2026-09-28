@@ -42,6 +42,22 @@
         android:title="@string/menu_guide"
         app:showAsAction="never" />
     <item
+        android:id="@+id/menu_day_off"
+        android:title="Ngày nghỉ"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_pause_today"
+        android:title="Tắt hết hôm nay"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_water"
+        android:title="Nhắc uống nước"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/menu_chat"
+        android:title="Chat trợ lý"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/menu_version"
         android:icon="@drawable/ic_menu_info"
         android:title="@string/menu_version"

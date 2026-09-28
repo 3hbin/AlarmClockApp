@@ -10,7 +10,8 @@ class AlarmAdapter(
     private val alarms: MutableList<Alarm>,
     private val onToggle: (Alarm) -> Unit,
     private val onDelete: (Alarm) -> Unit,
-    private val onEdit: (Alarm) -> Unit
+    private val onEdit: (Alarm) -> Unit,
+    private val onMore: (Alarm) -> Unit = {}
 ) : RecyclerView.Adapter<AlarmAdapter.ViewHolder>() {
 
     class ViewHolder(val binding: ItemAlarmBinding) : RecyclerView.ViewHolder(binding.root)
@@ -32,8 +33,11 @@ class AlarmAdapter(
                 append(Alarm.challengeLabel(alarm.challengeType))
             }
             if (alarm.snoozeMinutes > 0) append(" · báo lại ${alarm.snoozeMinutes} phút")
+            if (alarm.note.isNotBlank()) append(" · ").append(alarm.note)
+            if (alarm.useWeekendSchedule) append(" · cuối tuần khác")
         }
         holder.binding.tvRepeat.text = extra
+        try { holder.binding.colorDot.setBackgroundColor(alarm.color) } catch (_: Exception) {}
         holder.binding.ivGemini.visibility =
             if (alarm.routineOn) android.view.View.VISIBLE else android.view.View.GONE
 
@@ -65,6 +69,10 @@ class AlarmAdapter(
         }
         holder.binding.btnDelete.setOnClickListener {
             Motion.press(it) { onDelete(alarm) }
+        }
+        holder.binding.root.setOnLongClickListener {
+            onMore(alarm)
+            true
         }
 
         holder.binding.root.alpha = 1f

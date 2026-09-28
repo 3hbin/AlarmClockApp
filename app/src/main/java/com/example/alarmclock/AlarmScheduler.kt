@@ -12,6 +12,7 @@ object AlarmScheduler {
     fun schedule(context: Context, alarm: Alarm) {
         if (AppSettings.isPauseAlarmsAtHome(context)) return
         if (!alarm.isEnabled) return
+        if (DayOff.isPausedToday(context)) return
 
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val intent = Intent(context, AlarmReceiver::class.java).apply {
@@ -72,12 +73,16 @@ object AlarmScheduler {
                     applyHour()
                 }
             }
+            while (DayOff.isSkipped(context, this)) {
+                add(Calendar.DAY_OF_YEAR, 1)
+                applyHour()
+            }
         }
 
         try {
             val show = PendingIntent.getActivity(
                 context, alarm.id + 30000,
-                Intent(context, MainActivity::class.java),
+                Intent(context, NextAlarmActivity::class.java),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             alarmManager.setAlarmClock(
@@ -132,7 +137,7 @@ object AlarmScheduler {
         try {
             val show = PendingIntent.getActivity(
                 context, alarmId + 40000,
-                Intent(context, MainActivity::class.java),
+                Intent(context, NextAlarmActivity::class.java),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             alarmManager.setAlarmClock(AlarmManager.AlarmClockInfo(trigger, show), pendingIntent)

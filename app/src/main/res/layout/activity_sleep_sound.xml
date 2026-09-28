@@ -5,6 +5,11 @@
     android:layout_height="match_parent"
     android:background="#000000">
 
+    <com.example.alarmclock.SleepWhiteFxView
+        android:id="@+id/sleepFx"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <ImageButton
         android:id="@+id/btnCloseSleep"
         android:layout_width="48dp"

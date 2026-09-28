@@ -40,8 +40,10 @@ class SleepSoundActivity : AppCompatActivity() {
         val tv = findViewById<TextView>(R.id.tvSleepTitle)
         val play = findViewById<ImageButton>(R.id.btnSleepPlay)
         val timer = findViewById<MaterialButton>(R.id.btnSleepTimer)
+        val fx = findViewById<SleepWhiteFxView>(R.id.sleepFx)
         fun paint() {
             tv.text = title
+            fx.playing = SleepSoundService.playing
             timer.text = if (minutes >= 60) "Dừng sau 1 giờ" else "Dừng sau $minutes phút"
             play.setImageResource(
                 if (SleepSoundService.playing) android.R.drawable.ic_media_pause
@@ -61,11 +63,16 @@ class SleepSoundActivity : AppCompatActivity() {
             paint()
         }
         timer.setOnClickListener {
-            val opts = arrayOf("10 phút", "20 phút", "30 phút", "40 phút", "50 phút", "1 giờ")
-            val values = intArrayOf(10, 20, 30, 40, 50, 60)
+            val opts = arrayOf("10 phút", "20 phút", "30 phút", "40 phút", "50 phút", "1 giờ", "Tự chọn")
+            val values = intArrayOf(10, 20, 30, 40, 50, 60, -1)
             MaterialAlertDialogBuilder(this)
                 .setTitle("Dừng sau")
                 .setSingleChoiceItems(opts, values.indexOf(minutes).coerceAtLeast(0)) { d, which ->
+                    if (values[which] < 0) {
+                        d.dismiss()
+                        pickCustomSleepMinutes(prefs)
+                        return@setSingleChoiceItems
+                    }
                     minutes = values[which]
                     prefs.edit().putInt("sleep_minutes", minutes).apply()
                     if (SleepSoundService.playing) startSleep()
@@ -99,5 +106,25 @@ class SleepSoundActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= 26) ContextCompat.startForegroundService(this, i)
         else startService(i)
         SleepSoundService.playing = true
+    }
+
+    private fun pickCustomSleepMinutes(prefs: android.content.SharedPreferences) {
+        val picker = android.widget.NumberPicker(this).apply {
+            minValue = 1
+            maxValue = 180
+            value = minutes.coerceIn(1, 180)
+        }
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Dừng sau bao nhiêu phút")
+            .setView(picker)
+            .setPositiveButton("Đặt") { _, _ ->
+                minutes = picker.value
+                prefs.edit().putInt("sleep_minutes", minutes).apply()
+                if (SleepSoundService.playing) startSleep()
+                findViewById<MaterialButton>(R.id.btnSleepTimer).text =
+                    if (minutes >= 60) "Dừng sau ${minutes / 60} giờ ${minutes % 60} phút" else "Dừng sau $minutes phút"
+            }
+            .setNegativeButton("Hủy", null)
+            .show()
     }
 }

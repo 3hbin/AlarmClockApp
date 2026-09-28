@@ -148,7 +148,11 @@ class AlarmRingService : Service() {
         player = null
         TonePlayer.stop()
         if (ringtoneUri == "silent:") return
-        val isApp = ringtoneUri.isNullOrBlank() || ringtoneUri.startsWith("app:")
+        if (ringtoneUri.isNullOrBlank() || ringtoneUri == "system:") {
+            TonePlayer.playUri(this, AppRingtones.systemAlarm(this), loop = true, preview = false)
+            return
+        }
+        val isApp = ringtoneUri.startsWith("app:")
         if (!isApp) {
             TonePlayer.playUri(this, ringtoneUri, loop = true, preview = false)
             return

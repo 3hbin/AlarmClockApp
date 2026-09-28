@@ -91,6 +91,11 @@ class TimerService : Service() {
                 updateNotification(0, false)
                 sendBroadcast(Intent(ACTION_FINISHED).setPackage(packageName))
                 playFinishSound()
+                if (!AppVisibility.foreground) {
+                    try {
+                        startActivity(Intent(this, TimerDoneActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    } catch (_: Exception) {}
+                }
                 // Không stopSelf ngay — để activity mở và reo; user bấm dừng sẽ stop
                 stopForeground(STOP_FOREGROUND_DETACH)
             }

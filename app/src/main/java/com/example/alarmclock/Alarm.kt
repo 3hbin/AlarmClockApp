@@ -24,7 +24,9 @@ data class Alarm(
     var routineCalendar: Boolean = true,
     var routineTasks: Boolean = true,
     var routineTomorrow: Boolean = true,
-    var qrToken: String = ""
+    var qrToken: String = "",
+    var note: String = "",
+    var color: Int = 0xFF1A73E8.toInt()
 ) {
     companion object {
         const val REPEAT_ONCE = 0

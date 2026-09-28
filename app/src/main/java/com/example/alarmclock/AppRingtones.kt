@@ -26,6 +26,22 @@ object AppRingtones {
     const val DEFAULT_ALARM = "app:ringtone_huawei"
     const val DEFAULT_TIMER = "app:ringtone_oz"
 
+    fun systemAlarm(context: android.content.Context): String {
+        val uri = android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_ALARM)
+            ?: android.media.RingtoneManager.getDefaultUri(android.media.RingtoneManager.TYPE_RINGTONE)
+        return uri?.toString() ?: "content://settings/system/alarm_alert"
+    }
+
+    fun systemAlarmLabel(context: android.content.Context): String {
+        return try {
+            val uri = android.net.Uri.parse(systemAlarm(context))
+            android.media.RingtoneManager.getRingtone(context, uri)?.getTitle(context)
+                ?: "Chuông mặc định hệ thống"
+        } catch (_: Exception) {
+            "Chuông mặc định hệ thống"
+        }
+    }
+
     fun rawOf(uri: String?): Int {
         val key = uri?.removePrefix("app:")?.substringAfterLast('/') ?: return R.raw.ringtone_huawei
         return all.find { it.id == key }?.raw ?: R.raw.ringtone_huawei

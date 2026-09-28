@@ -56,6 +56,7 @@ class MainActivity : AppCompatActivity() {
     private val timeUpdater = object : Runnable {
         override fun run() {
             updateCurrentTime()
+            try { updateNextAlarmBanner() } catch (_: Exception) {}
             handler.postDelayed(this, 1000)
         }
     }
@@ -129,9 +130,9 @@ class MainActivity : AppCompatActivity() {
         } catch (_: Exception) {}
 
         repo = AlarmRepository(this)
-        selectedRingtoneUri = repo.getGlobalRingtone() ?: AppRingtones.DEFAULT_ALARM
+        selectedRingtoneUri = AppRingtones.systemAlarm(this)
         alarms.addAll(repo.getAlarms().onEach {
-            if (it.ringtoneUri.isNullOrEmpty()) it.ringtoneUri = AppRingtones.DEFAULT_ALARM
+            if (it.ringtoneUri.isNullOrEmpty()) it.ringtoneUri = AppRingtones.systemAlarm(this)
         })
 
         createNotificationChannel()
@@ -154,8 +155,10 @@ class MainActivity : AppCompatActivity() {
             },
             onEdit = { alarm ->
                 showEditDialog(alarm)
-            }
+            },
+            onMore = { alarm -> showAlarmMore(alarm) }
         )
+        alarms.sortBy { it.hour * 60 + it.minute }
 
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
@@ -257,16 +260,12 @@ class MainActivity : AppCompatActivity() {
                     best = a
                 }
             }
-            val diff = bestMs - now.timeInMillis
+            val diff = (bestMs - now.timeInMillis).coerceAtLeast(0)
             val h = (diff / 3_600_000).toInt()
             val m = ((diff % 3_600_000) / 60_000).toInt()
+            val s = ((diff % 60_000) / 1000).toInt()
             val timeStr = "%02d:%02d".format(best!!.hour, best.minute)
-            val left = when {
-                h > 24 -> getString(R.string.hours_minutes_fmt, h, m)
-                h > 0 -> getString(R.string.hours_minutes_fmt, h, m)
-                else -> getString(R.string.hours_minutes_fmt, 0, m)
-            }
-            binding.tvNextAlarm.text = getString(R.string.next_alarm_fmt, timeStr, left)
+            binding.tvNextAlarm.text = "Còn $h giờ $m phút $s giây • $timeStr"
         } catch (_: Exception) {
             try { binding.tvNextAlarm.text = getString(R.string.alarm_default_label) } catch (_: Exception) {}
         }
@@ -660,7 +659,7 @@ class MainActivity : AppCompatActivity() {
                             existing.label = label
                             existing.repeatMode = repeatMode
                             existing.snoozeMinutes = snoozeMinutes
-                            existing.ringtoneUri = selectedRingtoneUri ?: AppRingtones.DEFAULT_ALARM
+                            existing.ringtoneUri = selectedRingtoneUri ?: AppRingtones.systemAlarm(this)
                             existing.challengeType = challengeType
                             existing.shakeTargetCount = shakeTarget
                             existing.skipHolidays = skipHolidays
@@ -685,7 +684,7 @@ class MainActivity : AppCompatActivity() {
                                 label = label,
                                 repeatMode = repeatMode,
                                 snoozeMinutes = snoozeMinutes,
-                                ringtoneUri = selectedRingtoneUri ?: AppRingtones.DEFAULT_ALARM,
+                                ringtoneUri = selectedRingtoneUri ?: AppRingtones.systemAlarm(this),
                                 challengeType = challengeType,
                                 shakeTargetCount = shakeTarget,
                                 skipHolidays = skipHolidays,
@@ -783,7 +782,7 @@ class MainActivity : AppCompatActivity() {
     private fun reloadAlarmsFromDisk() {
         alarms.clear()
         alarms.addAll(repo.getAlarms().onEach {
-            if (it.ringtoneUri.isNullOrEmpty()) it.ringtoneUri = AppRingtones.DEFAULT_ALARM
+            if (it.ringtoneUri.isNullOrEmpty()) it.ringtoneUri = AppRingtones.systemAlarm(this)
         })
         try { adapter.notifyDataSetChanged() } catch (_: Exception) {}
         updateNextAlarmBanner()
@@ -866,7 +865,7 @@ class MainActivity : AppCompatActivity() {
             label = Lang.t(this, "Ngủ gật", "Nap") + " " + napText(minutes),
             repeatMode = Alarm.REPEAT_ONCE,
             challengeType = Alarm.CHALLENGE_NONE,
-            ringtoneUri = AppRingtones.DEFAULT_ALARM,
+            ringtoneUri = AppRingtones.systemAlarm(this),
             useCrescendo = true
         )
         alarms.add(alarm)
@@ -880,6 +879,53 @@ class MainActivity : AppCompatActivity() {
             "Báo thức $timeStr (sau ${napText(minutes)})",
             com.google.android.material.snackbar.Snackbar.LENGTH_LONG
         ).show()
+    }
+
+    private fun showAlarmMore(alarm: Alarm) {
+        val colors = intArrayOf(0xFF1A73E8.toInt(), 0xFF188038.toInt(), 0xFFE37400.toInt(), 0xFFD93025.toInt(), 0xFF9334E6.toInt())
+        MaterialAlertDialogBuilder(this)
+            .setTitle(alarm.label)
+            .setItems(arrayOf("Sao chép", "Ghi chú", "Đổi màu")) { _, which ->
+                when (which) {
+                    0 -> {
+                        val copy = alarm.copy(id = repo.getNextId(), label = alarm.label + " copy")
+                        alarms.add(copy)
+                        alarms.sortBy { it.hour * 60 + it.minute }
+                        repo.saveAlarms(alarms)
+                        AlarmScheduler.schedule(this, copy)
+                        adapter.notifyDataSetChanged()
+                    }
+                    1 -> {
+                        val et = EditText(this).apply { setText(alarm.note); hint = "Ghi chú ngắn" }
+                        MaterialAlertDialogBuilder(this)
+                            .setTitle("Ghi chú")
+                            .setView(et)
+                            .setPositiveButton("Lưu") { _, _ ->
+                                alarm.note = et.text.toString().trim()
+                                repo.saveAlarms(alarms)
+                                adapter.notifyDataSetChanged()
+                            }
+                            .setNegativeButton("Hủy", null)
+                            .show()
+                    }
+                    2 -> {
+                        alarm.color = colors[(colors.indexOf(alarm.color) + 1).coerceAtLeast(0) % colors.size]
+                        repo.saveAlarms(alarms)
+                        adapter.notifyDataSetChanged()
+                    }
+                }
+            }
+            .show()
+    }
+
+    private fun pickSkipDate() {
+        val now = java.util.Calendar.getInstance()
+        android.app.DatePickerDialog(this, { _, y, m, d ->
+            val ymd = "%04d-%02d-%02d".format(y, m + 1, d)
+            DayOff.toggle(this, ymd)
+            AlarmScheduler.rescheduleAll(this)
+            Toast.makeText(this, "Ngày nghỉ: $ymd", Toast.LENGTH_SHORT).show()
+        }, now.get(java.util.Calendar.YEAR), now.get(java.util.Calendar.MONTH), now.get(java.util.Calendar.DAY_OF_MONTH)).show()
     }
 
     private fun napText(minutes: Int): String {
@@ -986,6 +1032,32 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.menu_guide -> {
                 FirstLaunchDialog.show(this, force = true)
+                return true
+            }
+            R.id.menu_day_off -> {
+                pickSkipDate()
+                return true
+            }
+            R.id.menu_pause_today -> {
+                if (DayOff.isPausedToday(this)) {
+                    DayOff.clearPause(this)
+                    AlarmScheduler.rescheduleAll(this)
+                    Toast.makeText(this, "Đã bật lại báo thức", Toast.LENGTH_SHORT).show()
+                } else {
+                    DayOff.pauseToday(this)
+                    alarms.forEach { AlarmScheduler.cancel(this, it.id) }
+                    Toast.makeText(this, "Đã tắt hết báo thức hôm nay", Toast.LENGTH_SHORT).show()
+                }
+                return true
+            }
+            R.id.menu_water -> {
+                val on = !WaterReminder.isOn(this)
+                WaterReminder.setOn(this, on)
+                Toast.makeText(this, if (on) "Đã bật nhắc uống nước" else "Đã tắt nhắc uống nước", Toast.LENGTH_SHORT).show()
+                return true
+            }
+            R.id.menu_chat -> {
+                startActivity(Intent(this, ChatActivity::class.java))
                 return true
             }
             R.id.menu_history -> {

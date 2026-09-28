@@ -20,7 +20,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
     private var minute = 0
     private var repeatMode = Alarm.REPEAT_DAILY
     private var snoozeMinutes = 5
-    private var ringtoneUri: String? = AppRingtones.DEFAULT_ALARM
+    private var ringtoneUri: String? = null
     private var label = "Báo thức"
     private var challengeType = Alarm.CHALLENGE_NONE
     private var shakeTargetCount = 20
@@ -70,7 +70,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
             minute = existing.minute
             repeatMode = existing.repeatMode
             snoozeMinutes = existing.snoozeMinutes
-            ringtoneUri = existing.ringtoneUri ?: AppRingtones.DEFAULT_ALARM
+            ringtoneUri = existing.ringtoneUri ?: AppRingtones.systemAlarm(this)
             label = existing.label
             challengeType = existing.challengeType
             qrToken = existing.qrToken
@@ -91,6 +91,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
             val now = Calendar.getInstance()
             hour = now.get(Calendar.HOUR_OF_DAY)
             minute = now.get(Calendar.MINUTE)
+            ringtoneUri = AppRingtones.systemAlarm(this)
         }
 
         findViewById<android.view.View>(R.id.btnEditTime).setOnClickListener { showTimePicker() }
@@ -348,9 +349,11 @@ class AddEditAlarmActivity : AppCompatActivity() {
         }
         findViewById<TextView>(R.id.tvSoundValue).text = when {
             ringtoneUri == "silent:" -> "Im lặng"
+            ringtoneUri.isNullOrBlank() || ringtoneUri == AppRingtones.systemAlarm(this) ->
+                AppRingtones.systemAlarmLabel(this)
             ringtoneUri?.startsWith("app:") == true -> AppRingtones.labelOf(ringtoneUri)
             else -> CustomRingtones.list(this).find { it.uri == ringtoneUri }?.name
-                ?: "Nhạc chuông tùy chọn"
+                ?: AppRingtones.systemAlarmLabel(this)
         }
         findViewById<TextView>(R.id.tvRepeatValue).text = when (repeatMode) {
             Alarm.REPEAT_ONCE -> "Chỉ 1 lần"
