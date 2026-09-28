@@ -314,7 +314,8 @@ class ChatActivity : AppCompatActivity() {
                 scaleType = ImageView.ScaleType.CENTER_CROP
                 background = GradientDrawable().apply {
                     shape = GradientDrawable.OVAL
-                    setColor(0xFF111111.toInt())
+                    setColor(0xFFFFFFFF.toInt())
+                    setStroke((1 * resources.displayMetrics.density).toInt(), 0xFFE0E3EA.toInt())
                 }
                 outlineProvider = ViewOutlineProvider.BACKGROUND
                 clipToOutline = true
