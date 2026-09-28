@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:background="#FF000000">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Đăng nhập để lưu nhật ký báo thức"
+        android:textColor="#FFFFFFFF"
+        android:textSize="16sp"
+        android:gravity="center"
+        android:layout_marginBottom="28dp" />
+
+    <!-- Nút kiểu Google chính thức -->
+    <LinearLayout
+        android:id="@+id/btnGoogleSignIn"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@drawable/bg_google_sign_in"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="G"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:textColor="#FF4285F4"
+            android:layout_marginEnd="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sign in with Google"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="#FF3C4043" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvGoogleStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="#FFB0B0B0"
+        android:textSize="13sp"
+        android:gravity="center"
+        android:layout_marginTop="16dp" />
+</LinearLayout>

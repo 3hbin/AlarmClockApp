@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/surface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center_vertical"
+        android:paddingStart="4dp"
+        android:paddingEnd="12dp">
+        <ImageButton
+            android:id="@+id/btnCloseSheet"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_close_visible"
+            android:src="@drawable/ic_close"
+            android:tint="#FF212121"
+            android:contentDescription="Đóng"
+            android:padding="10dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="4dp" />
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp">
+                <TextView
+                    android:id="@+id/tvBigTime"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="07:00"
+                    android:textSize="56sp"
+                    android:fontFamily="sans-serif-light"
+                    android:textColor="@color/text_primary" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnEditTime"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="Chỉnh sửa"
+                    android:textAllCaps="false"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp" />
+            </LinearLayout>
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipDays"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                app:singleLine="false"
+                app:singleSelection="false"
+                app:chipSpacingHorizontal="8dp">
+                <com.google.android.material.chip.Chip android:id="@+id/chipT2" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="T2" android:checked="true" app:chipMinHeight="40dp" app:chipCornerRadius="20dp" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipT3" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="T3" android:checked="true" app:chipMinHeight="40dp" app:chipCornerRadius="20dp" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipT4" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="T4" android:checked="true" app:chipMinHeight="40dp" app:chipCornerRadius="20dp" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipT5" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="T5" android:checked="true" app:chipMinHeight="40dp" app:chipCornerRadius="20dp" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipT6" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="T6" android:checked="true" app:chipMinHeight="40dp" app:chipCornerRadius="20dp" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipT7" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="T7" android:checked="true" app:chipMinHeight="40dp" app:chipCornerRadius="20dp" />
+                <com.google.android.material.chip.Chip android:id="@+id/chipCN" style="@style/Widget.Material3.Chip.Filter" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="CN" android:checked="true" app:chipMinHeight="40dp" app:chipCornerRadius="20dp" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <LinearLayout
+                android:id="@+id/rowRepeat"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/bg_sheet_row"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Lặp lại" android:textSize="16sp" android:textColor="@color/text_primary" />
+                <TextView android:id="@+id/tvRepeatValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Hàng ngày" android:textColor="@color/text_secondary" android:textSize="15sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:paddingTop="14dp"
+                android:paddingBottom="10dp">
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Chuông báo sắp tới" android:textColor="@color/text_secondary" android:textSize="13sp" />
+                    <TextView android:id="@+id/tvNextHint" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Ngày mai" android:textColor="@color/text_primary" android:textSize="16sp" />
+                </LinearLayout>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSchedule"
+                    style="@style/Widget.Material3.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Hẹn báo thức"
+                    android:textAllCaps="false" />
+            </LinearLayout>
+
+            <!-- Tên -->
+            <LinearLayout
+                android:id="@+id/rowLabel"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_sheet_row"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="12dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tên chuông báo" android:textSize="16sp" android:textColor="@color/text_primary" />
+                <EditText
+                    android:id="@+id/etLabelInline"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:gravity="end"
+                    android:hint="Báo thức"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:paddingStart="12dp"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="16sp" />
+            </LinearLayout>
+
+            <!-- Âm thanh -->
+            <LinearLayout
+                android:id="@+id/rowSound"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_sheet_row"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Âm thanh" android:textSize="16sp" android:textColor="@color/text_primary" />
+                <TextView android:id="@+id/tvSoundValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Oz" android:textColor="@color/text_secondary" android:textSize="15sp" />
+            </LinearLayout>
+
+            <!-- Rung -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_sheet_row"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Rung" android:textSize="16sp" android:textColor="@color/text_primary" />
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/swVibrate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <!-- Thử thách -->
+            <LinearLayout
+                android:id="@+id/rowChallenge"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_sheet_row"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Thử thách" android:textSize="16sp" android:textColor="@color/text_primary" />
+                <TextView android:id="@+id/tvChallengeValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Không" android:textColor="@color/text_secondary" android:textSize="15sp" />
+            </LinearLayout>
+
+            <!-- Snooze -->
+            <LinearLayout
+                android:id="@+id/rowRoutine"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_sheet_row"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+                <ImageView
+                    android:id="@+id/ivRoutineGemini"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_marginEnd="8dp"
+                    android:src="@drawable/ic_gemini_sparkle"
+                    android:contentDescription="Gemini"
+                    android:visibility="gone" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Quy trình Gemini" android:textSize="16sp" android:textColor="@color/text_primary" />
+                <TextView android:id="@+id/tvRoutineValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tắt" android:textColor="@color/text_secondary" android:textSize="15sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/rowSnooze"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_sheet_row"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Báo lại" android:textSize="16sp" android:textColor="@color/text_primary" />
+                <TextView android:id="@+id/tvSnoozeValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="5 phút" android:textColor="@color/text_secondary" />
+            </LinearLayout>
+
+            <!-- Nhóm -->
+            <LinearLayout
+                android:id="@+id/rowGroup"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_sheet_row"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Nhóm" android:textSize="16sp" android:textColor="@color/text_primary" />
+                <TextView android:id="@+id/tvGroupValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Chung" android:textColor="@color/text_secondary" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/rowWeekendTime"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_sheet_row"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="8dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Giờ khác T7 / CN" android:textSize="16sp" android:textColor="@color/text_primary" />
+                <TextView android:id="@+id/tvWeekendValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Tắt" android:textColor="@color/text_secondary" android:paddingEnd="8dp" />
+                <com.google.android.material.checkbox.MaterialCheckBox
+                    android:id="@+id/cbWeekend"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/cbCrescendo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Chuông tăng dần"
+                android:checked="true" />
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/cbSkipHoliday"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Bỏ qua ngày lễ" />
+            <com.google.android.material.checkbox.MaterialCheckBox
+                android:id="@+id/cbAntiSnooze"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Chống báo lại" />
+
+            <LinearLayout
+                android:id="@+id/rowVoice"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/bg_sheet_row"
+                android:gravity="center_vertical"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Ghi chú giọng nói" android:textSize="16sp" android:textColor="@color/text_primary" />
+                <TextView android:id="@+id/tvVoiceValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Không" android:textColor="@color/text_secondary" />
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDelete"
+            style="@style/Widget.Material3.Button.TonalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:text="Xoá"
+            android:textColor="@color/danger"
+            android:textAllCaps="false" />
+        <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSave"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:minWidth="120dp"
+            android:text="Lưu"
+            android:textAllCaps="false" />
+
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.GET_ACCOUNTS" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.front" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.flash" android:required="false" />
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="http" />
+        </intent>
+    </queries>
+    <application
+        android:usesCleartextTraffic="false"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:name=".AlarmApp"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AlarmClock">
+
+        <activity android:name=".MainTabActivity"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:hardwareAccelerated="true"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:theme="@style/Theme.AlarmClock" />
+
+        <activity
+            android:name=".WelcomeActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AlarmClock" />
+
+        <!-- Không gắn LAUNCHER ở đây — icon launcher do activity-alias quản lý.
+             MainActivity luôn enabled để Intent tab Báo hoạt động. -->
+        <activity android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:hardwareAccelerated="true"
+            android:theme="@style/Theme.AlarmClock"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden" />
+
+        <!-- Icon launcher tự đổi: sáng / trưa / chiều / tối -->
+        <activity-alias
+            android:name=".MainAliasMorning"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_morning"
+            android:roundIcon="@mipmap/ic_launcher_morning_round"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".MainAliasNoon"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_noon"
+            android:roundIcon="@mipmap/ic_launcher_noon_round"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".MainAliasEvening"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_evening"
+            android:roundIcon="@mipmap/ic_launcher_evening_round"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".MainAliasNight"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_night"
+            android:roundIcon="@mipmap/ic_launcher_night_round"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        
+        <!-- Google Assistant / Gemini / Hey Google: đặt báo thức -->
+        <activity
+            android:name=".VoiceAlarmActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true"
+            android:taskAffinity="">
+            <intent-filter>
+                <action android:name="android.intent.action.SET_ALARM" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SHOW_ALARMS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SET_TIMER" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".AlarmRingActivity" android:exported="false"
+            android:showWhenLocked="true" android:turnScreenOn="true"
+            android:excludeFromRecents="true" android:launchMode="singleInstance"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.AlarmClock.FullScreen" />
+
+        <activity android:name=".TimerActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
+        <activity android:name=".WorldClockActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
+        <activity android:name=".QrChallengeActivity" android:exported="false" android:showWhenLocked="true" android:turnScreenOn="true" />
+        <activity android:name=".FaceChallengeActivity" android:exported="false"
+            android:showWhenLocked="true" android:turnScreenOn="true"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:theme="@style/Theme.AlarmClock.FullScreen" />
+        <activity android:name=".CalendarAgendaActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
+        <activity android:name=".AddEditAlarmActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
+        <activity android:name=".RingtonePickerActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
+        <activity android:name=".SettingsActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
+        <activity android:name=".BedtimeActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
+        <activity android:name=".SleepSoundActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
+        <activity android:name=".ScreensaverActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" android:showWhenLocked="true" android:turnScreenOn="true" />
+        <activity android:name=".PrivacyPolicyActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
+        <activity android:name=".GalleryActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
+        <service android:name=".GeminiSpeakService" android:exported="false" android:foregroundServiceType="specialUse" />
+        <service
+            android:name=".SleepSoundService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+        <activity android:name=".GeminiRoutineActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
+        <activity android:name=".FeaturesActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
+        <activity android:name=".StopwatchActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
+
+        <receiver
+            android:name=".AlarmReceiver"
+            android:exported="false"
+            android:directBootAware="true" />
+        <service
+            android:name=".AlarmKeepAliveService"
+            android:exported="false"
+            android:directBootAware="true"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="keep_alarm_scheduled" />
+        </service>
+        <service
+            android:name=".AlarmRingService"
+            android:exported="false"
+            android:directBootAware="true"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="alarm_ringing" />
+        </service>
+        <receiver android:name=".AlarmActionReceiver" android:exported="false" android:directBootAware="true" />
+        <receiver
+            android:name=".NotificationRefreshReceiver"
+            android:exported="false"
+            android:directBootAware="true" />
+        <receiver android:name=".IconUpdateReceiver" android:exported="false" />
+        <receiver
+            android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".TimerService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="countdown_timer" />
+        </service>
+        <service
+            android:name=".StopwatchService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="stopwatch" />
+        </service>
+
+        <receiver
+            android:name=".AlarmWidget1x1Provider"
+            android:exported="true"
+            android:label="Báo thức 1x1"
+            android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_alarm_1x1_info" />
+        </receiver>
+        <receiver
+            android:name=".AlarmWidget2x2Provider"
+            android:exported="true"
+            android:label="Báo thức 2x2"
+            android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_alarm_2x2_info" />
+        </receiver>
+        <receiver
+            android:name=".AlarmWidget4x2Provider"
+            android:exported="true"
+            android:label="Báo thức 4x2"
+            android:directBootAware="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_alarm_4x2_info" />
+        </receiver>
+        <receiver android:name=".WidgetClickReceiver" android:exported="false" android:directBootAware="true">
+            <intent-filter>
+                <action android:name="com.alarmclock.dongho.widget.TOGGLE" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name=".WidgetTickReceiver" android:exported="false" android:directBootAware="true">
+            <intent-filter>
+                <action android:name="com.alarmclock.dongho.widget.TICK" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

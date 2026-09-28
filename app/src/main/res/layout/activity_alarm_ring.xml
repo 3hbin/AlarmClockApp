@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0D1B4A">
+
+    <!-- Soft gradient blobs (decorative) -->
+    <View
+        android:layout_width="280dp"
+        android:layout_height="280dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="-60dp"
+        android:layout_marginEnd="-40dp"
+        android:background="@drawable/bg_ring_blob_top"
+        android:alpha="0.55" />
+    <View
+        android:layout_width="220dp"
+        android:layout_height="220dp"
+        android:layout_gravity="bottom|start"
+        android:layout_marginBottom="40dp"
+        android:layout_marginStart="-50dp"
+        android:background="@drawable/bg_ring_blob_bottom"
+        android:alpha="0.4" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:paddingBottom="160dp"
+        android:clipToPadding="false">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingStart="28dp"
+        android:paddingEnd="28dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="BÁO THỨC"
+            android:fontFamily="@font/noto_sans"
+            android:textAllCaps="true"
+            android:letterSpacing="0.18"
+            android:textSize="13sp"
+            android:textColor="#A5B4FC"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Clock emoji in glass circle -->
+        <FrameLayout
+            android:id="@+id/layoutRingIcon"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_ring_icon_circle">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:text="⏰"
+                android:textSize="36sp" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/tvRingTime"
+            android:fontFamily="@font/noto_sans"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="07:00"
+            android:textSize="40sp"
+            android:textStyle="bold"
+            android:textColor="@android:color/white"
+            android:letterSpacing="0.04" />
+
+        <TextView
+            android:id="@+id/tvLabel"
+            android:fontFamily="@font/noto_sans"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Báo thức"
+            android:textSize="18sp"
+            android:textColor="#C7D2FE"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Challenge cards -->
+        <LinearLayout
+            android:id="@+id/layoutMathChallenge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="20dp"
+            android:background="@drawable/bg_ring_card"
+            android:layout_marginBottom="20dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/challenge_title"
+                android:textColor="#A5B4FC"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/tvMathQuestion"
+                android:fontFamily="@font/noto_sans"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="12 + 15 = ?"
+                android:textColor="@android:color/white"
+                android:textSize="28sp"
+                android:textStyle="bold" />
+
+            <!-- Giữ id cũ (ẩn) để binding không vỡ nếu còn reference -->
+            <EditText
+                android:id="@+id/edtMathAnswer"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSubmitMath"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
+
+            <GridLayout
+                android:id="@+id/gridMathChoices"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="2"
+                android:layout_marginTop="14dp"
+                android:alignmentMode="alignBounds"
+                android:useDefaultMargins="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMathA"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_columnWeight="1"
+                    android:text="A. —"
+                    android:textSize="16sp"
+                    android:backgroundTint="#4338CA"
+                    app:cornerRadius="16dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMathB"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_columnWeight="1"
+                    android:text="B. —"
+                    android:textSize="16sp"
+                    android:backgroundTint="#4338CA"
+                    app:cornerRadius="16dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMathC"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_columnWeight="1"
+                    android:text="C. —"
+                    android:textSize="16sp"
+                    android:backgroundTint="#4338CA"
+                    app:cornerRadius="16dp" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMathD"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_columnWeight="1"
+                    android:text="D. —"
+                    android:textSize="16sp"
+                    android:backgroundTint="#4338CA"
+                    app:cornerRadius="16dp" />
+            </GridLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layoutShakeChallenge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="20dp"
+            android:background="@drawable/bg_ring_card"
+            android:layout_marginBottom="20dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/shake_instruction"
+                android:textColor="#C7D2FE"
+                android:textSize="15sp"
+                android:gravity="center" />
+
+            <TextView
+                android:id="@+id/tvShakeProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="0 / 10"
+                android:textColor="@android:color/white"
+                android:textSize="32sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+
+        <!-- Chọn từ nhanh (kiểu Duolingo) 10 giây -->
+        <LinearLayout
+            android:id="@+id/layoutReadChallenge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:padding="16dp"
+            android:background="@drawable/bg_ring_card"
+            android:layout_marginBottom="20dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvReadTimer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="⏱ 10 giây"
+                android:textColor="#FCA5A5"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="6dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Chọn từ theo đúng thứ tự (nhanh!)"
+                android:textColor="#A5B4FC"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:id="@+id/tvReadProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1 / 3"
+                android:textColor="#C7D2FE"
+                android:textSize="12sp"
+                android:layout_marginBottom="6dp" />
+
+            <!-- Câu đang ghép -->
+            <TextView
+                android:id="@+id/tvReadBuilt"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:gravity="center"
+                android:padding="10dp"
+                android:background="@drawable/bg_ring_input"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:text="…"
+                android:layout_marginBottom="10dp" />
+
+            <!-- Ẩn câu gốc (chỉ dùng nội bộ / gợi ý nhẹ) -->
+            <TextView
+                android:id="@+id/tvReadSentence"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textColor="#64748B"
+                android:textSize="11sp"
+                android:layout_marginBottom="8dp"
+                android:visibility="gone" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupReadWords"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp"
+                app:singleSelection="false" />
+
+            <!-- Giữ id cũ ẩn để binding không vỡ -->
+            <EditText
+                android:id="@+id/edtReadAnswer"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSubmitRead"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Bấm liên tục 200 -->
+        <LinearLayout
+            android:id="@+id/layoutTapChallenge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="20dp"
+            android:background="@drawable/bg_ring_card"
+            android:layout_marginBottom="20dp"
+            android:visibility="gone">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Bấm liên tục 200 lần (chống auto-click)"
+                android:textColor="#A5B4FC"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp" />
+            <TextView
+                android:id="@+id/tvTapProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 / 200"
+                android:textColor="@android:color/white"
+                android:textSize="36sp"
+                android:textStyle="bold" />
+            <TextView
+                android:id="@+id/tvTapHint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Chạm nút bên dưới bằng tay"
+                android:textColor="#FCA5A5"
+                android:textSize="12sp"
+                android:layout_marginTop="4dp" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnTapChallenge"
+                android:layout_width="160dp"
+                android:layout_height="160dp"
+                android:layout_marginTop="16dp"
+                android:text="BẤM"
+                android:textSize="22sp"
+                android:backgroundTint="#EF4444"
+                app:cornerRadius="80dp" />
+        </LinearLayout>
+
+    </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Nút luôn neo dưới màn hình -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:paddingStart="28dp"
+        android:paddingEnd="28dp"
+        android:paddingBottom="28dp"
+        android:paddingTop="8dp"
+        android:background="#CC0D1B4A"
+        android:clipChildren="false"
+        android:clipToPadding="false">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSnooze"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="@string/snooze"
+            android:textSize="16sp"
+            android:layout_marginBottom="12dp"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:textColor="@android:color/white"
+            app:strokeColor="#A5B4FC"
+            app:strokeWidth="1.5dp"
+            app:cornerRadius="28dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDismiss"
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:text="@string/dismiss"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:backgroundTint="#EF4444"
+            app:cornerRadius="28dp"
+            app:elevation="6dp" />
+    </LinearLayout>
+</FrameLayout>

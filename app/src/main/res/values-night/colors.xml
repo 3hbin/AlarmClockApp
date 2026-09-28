@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark palette 2026 -->
+    <color name="seed">#8B9BFF</color>
+    <color name="primary">#8B9BFF</color>
+    <color name="primary_dark">#6B7AE8</color>
+    <color name="primary_container">#2A2F55</color>
+    <color name="on_primary">#0E1020</color>
+    <color name="secondary">#B39DFF</color>
+    <color name="secondary_container">#2E2748</color>
+    <color name="surface">#12131A</color>
+    <color name="surface_card">#1C1E2A</color>
+    <color name="surface_variant">#252836</color>
+    <color name="text_primary">#F2F3F8</color>
+    <color name="text_secondary">#A8AEC0</color>
+    <color name="outline">#3A3F55</color>
+    <color name="outline_variant">#2C3044</color>
+    <color name="error">#FF6B6B</color>
+    <color name="success">#4ADE80</color>
+    <color name="warning">#FBBF24</color>
+    <color name="ripple">#33FFFFFF</color>
+    <color name="nav_bar_bg">#1A1C28</color>
+    <color name="nav_icon_inactive">#8B90A5</color>
+</resources>

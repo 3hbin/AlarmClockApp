@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="nav_alarm">Báo</string>
+    <string name="nav_world">Thế giới</string>
+    <string name="nav_stopwatch">Bấm</string>
+    <string name="nav_timer">Đếm</string>
+    <string name="nav_gallery">Ảnh</string>
+    <string name="nav_settings">Cài</string>
+    <string name="nav_bedtime">Ngủ</string>
+    <string name="test_face_scan">📷 Test quét mặt</string>
+    <string name="test_face_expr">😊 Test biểu cảm</string>
+    <string name="test_menu_title">Bạn muốn làm gì?</string>
+    <string name="lang_section">Ngôn ngữ</string>
+    <string name="lang_hint">Chỉ tiếng Anh. Theo hệ thống dùng định dạng ngày giờ máy.</string>
+    <string name="lang_app">Ngôn ngữ ứng dụng</string>
+    <string name="lang_system">🌐  Theo hệ thống</string>
+    <string name="lang_pick_title">Chọn ngôn ngữ (%1$d)</string>
+    <string name="lang_search_hint">🔍  Tìm ngôn ngữ…</string>
+    <string name="lang_count">%1$d ngôn ngữ</string>
+    <string name="lang_selected">✓  %1$s</string>
+    <string name="nav_style_title">Kiểu thanh dưới</string>
+    <string name="nav_style_hint">Chọn giao diện thanh điều hướng dưới.</string>
+    <string name="nav_style_curved">Android cong (mặc định)</string>
+    <string name="nav_style_persistent">Persistent</string>
+    <string name="nav_style_google">Google Nav</string>
+    <string name="nav_style_changed">Đã đổi kiểu thanh dưới</string>
+    <string name="settings_pin_title">🔒 Khóa Cài đặt (PIN)</string>
+    <string name="settings_pin_hint">Chống người khác vào Cài đặt sửa báo thức. Quên PIN → dùng Gmail khôi phục.</string>
+    <string name="settings_pin_save">Lưu PIN</string>
+    <string name="settings_pin_clear">Xóa PIN</string>
+    <string name="settings_pin_unlocked">Chưa khóa — ai cũng vào được Cài đặt</string>
+    <string name="test_section">Test thử thách mặt</string>
+    <string name="test_section_hint">Hoặc giữ tab ⚙️ Cài ở thanh dưới</string>
+    <string name="test_face_scan_btn">📷 Test quét mặt</string>
+    <string name="test_face_expr_btn">😊 Test biểu cảm (Cười / Giận / 🤞 …)</string>
+    <string name="quick_nap">Ngủ gật</string>
+
+    <string name="hide_ongoing_notif">Ẩn thông báo đang hoạt động</string>
+    <string name="pin_new_hint">PIN mới (≥4 số)</string>
+    <string name="pin_unlocked">Chưa khóa — ai cũng vào được Cài đặt</string>
+    <string name="pin_locked">Đã khóa Cài đặt</string>
+    <string name="nap">Ngủ gật</string>
+    <string name="next_alarm_fmt">Tiếp theo %1$s · %2$s</string>
+    <string name="hours_minutes_fmt">còn %1$d giờ %2$d phút</string>
+    <string name="title_world_clock">Giờ thế giới</string>
+    <string name="title_stopwatch">Bấm giờ</string>
+    <string name="title_timer">Đếm ngược</string>
+    <string name="title_bedtime">Giờ đi ngủ</string>
+    <string name="search_city_hint">Tìm thành phố, quốc gia, múi giờ…</string>
+    <string name="world_count_fmt">%1$d múi giờ / thành phố</string>
+    <string name="reset">Đặt lại</string>
+    <string name="start">Bắt đầu</string>
+    <string name="pick_hms">Chọn giờ / phút / giây</string>
+    <string name="schedule">Lịch biểu</string>
+    <string name="sleep_sounds">Âm thanh ru ngủ</string>
+    <string name="upcoming_events">Sự kiện sắp diễn ra</string>
+    <string name="sleep_playing">Đang phát · tự tắt sau</string>
+    <string name="sleep_stopped">Đã dừng</string>
+    <string name="sleep_done">Hết giờ — đã tắt nhạc</string>
+    <string name="sound">Âm thanh</string>
+    <string name="auto_off_after">Tự tắt sau</string>
+    <string name="play">Phát</string>
+    <string name="stop">Dừng</string>
+    <string name="soft1">Êm 1</string>
+    <string name="soft2">Êm 2</string>
+    <string name="oz_soft">Oz nhẹ</string>
+    <string name="font_size">Cỡ chữ</string>
+    <string name="font_small">Chữ bé</string>
+    <string name="font_medium">Vừa</string>
+    <string name="font_large">Chữ to</string>
+    <string name="alarm_default_label">Báo thức</string>
+    <string name="repeat_daily_short">Hàng ngày</string>
+
+
+    <string name="menu_calendar">Lịch và ngày lễ</string>
+    <string name="menu_google">Đăng nhập Google</string>
+    <string name="menu_history">Nhật ký báo thức</string>
+    <string name="menu_settings">Cài đặt</string>
+    <string name="menu_screensaver">Trình bảo vệ màn hình</string>
+    <string name="menu_privacy">Chính sách quyền riêng tư</string>
+    <string name="menu_guide">Hướng dẫn sử dụng</string>
+    <string name="menu_version">Phiên bản</string>
+
+</resources>

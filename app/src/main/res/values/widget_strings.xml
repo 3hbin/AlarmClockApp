@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_1x1_desc">Bật/tắt báo thức gần nhất</string>
+    <string name="widget_2x2_desc">Đồng hồ và báo thức tiếp theo</string>
+    <string name="widget_4x2_desc">Danh sách báo thức sắp tới</string>
+</resources>

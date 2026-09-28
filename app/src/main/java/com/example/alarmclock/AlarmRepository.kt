@@ -1,0 +1,143 @@
+package com.example.alarmclock
+
+import android.content.Context
+import org.json.JSONArray
+import org.json.JSONObject
+
+class AlarmRepository(context: Context) {
+    private val appContext = context.applicationContext
+    private val prefs = devicePrefs(appContext)
+
+    init {
+        migrateFromCredentialStorage(appContext)
+    }
+
+    fun getAlarms(): MutableList<Alarm> {
+        val json = prefs.getString("alarms", "[]") ?: "[]"
+        val array = JSONArray(json)
+        val list = mutableListOf<Alarm>()
+        for (i in 0 until array.length()) {
+            val obj = array.getJSONObject(i)
+            list.add(
+                Alarm(
+                    id = obj.getInt("id"),
+                    hour = obj.getInt("hour"),
+                    minute = obj.getInt("minute"),
+                    isEnabled = obj.getBoolean("isEnabled"),
+                    label = obj.optString("label", "Báo thức"),
+                    repeatMode = obj.optInt("repeatMode", Alarm.REPEAT_DAILY),
+                    snoozeMinutes = obj.optInt("snoozeMinutes", 5),
+                    ringtoneUri = if (obj.has("ringtoneUri") && !obj.isNull("ringtoneUri")) obj.getString("ringtoneUri") else null,
+                    challengeType = obj.optInt("challengeType", Alarm.CHALLENGE_NONE),
+                    shakeTargetCount = obj.optInt("shakeTargetCount", 10),
+                    skipHolidays = obj.optBoolean("skipHolidays", false),
+                    isStrictAntiSnooze = obj.optBoolean("isStrictAntiSnooze", false),
+                    voiceNote = if (obj.has("voiceNote") && !obj.isNull("voiceNote")) obj.getString("voiceNote") else null,
+                    useCrescendo = obj.optBoolean("useCrescendo", true),
+                    group = obj.optString("group", "Chung"),
+                    useWeekendSchedule = obj.optBoolean("useWeekendSchedule", false),
+                    weekendHour = obj.optInt("weekendHour", -1),
+                    weekendMinute = obj.optInt("weekendMinute", -1),
+                    routineOn = obj.optBoolean("routineOn", false),
+                    routineWeather = obj.optBoolean("routineWeather", true),
+                    routineCalendar = obj.optBoolean("routineCalendar", true),
+                    routineTasks = obj.optBoolean("routineTasks", true),
+                    routineTomorrow = obj.optBoolean("routineTomorrow", true),
+                    qrToken = obj.optString("qrToken", "")
+                )
+            )
+        }
+        return list
+    }
+
+    fun saveAlarms(alarms: List<Alarm>) {
+        val array = JSONArray()
+        alarms.forEach { alarm ->
+            val obj = JSONObject().apply {
+                put("id", alarm.id)
+                put("hour", alarm.hour)
+                put("minute", alarm.minute)
+                put("isEnabled", alarm.isEnabled)
+                put("label", alarm.label)
+                put("repeatMode", alarm.repeatMode)
+                put("snoozeMinutes", alarm.snoozeMinutes)
+                put("ringtoneUri", alarm.ringtoneUri)
+                put("challengeType", alarm.challengeType)
+                put("shakeTargetCount", alarm.shakeTargetCount)
+                put("skipHolidays", alarm.skipHolidays)
+                put("isStrictAntiSnooze", alarm.isStrictAntiSnooze)
+                put("voiceNote", alarm.voiceNote)
+                put("useCrescendo", alarm.useCrescendo)
+                put("group", alarm.group)
+                put("useWeekendSchedule", alarm.useWeekendSchedule)
+                put("weekendHour", alarm.weekendHour)
+                put("weekendMinute", alarm.weekendMinute)
+                put("routineOn", alarm.routineOn)
+                put("routineWeather", alarm.routineWeather)
+                put("routineCalendar", alarm.routineCalendar)
+                put("routineTasks", alarm.routineTasks)
+                put("routineTomorrow", alarm.routineTomorrow)
+                put("qrToken", alarm.qrToken)
+            }
+            array.put(obj)
+        }
+        prefs.edit().putString("alarms", array.toString()).apply()
+    }
+
+    fun getNextId(): Int {
+        return prefs.getInt("next_id", 1).also {
+            prefs.edit().putInt("next_id", it + 1).apply()
+        }
+    }
+
+    fun getGlobalRingtone(): String? = prefs.getString("global_ringtone", null)
+    fun setGlobalRingtone(uri: String?) = prefs.edit().putString("global_ringtone", uri).apply()
+
+    fun isFlashEnabled(): Boolean = prefs.getBoolean("flash_enabled", false)
+    fun setFlashEnabled(enabled: Boolean) = prefs.edit().putBoolean("flash_enabled", enabled).apply()
+
+    fun logSleep(startMs: Long, endMs: Long) {
+        val key = "sleep_log"
+        val arr = JSONArray(prefs.getString(key, "[]"))
+        arr.put(JSONObject().apply {
+            put("start", startMs)
+            put("end", endMs)
+            put("durationMin", (endMs - startMs) / 60000)
+        })
+        while (arr.length() > 30) arr.remove(0)
+        prefs.edit().putString(key, arr.toString()).apply()
+    }
+
+    fun getSleepLogs(): List<Triple<Long, Long, Long>> {
+        val arr = JSONArray(prefs.getString("sleep_log", "[]"))
+        val list = mutableListOf<Triple<Long, Long, Long>>()
+        for (i in 0 until arr.length()) {
+            val o = arr.getJSONObject(i)
+            list.add(Triple(o.getLong("start"), o.getLong("end"), o.getLong("durationMin")))
+        }
+        return list
+    }
+
+    companion object {
+        private const val PREF = "alarms_prefs"
+
+        fun devicePrefs(context: Context) =
+            context.createDeviceProtectedStorageContext()
+                .getSharedPreferences(PREF, Context.MODE_PRIVATE)
+
+        private fun migrateFromCredentialStorage(context: Context) {
+            try {
+                val dest = devicePrefs(context)
+                if ((dest.getString("alarms", "[]") ?: "[]") != "[]") return
+                val src = context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
+                val json = src.getString("alarms", null) ?: return
+                dest.edit()
+                    .putString("alarms", json)
+                    .putInt("next_id", src.getInt("next_id", 1))
+                    .putString("global_ringtone", src.getString("global_ringtone", null))
+                    .putBoolean("flash_enabled", src.getBoolean("flash_enabled", false))
+                    .apply()
+            } catch (_: Exception) {}
+        }
+    }
+}
