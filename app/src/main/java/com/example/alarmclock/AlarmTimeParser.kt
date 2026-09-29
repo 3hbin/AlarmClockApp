@@ -65,7 +65,7 @@ object AlarmTimeParser {
         return raw.lowercase()
             .replace('：', ':')
             .replace('．', '.')
-            .replace('小时', 'h')
+            .replace("小时", "h")
             .replace('\u00a0', ' ')
             .trim()
     }
