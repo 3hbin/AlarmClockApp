@@ -9,8 +9,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 
 /**
- * Sao lưu theo tài khoản Google: users/{uid}/backup
- * Gồm danh sách báo thức + email.
+ * Sao lưu theo tài khoản Google: users/{uid}/data/backup
+ * Gồm danh sách báo thức, khóa API Gemini và lịch sử chat.
  */
 object CloudSyncHelper {
     private const val TAG = "CloudSync"
@@ -50,9 +50,11 @@ object CloudSyncHelper {
                 onDone(false)
                 return
             }
-            val payload = hashMapOf(
+            val payload = hashMapOf<String, Any>(
                 "email" to AppSettings.getRecoveryEmail(context),
                 "updatedAt" to System.currentTimeMillis(),
+                "geminiKey" to ChatCloudStore.geminiKey(context),
+                "chatHistory" to ChatCloudStore.historyJson(context),
                 "alarms" to alarms.map { a ->
                     hashMapOf(
                         "id" to a.id,
@@ -133,7 +135,76 @@ object CloudSyncHelper {
         }
     }
 
+    fun pushChatBackup(context: Context, onDone: (Boolean) -> Unit = {}) {
+        try {
+            init(context)
+            if (uid(context) == null) {
+                onDone(false); return
+            }
+            val payload = hashMapOf<String, Any>(
+                "email" to AppSettings.getRecoveryEmail(context),
+                "updatedAt" to System.currentTimeMillis(),
+                "geminiKey" to ChatCloudStore.geminiKey(context),
+                "chatHistory" to ChatCloudStore.historyJson(context)
+            )
+            doc(context).set(payload, SetOptions.merge())
+                .addOnSuccessListener { onDone(true) }
+                .addOnFailureListener { e ->
+                    Log.e(TAG, "push chat failed", e)
+                    onDone(false)
+                }
+        } catch (e: Exception) {
+            Log.e(TAG, "push chat exception", e)
+            onDone(false)
+        }
+    }
+
+    fun pullChatBackup(context: Context, onResult: (String?, String?) -> Unit) {
+        try {
+            init(context)
+            migrateLegacyChatPrefs(context)
+            if (uid(context) == null) {
+                onResult(null, null); return
+            }
+            doc(context).get()
+                .addOnSuccessListener { snap ->
+                    val key = snap.getString("geminiKey")
+                    val hist = snap.getString("chatHistory")
+                    if (!key.isNullOrBlank() && ChatCloudStore.geminiKey(context).isBlank()) {
+                        ChatCloudStore.saveKey(context, key)
+                    }
+                    if (!hist.isNullOrBlank() && hist != "[]") {
+                        val local = ChatCloudStore.historyJson(context)
+                        if (local == "[]" || local.length < hist.length) {
+                            ChatCloudStore.saveHistory(context, hist)
+                        }
+                    }
+                    onResult(
+                        ChatCloudStore.geminiKey(context).ifBlank { key },
+                        ChatCloudStore.historyJson(context).ifBlank { hist }
+                    )
+                }
+                .addOnFailureListener { onResult(null, null) }
+        } catch (_: Exception) {
+            onResult(null, null)
+        }
+    }
+
+    private fun migrateLegacyChatPrefs(context: Context) {
+        try {
+            val dest = ChatCloudStore.prefs(context)
+            if (!dest.getString("key", "").isNullOrBlank() || dest.getString("history", "[]") != "[]") return
+            val old = context.getSharedPreferences("chat_ai", Context.MODE_PRIVATE)
+            val key = old.getString("key", "") ?: ""
+            val hist = old.getString("history", "[]") ?: "[]"
+            if (key.isNotBlank() || hist != "[]") {
+                dest.edit().putString("key", key).putString("history", hist).apply()
+            }
+        } catch (_: Exception) {}
+    }
+
     private fun pullThenMerge(context: Context) {
+        pullChatBackup(context) { _, _ -> }
         pullAlarms(context) { cloud ->
             val repo = AlarmRepository(context)
             val local = repo.getAlarms()

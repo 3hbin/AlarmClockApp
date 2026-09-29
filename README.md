@@ -3,7 +3,7 @@
 App đồng hồ báo thức cho điện thoại Android.
 
 Package: `com.alarmclock.dongho`  
-Phiên bản: **4.38.1**
+Phiên bản: **4.39.0**
 
 Tải app: https://apkpure.com/p/com.alarmclock.dongho  
 Mã nguồn: https://github.com/3hbin/AlarmClockApp
@@ -15,7 +15,9 @@ Mã nguồn: https://github.com/3hbin/AlarmClockApp
 - Chọn chuông của máy, hoặc chọn chuông yêu thích trong app.
 - Có nhạc ru ngủ, giờ đi ngủ và đếm ngược.
 - Có thử thách khi tắt chuông, nếu bạn bật.
-- Có thể đăng nhập Google để lưu bản sao báo thức.
+- Có thể đăng nhập Google để lưu bản sao báo thức, khóa API Gemini và lịch sử chat.
+- Chat AI: hiệu ứng gõ chữ, nút Dừng, tin nhắn bo góc, sao chép / thích / chia sẻ, định dạng đậm-nghiêng-công thức.
+- Đặt báo thức bằng chat nhận nhiều kiểu giờ (6:07, 6h07, 6 giờ 7…) và luôn thêm báo mới, không đè báo cũ.
 
 ## Cách cài
 

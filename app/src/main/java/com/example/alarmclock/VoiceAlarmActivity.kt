@@ -75,7 +75,7 @@ class VoiceAlarmActivity : AppCompatActivity() {
             ?: intent.getStringExtra(Intent.EXTRA_TEXT)
             ?: "Báo thức giọng nói"
 
-        val parsed = parseTimeFromMessage(message)
+        val parsed = AlarmTimeParser.parseFirst(message) ?: parseTimeFromMessage(message)
         var hour = when {
             intent.hasExtra(AlarmClock.EXTRA_HOUR) ->
                 intent.getIntExtra(AlarmClock.EXTRA_HOUR, -1)
