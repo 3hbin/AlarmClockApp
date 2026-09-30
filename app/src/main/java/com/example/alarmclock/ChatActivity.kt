@@ -119,10 +119,15 @@ class ChatActivity : AppCompatActivity() {
 
         val log = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding((12 * d).toInt(), (8 * d).toInt(), (12 * d).toInt(), (8 * d).toInt())
+            setPadding((10 * d).toInt(), (10 * d).toInt(), (10 * d).toInt(), (28 * d).toInt())
         }
         logRef = log
-        val scroll = ScrollView(this).apply { addView(log) }
+        val scroll = ScrollView(this).apply {
+            isFillViewport = true
+            clipToPadding = false
+            overScrollMode = View.OVER_SCROLL_IF_CONTENT_SCROLLS
+            addView(log)
+        }
         scrollRef = scroll
         val input = EditText(this).apply {
             hint = "Nhắn tin với Gemini"
@@ -331,24 +336,21 @@ class ChatActivity : AppCompatActivity() {
             setTextColor(if (mine) 0xFFFFFFFF.toInt() else 0xFF202124.toInt())
             setPadding((14 * d).toInt(), (10 * d).toInt(), (14 * d).toInt(), (10 * d).toInt())
             background = bubbleBg(mine, d)
-            setTextIsSelectable(false)
-            setOnLongClickListener {
-                copyText(text)
-                true
-            }
+            maxWidth = (resources.displayMetrics.widthPixels - (88 * d).toInt()).coerceAtLeast((180 * d).toInt())
+            enablePartialCopy()
         }
         val col = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = if (mine) Gravity.END else Gravity.START
+            setPadding(0, (4 * d).toInt(), 0, (10 * d).toInt())
         }
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.BOTTOM or if (mine) Gravity.END else Gravity.START
-            setPadding(0, (6 * d).toInt(), 0, (2 * d).toInt())
             val geminiView = if (!mine) (avatar(true) as ImageView).also { addView(it) } else null
             tv.tag = geminiView
             addView(tv, LinearLayout.LayoutParams(
-                (resources.displayMetrics.widthPixels * 0.74f).toInt(),
+                LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
                 marginStart = if (mine) 0 else (8 * d).toInt()
@@ -379,35 +381,113 @@ class ChatActivity : AppCompatActivity() {
         scrollRef?.post { scrollRef?.fullScroll(ScrollView.FOCUS_DOWN) }
     }
 
+    private val idleTint = 0xFF5F6368.toInt()
+    private val likeTint = 0xFF1A73E8.toInt()
+    private val dislikeTint = 0xFFD93025.toInt()
+
     private fun actionRow(raw: String): LinearLayout {
         val d = resources.displayMetrics.density
-        fun iconBtn(icon: Int, desc: String, tint: Int = 0xFF5F6368.toInt(), click: (ImageButton) -> Unit): ImageButton {
+        val ripple = try {
+            android.util.TypedValue().also {
+                theme.resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, it, true)
+            }.resourceId
+        } catch (_: Exception) { 0 }
+        fun iconBtn(icon: Int, desc: String): ImageButton {
             return ImageButton(this).apply {
                 setImageResource(icon)
-                background = null
+                if (ripple != 0) setBackgroundResource(ripple) else background = null
                 contentDescription = desc
-                imageTintList = android.content.res.ColorStateList.valueOf(tint)
-                setPadding((6 * d).toInt(), (6 * d).toInt(), (6 * d).toInt(), (6 * d).toInt())
-                layoutParams = LinearLayout.LayoutParams((36 * d).toInt(), (36 * d).toInt())
-                setOnClickListener { click(this) }
+                imageTintList = android.content.res.ColorStateList.valueOf(idleTint)
+                setPadding((8 * d).toInt(), (8 * d).toInt(), (8 * d).toInt(), (8 * d).toInt())
+                layoutParams = LinearLayout.LayoutParams((40 * d).toInt(), (40 * d).toInt())
             }
         }
-        val like = iconBtn(R.drawable.ic_chat_like, "Thích") { btn ->
-            btn.imageTintList = android.content.res.ColorStateList.valueOf(0xFF1A73E8.toInt())
-            Toast.makeText(this, "Đã thích", Toast.LENGTH_SHORT).show()
+        val hint = TextView(this).apply {
+            textSize = 12f
+            setTextColor(0xFF5F6368.toInt())
+            setPadding((8 * d).toInt(), 0, 0, 0)
         }
-        val dislike = iconBtn(R.drawable.ic_chat_dislike, "Không thích") { btn ->
-            btn.imageTintList = android.content.res.ColorStateList.valueOf(0xFFD93025.toInt())
-            Toast.makeText(this, "Đã ghi nhận", Toast.LENGTH_SHORT).show()
+        val like = iconBtn(R.drawable.ic_chat_like, "Thích")
+        val dislike = iconBtn(R.drawable.ic_chat_dislike, "Không thích")
+        var vote = 0
+        fun paint() {
+            like.imageTintList = android.content.res.ColorStateList.valueOf(if (vote == 1) likeTint else idleTint)
+            dislike.imageTintList = android.content.res.ColorStateList.valueOf(if (vote == -1) dislikeTint else idleTint)
+        }
+        fun flash(msg: String) {
+            hint.text = msg
+            hint.animate().cancel()
+            hint.alpha = 1f
+            hint.postDelayed({
+                hint.animate().alpha(0f).setDuration(250).start()
+            }, 1200)
+        }
+        like.setOnClickListener {
+            vote = if (vote == 1) 0 else 1
+            paint()
+            flash(if (vote == 1) "Đã thích" else "Đã bỏ thích")
+        }
+        dislike.setOnClickListener {
+            vote = if (vote == -1) 0 else -1
+            paint()
+            flash(if (vote == -1) "Không thích" else "Đã bỏ đánh giá")
         }
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.START or Gravity.CENTER_VERTICAL
-            setPadding((44 * d).toInt(), 0, 0, (4 * d).toInt())
-            addView(iconBtn(R.drawable.ic_chat_copy, "Sao chép") { copyText(raw) })
+            setPadding((44 * d).toInt(), (2 * d).toInt(), 0, (6 * d).toInt())
+            addView(iconBtn(R.drawable.ic_chat_copy, "Sao chép toàn bộ").also {
+                it.setOnClickListener { copyText(raw) }
+            })
             addView(like)
             addView(dislike)
-            addView(iconBtn(R.drawable.ic_chat_share, "Chia sẻ") { shareText(raw) })
+            addView(iconBtn(R.drawable.ic_chat_share, "Chia sẻ").also {
+                it.setOnClickListener { shareText(raw) }
+            })
+            addView(hint)
+        }
+    }
+
+    /** Giữ một đoạn chữ → menu Copy / Chọn tất cả của hệ thống. */
+    private fun TextView.enablePartialCopy() {
+        setTextIsSelectable(true)
+        setOnTouchListener { v, ev ->
+            if (ev.actionMasked == android.view.MotionEvent.ACTION_DOWN) {
+                v.parent?.requestDisallowInterceptTouchEvent(true)
+            }
+            if (ev.actionMasked == android.view.MotionEvent.ACTION_UP ||
+                ev.actionMasked == android.view.MotionEvent.ACTION_CANCEL
+            ) {
+                v.parent?.requestDisallowInterceptTouchEvent(false)
+            }
+            false
+        }
+        customSelectionActionModeCallback = object : android.view.ActionMode.Callback {
+            override fun onCreateActionMode(mode: android.view.ActionMode, menu: android.view.Menu): Boolean {
+                menu.clear()
+                menu.add(0, android.R.id.copy, 0, "Sao chép")
+                menu.add(0, android.R.id.selectAll, 1, "Chọn tất cả")
+                return true
+            }
+            override fun onPrepareActionMode(mode: android.view.ActionMode, menu: android.view.Menu) = false
+            override fun onActionItemClicked(mode: android.view.ActionMode, item: android.view.MenuItem): Boolean {
+                val start = selectionStart.coerceAtLeast(0)
+                val end = selectionEnd.coerceAtLeast(0)
+                val picked = if (end > start) text.subSequence(start, end).toString() else text.toString()
+                when (item.itemId) {
+                    android.R.id.copy -> {
+                        copyText(picked)
+                        mode.finish()
+                        return true
+                    }
+                    android.R.id.selectAll -> {
+                        setSelection(0, text.length)
+                        return true
+                    }
+                }
+                return false
+            }
+            override fun onDestroyActionMode(mode: android.view.ActionMode) {}
         }
     }
 
