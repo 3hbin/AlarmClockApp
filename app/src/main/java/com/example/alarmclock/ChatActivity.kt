@@ -578,11 +578,11 @@ class ChatActivity : AppCompatActivity() {
                 it.setOnClickListener { shareText(raw) }
             })
             addView(iconBtn(R.drawable.ic_chat_pin, "Ghim").also { btn ->
-                if (ChatCloudStore.isPinned(this, raw)) {
+                if (ChatCloudStore.isPinned(this@ChatActivity, raw)) {
                     btn.imageTintList = android.content.res.ColorStateList.valueOf(0xFFF9AB00.toInt())
                 }
                 btn.setOnClickListener {
-                    val on = ChatCloudStore.togglePin(this, raw)
+                    val on = ChatCloudStore.togglePin(this@ChatActivity, raw)
                     btn.imageTintList = android.content.res.ColorStateList.valueOf(
                         if (on) 0xFFF9AB00.toInt() else idleTint
                     )
