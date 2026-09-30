@@ -38,6 +38,8 @@ class ChatActivity : AppCompatActivity() {
     private var headerAvatar: ImageView? = null
     private var scrollRef: ScrollView? = null
     private var logRef: LinearLayout? = null
+    private var tts: TtsHelper? = null
+    private var ttsOn = false
 
     private val frames by lazy {
         IntArray(39) { resources.getIdentifier("gemini_loop_%02d".format(it), "drawable", packageName) }
@@ -183,6 +185,15 @@ class ChatActivity : AppCompatActivity() {
                     maxLines = 1
                 })
             }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(TextView(context).apply {
+                text = "Live"
+                setTextColor(0xFF1A73E8.toInt())
+                setPadding((8 * d).toInt(), 0, (8 * d).toInt(), 0)
+                gravity = Gravity.CENTER
+                setOnClickListener {
+                    startActivity(Intent(this@ChatActivity, GeminiLiveActivity::class.java))
+                }
+            })
             addView(keyBtn)
         }
         val bar = LinearLayout(this).apply {
@@ -361,6 +372,7 @@ class ChatActivity : AppCompatActivity() {
         col.addView(row)
         if (actions && !mine) {
             col.addView(actionRow(text))
+            addPromptCopyChips(col, text)
         }
         log.addView(col)
         if (save) {
@@ -378,6 +390,7 @@ class ChatActivity : AppCompatActivity() {
         val col = parent.parent as? LinearLayout ?: return
         if (col.childCount > 1) return
         col.addView(actionRow(raw))
+        addPromptCopyChips(col, raw)
         scrollRef?.post { scrollRef?.fullScroll(ScrollView.FOCUS_DOWN) }
     }
 
@@ -439,6 +452,9 @@ class ChatActivity : AppCompatActivity() {
             addView(iconBtn(R.drawable.ic_chat_copy, "Sao chép toàn bộ").also {
                 it.setOnClickListener { copyText(raw) }
             })
+            addView(iconBtn(R.drawable.ic_chat_speak, "Đọc văn bản").also { btn ->
+                btn.setOnClickListener { toggleSpeak(raw, btn) }
+            })
             addView(like)
             addView(dislike)
             addView(iconBtn(R.drawable.ic_chat_share, "Chia sẻ").also {
@@ -481,7 +497,10 @@ class ChatActivity : AppCompatActivity() {
                         return true
                     }
                     android.R.id.selectAll -> {
-                        setSelection(0, text.length)
+                        val span = text
+                        if (span is android.text.Spannable) {
+                            android.text.Selection.setSelection(span, 0, span.length)
+                        }
                         return true
                     }
                 }
@@ -500,6 +519,56 @@ class ChatActivity : AppCompatActivity() {
             cornerRadii = floatArrayOf(6 * d, 6 * d, r, r, r, r, r, r)
             setColor(0xFFFFFFFF.toInt())
         }
+    }
+
+    private fun addPromptCopyChips(col: LinearLayout, raw: String) {
+        val blocks = GeminiChatPolicy.extractCopyBlocks(raw)
+        if (blocks.isEmpty()) return
+        val d = resources.displayMetrics.density
+        val wrap = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((44 * d).toInt(), 0, 0, (6 * d).toInt())
+        }
+        blocks.forEach { (title, body) ->
+            wrap.addView(TextView(this).apply {
+                text = title
+                textSize = 13f
+                setTextColor(0xFF1A73E8.toInt())
+                setPadding((12 * d).toInt(), (8 * d).toInt(), (12 * d).toInt(), (8 * d).toInt())
+                background = GradientDrawable().apply {
+                    cornerRadius = 16 * d
+                    setColor(0xFFE8F0FE.toInt())
+                }
+                val lp = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                lp.bottomMargin = (6 * d).toInt()
+                layoutParams = lp
+                setOnClickListener { copyText(body) }
+            })
+        }
+        col.addView(wrap)
+    }
+
+    private fun toggleSpeak(text: String, btn: ImageButton) {
+        if (ttsOn) {
+            tts?.stop()
+            ttsOn = false
+            btn.imageTintList = android.content.res.ColorStateList.valueOf(idleTint)
+            return
+        }
+        if (tts == null) {
+            tts = TtsHelper(this).also { it.useMediaStream = true }
+        }
+        ttsOn = true
+        btn.imageTintList = android.content.res.ColorStateList.valueOf(likeTint)
+        tts?.onDone = {
+            ttsOn = false
+            btn.imageTintList = android.content.res.ColorStateList.valueOf(idleTint)
+        }
+        val clean = text.replace(Regex("```[\\s\\S]*?```"), " ").replace(Regex("\\s+"), " ").trim()
+        tts?.speak(clean)
     }
 
     private fun copyText(text: String) {
@@ -603,6 +672,7 @@ class ChatActivity : AppCompatActivity() {
         spinning.clear()
         typeHandler.removeCallbacksAndMessages(null)
         try { activeConn?.disconnect() } catch (_: Exception) {}
+        try { tts?.stop(); tts?.shutdown() } catch (_: Exception) {}
         super.onDestroy()
     }
 
@@ -655,9 +725,7 @@ class ChatActivity : AppCompatActivity() {
                 val body = JSONObject()
                     .put("systemInstruction", JSONObject().put("parts", JSONArray().put(JSONObject().put(
                         "text",
-                        "Bạn là Gemini trong app đồng hồ báo thức cho học sinh. Trả lời tiếng Việt, ngắn, dễ hiểu. Không nói tục. " +
-                            "Có thể dùng **in đậm**, *nghiêng*, công thức \$E=mc^2\$ hoặc H2O khi cần. " +
-                            "Nếu app đã lưu báo thức, xác nhận đúng giờ đó."
+                        GeminiChatPolicy.SYSTEM
                     ))))
                     .put("contents", contents)
                 val url = URL("https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent?key=$key")

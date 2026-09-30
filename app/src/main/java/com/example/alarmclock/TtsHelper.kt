@@ -97,6 +97,15 @@ class TtsHelper(context: Context) : TextToSpeech.OnInitListener {
         }
     }
 
+    fun stop() {
+        main.post {
+            pending.clear()
+            try { tts?.stop() } catch (_: Exception) {}
+        }
+    }
+
+    fun isSpeaking(): Boolean = try { tts?.isSpeaking == true } catch (_: Exception) { false }
+
     private fun flush() {
         if (!ready) return
         val engine = tts ?: return

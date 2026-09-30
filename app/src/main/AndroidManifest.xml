@@ -37,6 +37,9 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="http" />
         </intent>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
     </queries>
     <application
         android:usesCleartextTraffic="false"
@@ -168,6 +171,7 @@
         <activity android:name=".NextAlarmActivity" android:exported="false" android:showWhenLocked="true" android:turnScreenOn="true" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".TimerDoneActivity" android:exported="false" android:showWhenLocked="true" android:turnScreenOn="true" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".ChatActivity" android:exported="false" android:windowSoftInputMode="adjustResize" android:theme="@style/Theme.AlarmClock" />
+        <activity android:name=".GeminiLiveActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <receiver android:name=".WaterReceiver" android:exported="false" />
         <activity android:name=".SleepSoundActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".ScreensaverActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" android:showWhenLocked="true" android:turnScreenOn="true" />
