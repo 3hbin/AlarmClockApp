@@ -100,6 +100,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         // first-launch guide after layout
         if (WelcomeActivity.launchIfNeeded(this)) return
+        if (DynamicIconHelper.applyOnUserOpen(this)) return
         try { TamperGuard.verifyInActivity(this) } catch (_: Throwable) {}
         binding = ActivityMainBinding.inflate(layoutInflater)
         try {
@@ -120,6 +121,7 @@ class MainActivity : AppCompatActivity() {
         try { EventManager.applyChrome(this) } catch (_: Exception) {}
         binding.root.post { try { FirstLaunchDialog.show(this) } catch (_: Exception) {} }
         try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
+        try { DynamicIconHelper.cancelBackgroundIconAlarms(this) } catch (_: Exception) {}
         try {
             setSupportActionBar(binding.toolbar)
             supportActionBar?.setDisplayShowTitleEnabled(true)
@@ -328,7 +330,6 @@ class MainActivity : AppCompatActivity() {
         try { Motion.playTabEnter(this) } catch (_: Exception) {}
         try { BottomNavHelper.bind(this, binding.curvedNav, 0) } catch (_: Exception) {}
         try { binding.curvedNav.selectIndex(0, animate = false) } catch (_: Exception) {}
-        DynamicIconHelper.applySafe(this)
         try { reloadAlarmsFromDisk() } catch (_: Exception) {}
         try { maybeRequireAppLock() } catch (_: Exception) {
             try { forceShowUi() } catch (_: Exception) {}

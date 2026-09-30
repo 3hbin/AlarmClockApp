@@ -56,7 +56,7 @@ class MainTabActivity : AppCompatActivity() {
 
         val start = intent.getIntExtra(EXTRA_TAB, 0).coerceIn(0, 5)
         try { goToPage(start) } catch (_: Exception) {}
-        try { DynamicIconHelper.applySafe(this) } catch (_: Exception) {}
+        try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
         try {
             window.setBackgroundDrawableResource(R.color.surface)
             window.decorView.setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.surface))
@@ -207,7 +207,7 @@ class MainTabActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         try { applyNavStyle(AppSettings.getBottomNavStyle(this)) } catch (_: Exception) {}
-        try { DynamicIconHelper.applySafe(this) } catch (_: Exception) {}
+        try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
         try {
             window.setBackgroundDrawableResource(R.color.surface)
             window.decorView.setBackgroundColor(androidx.core.content.ContextCompat.getColor(this, R.color.surface))

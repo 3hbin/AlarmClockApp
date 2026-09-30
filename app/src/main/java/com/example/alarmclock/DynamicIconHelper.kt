@@ -1,5 +1,6 @@
 package com.example.alarmclock
 
+import android.app.Activity
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.ComponentName
@@ -7,17 +8,27 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.util.Log
+import org.json.JSONArray
+import org.json.JSONObject
 import java.util.Calendar
 
 /**
- * Icon launcher tự đổi theo buổi (sáng / trưa / chiều / tối).
- * QUAN TRỌNG: MainActivity luôn ENABLED — chỉ alias đổi icon launcher.
- * Nếu tắt MainActivity → Intent tab Báo lỗi "Unable to find activity class".
+ * Icon launcher theo buổi.
+ *
+ * Không đổi icon khi app chạy nền (mốc 19:00…). Việc đổi alias
+ * có thể làm OEM giết process và hủy PendingIntent của AlarmManager.
+ *
+ * Chỉ đổi khi người dùng mở app (foreground). Sau khi đổi:
+ * lưu báo thức → reschedule setAlarmClock → khởi động lại Activity.
  */
 object DynamicIconHelper {
 
     private const val TAG = "DynamicIcon"
     private const val CLASS_PKG = "com.example.alarmclock"
+    private const val PREFS = "dynamic_icon"
+    private const val KEY_PERIOD = "applied_period"
+    private const val KEY_SNAPSHOT = "alarm_snapshot"
+    const val EXTRA_ICON_RESTART = "icon_restart"
 
     enum class Period(val alias: String, val faceRes: Int) {
         MORNING(".MainAliasMorning", R.drawable.ic_clock_morning),
@@ -28,26 +39,122 @@ object DynamicIconHelper {
 
     fun currentPeriod(hour: Int = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)): Period =
         when (hour) {
-            // 5:00–10:59 sáng (7:00 là sáng, không phải trưa)
             5, 6, 7, 8, 9, 10 -> Period.MORNING
-            // 11:00–15:59 trưa
             11, 12, 13, 14, 15 -> Period.NOON
-            // 16:00–18:59 chiều
             16, 17, 18 -> Period.EVENING
-            // 19:00–4:59 tối
             else -> Period.NIGHT
         }
 
     fun faceDrawable(context: Context): Int = currentPeriod().faceRes
 
+    fun appliedPeriod(context: Context): String? =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_PERIOD, null)
+
+    fun needsSwitch(context: Context): Boolean =
+        appliedPeriod(context) != currentPeriod().name
+
+    /**
+     * Gọi từ MainActivity.onCreate khi user mở app.
+     * @return true nếu đã khởi động lại Activity (caller phải return ngay).
+     */
+    fun applyOnUserOpen(activity: Activity): Boolean {
+        ensureMainEnabled(activity)
+        cancelBackgroundIconAlarms(activity)
+        val want = currentPeriod()
+        if (appliedPeriod(activity) == want.name) return false
+        if (activity.intent.getBooleanExtra(EXTRA_ICON_RESTART, false)) {
+            saveApplied(activity, want)
+            return false
+        }
+        persistAlarmsSnapshot(activity)
+        applyAliases(activity, want)
+        saveApplied(activity, want)
+        AlarmScheduler.rescheduleAll(activity)
+        Log.i(TAG, "icon switched to $want — restarting after reschedule")
+        val next = Intent(activity, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            putExtra(EXTRA_ICON_RESTART, true)
+        }
+        activity.startActivity(next)
+        activity.finish()
+        return true
+    }
+
+    /** Không dùng khi app chạy nền. */
     fun applySafe(context: Context) {
+        if (AppVisibility.foreground) {
+            applyAliases(context, currentPeriod())
+            saveApplied(context, currentPeriod())
+        } else {
+            Log.i(TAG, "skip background icon change")
+        }
+    }
+
+    fun ensureMainEnabled(context: Context) {
+        try {
+            val main = ComponentName(context.packageName, "$CLASS_PKG.MainActivity")
+            context.packageManager.setComponentEnabledSetting(
+                main,
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                PackageManager.DONT_KILL_APP
+            )
+        } catch (_: Exception) {}
+    }
+
+    /** Bản cũ còn hẹn IconUpdateReceiver — hủy hết. */
+    fun cancelBackgroundIconAlarms(context: Context) {
+        try {
+            val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val pi = PendingIntent.getBroadcast(
+                context, 9911,
+                Intent(context, IconUpdateReceiver::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            am.cancel(pi)
+            pi.cancel()
+        } catch (_: Exception) {}
+    }
+
+    fun scheduleHourly(context: Context) {
+        // Cố ý không hẹn đổi icon nền nữa.
+        cancelBackgroundIconAlarms(context)
+    }
+
+    fun persistAlarmsSnapshot(context: Context) {
+        try {
+            val list = AlarmRepository(context).getAlarms()
+            val arr = JSONArray()
+            list.forEach { a ->
+                arr.put(JSONObject().apply {
+                    put("id", a.id)
+                    put("hour", a.hour)
+                    put("minute", a.minute)
+                    put("enabled", a.isEnabled)
+                    put("label", a.label ?: "")
+                    put("repeat", a.repeatMode)
+                    put("ringtone", a.ringtoneUri ?: "")
+                    put("snooze", a.snoozeMinutes)
+                    put("challenge", a.challengeType)
+                    put("shake", a.shakeTargetCount)
+                    put("strict", a.isStrictAntiSnooze)
+                    put("voice", a.voiceNote ?: "")
+                    put("crescendo", a.useCrescendo)
+                    put("skipHolidays", a.skipHolidays)
+                })
+            }
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+                .edit().putString(KEY_SNAPSHOT, arr.toString()).apply()
+            try { AlarmRepository(context).saveAlarms(list) } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.e(TAG, "snapshot failed", e)
+        }
+    }
+
+    private fun applyAliases(context: Context, target: Period) {
         try {
             val pm = context.packageManager
             val appId = context.packageName
-            val target = currentPeriod()
             Log.i(TAG, "apply icon period=$target hour=${Calendar.getInstance().get(Calendar.HOUR_OF_DAY)}")
-
-            // Bật alias đúng buổi, tắt alias khác (chỉ ảnh hưởng icon launcher)
             Period.values().forEach { p ->
                 val cn = ComponentName(appId, CLASS_PKG + p.alias)
                 val state = if (p == target)
@@ -60,65 +167,15 @@ object DynamicIconHelper {
                     Log.e(TAG, "fail alias ${p.alias}", e)
                 }
             }
-
-            // MainActivity LUÔN bật — để Intent tab Báo / REORDER hoạt động
-            val main = ComponentName(appId, "$CLASS_PKG.MainActivity")
-            pm.setComponentEnabledSetting(
-                main,
-                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                PackageManager.DONT_KILL_APP
-            )
+            ensureMainEnabled(context)
         } catch (e: Exception) {
-            Log.e(TAG, "applySafe failed", e)
-            try {
-                val main = ComponentName(context.packageName, "$CLASS_PKG.MainActivity")
-                context.packageManager.setComponentEnabledSetting(
-                    main,
-                    PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                    PackageManager.DONT_KILL_APP
-                )
-            } catch (_: Exception) {}
+            Log.e(TAG, "applyAliases failed", e)
+            ensureMainEnabled(context)
         }
     }
 
-    /** Gọi 1 lần khi mở app: nếu MainActivity bị tắt từ bản cũ → bật lại ngay. */
-    fun ensureMainEnabled(context: Context) {
-        try {
-            val main = ComponentName(context.packageName, "$CLASS_PKG.MainActivity")
-            context.packageManager.setComponentEnabledSetting(
-                main,
-                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                PackageManager.DONT_KILL_APP
-            )
-        } catch (_: Exception) {}
-    }
-
-    fun scheduleHourly(context: Context) {
-        try {
-            val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-            val intent = Intent(context, IconUpdateReceiver::class.java)
-            val pi = PendingIntent.getBroadcast(
-                context, 9911, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            val now = Calendar.getInstance()
-            val hour = now.get(Calendar.HOUR_OF_DAY)
-            val nextHour = when {
-                hour < 5 -> 5
-                hour < 11 -> 11
-                hour < 16 -> 16
-                hour < 19 -> 19
-                else -> 5
-            }
-            val cal = Calendar.getInstance().apply {
-                set(Calendar.MINUTE, 0)
-                set(Calendar.SECOND, 5)
-                set(Calendar.MILLISECOND, 0)
-                if (nextHour == 5 && hour >= 19) add(Calendar.DAY_OF_YEAR, 1)
-                set(Calendar.HOUR_OF_DAY, nextHour)
-                if (timeInMillis <= now.timeInMillis) add(Calendar.DAY_OF_YEAR, 1)
-            }
-            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pi)
-        } catch (_: Exception) {}
+    private fun saveApplied(context: Context, period: Period) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit().putString(KEY_PERIOD, period.name).apply()
     }
 }

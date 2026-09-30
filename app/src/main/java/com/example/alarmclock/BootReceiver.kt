@@ -12,8 +12,8 @@ class BootReceiver : BroadcastReceiver() {
         try {
             AlarmScheduler.rescheduleAll(context)
             try {
-                DynamicIconHelper.applySafe(context)
-                DynamicIconHelper.scheduleHourly(context)
+                DynamicIconHelper.ensureMainEnabled(context)
+                DynamicIconHelper.cancelBackgroundIconAlarms(context)
             } catch (_: Exception) {}
             // Notification đang kêu được lưu riêng nên khôi phục lại sau reboot,
             // không phụ thuộc việc foreground service có được Android phục hồi hay không.
