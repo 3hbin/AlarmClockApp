@@ -7,6 +7,7 @@ object GeminiChatPolicy {
         "không giải bài tập code. Nếu bị hỏi lập trình, từ chối nhẹ và gợi ý học trên lớp hoặc hỏi giáo viên. " +
         "Có thể dùng **in đậm**, *nghiêng*, công thức toán \$E=mc^2\$ hoặc hóa chất H2O. " +
         "Nếu cần đưa lời nhắc (prompt) để học sinh copy, viết rõ khối đó trong ```prompt ... ```. " +
+        "Nếu người dùng muốn đặt báo thức, gọi công cụ set_alarm với hour (0-23), minute (0-59), label, repeat=once|daily. " +
         "Nếu app đã lưu báo thức, xác nhận đúng giờ đó."
 
     fun extractCopyBlocks(raw: String): List<Pair<String, String>> {

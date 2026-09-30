@@ -34,6 +34,7 @@ class ChatActivity : AppCompatActivity() {
     private val cancelled = AtomicBoolean(false)
     private var generating = false
     private var activeConn: HttpURLConnection? = null
+    private val chatVm by lazy { ChatViewModel(applicationContext) }
     private lateinit var sendBtn: ImageButton
     private var headerAvatar: ImageView? = null
     private var scrollRef: ScrollView? = null
@@ -289,24 +290,23 @@ class ChatActivity : AppCompatActivity() {
             headerAvatar?.let { startSpin(it) }
             beginGeneration()
             Thread {
-                val created = createAlarmIfAsked(q)
-                val answer = if (cancelled.get()) "" else askGemini(key, q, created)
-                val shown = when {
-                    cancelled.get() && answer.isBlank() -> created ?: "Đã dừng trả lời."
-                    created == null -> answer
-                    else -> "$created\n\n$answer"
-                }
+                val turn = chatVm.runTurn(key, q, history.toString()) { cancelled.get() }
+                val shown = turn.answer
+                try {
+                    history.put(JSONObject().put("m", 0).put("t", shown).put("ts", System.currentTimeMillis()))
+                    while (history.length() > 80) history.remove(0)
+                    ChatCloudStore.snapshotCurrent(applicationContext, history)
+                } catch (_: Exception) {}
                 runOnUiThread {
+                    if (isFinishing || isDestroyed) return@runOnUiThread
                     (waiting.tag as? ImageView)?.let { stopSpin(it) }
                     headerAvatar?.let { stopSpin(it) }
                     if (cancelled.get()) {
                         waiting.text = ChatMarkdown.format(shown)
-                        persistAi(shown)
                         attachActions(waiting, shown)
                         endGeneration()
                     } else {
                         typeWords(waiting, shown) {
-                            persistAi(shown)
                             attachActions(waiting, shown)
                             endGeneration()
                         }
@@ -445,6 +445,7 @@ class ChatActivity : AppCompatActivity() {
     private fun stopGeneration() {
         cancelled.set(true)
         try { activeConn?.disconnect() } catch (_: Exception) {}
+        try { chatVm.disconnect() } catch (_: Exception) {}
         typeHandler.removeCallbacksAndMessages(null)
         headerAvatar?.let { stopSpin(it) }
         endGeneration()

@@ -27,15 +27,7 @@ class AlarmApp : Application() {
         try { Lang.sync(this) } catch (_: Exception) {}
         CloudSyncHelper.init(this)
         try { AlarmScheduler.rescheduleAll(this) } catch (_: Exception) {}
-        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
-            override fun onActivityStarted(activity: android.app.Activity) { AppVisibility.foreground = true }
-            override fun onActivityStopped(activity: android.app.Activity) { AppVisibility.foreground = false }
-            override fun onActivityCreated(activity: android.app.Activity, b: android.os.Bundle?) {}
-            override fun onActivityResumed(activity: android.app.Activity) { AppVisibility.foreground = true }
-            override fun onActivityPaused(activity: android.app.Activity) {}
-            override fun onActivitySaveInstanceState(activity: android.app.Activity, b: android.os.Bundle) {}
-            override fun onActivityDestroyed(activity: android.app.Activity) {}
-        })
+        AppVisibility.install(this)
         try { AlarmWatchdogWorker.start(this) } catch (_: Exception) {}
         try {
             AppSettings.setStatusNotificationEnabled(this, false)

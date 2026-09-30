@@ -190,6 +190,42 @@ object AlarmNotificationHelper {
 
 
     /**
+     * Chỉ khi app đã ẩn: báo "Đã đặt báo thức lúc HH:mm thành công!".
+     * Đang mở Chat thì không bắn để tránh trùng với tin nhắn trên màn hình.
+     */
+    fun notifyChatAlarmSetIfBackground(
+        context: Context,
+        hour: Int,
+        minute: Int,
+        label: String? = null
+    ) {
+        if (AppVisibility.isForeground()) return
+        try {
+            ensureChannels(context)
+            val timeStr = String.format("%02d:%02d", hour, minute)
+            val title = "Đã đặt báo thức lúc $timeStr thành công!"
+            val text = if (!label.isNullOrBlank()) label else "Báo thức AI"
+            val open = Intent(context, ChatActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            val id = 3200 + hour * 60 + minute
+            val pi = PendingIntent.getActivity(
+                context, id, open,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val builder = NotificationCompat.Builder(context, CHANNEL_SCHEDULED)
+                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setContentIntent(pi)
+                .setAutoCancel(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_STATUS)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            NotificationManagerCompat.from(context).notify(id, builder.build())
+        } catch (_: Exception) {
+        }
+    }
+
+    /**
      * Thông báo kiểu hệ thống khi tạo/bật báo thức — icon đồng hồ báo thức.
      * Hiện vài giây rồi tự ẩn (giống Clock app).
      */
