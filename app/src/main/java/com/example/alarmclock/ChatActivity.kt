@@ -44,6 +44,8 @@ class ChatActivity : AppCompatActivity() {
     private var speech: android.speech.SpeechRecognizer? = null
     private var lastHeard = ""
     private var listeningMic = false
+    private var menuBtn: ImageButton? = null
+    private var menuPopup: android.widget.PopupWindow? = null
 
     private val frames by lazy {
         IntArray(39) { resources.getIdentifier("gemini_loop_%02d".format(it), "drawable", packageName) }
@@ -202,6 +204,7 @@ class ChatActivity : AppCompatActivity() {
                 background = null
                 contentDescription = "Menu chat"
                 setOnClickListener { showChatMenu() }
+                menuBtn = this
             }, LinearLayout.LayoutParams((40 * d).toInt(), (40 * d).toInt()))
             addView(TextView(context).apply {
                 text = "Live"
@@ -829,25 +832,56 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun showChatMenu() {
-        val pop = androidx.appcompat.widget.PopupMenu(this, findViewById(android.R.id.content))
-        pop.menu.add(0, 1, 0, "Chat mới")
-        pop.menu.add(0, 2, 1, "Chat cũ")
-        pop.menu.add(0, 3, 2, "Tóm tắt")
-        pop.menu.add(0, 4, 3, "Giọng đọc")
-        pop.menu.add(0, 5, 4, "Tin đã ghim")
-        pop.menu.add(0, 6, 5, "Xóa đoạn chat này")
-        pop.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                1 -> newChat()
-                2 -> showOldChats()
-                3 -> summarizeChat()
-                4 -> voiceDialog()
-                5 -> showPins()
-                6 -> clearThisChat()
-            }
-            true
+        val anchor = menuBtn ?: return
+        if (menuPopup?.isShowing == true) {
+            menuPopup?.dismiss()
+            return
         }
-        pop.show()
+        val d = resources.displayMetrics.density
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = GradientDrawable().apply {
+                cornerRadius = 12 * d
+                setColor(0xFFFFFFFF.toInt())
+                setStroke((1 * d).toInt(), 0xFFE0E0E0.toInt())
+            }
+            setPadding(0, (6 * d).toInt(), 0, (6 * d).toInt())
+            elevation = 10 * d
+        }
+        fun row(label: String, action: () -> Unit) {
+            box.addView(TextView(this).apply {
+                text = label
+                textSize = 16f
+                setTextColor(0xFF202124.toInt())
+                setPadding((20 * d).toInt(), (12 * d).toInt(), (28 * d).toInt(), (12 * d).toInt())
+                isClickable = true
+                isFocusable = true
+                setOnClickListener {
+                    menuPopup?.dismiss()
+                    action()
+                }
+            })
+        }
+        row("Chat mới") { newChat() }
+        row("Chat cũ") { showOldChats() }
+        row("Tóm tắt") { summarizeChat() }
+        row("Giọng đọc") { voiceDialog() }
+        row("Tin đã ghim") { showPins() }
+        row("Xóa đoạn chat này") { clearThisChat() }
+        val pop = android.widget.PopupWindow(
+            box,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            true
+        ).apply {
+            elevation = 12 * d
+            isOutsideTouchable = true
+            isFocusable = true
+            setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+        }
+        menuPopup = pop
+        val xOff = -(120 * d).toInt()
+        pop.showAsDropDown(anchor, xOff, (4 * d).toInt())
     }
 
     private fun newChat() {
@@ -1024,6 +1058,7 @@ class ChatActivity : AppCompatActivity() {
         typeHandler.removeCallbacksAndMessages(null)
         try { activeConn?.disconnect() } catch (_: Exception) {}
         try { speech?.destroy() } catch (_: Exception) {}
+        try { menuPopup?.dismiss() } catch (_: Exception) {}
         try { tts?.stop(); tts?.shutdown() } catch (_: Exception) {}
         super.onDestroy()
     }
