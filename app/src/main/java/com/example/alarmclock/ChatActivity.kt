@@ -40,6 +40,10 @@ class ChatActivity : AppCompatActivity() {
     private var logRef: LinearLayout? = null
     private var tts: TtsHelper? = null
     private var ttsOn = false
+    private lateinit var inputBox: EditText
+    private var speech: android.speech.SpeechRecognizer? = null
+    private var lastHeard = ""
+    private var listeningMic = false
 
     private val frames by lazy {
         IntArray(39) { resources.getIdentifier("gemini_loop_%02d".format(it), "drawable", packageName) }
@@ -140,6 +144,14 @@ class ChatActivity : AppCompatActivity() {
             }
             maxLines = 5
         }
+        inputBox = input
+        val micBtn = ImageButton(this).apply {
+            setImageResource(R.drawable.ic_chat_mic)
+            background = null
+            contentDescription = "Nói"
+            imageTintList = android.content.res.ColorStateList.valueOf(0xFF5F6368.toInt())
+            setOnClickListener { toggleChatMic() }
+        }
         sendBtn = ImageButton(this).apply {
             setImageResource(R.drawable.ic_chat_send)
             background = sendBg(false)
@@ -185,6 +197,12 @@ class ChatActivity : AppCompatActivity() {
                     maxLines = 1
                 })
             }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(ImageButton(context).apply {
+                setImageResource(R.drawable.ic_chat_menu)
+                background = null
+                contentDescription = "Menu chat"
+                setOnClickListener { showChatMenu() }
+            }, LinearLayout.LayoutParams((40 * d).toInt(), (40 * d).toInt()))
             addView(TextView(context).apply {
                 text = "Live"
                 setTextColor(0xFF1A73E8.toInt())
@@ -202,15 +220,29 @@ class ChatActivity : AppCompatActivity() {
             setPadding((10 * d).toInt(), (8 * d).toInt(), (10 * d).toInt(), (12 * d).toInt())
             setBackgroundColor(0xFFF1F3F4.toInt())
             addView(input, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+            addView(micBtn, LinearLayout.LayoutParams((40 * d).toInt(), (40 * d).toInt()))
             addView(sendBtn, LinearLayout.LayoutParams((48 * d).toInt(), (48 * d).toInt()).apply {
                 marginStart = (8 * d).toInt()
             })
+        }
+        val chips = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding((10 * d).toInt(), (6 * d).toInt(), (10 * d).toInt(), 0)
+            addView(chip("Đặt báo thức", "Đặt báo thức 6:07 nhãn Toán"))
+            addView(chip("Viết prompt học", "Viết prompt ôn bài, bọc trong ```prompt"))
+            addView(chip("Tóm tắt bài", "Tóm tắt bài học ngắn, dễ nhớ"))
+            addView(chip("Ôn tập", "Đặt 5 câu ôn tập giúp mình"))
+        }
+        val chipScroll = android.widget.HorizontalScrollView(this).apply {
+            isHorizontalScrollBarEnabled = false
+            addView(chips)
         }
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(0xFFF1F3F4.toInt())
             addView(header)
             addView(scroll, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
+            addView(chipScroll)
             addView(bar)
         }
 
@@ -288,15 +320,100 @@ class ChatActivity : AppCompatActivity() {
         while (history.length() > 0) history.remove(0)
         val saved = chatPrefs().getString("history", "[]").orEmpty()
         val old = try { JSONArray(saved) } catch (_: Exception) { JSONArray() }
+        addPinnedBanner()
         if (old.length() == 0) {
-            addBubble("Chào bạn. Nhắn “đặt báo thức 6:07” hoặc “6 giờ 7” để mình lưu báo thức mới.", mine = false, save = true, actions = false)
+            addBubble("Chào bạn. Nhắn “đặt báo thức 6:07 nhãn Toán” hoặc bấm gợi ý phía dưới.", mine = false, save = true, actions = false)
         } else {
+            var lastDay = ""
             for (i in 0 until old.length()) {
                 val item = old.getJSONObject(i)
+                val day = dayLabel(item.optLong("ts", 0L))
+                if (day != lastDay) {
+                    lastDay = day
+                    addDayHeader(day)
+                }
                 val mine = item.optInt("m") == 1
                 addBubble(item.optString("t"), mine, save = false, actions = !mine)
                 history.put(item)
             }
+        }
+    }
+
+    private fun dayLabel(ts: Long): String {
+        if (ts <= 0L) return "Trước đây"
+        val fmt = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.getDefault())
+        val today = fmt.format(java.util.Date())
+        val that = fmt.format(java.util.Date(ts))
+        val cal = java.util.Calendar.getInstance()
+        cal.add(java.util.Calendar.DAY_OF_YEAR, -1)
+        val yest = fmt.format(cal.time)
+        return when (that) {
+            today -> "Hôm nay"
+            yest -> "Hôm qua"
+            else -> java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.getDefault()).format(java.util.Date(ts))
+        }
+    }
+
+    private fun addDayHeader(label: String) {
+        val log = logRef ?: return
+        val d = resources.displayMetrics.density
+        log.addView(TextView(this).apply {
+            text = label
+            textSize = 12f
+            gravity = Gravity.CENTER
+            setTextColor(0xFF5F6368.toInt())
+            setPadding(0, (10 * d).toInt(), 0, (6 * d).toInt())
+        })
+    }
+
+    private fun addPinnedBanner() {
+        val log = logRef ?: return
+        val pins = ChatCloudStore.pins(this)
+        if (pins.length() == 0) return
+        val d = resources.displayMetrics.density
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((12 * d).toInt(), (8 * d).toInt(), (12 * d).toInt(), (8 * d).toInt())
+            background = GradientDrawable().apply {
+                cornerRadius = 12 * d
+                setColor(0xFFFFF8E1.toInt())
+            }
+        }
+        box.addView(TextView(this).apply {
+            text = "Đã ghim"
+            textSize = 13f
+            paint.isFakeBoldText = true
+            setTextColor(0xFFB06000.toInt())
+        })
+        for (i in 0 until pins.length().coerceAtMost(3)) {
+            box.addView(TextView(this).apply {
+                text = pins.optString(i).take(90)
+                textSize = 13f
+                setTextColor(0xFF3C4043.toInt())
+                setPadding(0, (4 * d).toInt(), 0, 0)
+            })
+        }
+        log.addView(box)
+    }
+
+    private fun chip(label: String, fill: String): TextView {
+        val d = resources.displayMetrics.density
+        return TextView(this).apply {
+            text = label
+            textSize = 13f
+            setTextColor(0xFF1A73E8.toInt())
+            setPadding((12 * d).toInt(), (8 * d).toInt(), (12 * d).toInt(), (8 * d).toInt())
+            background = GradientDrawable().apply {
+                cornerRadius = 16 * d
+                setColor(0xFFE8F0FE.toInt())
+            }
+            val lp = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            lp.marginEnd = (8 * d).toInt()
+            layoutParams = lp
+            setOnClickListener { inputBox.setText(fill) }
         }
     }
 
@@ -331,9 +448,9 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun persistAi(text: String) {
-        history.put(JSONObject().put("m", 0).put("t", text))
-        while (history.length() > 60) history.remove(0)
-        chatPrefs().edit().putString("history", history.toString()).apply()
+        history.put(JSONObject().put("m", 0).put("t", text).put("ts", System.currentTimeMillis()))
+        while (history.length() > 80) history.remove(0)
+        ChatCloudStore.snapshotCurrent(this, history)
         CloudSyncHelper.pushChatBackup(this@ChatActivity)
     }
 
@@ -376,9 +493,9 @@ class ChatActivity : AppCompatActivity() {
         }
         log.addView(col)
         if (save) {
-            history.put(JSONObject().put("m", if (mine) 1 else 0).put("t", text))
-            while (history.length() > 60) history.remove(0)
-            chatPrefs().edit().putString("history", history.toString()).apply()
+            history.put(JSONObject().put("m", if (mine) 1 else 0).put("t", text).put("ts", System.currentTimeMillis()))
+            while (history.length() > 80) history.remove(0)
+            ChatCloudStore.snapshotCurrent(this, history)
             CloudSyncHelper.pushChatBackup(this)
         }
         scrollRef?.post { scrollRef?.fullScroll(ScrollView.FOCUS_DOWN) }
@@ -460,32 +577,38 @@ class ChatActivity : AppCompatActivity() {
             addView(iconBtn(R.drawable.ic_chat_share, "Chia sẻ").also {
                 it.setOnClickListener { shareText(raw) }
             })
+            addView(iconBtn(R.drawable.ic_chat_pin, "Ghim").also { btn ->
+                if (ChatCloudStore.isPinned(this, raw)) {
+                    btn.imageTintList = android.content.res.ColorStateList.valueOf(0xFFF9AB00.toInt())
+                }
+                btn.setOnClickListener {
+                    val on = ChatCloudStore.togglePin(this, raw)
+                    btn.imageTintList = android.content.res.ColorStateList.valueOf(
+                        if (on) 0xFFF9AB00.toInt() else idleTint
+                    )
+                    flash(if (on) "Đã ghim" else "Bỏ ghim")
+                }
+            })
             addView(hint)
         }
     }
 
-    /** Giữ một đoạn chữ → menu Copy / Chọn tất cả của hệ thống. */
+    /** Giữ chữ → thanh Sao chép / Chọn tất cả. */
     private fun TextView.enablePartialCopy() {
         setTextIsSelectable(true)
-        setOnTouchListener { v, ev ->
-            if (ev.actionMasked == android.view.MotionEvent.ACTION_DOWN) {
-                v.parent?.requestDisallowInterceptTouchEvent(true)
-            }
-            if (ev.actionMasked == android.view.MotionEvent.ACTION_UP ||
-                ev.actionMasked == android.view.MotionEvent.ACTION_CANCEL
-            ) {
-                v.parent?.requestDisallowInterceptTouchEvent(false)
-            }
-            false
-        }
-        customSelectionActionModeCallback = object : android.view.ActionMode.Callback {
+        val mode = object : android.view.ActionMode.Callback {
             override fun onCreateActionMode(mode: android.view.ActionMode, menu: android.view.Menu): Boolean {
                 menu.clear()
                 menu.add(0, android.R.id.copy, 0, "Sao chép")
                 menu.add(0, android.R.id.selectAll, 1, "Chọn tất cả")
                 return true
             }
-            override fun onPrepareActionMode(mode: android.view.ActionMode, menu: android.view.Menu) = false
+            override fun onPrepareActionMode(mode: android.view.ActionMode, menu: android.view.Menu): Boolean {
+                menu.clear()
+                menu.add(0, android.R.id.copy, 0, "Sao chép")
+                menu.add(0, android.R.id.selectAll, 1, "Chọn tất cả")
+                return true
+            }
             override fun onActionItemClicked(mode: android.view.ActionMode, item: android.view.MenuItem): Boolean {
                 val start = selectionStart.coerceAtLeast(0)
                 val end = selectionEnd.coerceAtLeast(0)
@@ -508,6 +631,15 @@ class ChatActivity : AppCompatActivity() {
             }
             override fun onDestroyActionMode(mode: android.view.ActionMode) {}
         }
+        customSelectionActionModeCallback = mode
+        customInsertionActionModeCallback = mode
+        setOnLongClickListener {
+            val span = text
+            if (span is android.text.Spannable && selectionEnd <= selectionStart) {
+                android.text.Selection.setSelection(span, 0, span.length)
+            }
+            false
+        }
     }
 
     private fun bubbleBg(mine: Boolean, d: Float) = GradientDrawable().apply {
@@ -527,26 +659,49 @@ class ChatActivity : AppCompatActivity() {
         val d = resources.displayMetrics.density
         val wrap = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding((44 * d).toInt(), 0, 0, (6 * d).toInt())
+            setPadding((44 * d).toInt(), 0, (8 * d).toInt(), (6 * d).toInt())
         }
         blocks.forEach { (title, body) ->
-            wrap.addView(TextView(this).apply {
+            val card = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding((12 * d).toInt(), (10 * d).toInt(), (12 * d).toInt(), (10 * d).toInt())
+                background = GradientDrawable().apply {
+                    cornerRadius = 12 * d
+                    setColor(0xFFE8F0FE.toInt())
+                    setStroke((1 * d).toInt(), 0xFFAECBFA.toInt())
+                }
+                val lp = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                lp.bottomMargin = (8 * d).toInt()
+                layoutParams = lp
+            }
+            card.addView(TextView(this).apply {
                 text = title
                 textSize = 13f
-                setTextColor(0xFF1A73E8.toInt())
+                paint.isFakeBoldText = true
+                setTextColor(0xFF174EA6.toInt())
+            })
+            card.addView(TextView(this).apply {
+                text = body.take(280)
+                textSize = 14f
+                setTextColor(0xFF202124.toInt())
+                setPadding(0, (6 * d).toInt(), 0, (8 * d).toInt())
+            })
+            card.addView(TextView(this).apply {
+                text = "Sao chép prompt"
+                gravity = Gravity.CENTER
+                textSize = 14f
+                setTextColor(0xFFFFFFFF.toInt())
                 setPadding((12 * d).toInt(), (8 * d).toInt(), (12 * d).toInt(), (8 * d).toInt())
                 background = GradientDrawable().apply {
                     cornerRadius = 16 * d
-                    setColor(0xFFE8F0FE.toInt())
+                    setColor(0xFF1A73E8.toInt())
                 }
-                val lp = LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                    LinearLayout.LayoutParams.WRAP_CONTENT
-                )
-                lp.bottomMargin = (6 * d).toInt()
-                layoutParams = lp
                 setOnClickListener { copyText(body) }
             })
+            wrap.addView(card)
         }
         col.addView(wrap)
     }
@@ -587,7 +742,7 @@ class ChatActivity : AppCompatActivity() {
     private fun typeWords(target: TextView, full: String, done: () -> Unit) {
         typeHandler.removeCallbacksAndMessages(null)
         val words = full.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
-        if (words.isEmpty()) {
+        if (words.size <= 8) {
             target.text = ChatMarkdown.format(full)
             done(); return
         }
@@ -595,20 +750,21 @@ class ChatActivity : AppCompatActivity() {
         var i = 0
         val step = object : Runnable {
             override fun run() {
-                if (cancelled.get() || isFinishing) {
+                if (cancelled.get() || isFinishing || i >= words.size) {
                     target.text = ChatMarkdown.format(full)
                     done(); return
                 }
-                if (i >= words.size) {
-                    target.text = ChatMarkdown.format(full)
-                    done(); return
+                val end = (i + 5).coerceAtMost(words.size)
+                while (i < end) {
+                    if (built.isNotEmpty()) built.append(' ')
+                    built.append(words[i])
+                    i++
                 }
-                if (built.isNotEmpty()) built.append(' ')
-                built.append(words[i])
-                i++
-                target.text = ChatMarkdown.format(built.toString())
-                scrollRef?.post { scrollRef?.fullScroll(ScrollView.FOCUS_DOWN) }
-                typeHandler.postDelayed(this, 45)
+                target.text = built
+                if (i % 15 == 0 || i >= words.size) {
+                    scrollRef?.post { scrollRef?.fullScroll(ScrollView.FOCUS_DOWN) }
+                }
+                typeHandler.postDelayed(this, 70)
             }
         }
         target.text = ""
@@ -630,7 +786,7 @@ class ChatActivity : AppCompatActivity() {
                 hour = t.hour,
                 minute = t.minute,
                 isEnabled = true,
-                label = "Báo thức AI",
+                label = alarmLabelFrom(raw),
                 repeatMode = if (daily) Alarm.REPEAT_DAILY else Alarm.REPEAT_ONCE
             )
             list.add(alarm)
@@ -666,12 +822,208 @@ class ChatActivity : AppCompatActivity() {
         view.setImageResource(R.drawable.ic_gemini_avatar)
     }
 
+    private fun alarmLabelFrom(raw: String): String {
+        val m = Regex("(?i)(?:nhãn|tên|gọi là)\\s+([^,.!?]{2,24})").find(raw)
+        val name = m?.groupValues?.get(1)?.trim().orEmpty()
+        return if (name.isNotBlank()) name else "Báo thức AI"
+    }
+
+    private fun showChatMenu() {
+        val pop = androidx.appcompat.widget.PopupMenu(this, findViewById(android.R.id.content))
+        pop.menu.add(0, 1, 0, "Chat mới")
+        pop.menu.add(0, 2, 1, "Chat cũ")
+        pop.menu.add(0, 3, 2, "Tóm tắt")
+        pop.menu.add(0, 4, 3, "Giọng đọc")
+        pop.menu.add(0, 5, 4, "Tin đã ghim")
+        pop.menu.add(0, 6, 5, "Xóa đoạn chat này")
+        pop.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                1 -> newChat()
+                2 -> showOldChats()
+                3 -> summarizeChat()
+                4 -> voiceDialog()
+                5 -> showPins()
+                6 -> clearThisChat()
+            }
+            true
+        }
+        pop.show()
+    }
+
+    private fun newChat() {
+        ChatCloudStore.startNewChat(this, history)
+        reloadHistoryBubbles()
+        Toast.makeText(this, "Chat mới", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showOldChats() {
+        ChatCloudStore.snapshotCurrent(this, history)
+        val all = ChatCloudStore.sessions(this)
+        if (all.length() == 0) {
+            Toast.makeText(this, "Chưa có chat cũ", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val titles = Array(all.length()) { i ->
+            all.optJSONObject(i)?.optString("title").orEmpty().ifBlank { "Chat ${i + 1}" }
+        }
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Chat cũ")
+            .setItems(titles) { _, which ->
+                val id = all.optJSONObject(which)?.optString("id").orEmpty()
+                if (id.isNotBlank()) {
+                    ChatCloudStore.openSession(this, id, history)
+                    reloadHistoryBubbles()
+                }
+            }
+            .setNegativeButton("Đóng", null)
+            .show()
+    }
+
+    private fun clearThisChat() {
+        while (history.length() > 0) history.remove(0)
+        ChatCloudStore.snapshotCurrent(this, history)
+        reloadHistoryBubbles()
+    }
+
+    private fun showPins() {
+        val pins = ChatCloudStore.pins(this)
+        if (pins.length() == 0) {
+            Toast.makeText(this, "Chưa ghim tin nào", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val items = Array(pins.length()) { pins.optString(it).take(60) }
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Tin đã ghim")
+            .setItems(items) { _, which -> copyText(pins.optString(which)) }
+            .setNegativeButton("Đóng", null)
+            .show()
+    }
+
+    private fun voiceDialog() {
+        val male = AppSettings.isChatTtsMale(this)
+        val rate = AppSettings.getChatTtsRate(this)
+        val items = arrayOf("Giọng nam", "Giọng nữ", "Đọc chậm", "Đọc vừa", "Đọc nhanh")
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("Giọng đọc (đang: ${if (male) "nam" else "nữ"}, tốc độ ${"%.1f".format(rate)})")
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> AppSettings.setChatTtsMale(this, true)
+                    1 -> AppSettings.setChatTtsMale(this, false)
+                    2 -> AppSettings.setChatTtsRate(this, 0.8f)
+                    3 -> AppSettings.setChatTtsRate(this, 0.95f)
+                    4 -> AppSettings.setChatTtsRate(this, 1.15f)
+                }
+                try { tts?.shutdown() } catch (_: Exception) {}
+                tts = TtsHelper(this).also { it.useMediaStream = true }
+                Toast.makeText(this, "Đã lưu giọng đọc", Toast.LENGTH_SHORT).show()
+            }
+            .show()
+    }
+
+    private fun summarizeChat() {
+        val key = chatPrefs().getString("key", "").orEmpty()
+        if (key.isBlank()) {
+            Toast.makeText(this, "Chưa có khóa Gemini", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val clip = StringBuilder()
+        val start = (history.length() - 12).coerceAtLeast(0)
+        for (i in start until history.length()) {
+            val o = history.optJSONObject(i) ?: continue
+            clip.append(if (o.optInt("m") == 1) "Bạn: " else "AI: ")
+            clip.append(o.optString("t")).append('\n')
+        }
+        if (clip.isBlank()) {
+            Toast.makeText(this, "Chưa có gì để tóm tắt", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val waiting = addBubble("Đang tóm tắt cuộc chat…", mine = false, save = false, actions = false)
+        beginGeneration()
+        Thread {
+            val answer = askGemini(key, "Tóm tắt cuộc chat sau thành 5 ý ngắn, dễ nhớ:\n$clip", null)
+            runOnUiThread {
+                typeWords(waiting, answer.ifBlank { "Chưa tóm tắt được." }) {
+                    persistAi(waiting.text.toString())
+                    attachActions(waiting, answer)
+                    endGeneration()
+                }
+            }
+        }.start()
+    }
+
+    private fun toggleChatMic() {
+        if (listeningMic) {
+            try { speech?.stopListening() } catch (_: Exception) {}
+            if (lastHeard.length >= 2) {
+                inputBox.setText(lastHeard)
+                listeningMic = false
+            }
+            return
+        }
+        if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO)
+            != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO), 72)
+            return
+        }
+        startChatListen()
+    }
+
+    private fun startChatListen() {
+        if (!android.speech.SpeechRecognizer.isRecognitionAvailable(this)) {
+            Toast.makeText(this, "Máy không nhận giọng nói", Toast.LENGTH_SHORT).show()
+            return
+        }
+        lastHeard = ""
+        try { speech?.destroy() } catch (_: Exception) {}
+        val rec = android.speech.SpeechRecognizer.createSpeechRecognizer(this)
+        speech = rec
+        rec.setRecognitionListener(object : android.speech.RecognitionListener {
+            override fun onReadyForSpeech(params: android.os.Bundle?) {
+                inputBox.hint = "Đang nghe…"
+            }
+            override fun onBeginningOfSpeech() {}
+            override fun onRmsChanged(rmsdB: Float) {}
+            override fun onBufferReceived(buffer: ByteArray?) {}
+            override fun onEndOfSpeech() { listeningMic = false }
+            override fun onError(error: Int) {
+                listeningMic = false
+                inputBox.hint = "Nhắn tin với Gemini"
+                if (lastHeard.length >= 2) inputBox.setText(lastHeard)
+            }
+            override fun onResults(results: android.os.Bundle?) {
+                listeningMic = false
+                inputBox.hint = "Nhắn tin với Gemini"
+                val text = results?.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION)
+                    ?.firstOrNull().orEmpty().ifBlank { lastHeard }
+                if (text.isNotBlank()) inputBox.setText(text)
+            }
+            override fun onPartialResults(partialResults: android.os.Bundle?) {
+                val text = partialResults?.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION)
+                    ?.firstOrNull().orEmpty()
+                if (text.isNotBlank()) {
+                    lastHeard = text
+                    inputBox.setText(text)
+                }
+            }
+            override fun onEvent(eventType: Int, params: android.os.Bundle?) {}
+        })
+        val intent = Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL, android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE, "vi-VN")
+            putExtra(android.speech.RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+        }
+        listeningMic = true
+        rec.startListening(intent)
+    }
+
     override fun onDestroy() {
         cancelled.set(true)
         spinning.values.forEach { spinHandler.removeCallbacks(it) }
         spinning.clear()
         typeHandler.removeCallbacksAndMessages(null)
         try { activeConn?.disconnect() } catch (_: Exception) {}
+        try { speech?.destroy() } catch (_: Exception) {}
         try { tts?.stop(); tts?.shutdown() } catch (_: Exception) {}
         super.onDestroy()
     }

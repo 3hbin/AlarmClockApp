@@ -211,6 +211,13 @@ object AppSettings {
     fun getTtsVoiceLabel(context: Context) =
         prefs(context).getString("tts_voice_label", "Nam vừa") ?: "Nam vừa"
 
+    fun setChatTtsMale(context: Context, male: Boolean) =
+        prefs(context).edit().putBoolean("chat_tts_male", male).apply()
+    fun isChatTtsMale(context: Context) = prefs(context).getBoolean("chat_tts_male", true)
+    fun setChatTtsRate(context: Context, rate: Float) =
+        prefs(context).edit().putFloat("chat_tts_rate", rate.coerceIn(0.7f, 1.3f)).apply()
+    fun getChatTtsRate(context: Context) = prefs(context).getFloat("chat_tts_rate", 0.95f)
+
     fun setMorningBriefing(context: Context, on: Boolean) =
         prefs(context).edit().putBoolean("morning_briefing", on).apply()
     fun isMorningBriefing(context: Context) =

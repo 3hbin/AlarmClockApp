@@ -20,12 +20,13 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-/** Nói chuyện giọng nói với Gemini trong app (không mở trợ lý hệ thống). */
+/** Nói chuyện giọng nói với Gemini trong app. */
 class GeminiLiveActivity : AppCompatActivity() {
     private var recognizer: SpeechRecognizer? = null
     private var tts: TtsHelper? = null
     private var listening = false
     private var busy = false
+    private var lastHeard = ""
     private lateinit var status: TextView
     private lateinit var transcript: TextView
     private lateinit var mic: ImageButton
@@ -34,13 +35,13 @@ class GeminiLiveActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         val d = resources.displayMetrics.density
         status = TextView(this).apply {
-            text = "Gemini Live"
+            text = "Bấm mic để nói"
             textSize = 22f
             gravity = Gravity.CENTER
             setTextColor(0xFF1A1C28.toInt())
         }
         transcript = TextView(this).apply {
-            text = "Bấm mic rồi nói. Gemini sẽ trả lời bằng giọng nói.\nKhông hỗ trợ lập trình."
+            text = "Nói xong bấm mic lần nữa để gửi.\nGemini sẽ trả lời bằng giọng nói."
             textSize = 16f
             gravity = Gravity.CENTER
             setTextColor(0xFF3C4043.toInt())
@@ -53,13 +54,12 @@ class GeminiLiveActivity : AppCompatActivity() {
                 setColor(0xFF1A73E8.toInt())
             }
             imageTintList = android.content.res.ColorStateList.valueOf(0xFFFFFFFF.toInt())
-            val s = (84 * d).toInt()
-            layoutParams = LinearLayout.LayoutParams(s, s).apply { gravity = Gravity.CENTER }
             setOnClickListener { onMic() }
         }
         val back = ImageButton(this).apply {
             setImageResource(R.drawable.ic_chat_back)
             background = null
+            contentDescription = "Quay lại"
             setOnClickListener { finish() }
         }
         val root = LinearLayout(this).apply {
@@ -95,9 +95,19 @@ class GeminiLiveActivity : AppCompatActivity() {
     }
 
     private fun onMic() {
-        if (busy) return
+        if (busy) {
+            Toast.makeText(this, "Đang trả lời, đợi chút", Toast.LENGTH_SHORT).show()
+            return
+        }
         if (listening) {
-            stopListen()
+            status.text = "Đang gửi…"
+            try { recognizer?.stopListening() } catch (_: Exception) {}
+            val heard = lastHeard.trim()
+            if (heard.length >= 2) {
+                listening = false
+                paintMic(false)
+                ask(heard)
+            }
             return
         }
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
@@ -117,42 +127,68 @@ class GeminiLiveActivity : AppCompatActivity() {
 
     private fun startListen() {
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            Toast.makeText(this, "Máy không có nhận giọng nói", Toast.LENGTH_LONG).show()
+            status.text = "Máy không có nhận giọng nói"
+            Toast.makeText(this, "Cần Google app / nhận giọng nói", Toast.LENGTH_LONG).show()
             return
         }
         try { tts?.stop() } catch (_: Exception) {}
-        stopListen()
-        val rec = SpeechRecognizer.createSpeechRecognizer(this)
+        lastHeard = ""
+        try { recognizer?.destroy() } catch (_: Exception) {}
+        val rec = try {
+            SpeechRecognizer.createSpeechRecognizer(this)
+        } catch (_: Exception) {
+            status.text = "Không mở được micro"
+            return
+        }
         recognizer = rec
         rec.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {
-                status.text = "Đang nghe…"
+                status.text = "Đang nghe… nói đi"
             }
-            override fun onBeginningOfSpeech() {}
+            override fun onBeginningOfSpeech() {
+                status.text = "Đã nghe thấy"
+            }
             override fun onRmsChanged(rmsdB: Float) {}
             override fun onBufferReceived(buffer: ByteArray?) {}
-            override fun onEndOfSpeech() { status.text = "Đang nghĩ…" }
+            override fun onEndOfSpeech() {
+                status.text = "Đang gửi…"
+            }
             override fun onError(error: Int) {
                 listening = false
-                status.text = "Gemini Live"
                 paintMic(false)
+                val heard = lastHeard.trim()
+                if (heard.length >= 2 && error != SpeechRecognizer.ERROR_CLIENT) {
+                    ask(heard)
+                    return
+                }
+                status.text = when (error) {
+                    SpeechRecognizer.ERROR_NO_MATCH -> "Chưa nghe rõ. Bấm mic nói lại."
+                    SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "Im quá lâu. Bấm mic nói lại."
+                    SpeechRecognizer.ERROR_NETWORK, SpeechRecognizer.ERROR_NETWORK_TIMEOUT ->
+                        "Mạng nhận giọng yếu. Thử lại."
+                    SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Thiếu quyền micro"
+                    SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Micro đang bận. Đợi 1 giây rồi bấm."
+                    else -> "Lỗi nghe ($error). Bấm mic nói lại."
+                }
             }
             override fun onResults(results: Bundle?) {
                 listening = false
                 paintMic(false)
                 val text = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                    ?.firstOrNull().orEmpty().trim()
-                if (text.isBlank()) {
+                    ?.firstOrNull().orEmpty().trim().ifBlank { lastHeard.trim() }
+                if (text.length < 2) {
                     status.text = "Chưa nghe rõ. Bấm mic nói lại."
                     return
                 }
-                transcript.text = "Bạn: $text"
                 ask(text)
             }
             override fun onPartialResults(partialResults: Bundle?) {
                 val text = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                    ?.firstOrNull().orEmpty()
-                if (text.isNotBlank()) transcript.text = text
+                    ?.firstOrNull().orEmpty().trim()
+                if (text.isNotBlank()) {
+                    lastHeard = text
+                    transcript.text = text
+                }
             }
             override fun onEvent(eventType: Int, params: Bundle?) {}
         })
@@ -160,17 +196,21 @@ class GeminiLiveActivity : AppCompatActivity() {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, "vi-VN")
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1800L)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1500L)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 800L)
         }
         listening = true
         paintMic(true)
-        rec.startListening(intent)
-    }
-
-    private fun stopListen() {
-        listening = false
-        paintMic(false)
-        try { recognizer?.cancel(); recognizer?.destroy() } catch (_: Exception) {}
-        recognizer = null
+        status.text = "Đang nghe…"
+        try {
+            rec.startListening(intent)
+        } catch (_: Exception) {
+            listening = false
+            paintMic(false)
+            status.text = "Không bật được nghe"
+        }
     }
 
     private fun paintMic(on: Boolean) {
@@ -178,6 +218,7 @@ class GeminiLiveActivity : AppCompatActivity() {
     }
 
     private fun ask(question: String) {
+        lastHeard = ""
         val key = ChatCloudStore.geminiKey(this)
         if (key.isBlank()) {
             status.text = "Chưa có khóa Gemini. Mở Chat bấm Khóa."
@@ -185,13 +226,34 @@ class GeminiLiveActivity : AppCompatActivity() {
         }
         busy = true
         status.text = "Gemini đang trả lời…"
+        transcript.text = "Bạn: $question"
         Thread {
             val answer = callGemini(key, question)
             runOnUiThread {
                 busy = false
-                status.text = "Gemini Live"
-                transcript.text = "Bạn: $question\n\nGemini: $answer"
-                tts?.speak(answer.replace(Regex("```[\\s\\S]*?```"), " "))
+                status.text = "Đang đọc…"
+                val clean = answer.replace(Regex("```[\\s\\S]*?```"), " ").replace(Regex("\\s+"), " ").trim()
+                val parts = clean.split(Regex("(?<=[.!?…])\\s+")).filter { it.isNotBlank() }
+                if (parts.size <= 1) {
+                    transcript.text = "Bạn: $question\n\nGemini: $answer"
+                    tts?.onDone = { status.text = "Bấm mic để nói tiếp" }
+                    tts?.speak(clean)
+                } else {
+                    var i = 0
+                    fun next() {
+                        if (i >= parts.size) {
+                            status.text = "Bấm mic để nói tiếp"
+                            transcript.text = "Bạn: $question\n\nGemini: $answer"
+                            return
+                        }
+                        val line = parts[i]
+                        i++
+                        transcript.text = "Bạn: $question\n\nGemini: $line"
+                        tts?.onDone = { next() }
+                        tts?.speak(line)
+                    }
+                    next()
+                }
             }
         }.start()
     }
@@ -225,7 +287,8 @@ class GeminiLiveActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        stopListen()
+        listening = false
+        try { recognizer?.cancel(); recognizer?.destroy() } catch (_: Exception) {}
         try { tts?.stop(); tts?.shutdown() } catch (_: Exception) {}
         super.onDestroy()
     }

@@ -36,7 +36,7 @@ class TtsHelper(context: Context) : TextToSpeech.OnInitListener {
             engine.setLanguage(if (wantEn) Locale.ENGLISH else Locale.getDefault())
         }
         applySavedVoice(engine)
-        engine.setSpeechRate(0.92f)
+        engine.setSpeechRate(AppSettings.getChatTtsRate(app))
         engine.setAudioAttributes(
             AudioAttributes.Builder()
                 .setUsage(
@@ -60,7 +60,7 @@ class TtsHelper(context: Context) : TextToSpeech.OnInitListener {
         val pitch = AppSettings.getTtsPitch(app)
         engine.setPitch(pitch.coerceIn(0.6f, 1.4f))
         if (name.isBlank()) {
-            pickFallback(engine, preferMale = true)
+            pickFallback(engine, preferMale = AppSettings.isChatTtsMale(app))
             return
         }
         val voices = try { engine.voices } catch (_: Exception) { emptySet<Voice>() }
