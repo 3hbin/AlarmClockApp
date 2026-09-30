@@ -47,6 +47,7 @@ class ChatActivity : AppCompatActivity() {
     private var listeningMic = false
     private var menuBtn: ImageButton? = null
     private var menuPopup: android.widget.PopupWindow? = null
+    private var errorCard: android.view.View? = null
 
     private val frames by lazy {
         IntArray(39) { resources.getIdentifier("gemini_loop_%02d".format(it), "drawable", packageName) }
@@ -276,43 +277,7 @@ class ChatActivity : AppCompatActivity() {
                 stopGeneration()
                 return@setOnClickListener
             }
-            val q = input.text.toString().trim()
-            if (q.isEmpty()) return@setOnClickListener
-            val key = prefs.getString("key", "").orEmpty()
-            if (key.isBlank()) {
-                addBubble("Chưa có khóa. Bấm Khóa và dán khóa API Gemini.", mine = false, save = true, actions = false)
-                return@setOnClickListener
-            }
-            addBubble(q, mine = true, save = true, actions = false)
-            input.setText("")
-            val waiting = addBubble("Gemini đang trả lời…", mine = false, save = false, actions = false)
-            (waiting.tag as? ImageView)?.let { startSpin(it) }
-            headerAvatar?.let { startSpin(it) }
-            beginGeneration()
-            Thread {
-                val turn = chatVm.runTurn(key, q, history.toString()) { cancelled.get() }
-                val shown = turn.answer
-                try {
-                    history.put(JSONObject().put("m", 0).put("t", shown).put("ts", System.currentTimeMillis()))
-                    while (history.length() > 80) history.remove(0)
-                    ChatCloudStore.snapshotCurrent(applicationContext, history)
-                } catch (_: Exception) {}
-                runOnUiThread {
-                    if (isFinishing || isDestroyed) return@runOnUiThread
-                    (waiting.tag as? ImageView)?.let { stopSpin(it) }
-                    headerAvatar?.let { stopSpin(it) }
-                    if (cancelled.get()) {
-                        waiting.text = ChatMarkdown.format(shown)
-                        attachActions(waiting, shown)
-                        endGeneration()
-                    } else {
-                        typeWords(waiting, shown) {
-                            attachActions(waiting, shown)
-                            endGeneration()
-                        }
-                    }
-                }
-            }.start()
+            submitPrompt(input.text.toString().trim(), addUserBubble = true)
         }
         setContentView(root)
     }
@@ -449,6 +414,84 @@ class ChatActivity : AppCompatActivity() {
         typeHandler.removeCallbacksAndMessages(null)
         headerAvatar?.let { stopSpin(it) }
         endGeneration()
+    }
+
+    private fun submitPrompt(q: String, addUserBubble: Boolean) {
+        if (q.isEmpty() || generating) return
+        val key = chatPrefs().getString("key", "").orEmpty()
+        if (key.isBlank()) {
+            addBubble("Chưa có khóa. Bấm Khóa và dán khóa API Gemini.", mine = false, save = true, actions = false)
+            return
+        }
+        removeErrorCard()
+        if (addUserBubble) {
+            addBubble(q, mine = true, save = true, actions = false)
+            inputBox.setText("")
+        }
+        val waiting = addBubble("Gemini đang trả lời…", mine = false, save = false, actions = false)
+        (waiting.tag as? ImageView)?.let { startSpin(it) }
+        headerAvatar?.let { startSpin(it) }
+        beginGeneration()
+        Thread {
+            val turn = chatVm.runTurn(key, q, history.toString()) { cancelled.get() }
+            val shown = turn.answer
+            val err = turn.error
+            if (err == null) {
+                try {
+                    history.put(JSONObject().put("m", 0).put("t", shown).put("ts", System.currentTimeMillis()))
+                    while (history.length() > 80) history.remove(0)
+                    ChatCloudStore.snapshotCurrent(applicationContext, history)
+                } catch (_: Exception) {}
+            }
+            runOnUiThread {
+                if (isFinishing || isDestroyed) return@runOnUiThread
+                (waiting.tag as? ImageView)?.let { stopSpin(it) }
+                headerAvatar?.let { stopSpin(it) }
+                if (err != null && err.canRetry) {
+                    hideWaitingRow(waiting)
+                    showErrorCard(err)
+                    endGeneration()
+                    return@runOnUiThread
+                }
+                if (cancelled.get()) {
+                    waiting.text = ChatMarkdown.format(shown)
+                    attachActions(waiting, shown)
+                    endGeneration()
+                } else {
+                    typeWords(waiting, shown) {
+                        attachActions(waiting, shown)
+                        endGeneration()
+                    }
+                }
+            }
+        }.start()
+    }
+
+    private fun hideWaitingRow(waiting: TextView) {
+        val row = waiting.parent as? LinearLayout
+        val col = row?.parent as? LinearLayout
+        (col?.parent as? LinearLayout)?.removeView(col)
+    }
+
+    private fun removeErrorCard() {
+        errorCard?.let { card ->
+            (card.parent as? LinearLayout)?.removeView(card)
+        }
+        errorCard = null
+    }
+
+    private fun showErrorCard(err: ChatApiError) {
+        val log = logRef ?: return
+        removeErrorCard()
+        val card = layoutInflater.inflate(R.layout.item_chat_error, log, false)
+        card.findViewById<TextView>(R.id.txtError).text = err.errorMessage
+        card.findViewById<android.widget.Button>(R.id.btnRetry).setOnClickListener {
+            val prompt = chatVm.lastFailedPrompt ?: err.rawPrompt
+            submitPrompt(prompt, addUserBubble = false)
+        }
+        log.addView(card)
+        errorCard = card
+        scrollRef?.post { scrollRef?.fullScroll(ScrollView.FOCUS_DOWN) }
     }
 
     private fun persistAi(text: String) {

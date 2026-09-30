@@ -15,8 +15,13 @@ class ChatViewModel(private val app: Context) {
     data class Turn(
         val answer: String,
         val createdNote: String?,
-        val times: List<String>
+        val times: List<String>,
+        val error: ChatApiError? = null
     )
+
+    @Volatile
+    var lastFailedPrompt: String? = null
+        private set
 
     fun runTurn(
         apiKey: String,
@@ -26,7 +31,8 @@ class ChatViewModel(private val app: Context) {
     ): Turn {
         if (cancelled()) return Turn("Đã dừng trả lời.", null, emptyList())
 
-        val gemini = askGemini(apiKey, question, historyJson, cancelled)
+        val api = askGemini(apiKey, question, historyJson, cancelled)
+        val gemini = api.out
         val merged = LinkedHashMap<String, GeminiTools.AlarmIntent>()
         (gemini.intents + localIntents(question)).forEach { i ->
             if (i.hour in 0..23 && i.minute in 0..59) {
@@ -44,13 +50,26 @@ class ChatViewModel(private val app: Context) {
             }
         }
 
+        if (api.error != null && created.note == null) {
+            lastFailedPrompt = question
+            return Turn(
+                answer = api.error.errorMessage,
+                createdNote = null,
+                times = emptyList(),
+                error = api.error
+            )
+        }
+        lastFailedPrompt = null
+
         val answer = when {
             cancelled() && gemini.text.isBlank() -> created.note ?: "Đã dừng trả lời."
+            created.note == null && gemini.text.isBlank() && api.error != null ->
+                "${api.error.errorMessage}\n\n${created.note ?: ""}".trim()
             created.note == null -> gemini.text.ifBlank { "Gemini đang bận. Đợi một lát rồi gửi lại." }
             gemini.text.isBlank() -> created.note
             else -> "${created.note}\n\n${gemini.text}"
         }
-        return Turn(answer, created.note, created.times)
+        return Turn(answer, created.note, created.times, error = null)
     }
 
     private fun localIntents(raw: String): List<GeminiTools.AlarmIntent> {
@@ -93,12 +112,17 @@ class ChatViewModel(private val app: Context) {
         return Created(note, added, lastLabel)
     }
 
+    private data class AskOut(
+        val out: GeminiTools.ModelOut,
+        val error: ChatApiError? = null
+    )
+
     private fun askGemini(
         key: String,
         question: String,
         historyJson: String,
         cancelled: () -> Boolean
-    ): GeminiTools.ModelOut {
+    ): AskOut {
         val contents = JSONArray()
         val old = try { JSONArray(historyJson) } catch (_: Exception) { JSONArray() }
         val start = (old.length() - 8).coerceAtLeast(0)
@@ -113,8 +137,9 @@ class ChatViewModel(private val app: Context) {
         contents.put(
             JSONObject().put("role", "user").put("parts", JSONArray().put(JSONObject().put("text", question)))
         )
-        repeat(2) {
-            if (cancelled()) return GeminiTools.ModelOut("", emptyList())
+        var lastError: ChatApiError? = null
+        repeat(2) { attempt ->
+            if (cancelled()) return AskOut(GeminiTools.ModelOut("", emptyList()))
             try {
                 val body = JSONObject()
                     .put(
@@ -140,17 +165,27 @@ class ChatViewModel(private val app: Context) {
                 conn.outputStream.use { it.write(body.toString().toByteArray()) }
                 if (cancelled()) {
                     try { conn.disconnect() } catch (_: Exception) {}
-                    return GeminiTools.ModelOut("", emptyList())
+                    return AskOut(GeminiTools.ModelOut("", emptyList()))
                 }
                 val code = conn.responseCode
                 val raw = (if (code in 200..299) conn.inputStream else conn.errorStream)
                     ?.bufferedReader()?.readText().orEmpty()
-                if (code in 200..299) return GeminiTools.parseResponse(raw)
-            } catch (_: Exception) {
-                if (cancelled()) return GeminiTools.ModelOut("", emptyList())
+                if (code in 200..299) {
+                    return AskOut(GeminiTools.parseResponse(raw))
+                }
+                lastError = ChatApiExceptionMapper.fromHttp(code, raw, question)
+                if (lastError?.kind == ChatErrorKind.RATE_LIMIT && attempt == 0) {
+                    try { Thread.sleep(1200) } catch (_: Exception) {}
+                }
+            } catch (t: Throwable) {
+                if (cancelled()) return AskOut(GeminiTools.ModelOut("", emptyList()))
+                lastError = ChatApiExceptionMapper.fromThrowable(t, question)
+                if (lastError?.kind == ChatErrorKind.NETWORK && attempt == 0) {
+                    try { Thread.sleep(800) } catch (_: Exception) {}
+                }
             }
         }
-        return GeminiTools.ModelOut("", emptyList())
+        return AskOut(GeminiTools.ModelOut("", emptyList()), lastError)
     }
 
     fun disconnect() {
