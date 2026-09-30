@@ -24,6 +24,8 @@ object AlarmNotificationHelper {
     const val CHANNEL_SCHEDULED = "alarm_scheduled_v1"
     const val NOTIF_ID_SCHEDULED = 1002
     const val CHANNEL_CHRONO = "chrono_running"
+    const val CHANNEL_TIMER_DONE = "timer_done_v1"
+    const val NOTIF_ID_TIMER_DONE = 2010
     const val CHANNEL_GEMINI = "gemini_briefing_v1"
     const val NOTIF_ID_RINGING = 2001
     const val ALARM_NOTIFICATION_ID = 2001
@@ -86,6 +88,18 @@ object AlarmNotificationHelper {
             enableVibration(false)
         }
         nm.createNotificationChannel(chrono)
+
+        val timerDone = NotificationChannel(
+            CHANNEL_TIMER_DONE,
+            "Hết giờ đếm ngược",
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = "Hiện full-screen khi đếm ngược về 00:00"
+            enableVibration(true)
+            setBypassDnd(true)
+            lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+        }
+        nm.createNotificationChannel(timerDone)
 
         val gemini = NotificationChannel(
             CHANNEL_GEMINI,
@@ -267,6 +281,51 @@ object AlarmNotificationHelper {
             NotificationManagerCompat.from(context).notify(NOTIF_ID_SCHEDULED, builder.build())
         } catch (_: Exception) {
         }
+    }
+
+    /** Full-screen khi đếm ngược hết — bắt buộc kênh HIGH. */
+    fun postTimerDoneFullScreen(context: Context): Notification {
+        ensureChannels(context)
+        val open = Intent(context, TimerDoneActivity::class.java).apply {
+            addFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                    Intent.FLAG_ACTIVITY_NO_USER_ACTION
+            )
+        }
+        val fullPi = PendingIntent.getActivity(
+            context, NOTIF_ID_TIMER_DONE, open,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val stopPi = PendingIntent.getService(
+            context, NOTIF_ID_TIMER_DONE + 1,
+            Intent(context, TimerService::class.java).setAction(TimerService.ACTION_STOP),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val n = NotificationCompat.Builder(context, CHANNEL_TIMER_DONE)
+            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+            .setContentTitle("Hết giờ!")
+            .setContentText("Đếm ngược đã kết thúc")
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setFullScreenIntent(fullPi, true)
+            .setContentIntent(fullPi)
+            .setOngoing(true)
+            .setAutoCancel(false)
+            .setDefaults(NotificationCompat.DEFAULT_VIBRATE)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Tắt", stopPi)
+            .build()
+        try {
+            NotificationManagerCompat.from(context).notify(NOTIF_ID_TIMER_DONE, n)
+        } catch (_: Exception) {}
+        return n
+    }
+
+    fun cancelTimerDone(context: Context) {
+        try { NotificationManagerCompat.from(context).cancel(NOTIF_ID_TIMER_DONE) } catch (_: Exception) {}
+        try { NotificationManagerCompat.from(context).cancel(NOTIF_ID_TIMER) } catch (_: Exception) {}
     }
 
     fun cancelRinging(context: Context) {

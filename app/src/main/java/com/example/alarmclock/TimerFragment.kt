@@ -34,6 +34,7 @@ class TimerFragment : Fragment() {
                     isRunning = false
                     updateText()
                     try { binding.btnStartPause.text = "Start" } catch (_: Exception) {}
+                    try { binding.ringLayout.visibility = View.VISIBLE } catch (_: Exception) {}
                 }
             }
         }
@@ -83,6 +84,10 @@ class TimerFragment : Fragment() {
             binding.btn5min.setOnClickListener { setMinutes(5) }
             binding.btn10min.setOnClickListener { setMinutes(10) }
             binding.btn15min.setOnClickListener { setMinutes(15) }
+            binding.btnStopRing.setOnClickListener {
+                TimerDoneController.dismiss(requireContext())
+                try { binding.ringLayout.visibility = View.GONE } catch (_: Exception) {}
+            }
         } catch (_: Exception) {}
     }
 

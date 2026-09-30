@@ -1,45 +1,81 @@
 package com.example.alarmclock
 
+import android.app.KeyguardManager
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.view.Gravity
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 
-/** Chỉ hiện khi đếm ngược hết lúc app đang thoát. */
 class TimerDoneActivity : AppCompatActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        showOverLock()
         super.onCreate(savedInstanceState)
-        if (BuildShow.turnOn(this)) {
-            // flags applied
-        }
+        try { TonePlayer.playAppRaw(this, R.raw.ringtone_oz, loop = true) } catch (_: Exception) {}
+
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(0xFF000000.toInt())
-            setPadding(48, 160, 48, 48)
+            gravity = Gravity.CENTER
+            setBackgroundColor(0xFF1A237E.toInt())
+            setPadding(48, 80, 48, 80)
         }
         root.addView(TextView(this).apply {
-            text = "Hết giờ"
+            text = "⏰  Hết giờ!"
             setTextColor(0xFFFFFFFF.toInt())
-            textSize = 36f
+            textSize = 32f
+            gravity = Gravity.CENTER
+            setPadding(0, 0, 0, 36)
         })
         root.addView(Button(this).apply {
             text = "Tắt"
-            setOnClickListener {
-                stopService(android.content.Intent(this@TimerDoneActivity, TimerService::class.java))
-                finish()
-            }
+            textSize = 18f
+            setBackgroundColor(0xFFE53935.toInt())
+            setTextColor(0xFFFFFFFF.toInt())
+            setOnClickListener { dismiss() }
         })
         setContentView(root)
     }
-}
 
-private object BuildShow {
-    fun turnOn(activity: AppCompatActivity): Boolean {
-        if (android.os.Build.VERSION.SDK_INT >= 27) {
-            activity.setShowWhenLocked(true)
-            activity.setTurnScreenOn(true)
+    private fun showOverLock() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true)
+            setTurnScreenOn(true)
+        } else {
+            @Suppress("DEPRECATION")
+            window.addFlags(
+                WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED or
+                    WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or
+                    WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD
+            )
         }
-        return true
+        window.addFlags(
+            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
+                WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
+        )
+        try {
+            val km = getSystemService(KeyguardManager::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                km?.requestDismissKeyguard(this, null)
+            }
+        } catch (_: Exception) {}
+    }
+
+    private fun dismiss() {
+        TimerDoneController.dismiss(this)
+        finish()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        showOverLock()
+    }
+
+    override fun onBackPressed() {
+        dismiss()
     }
 }

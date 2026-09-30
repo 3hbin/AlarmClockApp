@@ -169,7 +169,16 @@
         <activity android:name=".SettingsActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".BedtimeActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".NextAlarmActivity" android:exported="false" android:showWhenLocked="true" android:turnScreenOn="true" android:theme="@style/Theme.AlarmClock" />
-        <activity android:name=".TimerDoneActivity" android:exported="false" android:showWhenLocked="true" android:turnScreenOn="true" android:theme="@style/Theme.AlarmClock" />
+        <activity
+            android:name=".TimerDoneActivity"
+            android:exported="false"
+            android:showWhenLocked="true"
+            android:turnScreenOn="true"
+            android:excludeFromRecents="false"
+            android:launchMode="singleInstance"
+            android:taskAffinity=".timerDone"
+            android:theme="@style/Theme.AlarmClock" />
+        <receiver android:name=".TimerDoneReceiver" android:exported="false" />
         <activity android:name=".ChatActivity" android:exported="false" android:screenOrientation="portrait" android:windowSoftInputMode="adjustResize" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".GeminiLiveActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <receiver android:name=".WaterReceiver" android:exported="false" />

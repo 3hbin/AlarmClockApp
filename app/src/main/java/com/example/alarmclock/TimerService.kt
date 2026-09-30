@@ -39,10 +39,18 @@ class TimerService : Service() {
                 if (timeLeftMs > 0) startCountdown()
             }
             ACTION_STOP -> {
+                TimerDoneController.ringing = false
+                TimerDoneController.cancelExact(this)
+                AlarmNotificationHelper.cancelTimerDone(this)
                 stopEverything()
                 stopSelf()
             }
+            ACTION_HOLD_DONE -> {
+                val n = AlarmNotificationHelper.postTimerDoneFullScreen(this)
+                startForeground(AlarmNotificationHelper.NOTIF_ID_TIMER_DONE, n)
+            }
             ACTION_RESET -> {
+                TimerDoneController.cancelExact(this)
                 stopEverything()
                 remainingMs = 0
                 sendBroadcast(Intent(ACTION_UPDATE).apply {
@@ -70,6 +78,7 @@ class TimerService : Service() {
         remainingMs = timeLeftMs
 
         startForeground(AlarmNotificationHelper.NOTIF_ID_TIMER, buildNotification(timeLeftMs, true))
+        TimerDoneController.scheduleExact(this, timeLeftMs)
 
         countDownTimer = object : CountDownTimer(timeLeftMs, 1000) {
             override fun onTick(millisUntilFinished: Long) {
@@ -88,16 +97,10 @@ class TimerService : Service() {
                 remainingMs = 0
                 isRunning = false
                 isActive = false
-                updateNotification(0, false)
-                sendBroadcast(Intent(ACTION_FINISHED).setPackage(packageName))
-                playFinishSound()
-                if (!AppVisibility.foreground) {
-                    try {
-                        startActivity(Intent(this@TimerService, TimerDoneActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                    } catch (_: Exception) {}
-                }
-                // Không stopSelf ngay — để activity mở và reo; user bấm dừng sẽ stop
-                stopForeground(STOP_FOREGROUND_DETACH)
+                TimerDoneController.cancelExact(this@TimerService)
+                TimerDoneController.fire(this@TimerService)
+                val n = AlarmNotificationHelper.postTimerDoneFullScreen(this@TimerService)
+                startForeground(AlarmNotificationHelper.NOTIF_ID_TIMER_DONE, n)
             }
         }.start()
     }
@@ -105,7 +108,7 @@ class TimerService : Service() {
     private fun pauseCountdown() {
         countDownTimer?.cancel()
         isRunning = false
-        // timeLeftMs already current
+        TimerDoneController.cancelExact(this)
         remainingMs = timeLeftMs
         updateNotification(timeLeftMs, false)
         sendBroadcast(Intent(ACTION_UPDATE).apply {
@@ -206,6 +209,7 @@ class TimerService : Service() {
         const val ACTION_PAUSE = "timer.PAUSE"
         const val ACTION_RESUME = "timer.RESUME"
         const val ACTION_STOP = "timer.STOP"
+        const val ACTION_HOLD_DONE = "timer.HOLD_DONE"
         const val ACTION_RESET = "timer.RESET"
         const val ACTION_TICK_QUERY = "timer.QUERY"
         const val ACTION_UPDATE = "com.example.alarmclock.TIMER_UPDATE"
