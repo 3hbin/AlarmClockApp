@@ -46,7 +46,7 @@ class MusicLibraryActivity : AppCompatActivity() {
         val d = resources.displayMetrics.density
         val night = isNight()
         val bg = if (night) 0xFF12141C.toInt() else 0xFFF7F8FC.toInt()
-        val text = if (night) Color.WHITE else 0xFF1A1C28.toInt()
+        val ink = if (night) Color.WHITE else 0xFF1A1C28.toInt()
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -73,8 +73,8 @@ class MusicLibraryActivity : AppCompatActivity() {
             textSize = 14f
             setTextColor(if (night) Color.WHITE else 0xFF3C4043.toInt())
             setPadding((12 * d).toInt(), 0, 0, 0)
-            text = if (isInstalled()) "App đã cài. Tìm bài bên dưới, nghe thử rồi chọn làm chuông."
-            else "Chưa tải app. Có thể tìm bài ngay, hoặc tải app để mở đăng nhập."
+            setText(if (isInstalled()) "App đã cài. Tìm bài bên dưới, nghe thử rồi chọn làm chuông."
+            else "Chưa tải app. Có thể tìm bài ngay, hoặc tải app để mở đăng nhập.")
         }
         head.addView(status, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         root.addView(head)
@@ -84,7 +84,7 @@ class MusicLibraryActivity : AppCompatActivity() {
             setSingleLine(true)
             imeOptions = EditorInfo.IME_ACTION_SEARCH
             setPadding((16 * d).toInt(), (12 * d).toInt(), (16 * d).toInt(), (12 * d).toInt())
-            setTextColor(text)
+            setTextColor(ink)
             setHintTextColor(0xFF8A8F98.toInt())
             setOnEditorActionListener { v, action, _ ->
                 if (action == EditorInfo.IME_ACTION_SEARCH) {
@@ -102,12 +102,12 @@ class MusicLibraryActivity : AppCompatActivity() {
             setPadding((16 * d).toInt(), (8 * d).toInt(), (16 * d).toInt(), (8 * d).toInt())
         }
         actions.addView(MaterialButton(this).apply {
-            text = "Đăng nhập"
+            setText("Đăng nhập")
             setOnClickListener { openApp(search.text.toString()) }
         }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         if (!isInstalled()) {
             actions.addView(MaterialButton(this).apply {
-                text = "Tải app"
+                setText("Tải app")
                 setOnClickListener { openStore() }
             }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
                 marginStart = (8 * d).toInt()
@@ -258,7 +258,7 @@ class MusicLibraryActivity : AppCompatActivity() {
                 setTextColor(0xFF8A8F98.toInt())
             })
             val play = MaterialButton(this).apply {
-                text = "Nghe thử"
+                setText("Nghe thử")
                 setOnClickListener { playPreview(song) }
             }
             row.addView(art)
