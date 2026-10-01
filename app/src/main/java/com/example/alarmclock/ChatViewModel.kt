@@ -72,13 +72,25 @@ class ChatViewModel(private val app: Context) {
         return Turn(answer, created.note, created.times, error = null)
     }
 
+    /** Đặt báo thức từ câu nói, không gọi API. Dùng cho Gemini Live khi mạng bận. */
+    fun applySpokenCommand(question: String): Turn {
+        val created = applyAlarms(localIntents(question))
+        return Turn(created.note ?: "", created.note, created.times)
+    }
+
     private fun localIntents(raw: String): List<GeminiTools.AlarmIntent> {
-        if (!AlarmTimeParser.looksLikeSetAlarm(raw)) return emptyList()
         val daily = raw.contains("mỗi ngày") || raw.contains("hàng ngày") || raw.contains("hang ngay")
         val label = labelFrom(raw)
-        return AlarmTimeParser.parseAll(raw).map {
-            GeminiTools.AlarmIntent(it.hour, it.minute, label, daily)
+        val times = AlarmTimeParser.parseAll(raw)
+        val bareTime = times.isNotEmpty() && raw.trim().length <= 12
+        if (times.isNotEmpty() && (AlarmTimeParser.looksLikeSetAlarm(raw) || bareTime)) {
+            return times.map { GeminiTools.AlarmIntent(it.hour, it.minute, label, daily) }
         }
+        val offset = AlarmTimeParser.parseOffset(raw)
+        if (offset != null && (AlarmTimeParser.looksLikeSetAlarm(raw) || raw.trim().length < 24)) {
+            return listOf(GeminiTools.AlarmIntent(offset.hour, offset.minute, label, false))
+        }
+        return emptyList()
     }
 
     private data class Created(val note: String?, val times: List<String>, val label: String)
@@ -202,7 +214,7 @@ class ChatViewModel(private val app: Context) {
     }
 
     private fun labelFrom(raw: String): String {
-        val m = Regex("(?i)(?:nhãn|tên|gọi là)\\s+([^,.!?]{2,24})").find(raw)
+        val m = Regex("(?i)(?:nhãn|tên|gọi là|nhắn|nhan)\\s+([^,.!?]{2,24})").find(raw)
         val name = m?.groupValues?.get(1)?.trim().orEmpty()
         return if (name.isNotBlank()) name else "Báo thức AI"
     }

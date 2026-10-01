@@ -90,9 +90,10 @@ class TtsHelper(context: Context) : TextToSpeech.OnInitListener {
     }
 
     fun speak(text: String) {
-        if (text.isBlank()) return
+        val plain = forSpeech(text)
+        if (plain.isBlank()) return
         main.post {
-            pending.addLast(text)
+            pending.addLast(plain)
             flush()
         }
     }
@@ -142,6 +143,23 @@ class TtsHelper(context: Context) : TextToSpeech.OnInitListener {
             tts?.shutdown()
             tts = null
             ready = false
+        }
+    }
+
+    companion object {
+        /** Bỏ **, *, # để loa không đọc thành "sao sao". */
+        fun forSpeech(text: String): String {
+            var s = text
+            s = s.replace(Regex("```[\\s\\S]*?```"), " ")
+            s = s.replace(Regex("`([^`]*)`"), "$1")
+            s = s.replace(Regex("\\*\\*([^*]+)\\*\\*"), "$1")
+            s = s.replace(Regex("\\*([^*]+)\\*"), "$1")
+            s = s.replace(Regex("__([^_]+)__"), "$1")
+            s = s.replace(Regex("_([^_]+)_"), "$1")
+            s = s.replace(Regex("^#+\\s*", RegexOption.MULTILINE), "")
+            s = s.replace(Regex("[*_#`~\\[\\]()]"), " ")
+            s = s.replace(Regex("\\s+"), " ").trim()
+            return s
         }
     }
 }

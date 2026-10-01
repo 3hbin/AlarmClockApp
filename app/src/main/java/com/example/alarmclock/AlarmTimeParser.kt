@@ -48,7 +48,29 @@ object AlarmTimeParser {
                 }
         }
 
+        // "đặt 7" khi không có chữ giờ
+        if (found.isEmpty() && looksLikeSetAlarm(text)) {
+            Regex("""(?<!\d)(\d{1,2})(?!\s*\d)""").findAll(text).forEach { m ->
+                add(found, m.groupValues[1], "0", text, m.range)
+            }
+        }
+
         return found.toList()
+    }
+
+    /** 180 phút, 3 tiếng, 2 giờ nữa → giờ đồng hồ tính từ bây giờ. */
+    fun parseOffset(raw: String, nowMillis: Long = System.currentTimeMillis()): AlarmTime? {
+        val text = normalize(raw)
+        val m = Regex(
+            """(?<!\d)(\d{1,4})\s*(phút|phut|p\b|min|mins|minutes?|tiếng|tieng|giờ|gio|hours?|hrs?)""",
+            RegexOption.IGNORE_CASE
+        ).find(text) ?: return null
+        val n = m.groupValues[1].toIntOrNull() ?: return null
+        val unit = m.groupValues[2].lowercase()
+        val minutes = if (unit.startsWith("p") || unit.startsWith("min") || unit.startsWith("ph")) n else n * 60
+        if (minutes !in 1..(24 * 60)) return null
+        val cal = java.util.Calendar.getInstance().apply { timeInMillis = nowMillis + minutes * 60_000L }
+        return AlarmTime(cal.get(java.util.Calendar.HOUR_OF_DAY), cal.get(java.util.Calendar.MINUTE))
     }
 
     fun looksLikeSetAlarm(raw: String): Boolean {

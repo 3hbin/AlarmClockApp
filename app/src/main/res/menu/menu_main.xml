@@ -47,16 +47,6 @@
         android:title="Nghỉ"
         app:showAsAction="never" />
     <item
-        android:id="@+id/menu_pause_today"
-        android:icon="@drawable/ic_menu_pause"
-        android:title="Tắt hôm nay"
-        app:showAsAction="never" />
-    <item
-        android:id="@+id/menu_water"
-        android:icon="@drawable/ic_menu_water"
-        android:title="Nhắc nước"
-        app:showAsAction="never" />
-    <item
         android:id="@+id/menu_chat"
         android:icon="@drawable/ic_menu_chat"
         android:title="Chat"

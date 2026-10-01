@@ -14,6 +14,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -25,6 +26,15 @@ class RingtonePickerActivity : AppCompatActivity() {
 
     private var selectedUri: String = "app:ringtone_huawei"
     private lateinit var adapter: ToneAdapter
+
+    private val pickMusic = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        if (res.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+        val uri = res.data?.getStringExtra(EXTRA_URI) ?: return@registerForActivityResult
+        val label = res.data?.getStringExtra(EXTRA_LABEL) ?: "Bài hát"
+        selectedUri = uri
+        Toast.makeText(this, "Đã chọn: $label", Toast.LENGTH_SHORT).show()
+        rebuild()
+    }
 
     private val openDoc = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri == null) return@registerForActivityResult
@@ -81,6 +91,9 @@ class RingtonePickerActivity : AppCompatActivity() {
 
     private fun rebuild() {
         val rows = mutableListOf<ToneRow>()
+        rows += ToneRow.Header("Nhạc trực tuyến")
+        rows += ToneRow.Tone("open:spotify", "Spotify", false)
+        rows += ToneRow.Tone("open:ytm", "YouTube Music", false)
         rows += ToneRow.Header("Âm thanh của bạn")
         val custom = CustomRingtones.list(this)
         if (custom.isEmpty()) {
@@ -110,6 +123,10 @@ class RingtonePickerActivity : AppCompatActivity() {
     }
 
 
+    fun openMusic(source: String) {
+        pickMusic.launch(Intent(this, MusicLibraryActivity::class.java).putExtra(MusicLibraryActivity.EXTRA_SOURCE, source))
+    }
+
     private fun queryDisplayName(uri: Uri): String? {
         return try {
             contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
@@ -120,6 +137,8 @@ class RingtonePickerActivity : AppCompatActivity() {
 
     private fun labelOf(uri: String): String {
         if (uri == "silent:") return "Im lặng"
+        if (uri.startsWith("music:spotify:")) return "Spotify"
+        if (uri.startsWith("music:ytm:")) return "YouTube Music"
         CustomRingtones.list(this).find { it.uri == uri }?.let { return it.name }
         if (uri.startsWith("app:")) return AppRingtones.labelOf(uri)
         return "Chuông tùy chọn"
@@ -186,7 +205,24 @@ class ToneAdapter(private val onPick: (ToneRow.Tone) -> Unit) :
             itemView.findViewById<TextView>(R.id.tvToneName).text = row.name
             val mark = itemView.findViewById<TextView>(R.id.tvSelected)
             mark.visibility = if (row.uri == selected) View.VISIBLE else View.GONE
-            itemView.setOnClickListener { onPick(row) }
+            val icon = itemView.findViewById<ImageView>(R.id.ivToneIcon)
+            if (row.uri == "open:spotify" || row.uri.startsWith("music:spotify:")) {
+                icon.visibility = View.VISIBLE
+                icon.setImageResource(R.drawable.ic_spotify)
+            } else if (row.uri == "open:ytm" || row.uri.startsWith("music:ytm:")) {
+                icon.visibility = View.VISIBLE
+                icon.setImageResource(R.drawable.ic_youtube_music)
+            } else icon.visibility = View.GONE
+            val night = (itemView.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES || AppSettings.getDarkMode(itemView.context) == 1
+            if (night && icon.visibility == View.VISIBLE) icon.setColorFilter(android.graphics.Color.WHITE) else icon.clearColorFilter()
+            itemView.setOnClickListener {
+                val act = itemView.context as? RingtonePickerActivity
+                if (row.uri == "open:spotify") {
+                    act?.openMusic(MusicLibraryActivity.SRC_SPOTIFY)
+                } else if (row.uri == "open:ytm") {
+                    act?.openMusic(MusicLibraryActivity.SRC_YTM)
+                } else onPick(row)
+            }
             itemView.findViewById<View>(R.id.btnToneMore).setOnClickListener {
                 if (!row.user) {
                     onPick(row)

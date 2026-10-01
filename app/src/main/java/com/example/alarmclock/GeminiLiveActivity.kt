@@ -219,23 +219,25 @@ class GeminiLiveActivity : AppCompatActivity() {
 
     private fun ask(question: String) {
         lastHeard = ""
+        val local = try { ChatViewModel(this).applySpokenCommand(question) } catch (_: Exception) { null }
         val key = ChatCloudStore.geminiKey(this)
-        if (key.isBlank()) {
+        if (key.isBlank() && local?.createdNote == null) {
             status.text = "Chưa có khóa Gemini. Mở Chat bấm Khóa."
             return
         }
+        val localNote = local?.createdNote
         busy = true
-        status.text = "Gemini đang trả lời…"
+        status.text = if (localNote != null) "Đã đặt báo thức" else "Gemini đang trả lời…"
         transcript.text = "Bạn: $question"
         Thread {
-            val answer = callGemini(key, question)
+            val answer = if (localNote != null) localNote else callGemini(key, question)
             runOnUiThread {
                 busy = false
                 status.text = "Đang đọc…"
-                val clean = answer.replace(Regex("```[\\s\\S]*?```"), " ").replace(Regex("\\s+"), " ").trim()
+                val clean = TtsHelper.forSpeech(answer).ifBlank { "Mình chưa nghe rõ." }
                 val parts = clean.split(Regex("(?<=[.!?…])\\s+")).filter { it.isNotBlank() }
                 if (parts.size <= 1) {
-                    transcript.text = "Bạn: $question\n\nGemini: $answer"
+                    transcript.text = "Bạn: $question\n\nGemini: $clean"
                     tts?.onDone = { status.text = "Bấm mic để nói tiếp" }
                     tts?.speak(clean)
                 } else {
@@ -243,14 +245,14 @@ class GeminiLiveActivity : AppCompatActivity() {
                     fun next() {
                         if (i >= parts.size) {
                             status.text = "Bấm mic để nói tiếp"
-                            transcript.text = "Bạn: $question\n\nGemini: $answer"
+                            transcript.text = "Bạn: $question\n\nGemini: $clean"
                             return
                         }
                         val line = parts[i]
                         i++
                         transcript.text = "Bạn: $question\n\nGemini: $line"
                         tts?.onDone = { next() }
-                        tts?.speak(line)
+                        tts?.speak(TtsHelper.forSpeech(line))
                     }
                     next()
                 }

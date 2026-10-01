@@ -57,6 +57,11 @@ object TonePlayer {
         val app = ctx.applicationContext
         val attrs = if (preview) mediaAttrs() else alarmAttrs()
 
+        if (uri.startsWith("music:spotify:") || uri.startsWith("music:ytm:")) {
+            openMusicApp(app, uri)
+            if (!preview) playAppRaw(app, R.raw.ringtone_oz, loop)
+            return
+        }
         if (uri.startsWith("app:")) {
             playAppRaw(app, AppRingtones.rawOf(uri), loop)
             if (preview) handler.postDelayed(stopTask, 8000L)
@@ -95,6 +100,19 @@ object TonePlayer {
         // Không fallback Huawei khi user đã chọn hệ thống — tránh "kêu nhạc trong app".
         if (preview) return
         playAppRaw(app, R.raw.ringtone_oz, loop)
+    }
+
+    private fun openMusicApp(ctx: Context, uri: String) {
+        val pkg = if (uri.startsWith("music:ytm:")) MusicLibraryActivity.PKG_YTM else MusicLibraryActivity.PKG_SPOTIFY
+        val id = uri.substringAfter("music:spotify:").substringAfter("music:ytm:")
+        val view = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+            data = android.net.Uri.parse(if (pkg == MusicLibraryActivity.PKG_SPOTIFY) "spotify:track:$id" else "https://music.youtube.com/watch?v=$id")
+            setPackage(pkg)
+            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        try { ctx.startActivity(view) } catch (_: Exception) {
+            try { ctx.startActivity(ctx.packageManager.getLaunchIntentForPackage(pkg)) } catch (_: Exception) {}
+        }
     }
 
     private fun alarmAttrs() = AudioAttributes.Builder()
