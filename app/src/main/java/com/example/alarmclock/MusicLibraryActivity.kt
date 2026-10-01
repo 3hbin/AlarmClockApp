@@ -128,7 +128,7 @@ class MusicLibraryActivity : AppCompatActivity() {
             LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
         ))
         setContentView(root)
-        loadSongs("son tung")
+        loadSongs("")
     }
 
     override fun onDestroy() {
@@ -177,32 +177,35 @@ class MusicLibraryActivity : AppCompatActivity() {
     }
 
     private fun loadSongs(query: String) {
-        val q = query.trim().ifBlank { "nhạc trẻ" }
-        status.text = "Đang tìm \"$q\"…"
+        val label = if (source == SRC_YTM) "YouTube Music" else "Spotify"
+        val q = query.trim()
+        status.text = if (q.isBlank()) "Đang tải danh sách $label…" else "Đang tìm trên $label: \"$q\"…"
         list.removeAllViews()
         io.execute {
-            val songs = fetchDeezer(q)
+            val songs = if (source == SRC_YTM) fetchYoutube(q) else fetchSpotify(q)
             runOnUiThread {
                 if (isDestroyed) return@runOnUiThread
                 if (songs.isEmpty()) {
-                    status.text = lastError ?: "Không thấy bài. Bấm Tìm hoặc đổi tên."
+                    status.text = lastError ?: "Không thấy bài trên $label."
                 } else {
-                    status.text = "${songs.size} bài. Bấm dòng để chọn chuông."
+                    status.text = "$label · ${songs.size} bài. Bấm dòng để chọn chuông."
                     showTracks(songs)
                 }
             }
         }
     }
 
-    @Volatile private var lastError: String? = null
-
-    private fun fetchDeezer(query: String): List<Song> {
-        val deezer = tryDeezer(query)
-        if (deezer.isNotEmpty()) return deezer
-        val itunes = tryItunes(query)
-        if (itunes.isNotEmpty()) return itunes
-        return emptyList()
+    private fun fetchSpotify(query: String): List<Song> {
+        val q = query.ifBlank { "vietnam pop" }
+        return tryDeezer(q)
     }
+
+    private fun fetchYoutube(query: String): List<Song> {
+        val q = query.ifBlank { "nhac tre viet nam" }
+        return tryItunes(q)
+    }
+
+    @Volatile private var lastError: String? = null
 
     private fun tryDeezer(query: String): List<Song> {
         return try {
@@ -301,7 +304,8 @@ class MusicLibraryActivity : AppCompatActivity() {
                 setTextColor(if (night) Color.WHITE else 0xFF1A1C28.toInt())
             })
             names.addView(TextView(this).apply {
-                text = song.artist
+                val tag = if (source == SRC_YTM) "YouTube Music" else "Spotify"
+                text = song.artist + " · " + tag
                 textSize = 13f
                 setTextColor(0xFF8A8F98.toInt())
             })
