@@ -9,6 +9,9 @@ import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.SystemClock
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.view.WindowManager
@@ -27,7 +30,19 @@ class TimerActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityTimerBinding
     private var timeLeftInMillis: Long = 0
+    private var totalMillis: Long = 0
     private var isRunning = false
+    private var finished = false
+    private var finishedAt = 0L
+    private val handler = Handler(Looper.getMainLooper())
+    private val overtimeTick = object : Runnable {
+        override fun run() {
+            if (!finished) return
+            val sec = ((SystemClock.elapsedRealtime() - finishedAt) / 1000L).coerceAtLeast(0L)
+            binding.tvOvertime.text = "Đã trễ %02d:%02d".format(sec / 60, sec % 60)
+            handler.postDelayed(this, 1000L)
+        }
+    }
     private var mediaPlayer: MediaPlayer? = null
     private var vibrator: Vibrator? = null
     private var flashHelper: FlashHelper? = null
@@ -39,13 +54,15 @@ class TimerActivity : AppCompatActivity() {
                     timeLeftInMillis = intent.getLongExtra(TimerService.EXTRA_MS, 0L)
                     isRunning = intent.getBooleanExtra(TimerService.EXTRA_RUNNING, false)
                     updateCountDownText()
-                    binding.btnStartPause.text = if (isRunning) "Pause" else "Start"
+                    if (timeLeftInMillis > 0) finished = false
+                    binding.btnStartPause.text = if (isRunning) "Tạm dừng" else "Tiếp tục"
+                    binding.btnAddMinute.visibility = android.view.View.VISIBLE
                 }
                 TimerService.ACTION_FINISHED -> {
                     timeLeftInMillis = 0
                     isRunning = false
                     updateCountDownText()
-                    binding.btnStartPause.text = "Start"
+                    binding.btnStartPause.text = "Bắt đầu"
                     onTimerFinished()
                 }
             }
@@ -73,7 +90,9 @@ class TimerActivity : AppCompatActivity() {
         if (TimerService.isActive && TimerService.remainingMs > 0) {
             timeLeftInMillis = TimerService.remainingMs
             isRunning = true
-            binding.btnStartPause.text = "Pause"
+            binding.btnStartPause.text = "Tạm dừng"
+            binding.btnAddMinute.visibility = android.view.View.VISIBLE
+            if (totalMillis < timeLeftInMillis) totalMillis = timeLeftInMillis
             updateCountDownText()
         }
 
@@ -97,10 +116,30 @@ class TimerActivity : AppCompatActivity() {
         binding.btn5min.setOnClickListener { SoundHelper.animatePress(it); SoundHelper.playClick(this); setTime(5) }
         binding.btn10min.setOnClickListener { SoundHelper.animatePress(it); SoundHelper.playClick(this); setTime(10) }
         binding.btn15min.setOnClickListener { SoundHelper.animatePress(it); SoundHelper.playClick(this); setTime(15) }
+        binding.btn30min.setOnClickListener { SoundHelper.animatePress(it); SoundHelper.playClick(this); setTime(30) }
+        binding.btnAddMinute.setOnClickListener {
+            SoundHelper.animatePress(it)
+            SoundHelper.playClick(this)
+            addMinute()
+        }
+        binding.btnAddFromDone.setOnClickListener {
+            SoundHelper.animatePress(it)
+            stopRinging()
+            finished = false
+            handler.removeCallbacks(overtimeTick)
+            binding.ringLayout.visibility = android.view.View.GONE
+            timeLeftInMillis = 60_000L
+            totalMillis = 60_000L
+            startTimer()
+        }
+        binding.etLabel.setText(getSharedPreferences("timer_ui", MODE_PRIVATE).getString("label", ""))
+        binding.etLabel.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus) saveLabel()
+        }
 
         binding.btnCustom.setOnClickListener {
             if (isRunning) {
-                Toast.makeText(this, "Hãy Pause trước", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Hãy tạm dừng trước", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             showCustomTimeDialog()
@@ -110,6 +149,8 @@ class TimerActivity : AppCompatActivity() {
             TonePlayer.stop()
             stopRinging()
             binding.ringLayout.visibility = android.view.View.GONE
+            finished = false
+            handler.removeCallbacks(overtimeTick)
             resetTimer()
         }
 
@@ -182,6 +223,8 @@ class TimerActivity : AppCompatActivity() {
     private fun setTime(minutes: Int) {
         if (isRunning) return
         timeLeftInMillis = minutes * 60 * 1000L
+        totalMillis = timeLeftInMillis
+        finished = false
         updateCountDownText()
     }
 
@@ -196,7 +239,13 @@ class TimerActivity : AppCompatActivity() {
         }
         ContextCompat.startForegroundService(this, intent)
         isRunning = true
-        binding.btnStartPause.text = "Pause"
+        finished = false
+        handler.removeCallbacks(overtimeTick)
+        binding.ringLayout.visibility = android.view.View.GONE
+        if (totalMillis < timeLeftInMillis) totalMillis = timeLeftInMillis
+        binding.btnStartPause.text = "Tạm dừng"
+        binding.btnAddMinute.visibility = android.view.View.VISIBLE
+        saveLabel()
         Toast.makeText(this, "Đếm ngược chạy nền — thoát app vẫn chạy (xem thông báo)", Toast.LENGTH_SHORT).show()
     }
 
@@ -206,7 +255,7 @@ class TimerActivity : AppCompatActivity() {
         }
         startService(intent)
         isRunning = false
-        binding.btnStartPause.text = "Start"
+        binding.btnStartPause.text = "Tiếp tục"
     }
 
     private fun resetTimer() {
@@ -216,8 +265,13 @@ class TimerActivity : AppCompatActivity() {
         startService(intent)
         timeLeftInMillis = 0
         isRunning = false
-        binding.btnStartPause.text = "Start"
+        finished = false
+        handler.removeCallbacks(overtimeTick)
+        binding.btnStartPause.text = "Bắt đầu"
+        binding.btnAddMinute.visibility = android.view.View.GONE
         binding.ringLayout.visibility = android.view.View.GONE
+        binding.tvStatus.text = "Sẵn sàng"
+        binding.progressRing.setProgressCompat(0, true)
         stopRinging()
         updateCountDownText()
     }
@@ -231,11 +285,43 @@ class TimerActivity : AppCompatActivity() {
             String.format("%02d:%02d:%02d", hours, minutes, seconds)
         else
             String.format("%02d:%02d", minutes, seconds)
+        val total = if (totalMillis > 0) totalMillis else timeLeftInMillis.coerceAtLeast(1)
+        val progress = ((timeLeftInMillis.coerceAtLeast(0) * 1000L) / total).toInt().coerceIn(0, 1000)
+        binding.progressRing.setProgressCompat(progress, true)
+        binding.tvStatus.text = when {
+            finished -> "Hết giờ"
+            isRunning -> "Đang đếm"
+            timeLeftInMillis > 0 -> "Tạm dừng"
+            else -> "Sẵn sàng"
+        }
+    }
+
+    private fun addMinute() {
+        val base = if (timeLeftInMillis > 0) timeLeftInMillis else totalMillis
+        timeLeftInMillis = base + 60_000L
+        totalMillis = timeLeftInMillis
+        if (isRunning || TimerService.isActive) {
+            startTimer()
+        } else {
+            updateCountDownText()
+        }
+    }
+
+    private fun saveLabel() {
+        getSharedPreferences("timer_ui", MODE_PRIVATE).edit()
+            .putString("label", binding.etLabel.text?.toString()?.trim().orEmpty())
+            .apply()
     }
 
     private fun onTimerFinished() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        finished = true
+        finishedAt = SystemClock.elapsedRealtime()
         binding.ringLayout.visibility = android.view.View.VISIBLE
+        binding.tvOvertime.text = "Đã trễ 00:00"
+        binding.btnAddMinute.visibility = android.view.View.GONE
+        handler.removeCallbacks(overtimeTick)
+        handler.post(overtimeTick)
         startRinging()
         val repo = AlarmRepository(this)
         if (repo.isFlashEnabled()) {
@@ -266,6 +352,8 @@ class TimerActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        handler.removeCallbacks(overtimeTick)
+        saveLabel()
         stopRinging()
         super.onDestroy()
         // Service tiếp tục chạy nếu đang đếm

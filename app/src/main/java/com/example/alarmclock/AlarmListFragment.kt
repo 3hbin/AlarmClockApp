@@ -118,9 +118,8 @@ class AlarmListFragment : Fragment() {
         updateNextAlarmBanner()
         try {
             val enabled = alarms.count { it.isEnabled }
-            if (enabled == 0) {
-                androidx.core.app.NotificationManagerCompat.from(ctx).cancel(1001)
-            }
+            androidx.core.app.NotificationManagerCompat.from(ctx).cancel(1001)
+            try { AlarmKeepAliveService.sync(ctx) } catch (_: Exception) {}
         } catch (_: Exception) {}
     }
 
@@ -136,6 +135,7 @@ class AlarmListFragment : Fragment() {
                 if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
             }
         } catch (_: Exception) {}
+        try { context?.let { AlarmDueWatcher.fireIfDue(it) } } catch (_: Exception) {}
         updateNextAlarmBanner()
     }
 

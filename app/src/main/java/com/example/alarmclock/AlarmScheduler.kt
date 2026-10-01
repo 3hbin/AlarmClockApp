@@ -56,8 +56,13 @@ object AlarmScheduler {
                     applyHour()
                 }
             } else if (timeInMillis <= System.currentTimeMillis()) {
-                add(Calendar.DAY_OF_YEAR, 1)
-                applyHour()
+                val late = System.currentTimeMillis() - timeInMillis
+                if (late in 0..90_000) {
+                    timeInMillis = System.currentTimeMillis() + 1_000L
+                } else {
+                    add(Calendar.DAY_OF_YEAR, 1)
+                    applyHour()
+                }
             }
             if (alarm.repeatMode == Alarm.REPEAT_WEEKDAYS) {
                 while (get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY ||

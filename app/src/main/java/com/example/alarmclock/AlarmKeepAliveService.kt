@@ -118,20 +118,16 @@ class AlarmKeepAliveService : Service() {
 
         fun sync(context: Context) {
             val ctx = context.applicationContext
-            val count = enabledCount(ctx)
-            if (count <= 0) {
-                try {
-                    ctx.startService(Intent(ctx, AlarmKeepAliveService::class.java).setAction(ACTION_STOP))
-                } catch (_: Exception) {}
-                try {
-                    val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
-                    nm.cancel(NOTIF_ID)
-                } catch (_: Exception) {}
-                return
-            }
             try {
-                val i = Intent(ctx, AlarmKeepAliveService::class.java)
-                if (Build.VERSION.SDK_INT >= 26) ctx.startForegroundService(i) else ctx.startService(i)
+                ctx.startService(Intent(ctx, AlarmKeepAliveService::class.java).setAction(ACTION_STOP))
+            } catch (_: Exception) {}
+            try {
+                val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+                nm.cancel(NOTIF_ID)
+                if (android.os.Build.VERSION.SDK_INT >= 26) {
+                    try { nm.deleteNotificationChannel(CHANNEL) } catch (_: Exception) {}
+                    try { nm.deleteNotificationChannel("alarm_status") } catch (_: Exception) {}
+                }
             } catch (_: Exception) {}
         }
     }

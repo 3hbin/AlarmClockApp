@@ -56,6 +56,7 @@ class MainActivity : AppCompatActivity() {
     private val timeUpdater = object : Runnable {
         override fun run() {
             updateCurrentTime()
+            try { AlarmDueWatcher.fireIfDue(this@MainActivity) } catch (_: Exception) {}
             try { updateNextAlarmBanner() } catch (_: Exception) {}
             handler.postDelayed(this, 1000)
         }
@@ -262,11 +263,22 @@ class MainActivity : AppCompatActivity() {
                     best = a
                 }
             }
+            val timeStr = "%02d:%02d".format(best!!.hour, best.minute)
+            val today = java.util.Calendar.getInstance().apply {
+                set(java.util.Calendar.HOUR_OF_DAY, best.hour)
+                set(java.util.Calendar.MINUTE, best.minute)
+                set(java.util.Calendar.SECOND, 0)
+                set(java.util.Calendar.MILLISECOND, 0)
+            }.timeInMillis
+            val late = now.timeInMillis - today
+            if (late in 0..90_000) {
+                binding.tvNextAlarm.text = "Đang kêu • $timeStr"
+                return
+            }
             val diff = (bestMs - now.timeInMillis).coerceAtLeast(0)
             val h = (diff / 3_600_000).toInt()
             val m = ((diff % 3_600_000) / 60_000).toInt()
             val s = ((diff % 60_000) / 1000).toInt()
-            val timeStr = "%02d:%02d".format(best!!.hour, best.minute)
             binding.tvNextAlarm.text = "Còn $h giờ $m phút $s giây • $timeStr"
         } catch (_: Exception) {
             try { binding.tvNextAlarm.text = getString(R.string.alarm_default_label) } catch (_: Exception) {}
