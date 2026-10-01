@@ -1,35 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/layoutWidget2x2"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0D1B4C"
-    android:gravity="center"
-    android:orientation="vertical"
-    android:padding="12dp">
-    <TextView
-        android:id="@+id/tvWidget2x2Clock"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="00:00"
-        android:textColor="#FFFFFF"
-        android:textSize="28sp"
-        android:textStyle="bold" />
-    <TextView
-        android:id="@+id/tvWidget2x2Next"
+    android:padding="4dp">
+
+    <LinearLayout
+        android:id="@+id/layoutWidget2x2"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_widget_2x2"
         android:gravity="center"
-        android:layout_marginTop="6dp"
-        android:text="Báo tiếp theo"
-        android:textColor="#DDFFFFFF"
-        android:textSize="13sp" />
-    <TextView
-        android:id="@+id/tvWidget2x2Count"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="—"
-        android:textColor="#90CAF9"
-        android:textSize="12sp" />
-</LinearLayout>
+        android:orientation="vertical"
+        android:padding="14dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Báo tiếp theo"
+            android:textColor="#A9C0FF"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/tvWidget2x2Clock"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="00:00"
+            android:textColor="#FFFFFF"
+            android:textSize="32sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvWidget2x2Next"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:text="Chưa có báo thức"
+            android:textColor="#E8EEFF"
+            android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/tvWidget2x2Count"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_widget_chip"
+            android:paddingStart="10dp"
+            android:paddingTop="3dp"
+            android:paddingEnd="10dp"
+            android:paddingBottom="3dp"
+            android:text="—"
+            android:textColor="#D6E2FF"
+            android:textSize="12sp" />
+    </LinearLayout>
+</FrameLayout>

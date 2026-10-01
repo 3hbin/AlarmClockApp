@@ -99,8 +99,12 @@ class TimerService : Service() {
                 isActive = false
                 TimerDoneController.cancelExact(this@TimerService)
                 TimerDoneController.fire(this@TimerService)
-                val n = AlarmNotificationHelper.postTimerDoneFullScreen(this@TimerService)
-                startForeground(AlarmNotificationHelper.NOTIF_ID_TIMER_DONE, n)
+                if (AppVisibility.isBackground()) {
+                    val n = AlarmNotificationHelper.postTimerDoneFullScreen(this@TimerService)
+                    startForeground(AlarmNotificationHelper.NOTIF_ID_TIMER_DONE, n)
+                } else {
+                    updateNotification(0, false)
+                }
             }
         }.start()
     }

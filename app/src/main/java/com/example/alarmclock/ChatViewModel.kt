@@ -150,7 +150,9 @@ class ChatViewModel(private val app: Context) {
                         )
                     )
                     .put("contents", contents)
-                    .put("tools", GeminiTools.declarations())
+                if (AlarmTimeParser.looksLikeSetAlarm(question)) {
+                    body.put("tools", GeminiTools.declarations())
+                }
                 val url = URL(
                     "https://generativelanguage.googleapis.com/v1beta/models/$MODEL:generateContent?key=$key"
                 )
@@ -158,8 +160,8 @@ class ChatViewModel(private val app: Context) {
                     requestMethod = "POST"
                     setRequestProperty("Content-Type", "application/json; charset=utf-8")
                     doOutput = true
-                    connectTimeout = 20_000
-                    readTimeout = 40_000
+                    connectTimeout = 12_000
+                    readTimeout = 25_000
                 }
                 lastConn = conn
                 conn.outputStream.use { it.write(body.toString().toByteArray()) }

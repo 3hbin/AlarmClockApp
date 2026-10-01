@@ -46,10 +46,35 @@ object TimerDoneController {
     fun fire(context: Context) {
         val already = ringing
         ringing = true
-        wake(context)
         if (!already) {
             try { TonePlayer.playAppRaw(context, R.raw.ringtone_oz, loop = true) } catch (_: Exception) {}
+            vibrate(context)
         }
+        if (AppVisibility.isForeground()) {
+            showInApp(context)
+            if (!already) {
+                try {
+                    context.sendBroadcast(
+                        Intent(TimerService.ACTION_FINISHED)
+                            .setPackage(context.packageName)
+                            .putExtra("in_app", true)
+                    )
+                } catch (_: Exception) {}
+            }
+            return
+        }
+        promoteToFullScreen(context)
+        if (!already) {
+            try {
+                context.sendBroadcast(Intent(TimerService.ACTION_FINISHED).setPackage(context.packageName))
+            } catch (_: Exception) {}
+        }
+    }
+
+    /** App đã ẩn: full-screen intent + TimerDoneActivity. Không dùng khi đang mở app. */
+    fun promoteToFullScreen(context: Context) {
+        if (!ringing) return
+        wake(context)
         AlarmNotificationHelper.postTimerDoneFullScreen(context)
         try {
             val app = context.applicationContext
@@ -68,16 +93,42 @@ object TimerDoneController {
                 }
             )
         } catch (_: Exception) {}
-        if (!already) {
+    }
+
+    private fun showInApp(context: Context) {
+        val act = AppVisibility.resumedActivity() ?: return
+        act.runOnUiThread {
+            if (act.isFinishing || act.isDestroyed) return@runOnUiThread
             try {
-                context.sendBroadcast(Intent(TimerService.ACTION_FINISHED).setPackage(context.packageName))
+                com.google.android.material.dialog.MaterialAlertDialogBuilder(act)
+                    .setTitle("⏰ Hết giờ!")
+                    .setMessage("Đếm ngược đã kết thúc. Bấm Tắt để dừng chuông.")
+                    .setCancelable(false)
+                    .setPositiveButton("Tắt") { _, _ -> dismiss(act) }
+                    .show()
             } catch (_: Exception) {}
         }
+    }
+
+    private fun vibrate(context: Context) {
+        try {
+            val vib = context.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vib.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 400, 250, 400), 0))
+            } else {
+                @Suppress("DEPRECATION")
+                vib.vibrate(longArrayOf(0, 400, 250, 400), 0)
+            }
+        } catch (_: Exception) {}
     }
 
     fun dismiss(context: Context) {
         ringing = false
         try { TonePlayer.stop() } catch (_: Exception) {}
+        try {
+            val vib = context.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
+            vib.cancel()
+        } catch (_: Exception) {}
         cancelExact(context)
         AlarmNotificationHelper.cancelTimerDone(context)
         try { context.stopService(Intent(context, TimerService::class.java)) } catch (_: Exception) {}

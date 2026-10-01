@@ -37,6 +37,22 @@ object MorningBriefing {
             val place = try { LocationPlaceHelper.resolve(app) } catch (_: Exception) { null }
             val label = alarm?.label?.trim().orEmpty()
 
+            val weatherBox = arrayOf("")
+            val todayBox = arrayOf("")
+            val tomorrowBox = arrayOf("")
+            val jobs = mutableListOf<Thread>()
+            if (wantWeather) {
+                jobs += thread {
+                    weatherBox[0] = try {
+                        if (place != null) WeatherHelper.fetchWeatherAt(place.lat, place.lon, place.shortCity(), en)
+                        else WeatherHelper.fetchWeatherSummary("Hanoi", en)
+                    } catch (_: Exception) { "" }
+                }
+            }
+            if (wantCal) jobs += thread { todayBox[0] = eventsOn(app, 0) }
+            if (wantTomorrow) jobs += thread { tomorrowBox[0] = eventsOn(app, 1) }
+            jobs.forEach { try { it.join(3500) } catch (_: Exception) {} }
+
             val text = buildString {
                 if (en) {
                     append("Hello. Time to wake up. ")
@@ -50,15 +66,12 @@ object MorningBriefing {
                     else append("Chưa có vị trí. Hãy mở app và cấp quyền vị trí. ")
                 }
                 if (wantWeather) {
-                    val w = try {
-                        if (place != null) WeatherHelper.fetchWeatherAt(place.lat, place.lon, place.shortCity(), en)
-                        else WeatherHelper.fetchWeatherSummary("Hanoi", en)
-                    } catch (_: Exception) { "" }
+                    val w = weatherBox[0]
                     if (w.isNotBlank()) append(w)
                     else append(if (en) "Weather is unavailable. " else "Chưa lấy được thời tiết. ")
                 }
                 if (wantCal) {
-                    val ev = eventsOn(app, 0)
+                    val ev = todayBox[0]
                     append(
                         if (en) {
                             if (ev.isNotBlank()) "Today's events: $ev. " else "No calendar events today. "
@@ -68,7 +81,7 @@ object MorningBriefing {
                     )
                 }
                 if (wantTomorrow) {
-                    val ev = eventsOn(app, 1)
+                    val ev = tomorrowBox[0]
                     append(
                         if (en) {
                             if (ev.isNotBlank()) "Tomorrow you have: $ev. " else "No calendar events tomorrow. "

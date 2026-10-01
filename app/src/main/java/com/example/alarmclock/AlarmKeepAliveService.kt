@@ -58,7 +58,7 @@ class AlarmKeepAliveService : Service() {
                 NotificationChannel(
                     CHANNEL,
                     "Báo thức đang bật",
-                    NotificationManager.IMPORTANCE_HIGH
+                    NotificationManager.IMPORTANCE_LOW
                 ).apply {
                     description = "Giữ báo thức chạy nền"
                     setShowBadge(false)
@@ -101,7 +101,7 @@ class AlarmKeepAliveService : Service() {
             .setSilent(true)
             .setOnlyAlertOnce(true)
             .setAutoCancel(false)
-            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .setContentIntent(open)
@@ -118,13 +118,20 @@ class AlarmKeepAliveService : Service() {
 
         fun sync(context: Context) {
             val ctx = context.applicationContext
+            val count = enabledCount(ctx)
+            if (count <= 0) {
+                try {
+                    ctx.startService(Intent(ctx, AlarmKeepAliveService::class.java).setAction(ACTION_STOP))
+                } catch (_: Exception) {}
+                try {
+                    val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+                    nm.cancel(NOTIF_ID)
+                } catch (_: Exception) {}
+                return
+            }
             try {
-                ctx.startService(Intent(ctx, AlarmKeepAliveService::class.java).setAction(ACTION_STOP))
-            } catch (_: Exception) {}
-            try {
-                val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
-                nm.cancel(NOTIF_ID)
-                nm.cancel(2099)
+                val i = Intent(ctx, AlarmKeepAliveService::class.java)
+                if (Build.VERSION.SDK_INT >= 26) ctx.startForegroundService(i) else ctx.startService(i)
             } catch (_: Exception) {}
         }
     }

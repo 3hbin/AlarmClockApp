@@ -268,8 +268,8 @@ class GeminiLiveActivity : AppCompatActivity() {
                 requestMethod = "POST"
                 setRequestProperty("Content-Type", "application/json; charset=utf-8")
                 doOutput = true
-                connectTimeout = 20000
-                readTimeout = 40000
+                connectTimeout = 12_000
+                readTimeout = 22_000
             }
             conn.outputStream.use { it.write(body.toString().toByteArray()) }
             val raw = conn.inputStream.bufferedReader().readText()
