@@ -40,9 +40,12 @@ class TimerService : Service() {
             }
             ACTION_STOP -> {
                 TimerDoneController.ringing = false
+                TimerDoneController.fullScreenShown = false
+                TimerDoneController.stopVibrate(this)
                 TimerDoneController.cancelExact(this)
                 AlarmNotificationHelper.cancelTimerDone(this)
                 stopEverything()
+                TimerDoneController.stopVibrate(this)
                 stopSelf()
             }
             ACTION_HOLD_DONE -> {
@@ -67,7 +70,7 @@ class TimerService : Service() {
                 if (!isRunning && timeLeftMs > 0) startCountdown()
             }
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     private fun startCountdown() {
@@ -132,6 +135,7 @@ class TimerService : Service() {
         remainingMs = 0
         timeLeftMs = 0
         TonePlayer.stop()
+        TimerDoneController.stopVibrate(this)
         stopForeground(STOP_FOREGROUND_REMOVE)
         NotificationManagerCompat.from(this).cancel(AlarmNotificationHelper.NOTIF_ID_TIMER)
     }
@@ -205,7 +209,15 @@ class TimerService : Service() {
         countDownTimer?.cancel()
         isActive = false
         TonePlayer.stop()
+        TimerDoneController.stopVibrate(this)
         super.onDestroy()
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        TimerDoneController.dismiss(this)
+        stopEverything()
+        stopSelf()
+        super.onTaskRemoved(rootIntent)
     }
 
     companion object {

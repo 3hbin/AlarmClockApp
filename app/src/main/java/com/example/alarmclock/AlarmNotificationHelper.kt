@@ -25,7 +25,7 @@ object AlarmNotificationHelper {
     const val CHANNEL_SCHEDULED = "alarm_scheduled_v1"
     const val NOTIF_ID_SCHEDULED = 1002
     const val CHANNEL_CHRONO = "chrono_running"
-    const val CHANNEL_TIMER_DONE = "timer_done_v1"
+    const val CHANNEL_TIMER_DONE = "timer_done_v2"
     const val NOTIF_ID_TIMER_DONE = 2010
     const val CHANNEL_GEMINI = "gemini_briefing_v1"
     const val NOTIF_ID_RINGING = 2001
@@ -96,7 +96,8 @@ object AlarmNotificationHelper {
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
             description = "Hiện full-screen khi đếm ngược về 00:00"
-            enableVibration(true)
+            enableVibration(false)
+            setSound(null, null)
             setBypassDnd(true)
             lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         }
@@ -315,7 +316,7 @@ object AlarmNotificationHelper {
             .setContentIntent(fullPi)
             .setOngoing(true)
             .setAutoCancel(false)
-            .setDefaults(NotificationCompat.DEFAULT_VIBRATE)
+            .setOnlyAlertOnce(true)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Tắt", stopPi)
             .build()
         try {

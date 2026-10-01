@@ -16,6 +16,10 @@ class TimerDoneActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         showOverLock()
         super.onCreate(savedInstanceState)
+        if (TimerDoneController.stopped || !TimerDoneController.ringing) {
+            finish()
+            return
+        }
         try { TonePlayer.playAppRaw(this, R.raw.ringtone_oz, loop = true) } catch (_: Exception) {}
 
         val root = LinearLayout(this).apply {
@@ -67,7 +71,7 @@ class TimerDoneActivity : AppCompatActivity() {
 
     private fun dismiss() {
         TimerDoneController.dismiss(this)
-        finish()
+        finishAndRemoveTask()
     }
 
     override fun onNewIntent(intent: Intent) {

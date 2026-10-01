@@ -17,7 +17,11 @@ object TimerDoneController {
     @Volatile
     var fullScreenShown = false
 
+    @Volatile
+    var stopped = false
+
     fun scheduleExact(context: Context, durationMs: Long) {
+        stopped = false
         cancelExact(context)
         if (durationMs <= 0) return
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -25,7 +29,7 @@ object TimerDoneController {
         val pi = alarmPi(context)
         val show = PendingIntent.getActivity(
             context, REQ + 1,
-            Intent(context, TimerDoneActivity::class.java),
+            Intent(context, MainTabActivity::class.java),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         try {
@@ -43,10 +47,12 @@ object TimerDoneController {
         try {
             val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
             am.cancel(alarmPi(context))
+            am.cancel(showPi(context))
         } catch (_: Exception) {}
     }
 
     fun fire(context: Context) {
+        if (stopped) return
         val already = ringing
         ringing = true
         if (!already) {
@@ -75,7 +81,7 @@ object TimerDoneController {
 
     /** App đã ẩn: full-screen intent + TimerDoneActivity. Không dùng khi đang mở app. */
     fun promoteToFullScreen(context: Context) {
-        if (!ringing || fullScreenShown) return
+        if (!ringing || fullScreenShown || stopped) return
         fullScreenShown = true
         wake(context)
         AlarmNotificationHelper.postTimerDoneFullScreen(context)
@@ -113,29 +119,57 @@ object TimerDoneController {
         }
     }
 
+    private val pulse = android.os.Handler(android.os.Looper.getMainLooper())
+    private var pulseContext: Context? = null
+    private val pulseRunnable = object : Runnable {
+        override fun run() {
+            val ctx = pulseContext ?: return
+            if (!ringing) return
+            try {
+                val vib = ctx.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    vib.vibrate(android.os.VibrationEffect.createOneShot(400, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+                } else {
+                    @Suppress("DEPRECATION")
+                    vib.vibrate(400)
+                }
+            } catch (_: Exception) {}
+            if (ringing) pulse.postDelayed(this, 900)
+        }
+    }
+
     private fun vibrate(context: Context) {
+        pulseContext = context.applicationContext
+        pulse.removeCallbacks(pulseRunnable)
+        pulse.post(pulseRunnable)
+    }
+
+    fun stopVibrate(context: Context) {
+        ringing = false
+        pulse.removeCallbacks(pulseRunnable)
         try {
-            val vib = context.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                vib.vibrate(android.os.VibrationEffect.createWaveform(longArrayOf(0, 400, 250, 400), 0))
-            } else {
-                @Suppress("DEPRECATION")
-                vib.vibrate(longArrayOf(0, 400, 250, 400), 0)
-            }
+            val vib = context.applicationContext.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
+            vib.cancel()
         } catch (_: Exception) {}
     }
 
     fun dismiss(context: Context) {
+        stopped = true
         ringing = false
         fullScreenShown = false
         try { TonePlayer.stop() } catch (_: Exception) {}
-        try {
-            val vib = context.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
-            vib.cancel()
-        } catch (_: Exception) {}
+        stopVibrate(context)
         cancelExact(context)
         AlarmNotificationHelper.cancelTimerDone(context)
         try { context.stopService(Intent(context, TimerService::class.java)) } catch (_: Exception) {}
+    }
+
+    private fun showPi(context: Context): PendingIntent {
+        return PendingIntent.getActivity(
+            context, REQ + 1,
+            Intent(context, MainTabActivity::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
     }
 
     private fun alarmPi(context: Context): PendingIntent {
