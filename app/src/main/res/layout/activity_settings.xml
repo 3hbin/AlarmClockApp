@@ -275,6 +275,20 @@
             android:orientation="horizontal" android:gravity="center_vertical"
             android:layout_marginBottom="4dp">
             <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="Tự đổi icon theo buổi" android:textSize="16sp"/>
+            <com.example.alarmclock.LoadSwitchView
+                android:id="@+id/switchAutoIcon"
+                android:layout_width="52dp" android:layout_height="32dp"/>
+        </LinearLayout>
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Tắt sẽ khóa icon buổi tối và thoát app."
+            android:textSize="12sp" android:textColor="?android:attr/textColorSecondary"
+            android:layout_marginBottom="12dp"/>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:layout_marginBottom="4dp">
+            <TextView android:layout_width="0dp" android:layout_height="wrap_content"
                 android:layout_weight="1" android:text="@string/animation_title" android:textSize="16sp"/>
             <com.example.alarmclock.LoadSwitchView
                 android:id="@+id/switchAnimation"

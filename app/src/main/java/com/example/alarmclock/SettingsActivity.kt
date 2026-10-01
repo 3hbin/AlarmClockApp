@@ -347,6 +347,37 @@ class SettingsActivity : AppCompatActivity() {
             }, 280)
         }
 
+        binding.switchAutoIcon.setCheckedSilent(DynamicIconHelper.isAutoIcon(this))
+        binding.switchAutoIcon.setOnCheckedChangeListener { sw, on ->
+            if (on) {
+                DynamicIconHelper.setAutoIcon(this, true)
+                android.widget.Toast.makeText(this, "Đã bật đổi icon theo buổi", android.widget.Toast.LENGTH_SHORT).show()
+                return@setOnCheckedChangeListener
+            }
+            sw.setCheckedSilent(true)
+            com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setTitle("Tắt đổi icon")
+                .setMessage("Chắc chắn muốn tắt nó sẽ bị văng ra ngoài")
+                .setPositiveButton("Có") { _, _ ->
+                    val loading = android.app.ProgressDialog(this).apply {
+                        setMessage("Đang đặt icon buổi tối…")
+                        setCancelable(false)
+                        show()
+                    }
+                    window.decorView.postDelayed({
+                        try { loading.dismiss() } catch (_: Exception) {}
+                        DynamicIconHelper.lockEveningIcon(this)
+                        val home = android.content.Intent(android.content.Intent.ACTION_MAIN).addCategory(android.content.Intent.CATEGORY_HOME)
+                        home.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                        try { startActivity(home) } catch (_: Exception) {}
+                        finishAffinity()
+                        android.os.Process.killProcess(android.os.Process.myPid())
+                    }, 3000)
+                }
+                .setNegativeButton("Không", null)
+                .show()
+        }
+
         // Pure alarm
         binding.switchPure.setCheckedSilent(AppSettings.isPureAlarmOnly(this))
         binding.switchPure.setOnCheckedChangeListener { sw, on ->

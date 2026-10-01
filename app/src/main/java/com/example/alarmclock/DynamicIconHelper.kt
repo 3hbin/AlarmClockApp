@@ -28,7 +28,25 @@ object DynamicIconHelper {
     private const val PREFS = "dynamic_icon"
     private const val KEY_PERIOD = "applied_period"
     private const val KEY_SNAPSHOT = "alarm_snapshot"
+    private const val KEY_AUTO = "auto_icon"
     const val EXTRA_ICON_RESTART = "icon_restart"
+
+    fun isAutoIcon(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_AUTO, true)
+
+    fun setAutoIcon(context: Context, on: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit().putBoolean(KEY_AUTO, on).apply()
+    }
+
+    /** Tắt tự đổi: khóa icon buổi tối, không restart ở đây. */
+    fun lockEveningIcon(context: Context) {
+        setAutoIcon(context, false)
+        persistAlarmsSnapshot(context)
+        applyAliases(context, Period.NIGHT)
+        saveApplied(context, Period.NIGHT)
+        try { AlarmScheduler.rescheduleAll(context) } catch (_: Exception) {}
+    }
 
     enum class Period(val alias: String, val faceRes: Int) {
         MORNING(".MainAliasMorning", R.drawable.ic_clock_morning),
@@ -60,6 +78,13 @@ object DynamicIconHelper {
     fun applyOnUserOpen(activity: Activity): Boolean {
         ensureMainEnabled(activity)
         cancelBackgroundIconAlarms(activity)
+        if (!isAutoIcon(activity)) {
+            if (appliedPeriod(activity) != Period.NIGHT.name) {
+                applyAliases(activity, Period.NIGHT)
+                saveApplied(activity, Period.NIGHT)
+            }
+            return false
+        }
         val want = currentPeriod()
         if (appliedPeriod(activity) == want.name) return false
         if (activity.intent.getBooleanExtra(EXTRA_ICON_RESTART, false)) {
