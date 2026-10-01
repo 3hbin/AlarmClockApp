@@ -39,7 +39,7 @@ class TimerFragment : Fragment() {
             val b = _binding ?: return
             if (!finished) return
             val sec = ((SystemClock.elapsedRealtime() - finishedAt) / 1000L).coerceAtLeast(0L)
-            b.tvOvertime.text = "-%02d:%02d".format(sec / 60, sec % 60)
+            b.tvOvertime.text = "Đã trễ %02d:%02d".format(sec / 60, sec % 60)
             handler.postDelayed(this, 1000L)
         }
     }
@@ -126,13 +126,15 @@ class TimerFragment : Fragment() {
         val raw = digits.padStart(6, '0').takeLast(6)
         val parts = listOf(b.tvHour to raw.substring(0, 2), b.tvMin to raw.substring(2, 4), b.tvSec to raw.substring(4, 6))
         val active = digits.isNotEmpty()
+        val on = ContextCompat.getColor(b.root.context, R.color.text_primary)
+        val off = ContextCompat.getColor(b.root.context, R.color.text_tertiary)
         parts.forEach { (tv, value) ->
             tv.text = value
-            tv.setTextColor(if (active) Color.parseColor("#1A1C28") else Color.parseColor("#C5C9D6"))
+            tv.setTextColor(if (active) on else off)
         }
         val canStart = enteredMillis() > 0
         b.btnStartPause.isEnabled = canStart
-        b.btnStartPause.setTextColor(if (canStart) Color.WHITE else Color.parseColor("#9AA0B4"))
+        b.btnStartPause.setTextColor(if (canStart) Color.WHITE else off)
     }
 
     private fun startPreset(minutes: Int) {
@@ -240,7 +242,7 @@ class TimerFragment : Fragment() {
         b.setupPanel.visibility = View.GONE
         b.runPanel.visibility = View.GONE
         b.ringLayout.visibility = View.VISIBLE
-        b.tvOvertime.text = "00:00"
+        b.tvOvertime.text = "Đã trễ 00:00"
         handler.removeCallbacks(overtimeTick)
         handler.post(overtimeTick)
     }

@@ -21,4 +21,7 @@
     <color name="ripple">#33FFFFFF</color>
     <color name="nav_bar_bg">#1A1C28</color>
     <color name="nav_icon_inactive">#8B90A5</color>
+    <color name="text_tertiary">#8B90A5</color>
+    <color name="danger">#FF6B81</color>
 </resources>
+
