@@ -113,6 +113,12 @@ class MusicLibraryActivity : AppCompatActivity() {
                 marginStart = (8 * d).toInt()
             })
         }
+        actions.addView(MaterialButton(this).apply {
+            setText("Tìm")
+            setOnClickListener { loadSongs(search.text.toString()) }
+        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+            marginStart = (8 * d).toInt()
+        })
         root.addView(actions)
 
         list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
@@ -122,7 +128,7 @@ class MusicLibraryActivity : AppCompatActivity() {
             LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
         ))
         setContentView(root)
-        loadSongs("nhạc trẻ")
+        loadSongs("son tung")
     }
 
     override fun onDestroy() {
@@ -179,7 +185,7 @@ class MusicLibraryActivity : AppCompatActivity() {
             runOnUiThread {
                 if (isDestroyed) return@runOnUiThread
                 if (songs.isEmpty()) {
-                    status.text = "Không thấy bài. Thử tên khác."
+                    status.text = lastError ?: "Không thấy bài. Bấm Tìm hoặc đổi tên."
                 } else {
                     status.text = "${songs.size} bài. Bấm dòng để chọn chuông."
                     showTracks(songs)
@@ -188,7 +194,17 @@ class MusicLibraryActivity : AppCompatActivity() {
         }
     }
 
+    @Volatile private var lastError: String? = null
+
     private fun fetchDeezer(query: String): List<Song> {
+        val deezer = tryDeezer(query)
+        if (deezer.isNotEmpty()) return deezer
+        val itunes = tryItunes(query)
+        if (itunes.isNotEmpty()) return itunes
+        return emptyList()
+    }
+
+    private fun tryDeezer(query: String): List<Song> {
         return try {
             val url = "https://api.deezer.com/search?limit=25&q=" + URLEncoder.encode(query, "UTF-8")
             val conn = URL(url).openConnection() as HttpURLConnection
@@ -211,7 +227,39 @@ class MusicLibraryActivity : AppCompatActivity() {
                     ))
                 }
             }
-        } catch (_: Exception) { emptyList() }
+        } catch (e: Exception) {
+            lastError = "Deezer lỗi: ${e.javaClass.simpleName}. Đang thử nguồn khác."
+            emptyList()
+        }
+    }
+
+    private fun tryItunes(query: String): List<Song> {
+        return try {
+            val url = "https://itunes.apple.com/search?limit=25&entity=song&term=" + URLEncoder.encode(query, "UTF-8")
+            val conn = URL(url).openConnection() as HttpURLConnection
+            conn.connectTimeout = 10000
+            conn.readTimeout = 10000
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0")
+            val body = conn.inputStream.bufferedReader().readText()
+            conn.disconnect()
+            val arr = JSONObject(body).optJSONArray("results") ?: return emptyList()
+            buildList {
+                for (i in 0 until arr.length()) {
+                    val o = arr.getJSONObject(i)
+                    val title = o.optString("trackName")
+                    if (title.isBlank()) continue
+                    add(Song(
+                        title = title,
+                        artist = o.optString("artistName"),
+                        cover = o.optString("artworkUrl100"),
+                        preview = o.optString("previewUrl")
+                    ))
+                }
+            }
+        } catch (e: Exception) {
+            lastError = "Không tải được bài. Kiểm tra mạng rồi bấm Tìm. (${e.javaClass.simpleName})"
+            emptyList()
+        }
     }
 
     private fun showTracks(songs: List<Song>) {
