@@ -14,6 +14,9 @@ object TimerDoneController {
     @Volatile
     var ringing = false
 
+    @Volatile
+    var fullScreenShown = false
+
     fun scheduleExact(context: Context, durationMs: Long) {
         cancelExact(context)
         if (durationMs <= 0) return
@@ -51,7 +54,6 @@ object TimerDoneController {
             vibrate(context)
         }
         if (AppVisibility.isForeground()) {
-            showInApp(context)
             if (!already) {
                 try {
                     context.sendBroadcast(
@@ -73,7 +75,8 @@ object TimerDoneController {
 
     /** App đã ẩn: full-screen intent + TimerDoneActivity. Không dùng khi đang mở app. */
     fun promoteToFullScreen(context: Context) {
-        if (!ringing) return
+        if (!ringing || fullScreenShown) return
+        fullScreenShown = true
         wake(context)
         AlarmNotificationHelper.postTimerDoneFullScreen(context)
         try {
@@ -124,6 +127,7 @@ object TimerDoneController {
 
     fun dismiss(context: Context) {
         ringing = false
+        fullScreenShown = false
         try { TonePlayer.stop() } catch (_: Exception) {}
         try {
             val vib = context.getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
