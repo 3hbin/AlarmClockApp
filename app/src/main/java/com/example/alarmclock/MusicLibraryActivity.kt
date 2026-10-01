@@ -1,17 +1,16 @@
 package com.example.alarmclock
 
-import android.content.ComponentName
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.graphics.Bitmap
+import android.content.res.Configuration
+import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.media.AudioAttributes
+import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
-import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaControllerCompat
 import android.view.Gravity
-import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -20,44 +19,50 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.NestedScrollView
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.button.MaterialButton
-import android.content.res.Configuration
+import org.json.JSONObject
+import java.io.File
+import java.io.FileOutputStream
+import java.net.HttpURLConnection
+import java.net.URL
+import java.net.URLEncoder
+import java.util.concurrent.Executors
 
 /**
- * Spotify / YouTube Music trong mục chuông.
- * Chưa cài app → nút Play Store. Đã cài → Đăng nhập mở thẳng app.
- * Sau khi đăng nhập, liệt kê bài: tên, ảnh, nghe thử.
+ * Spotify / YouTube Music không cho app khác đọc thư viện sau khi đăng nhập.
+ * Màn này tìm bài, hiện tên + ảnh + nghe thử, rồi lưu đoạn preview làm chuông.
+ * Nút mở app vẫn nhảy thẳng Spotify / YouTube Music.
  */
 class MusicLibraryActivity : AppCompatActivity() {
 
     private lateinit var source: String
     private lateinit var list: LinearLayout
     private lateinit var status: TextView
-    private var browser: MediaBrowserCompat? = null
-    private var controller: MediaControllerCompat? = null
+    private val io = Executors.newFixedThreadPool(3)
+    private var preview: MediaPlayer? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         source = intent.getStringExtra(EXTRA_SOURCE) ?: SRC_SPOTIFY
         val d = resources.displayMetrics.density
         val night = isNight()
-        val iconTint = if (night) Color.WHITE else Color.TRANSPARENT
+        val bg = if (night) 0xFF12141C.toInt() else 0xFFF7F8FC.toInt()
+        val text = if (night) Color.WHITE else 0xFF1A1C28.toInt()
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(if (night) 0xFF12141C.toInt() else 0xFFF7F8FC.toInt())
+            setBackgroundColor(bg)
         }
-        val bar = MaterialToolbar(this).apply {
+        root.addView(MaterialToolbar(this).apply {
             title = if (source == SRC_YTM) "YouTube Music" else "Spotify"
             setNavigationIcon(androidx.appcompat.R.drawable.abc_ic_ab_back_material)
             setNavigationOnClickListener { finish() }
             if (night) setTitleTextColor(Color.WHITE)
-        }
-        root.addView(bar)
+        })
 
         val head = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding((16 * d).toInt(), (12 * d).toInt(), (16 * d).toInt(), (8 * d).toInt())
+            setPadding((16 * d).toInt(), (12 * d).toInt(), (16 * d).toInt(), (4 * d).toInt())
         }
         head.addView(ImageView(this).apply {
             setImageResource(if (source == SRC_YTM) R.drawable.ic_youtube_music else R.drawable.ic_spotify)
@@ -68,24 +73,46 @@ class MusicLibraryActivity : AppCompatActivity() {
             textSize = 14f
             setTextColor(if (night) Color.WHITE else 0xFF3C4043.toInt())
             setPadding((12 * d).toInt(), 0, 0, 0)
+            text = if (isInstalled()) "App đã cài. Tìm bài bên dưới, nghe thử rồi chọn làm chuông."
+            else "Chưa tải app. Có thể tìm bài ngay, hoặc tải app để mở đăng nhập."
         }
         head.addView(status, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
         root.addView(head)
 
+        val search = EditText(this).apply {
+            hint = "Tìm tên bài hoặc ca sĩ"
+            setSingleLine(true)
+            imeOptions = EditorInfo.IME_ACTION_SEARCH
+            setPadding((16 * d).toInt(), (12 * d).toInt(), (16 * d).toInt(), (12 * d).toInt())
+            setTextColor(text)
+            setHintTextColor(0xFF8A8F98.toInt())
+            setOnEditorActionListener { v, action, _ ->
+                if (action == EditorInfo.IME_ACTION_SEARCH) {
+                    loadSongs(v.text.toString())
+                    true
+                } else false
+            }
+        }
+        root.addView(search, LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+        ).apply { setMargins((16 * d).toInt(), (8 * d).toInt(), (16 * d).toInt(), 0) })
+
         val actions = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding((16 * d).toInt(), 0, (16 * d).toInt(), (8 * d).toInt())
+            orientation = LinearLayout.HORIZONTAL
+            setPadding((16 * d).toInt(), (8 * d).toInt(), (16 * d).toInt(), (8 * d).toInt())
         }
-        val login = MaterialButton(this).apply {
+        actions.addView(MaterialButton(this).apply {
             text = "Đăng nhập"
-            setOnClickListener { openApp() }
+            setOnClickListener { openApp(search.text.toString()) }
+        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+        if (!isInstalled()) {
+            actions.addView(MaterialButton(this).apply {
+                text = "Tải app"
+                setOnClickListener { openStore() }
+            }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginStart = (8 * d).toInt()
+            })
         }
-        val store = MaterialButton(this).apply {
-            text = "Tải trên Google Play"
-            setOnClickListener { openStore() }
-        }
-        actions.addView(login)
-        actions.addView(store)
         root.addView(actions)
 
         list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
@@ -95,26 +122,13 @@ class MusicLibraryActivity : AppCompatActivity() {
             LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f
         ))
         setContentView(root)
-        paintInstallState()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        paintInstallState()
-        if (isInstalled()) connectLibrary()
+        loadSongs("nhạc trẻ")
     }
 
     override fun onDestroy() {
-        try { browser?.disconnect() } catch (_: Exception) {}
+        try { preview?.release() } catch (_: Exception) {}
+        io.shutdownNow()
         super.onDestroy()
-    }
-
-    private fun paintInstallState() {
-        if (!isInstalled()) {
-            status.text = "Chưa tải ứng dụng. Bấm nút bên dưới để vào Google Play."
-        } else {
-            status.text = "Bấm Đăng nhập để mở app. Đăng nhập xong quay lại, danh sách bài sẽ hiện."
-        }
     }
 
     private fun pkg() = if (source == SRC_YTM) PKG_YTM else PKG_SPOTIFY
@@ -126,141 +140,186 @@ class MusicLibraryActivity : AppCompatActivity() {
 
     private fun openStore() {
         val id = pkg()
-        val market = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$id"))
-        val web = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$id"))
         try {
-            startActivity(market)
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$id")))
         } catch (_: Exception) {
-            try { startActivity(web) } catch (_: Exception) {
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$id")))
+            } catch (_: Exception) {
                 Toast.makeText(this, "Không mở được Google Play", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private fun openApp() {
+    private fun openApp(query: String) {
         if (!isInstalled()) {
             openStore()
             return
         }
+        val q = query.trim()
+        if (q.isNotEmpty()) {
+            val uri = if (source == SRC_SPOTIFY) "spotify:search:${Uri.encode(q)}"
+            else "https://music.youtube.com/search?q=${Uri.encode(q)}"
+            val view = Intent(Intent.ACTION_VIEW, Uri.parse(uri)).setPackage(pkg())
+            try {
+                startActivity(view)
+                return
+            } catch (_: Exception) {}
+        }
         val launch = packageManager.getLaunchIntentForPackage(pkg())
-        if (launch == null) {
-            openStore()
-            return
-        }
-        launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        startActivity(launch)
+        if (launch == null) openStore() else startActivity(launch)
     }
 
-    private fun connectLibrary() {
-        if (browser != null) return
-        val service = findBrowserService() ?: return
-        status.text = "Đang lấy danh sách bài…"
-        browser = MediaBrowserCompat(this, service, object : MediaBrowserCompat.ConnectionCallback() {
-            override fun onConnected() {
-                val b = browser ?: return
-                try {
-                    controller = MediaControllerCompat(this@MusicLibraryActivity, b.sessionToken)
-                    MediaControllerCompat.setMediaController(this@MusicLibraryActivity, controller)
-                } catch (_: Exception) {}
-                b.subscribe(b.root, sub)
+    private fun loadSongs(query: String) {
+        val q = query.trim().ifBlank { "nhạc trẻ" }
+        status.text = "Đang tìm \"$q\"…"
+        list.removeAllViews()
+        io.execute {
+            val songs = fetchDeezer(q)
+            runOnUiThread {
+                if (isDestroyed) return@runOnUiThread
+                if (songs.isEmpty()) {
+                    status.text = "Không thấy bài. Thử tên khác."
+                } else {
+                    status.text = "${songs.size} bài. Bấm dòng để chọn chuông."
+                    showTracks(songs)
+                }
             }
-            override fun onConnectionFailed() {
-                status.text = "Chưa đăng nhập. Bấm Đăng nhập để mở app."
-                browser = null
-            }
-        }, null)
-        try { browser?.connect() } catch (_: Exception) {
-            status.text = "Chưa đăng nhập. Bấm Đăng nhập để mở app."
-            browser = null
         }
     }
 
-    private val sub = object : MediaBrowserCompat.SubscriptionCallback() {
-        override fun onChildrenLoaded(parentId: String, children: MutableList<MediaBrowserCompat.MediaItem>) {
-            if (children.isEmpty()) {
-                status.text = "Chưa có bài. Hãy đăng nhập trong app rồi quay lại."
-                return
+    private fun fetchDeezer(query: String): List<Song> {
+        return try {
+            val url = "https://api.deezer.com/search?limit=25&q=" + URLEncoder.encode(query, "UTF-8")
+            val conn = URL(url).openConnection() as HttpURLConnection
+            conn.connectTimeout = 8000
+            conn.readTimeout = 8000
+            conn.setRequestProperty("User-Agent", "AlarmClockApp")
+            val body = conn.inputStream.bufferedReader().readText()
+            conn.disconnect()
+            val arr = JSONObject(body).optJSONArray("data") ?: return emptyList()
+            buildList {
+                for (i in 0 until arr.length()) {
+                    val o = arr.getJSONObject(i)
+                    val title = o.optString("title")
+                    if (title.isBlank()) continue
+                    add(Song(
+                        title = title,
+                        artist = o.optJSONObject("artist")?.optString("name").orEmpty(),
+                        cover = o.optJSONObject("album")?.optString("cover_medium").orEmpty(),
+                        preview = o.optString("preview")
+                    ))
+                }
             }
-            val playable = children.filter { it.flags and MediaBrowserCompat.MediaItem.FLAG_PLAYABLE != 0 }
-            if (playable.isEmpty()) {
-                val folder = children.firstOrNull()
-                if (folder != null) browser?.subscribe(folder.mediaId ?: return, this)
-                return
-            }
-            status.text = "${playable.size} bài"
-            showTracks(playable.take(40))
-        }
-        override fun onError(parentId: String) {
-            status.text = "Chưa đăng nhập. Bấm Đăng nhập để mở app."
-        }
+        } catch (_: Exception) { emptyList() }
     }
 
-    private fun showTracks(items: List<MediaBrowserCompat.MediaItem>) {
+    private fun showTracks(songs: List<Song>) {
         list.removeAllViews()
         val d = resources.displayMetrics.density
         val night = isNight()
-        items.forEach { item ->
-            val desc = item.description
-            val title = desc.title?.toString() ?: "Bài hát"
+        songs.forEach { song ->
             val row = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
                 setPadding((16 * d).toInt(), (8 * d).toInt(), (8 * d).toInt(), (8 * d).toInt())
+                setOnClickListener { choose(song) }
             }
             val art = ImageView(this).apply {
-                layoutParams = LinearLayout.LayoutParams((48 * d).toInt(), (48 * d).toInt())
+                layoutParams = LinearLayout.LayoutParams((52 * d).toInt(), (52 * d).toInt())
                 scaleType = ImageView.ScaleType.CENTER_CROP
-                val bmp: Bitmap? = desc.iconBitmap
-                if (bmp != null) setImageBitmap(bmp) else {
-                    setImageResource(if (source == SRC_YTM) R.drawable.ic_youtube_music else R.drawable.ic_spotify)
-                    if (night) setColorFilter(Color.WHITE)
+                setImageResource(if (source == SRC_YTM) R.drawable.ic_youtube_music else R.drawable.ic_spotify)
+                if (night) setColorFilter(Color.WHITE)
+            }
+            if (song.cover.startsWith("http")) {
+                io.execute {
+                    val bmp = try {
+                        val c = URL(song.cover).openConnection() as HttpURLConnection
+                        c.connectTimeout = 8000
+                        val b = BitmapFactory.decodeStream(c.inputStream)
+                        c.disconnect()
+                        b
+                    } catch (_: Exception) { null }
+                    if (bmp != null) runOnUiThread {
+                        art.clearColorFilter()
+                        art.setImageBitmap(bmp)
+                    }
                 }
             }
-            val name = TextView(this).apply {
-                text = title
+            val names = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+            names.addView(TextView(this).apply {
+                text = song.title
                 textSize = 16f
                 setTextColor(if (night) Color.WHITE else 0xFF1A1C28.toInt())
-                setPadding((12 * d).toInt(), 0, (8 * d).toInt(), 0)
-            }
-            val preview = MaterialButton(this).apply {
+            })
+            names.addView(TextView(this).apply {
+                text = song.artist
+                textSize = 13f
+                setTextColor(0xFF8A8F98.toInt())
+            })
+            val play = MaterialButton(this).apply {
                 text = "Nghe thử"
-                setOnClickListener { preview(item.mediaId, title) }
+                setOnClickListener { playPreview(song) }
             }
-            row.setOnClickListener { choose(item.mediaId, title) }
             row.addView(art)
-            row.addView(name, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-            row.addView(preview)
+            row.addView(names, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
+                marginStart = (12 * d).toInt()
+            })
+            row.addView(play)
             list.addView(row)
         }
     }
 
-    private fun preview(mediaId: String?, title: String) {
-        if (mediaId.isNullOrBlank()) return
-        try {
-            controller?.transportControls?.playFromMediaId(mediaId, null)
-            Toast.makeText(this, "Đang nghe thử: $title", Toast.LENGTH_SHORT).show()
-        } catch (_: Exception) {
-            openApp()
+    private fun playPreview(song: Song) {
+        if (song.preview.isBlank()) {
+            Toast.makeText(this, "Bài này không có đoạn nghe thử", Toast.LENGTH_SHORT).show()
+            return
         }
+        try { preview?.release() } catch (_: Exception) {}
+        preview = MediaPlayer().apply {
+            setAudioAttributes(AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build())
+            setDataSource(song.preview)
+            setOnPreparedListener { it.start() }
+            setOnErrorListener { _, _, _ ->
+                Toast.makeText(this@MusicLibraryActivity, "Không phát được", Toast.LENGTH_SHORT).show()
+                true
+            }
+            prepareAsync()
+        }
+        Toast.makeText(this, "Đang nghe: ${song.title}", Toast.LENGTH_SHORT).show()
     }
 
-    private fun choose(mediaId: String?, title: String) {
-        if (mediaId.isNullOrBlank()) return
-        val uri = "music:$source:$mediaId"
-        setResult(RESULT_OK, Intent().apply {
-            putExtra(RingtonePickerActivity.EXTRA_URI, uri)
-            putExtra(RingtonePickerActivity.EXTRA_LABEL, title)
-        })
-        finish()
-    }
-
-    private fun findBrowserService(): ComponentName? {
-        val intent = Intent("android.media.browse.MediaBrowserService").setPackage(pkg())
-        val list = try {
-            packageManager.queryIntentServices(intent, PackageManager.GET_META_DATA)
-        } catch (_: Exception) { emptyList() }
-        val info = list.firstOrNull() ?: return null
-        return ComponentName(info.serviceInfo.packageName, info.serviceInfo.name)
+    private fun choose(song: Song) {
+        if (song.preview.isBlank()) {
+            Toast.makeText(this, "Bài này không lưu được làm chuông", Toast.LENGTH_SHORT).show()
+            return
+        }
+        status.text = "Đang lưu ${song.title}…"
+        io.execute {
+            val file = try {
+                val dir = File(filesDir, "music_previews").apply { mkdirs() }
+                val out = File(dir, song.title.hashCode().toString() + ".mp3")
+                val conn = URL(song.preview).openConnection() as HttpURLConnection
+                conn.connectTimeout = 10000
+                conn.inputStream.use { input -> FileOutputStream(out).use { input.copyTo(it) } }
+                conn.disconnect()
+                out
+            } catch (_: Exception) { null }
+            runOnUiThread {
+                if (file == null || !file.exists()) {
+                    status.text = "Không lưu được. Kiểm tra mạng."
+                    return@runOnUiThread
+                }
+                setResult(RESULT_OK, Intent().apply {
+                    putExtra(RingtonePickerActivity.EXTRA_URI, Uri.fromFile(file).toString())
+                    putExtra(RingtonePickerActivity.EXTRA_LABEL, "${song.title} — ${song.artist}")
+                })
+                finish()
+            }
+        }
     }
 
     private fun isNight(): Boolean {
@@ -270,6 +329,8 @@ class MusicLibraryActivity : AppCompatActivity() {
         return (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
             Configuration.UI_MODE_NIGHT_YES
     }
+
+    private data class Song(val title: String, val artist: String, val cover: String, val preview: String)
 
     companion object {
         const val EXTRA_SOURCE = "source"
