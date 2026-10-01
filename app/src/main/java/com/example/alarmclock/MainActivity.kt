@@ -1051,24 +1051,6 @@ class MainActivity : AppCompatActivity() {
                 pickSkipDate()
                 return true
             }
-            R.id.menu_pause_today -> {
-                if (DayOff.isPausedToday(this)) {
-                    DayOff.clearPause(this)
-                    AlarmScheduler.rescheduleAll(this)
-                    Toast.makeText(this, "Đã bật lại báo thức", Toast.LENGTH_SHORT).show()
-                } else {
-                    DayOff.pauseToday(this)
-                    alarms.forEach { AlarmScheduler.cancel(this, it.id) }
-                    Toast.makeText(this, "Đã tắt hết báo thức hôm nay", Toast.LENGTH_SHORT).show()
-                }
-                return true
-            }
-            R.id.menu_water -> {
-                val on = !WaterReminder.isOn(this)
-                WaterReminder.setOn(this, on)
-                Toast.makeText(this, if (on) "Đã bật nhắc uống nước" else "Đã tắt nhắc uống nước", Toast.LENGTH_SHORT).show()
-                return true
-            }
             R.id.menu_chat -> {
                 startActivity(Intent(this, ChatActivity::class.java))
                 return true

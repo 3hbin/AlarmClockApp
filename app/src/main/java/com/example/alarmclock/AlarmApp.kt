@@ -32,8 +32,8 @@ class AlarmApp : Application() {
         try {
             AppSettings.setStatusNotificationEnabled(this, false)
             AlarmKeepAliveService.sync(this)
-            WaterReceiver.setOn(this, false)
-            WaterReceiver.cancel(this)
+            WaterReminder.setOn(this, false)
+            WaterReminder.cancel(this)
             DayOff.clearPause(this)
         } catch (_: Exception) {}
         // Không xin bỏ tối ưu pin lúc mở app — để máy ngủ khi ở nhà, tránh chai pin.
