@@ -43,7 +43,10 @@ object CloudSyncHelper {
     }
 
     /** Cài lại app: đăng nhập Google im lặng rồi kéo báo thức + chat cũ. */
+    @Volatile private var quiet = false
+
     fun restoreSilently(context: Context) {
+        quiet = true
         init(context)
         try {
             val existing = com.google.android.gms.auth.api.signin.GoogleSignIn.getLastSignedInAccount(context)
@@ -210,7 +213,7 @@ object CloudSyncHelper {
                     if (viaRest != null) {
                         onResult(viaRest)
                     } else {
-                        Toast.makeText(context, "Tải cloud lỗi: ${it.message}\nThử HTTPS cũng không vào được.", Toast.LENGTH_LONG).show()
+                        if (!quiet) Toast.makeText(context, "Tải cloud lỗi: ${it.message}", Toast.LENGTH_SHORT).show()
                         onResult(emptyList())
                     }
                 }
@@ -414,7 +417,10 @@ object CloudSyncHelper {
                     Toast.makeText(context, "Đã khôi phục ${cloud.size} báo từ Google", Toast.LENGTH_LONG).show()
                 }
                 local.isNotEmpty() -> pushAlarms(context, local)
-                else -> Toast.makeText(context, "Đã đăng nhập Google. Chưa có báo thức để sao lưu.", Toast.LENGTH_LONG).show()
+                else -> {
+                    // Không hiện toast đè màn hình. Vẫn ghi 1 dòng tài khoản để tab Data có dữ liệu.
+                    restWrite(context, local)
+                }
             }
         }
     }
