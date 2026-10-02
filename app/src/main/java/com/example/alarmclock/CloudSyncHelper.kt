@@ -42,6 +42,79 @@ object CloudSyncHelper {
         pullThenMerge(context)
     }
 
+    /** Cài lại app: đăng nhập Google im lặng rồi kéo báo thức + chat cũ. */
+    fun restoreSilently(context: Context) {
+        init(context)
+        try {
+            val existing = com.google.android.gms.auth.api.signin.GoogleSignIn.getLastSignedInAccount(context)
+            if (existing?.email.isNullOrBlank().not()) {
+                saveAccount(context, existing!!)
+                pullThenMerge(context)
+                return
+            }
+        } catch (_: Exception) {}
+        try {
+            val gso = com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(
+                com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN
+            ).requestEmail().requestProfile().requestIdToken(
+                "297353017052-lkqrj6s8a1ube2c8quhvk9ebkhodedbq.apps.googleusercontent.com"
+            ).build()
+            val client = com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(context, gso)
+            client.silentSignIn()
+                .addOnSuccessListener { account ->
+                    if (account.email.isNullOrBlank()) return@addOnSuccessListener
+                    saveAccount(context, account)
+                    pullThenMerge(context)
+                }
+        } catch (_: Exception) {}
+    }
+
+    private fun saveAccount(context: Context, account: com.google.android.gms.auth.api.signin.GoogleSignInAccount) {
+        val email = account.email ?: return
+        AppSettings.setRecoveryEmail(context, email)
+        AppSettings.setGoogleDisplayName(context, account.displayName?.takeIf { it.isNotBlank() } ?: email)
+        AppSettings.setGooglePhotoUrl(context, account.photoUrl?.toString().orEmpty())
+        try {
+            val token = account.idToken
+            if (!token.isNullOrBlank()) {
+                val cred = com.google.firebase.auth.GoogleAuthProvider.getCredential(token, null)
+                com.google.firebase.auth.FirebaseAuth.getInstance().signInWithCredential(cred)
+            }
+        } catch (_: Exception) {}
+    }
+
+    fun pushAlarmsQuiet(context: Context) {
+        try {
+            init(context)
+            if (uid(context) == null) return
+            val alarms = AlarmRepository(context).getAlarms()
+            val payload = hashMapOf(
+                "alarms" to alarms.map { a ->
+                    mapOf(
+                        "id" to a.id,
+                        "hour" to a.hour,
+                        "minute" to a.minute,
+                        "isEnabled" to a.isEnabled,
+                        "label" to a.label,
+                        "repeatMode" to a.repeatMode,
+                        "snoozeMinutes" to a.snoozeMinutes,
+                        "ringtoneUri" to (a.ringtoneUri ?: ""),
+                        "challengeType" to a.challengeType,
+                        "shakeTargetCount" to a.shakeTargetCount,
+                        "skipHolidays" to a.skipHolidays,
+                        "isStrictAntiSnooze" to a.isStrictAntiSnooze,
+                        "voiceNote" to (a.voiceNote ?: ""),
+                        "useCrescendo" to a.useCrescendo,
+                        "group" to a.group,
+                        "updatedAt" to System.currentTimeMillis()
+                    )
+                },
+                "updatedAt" to System.currentTimeMillis()
+            )
+            doc(context).set(payload, com.google.firebase.firestore.SetOptions.merge())
+        } catch (_: Exception) {}
+    }
+
     fun pushAlarms(context: Context, alarms: List<Alarm> = AlarmRepository(context).getAlarms(), onDone: (Boolean) -> Unit = {}) {
         try {
             init(context)
@@ -219,7 +292,7 @@ object CloudSyncHelper {
                     Toast.makeText(context, "Đã khôi phục ${cloud.size} báo từ Google", Toast.LENGTH_LONG).show()
                 }
                 local.isNotEmpty() -> pushAlarms(context, local)
-                else -> Toast.makeText(context, "Google đã liên kết — chưa có báo để sao lưu", Toast.LENGTH_SHORT).show()
+                else -> Toast.makeText(context, "Đã đăng nhập Google. Chưa có báo thức để sao lưu.", Toast.LENGTH_LONG).show()
             }
         }
     }

@@ -26,6 +26,7 @@ class AlarmApp : Application() {
         LocaleHelper.applySavedLocale(this)
         try { Lang.sync(this) } catch (_: Exception) {}
         CloudSyncHelper.init(this)
+        try { CloudSyncHelper.restoreSilently(this) } catch (_: Exception) {}
         try { AlarmScheduler.rescheduleAll(this) } catch (_: Exception) {}
         AppVisibility.install(this)
         try { AlarmWatchdogWorker.start(this) } catch (_: Exception) {}

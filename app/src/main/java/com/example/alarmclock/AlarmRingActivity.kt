@@ -1032,6 +1032,8 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
 
     /** Hết thời lượng đổ chuông: tắt tiếng, không đọc Gemini, không kêu thêm. */
     private fun autoStopAfterDuration() {
+        RingGuard.markDismissed(this, alarmId)
+        try { AlarmNotificationHelper.clearRingingState(this) } catch (_: Exception) {}
         try { restoreFocusMode() } catch (_: Exception) {}
         try {
             AlarmHistory.add(
@@ -1065,6 +1067,8 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
     }
 
     private fun dismissAlarm(repo: AlarmRepository) {
+        RingGuard.markDismissed(this, alarmId)
+        try { AlarmNotificationHelper.clearRingingState(this) } catch (_: Exception) {}
         try { restoreFocusMode() } catch (_: Exception) {}
         try {
             AlarmHistory.add(this, intent.getStringExtra("ALARM_LABEL") ?: "",
@@ -1094,6 +1098,8 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
     }
 
     private fun snoozeAlarm(label: String) {
+        RingGuard.markDismissed(this, alarmId)
+        try { AlarmNotificationHelper.clearRingingState(this) } catch (_: Exception) {}
         try { restoreFocusMode() } catch (_: Exception) {}
         try {
             AlarmHistory.add(this, label,

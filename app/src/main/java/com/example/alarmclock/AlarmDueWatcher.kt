@@ -22,9 +22,12 @@ object AlarmDueWatcher {
             }.timeInMillis
             val late = now - trigger
             if (late < 0 || late > GRACE_MS) continue
+            if (RingGuard.isDismissed(context, alarm.id)) continue
+            if (RingGuard.alreadyFiredThisMinute(context, alarm.id)) continue
             val key = "${alarm.id}_$trigger"
             if (prefs.getBoolean(key, false)) continue
             prefs.edit().putBoolean(key, true).apply()
+            RingGuard.markFired(context, alarm.id)
             ring(context, alarm)
         }
     }

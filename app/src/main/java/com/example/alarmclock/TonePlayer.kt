@@ -19,6 +19,10 @@ object TonePlayer {
     private val handler = Handler(Looper.getMainLooper())
     private val stopTask = Runnable { stop() }
 
+    fun isPlaying(): Boolean {
+        return try { player?.isPlaying == true || ringtone?.isPlaying == true } catch (_: Exception) { false }
+    }
+
     fun stop() {
         handler.removeCallbacks(stopTask)
         try { player?.stop() } catch (_: Exception) {}

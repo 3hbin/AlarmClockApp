@@ -23,12 +23,16 @@ class AlarmRingService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_STOP) {
+        if (intent == null || intent.action == ACTION_STOP) {
             stopSelfSafe()
             return START_NOT_STICKY
         }
-
-        val alarmId = intent?.getIntExtra("ALARM_ID", -1) ?: -1
+        val alarmId = intent.getIntExtra("ALARM_ID", -1)
+        if (RingGuard.isDismissed(this, alarmId)) {
+            stopSelfSafe()
+            return START_NOT_STICKY
+        }
+        RingGuard.markFired(this, alarmId)
         val label = intent?.getStringExtra("ALARM_LABEL") ?: "Báo thức"
         val ringtoneUri = intent?.getStringExtra("RINGTONE_URI")
         val hour = intent?.getIntExtra("ALARM_HOUR", -1) ?: -1
@@ -60,7 +64,7 @@ class AlarmRingService : Service() {
         // Chỉ mở Activity tối đa 1 lần / 20s để tránh crash-loop khi RingActivity lỗi.
         val now = android.os.SystemClock.elapsedRealtime()
         if (now - lastActivityLaunchAt < 20_000L) {
-            return START_STICKY
+            return START_NOT_STICKY
         }
         lastActivityLaunchAt = now
         try {
@@ -83,7 +87,7 @@ class AlarmRingService : Service() {
             )
         } catch (_: Exception) {}
 
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     private fun buildNotification(
@@ -147,9 +151,15 @@ class AlarmRingService : Service() {
         try { player?.release() } catch (_: Exception) {}
         player = null
         TonePlayer.stop()
+        boostAlarmVolume()
         if (ringtoneUri == "silent:") return
-        if (ringtoneUri.isNullOrBlank() || ringtoneUri == "system:") {
+        // Nhạc online không phát được lúc chuông — mở app sẽ làm mất tiếng. Dùng chuông trong máy.
+        val local = ringtoneUri?.takeUnless {
+            it.startsWith("music:") || it.startsWith("http://") || it.startsWith("https://")
+        }
+        if (local.isNullOrBlank() || local == "system:") {
             TonePlayer.playUri(this, AppRingtones.systemAlarm(this), loop = true, preview = false)
+            ensureAudible()
             return
         }
         val isApp = ringtoneUri.startsWith("app:")
@@ -178,6 +188,31 @@ class AlarmRingService : Service() {
         } catch (_: Exception) {
             TonePlayer.playAppRaw(this, R.raw.ringtone_oz, loop = true)
         }
+        ensureAudible()
+    }
+
+    private fun boostAlarmVolume() {
+        try {
+            val am = getSystemService(AUDIO_SERVICE) as android.media.AudioManager
+            val max = am.getStreamMaxVolume(android.media.AudioManager.STREAM_ALARM)
+            val cur = am.getStreamVolume(android.media.AudioManager.STREAM_ALARM)
+            if (cur < (max * 0.7f).toInt().coerceAtLeast(1)) {
+                am.setStreamVolume(android.media.AudioManager.STREAM_ALARM, max, 0)
+            }
+            @Suppress("DEPRECATION")
+            am.requestAudioFocus(null, android.media.AudioManager.STREAM_ALARM, android.media.AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+        } catch (_: Exception) {}
+    }
+
+    /** Nếu chuông đã chọn không phát được (Huawei / link online), bật file trong máy. */
+    private fun ensureAudible() {
+        val h = android.os.Handler(mainLooper)
+        h.postDelayed({
+            if (RingGuard.isDismissed(this, -1)) return@postDelayed
+            if (!TonePlayer.isPlaying() && player?.isPlaying != true) {
+                TonePlayer.playAppRaw(this, R.raw.ringtone_oz, true)
+            }
+        }, 700L)
     }
 
     private fun startCrescendo(mp: MediaPlayer) {

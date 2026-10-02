@@ -21,13 +21,16 @@ object GoogleSignInHelper {
     private const val WEB_CLIENT_ID =
         "297353017052-lkqrj6s8a1ube2c8quhvk9ebkhodedbq.apps.googleusercontent.com"
 
-    fun signInIntent(activity: Activity): Intent {
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+    fun options(): GoogleSignInOptions {
+        return GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(WEB_CLIENT_ID)
             .requestEmail()
             .requestProfile()
             .build()
-        return GoogleSignIn.getClient(activity, gso).signInIntent
+    }
+
+    fun signInIntent(activity: Activity): Intent {
+        return GoogleSignIn.getClient(activity, options()).signInIntent
     }
 
     fun accountPickerIntent(): Intent {
@@ -87,11 +90,27 @@ object GoogleSignInHelper {
         }
     }
 
+    /** Xóa phiên Google trên máy rồi mới trả intent, để màn chọn tài khoản không tự đóng. Không xóa email đã lưu. */
+    fun preparePicker(activity: Activity, onReady: (Intent) -> Unit) {
+        try {
+            val client = GoogleSignIn.getClient(activity, options())
+            client.signOut().addOnCompleteListener {
+                try {
+                    onReady(client.signInIntent)
+                } catch (e: Exception) {
+                    Log.w(TAG, "signInIntent after signOut: ${e.message}")
+                    onReady(accountPickerIntent())
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "preparePicker: ${e.message}")
+            onReady(accountPickerIntent())
+        }
+    }
+
     fun signOut(activity: Activity) {
         try {
-            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail().build()
-            GoogleSignIn.getClient(activity, gso).signOut()
+            GoogleSignIn.getClient(activity, options()).signOut()
             FirebaseAuth.getInstance().signOut()
         } catch (_: Exception) {}
         AppSettings.setGoogleDisplayName(activity, "")

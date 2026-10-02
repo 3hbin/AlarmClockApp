@@ -86,6 +86,7 @@ class AlarmRepository(context: Context) {
             array.put(obj)
         }
         prefs.edit().putString("alarms", array.toString()).apply()
+        try { CloudSyncHelper.pushAlarmsQuiet(appContext) } catch (_: Exception) {}
     }
 
     fun getNextId(): Int {

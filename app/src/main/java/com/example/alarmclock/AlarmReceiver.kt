@@ -34,6 +34,12 @@ class AlarmReceiver : BroadcastReceiver() {
                 return
             }
             val alarmId = intent.getIntExtra("ALARM_ID", -1)
+            if (RingGuard.isDismissed(context, alarmId)) {
+                try { if (wakeLock.isHeld) wakeLock.release() } catch (_: Exception) {}
+                try { pending.finish() } catch (_: Exception) {}
+                return
+            }
+            RingGuard.markFired(context, alarmId)
             val label = intent.getStringExtra("ALARM_LABEL") ?: "Báo thức"
             val snoozeMinutes = intent.getIntExtra("SNOOZE_MINUTES", 5)
             val repeatMode = intent.getIntExtra("REPEAT_MODE", Alarm.REPEAT_DAILY)
@@ -143,7 +149,9 @@ class AlarmReceiver : BroadcastReceiver() {
             // 3) Thử lại sau 800ms (Samsung đôi khi cần delay)
             Handler(Looper.getMainLooper()).postDelayed({
                 try {
-                    context.startActivity(ringIntent)
+                    if (!RingGuard.isDismissed(context, alarmId)) {
+                        context.startActivity(ringIntent)
+                    }
                 } catch (_: Exception) {
                 } finally {
                     try {
