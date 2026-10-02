@@ -32,8 +32,12 @@ class RingtonePickerActivity : AppCompatActivity() {
         val uri = res.data?.getStringExtra(EXTRA_URI) ?: return@registerForActivityResult
         val label = res.data?.getStringExtra(EXTRA_LABEL) ?: "Bài hát"
         selectedUri = uri
-        Toast.makeText(this, "Đã chọn: $label", Toast.LENGTH_SHORT).show()
-        rebuild()
+        CustomRingtones.add(this, android.net.Uri.parse(uri), label)
+        setResult(Activity.RESULT_OK, Intent().apply {
+            putExtra(EXTRA_URI, uri)
+            putExtra(EXTRA_LABEL, label)
+        })
+        finish()
     }
 
     private val openDoc = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -95,6 +99,7 @@ class RingtonePickerActivity : AppCompatActivity() {
         rows += ToneRow.Tone("open:spotify", "Spotify", false)
         rows += ToneRow.Tone("open:ytm", "YouTube Music", false)
         rows += ToneRow.Tone("open:tiktok", "TikTok", false)
+        rows += ToneRow.Tone("open:zedge", "Zedge", false)
         rows += ToneRow.Header("Âm thanh của bạn")
         val custom = CustomRingtones.list(this)
         if (custom.isEmpty()) {
@@ -141,6 +146,7 @@ class RingtonePickerActivity : AppCompatActivity() {
         if (uri.startsWith("music:spotify:")) return "Spotify"
         if (uri.startsWith("music:ytm:")) return "YouTube Music"
         if (uri.startsWith("music:tiktok:")) return "TikTok"
+        if (uri.startsWith("music:zedge:")) return "Zedge"
         CustomRingtones.list(this).find { it.uri == uri }?.let { return it.name }
         if (uri.startsWith("app:")) return AppRingtones.labelOf(uri)
         return "Chuông tùy chọn"
@@ -206,7 +212,7 @@ class ToneAdapter(private val onPick: (ToneRow.Tone) -> Unit) :
         fun bind(row: ToneRow.Tone) {
             itemView.findViewById<TextView>(R.id.tvToneName).text = row.name
             val mark = itemView.findViewById<TextView>(R.id.tvSelected)
-            mark.visibility = if (row.uri == selected) View.VISIBLE else View.GONE
+            mark.visibility = if (row.uri == selected && !row.uri.startsWith("open:")) View.VISIBLE else View.GONE
             val icon = itemView.findViewById<ImageView>(R.id.ivToneIcon)
             if (row.uri == "open:spotify" || row.uri.startsWith("music:spotify:")) {
                 icon.visibility = View.VISIBLE
@@ -217,6 +223,9 @@ class ToneAdapter(private val onPick: (ToneRow.Tone) -> Unit) :
             } else if (row.uri == "open:tiktok" || row.uri.startsWith("music:tiktok:")) {
                 icon.visibility = View.VISIBLE
                 icon.setImageResource(R.drawable.ic_tiktok)
+            } else if (row.uri == "open:zedge" || row.uri.startsWith("music:zedge:")) {
+                icon.visibility = View.VISIBLE
+                icon.setImageResource(R.drawable.ic_zedge)
             } else icon.visibility = View.GONE
             val night = (itemView.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES || AppSettings.getDarkMode(itemView.context) == 1
             if (night && icon.visibility == View.VISIBLE) icon.setColorFilter(android.graphics.Color.WHITE) else icon.clearColorFilter()
@@ -228,9 +237,16 @@ class ToneAdapter(private val onPick: (ToneRow.Tone) -> Unit) :
                     act?.openMusic(MusicLibraryActivity.SRC_YTM)
                 } else if (row.uri == "open:tiktok") {
                     act?.openMusic(MusicLibraryActivity.SRC_TIKTOK)
+                } else if (row.uri == "open:zedge") {
+                    act?.openMusic(MusicLibraryActivity.SRC_ZEDGE)
                 } else onPick(row)
             }
             itemView.findViewById<View>(R.id.btnToneMore).setOnClickListener {
+                val act = itemView.context as? RingtonePickerActivity
+                if (row.uri == "open:spotify") { act?.openMusic(MusicLibraryActivity.SRC_SPOTIFY); return@setOnClickListener }
+                if (row.uri == "open:ytm") { act?.openMusic(MusicLibraryActivity.SRC_YTM); return@setOnClickListener }
+                if (row.uri == "open:tiktok") { act?.openMusic(MusicLibraryActivity.SRC_TIKTOK); return@setOnClickListener }
+                if (row.uri == "open:zedge") { act?.openMusic(MusicLibraryActivity.SRC_ZEDGE); return@setOnClickListener }
                 if (!row.user) {
                     onPick(row)
                     return@setOnClickListener

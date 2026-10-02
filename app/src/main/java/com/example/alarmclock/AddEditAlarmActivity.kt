@@ -43,6 +43,10 @@ class AddEditAlarmActivity : AppCompatActivity() {
     private val pickTone = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
         if (res.resultCode != RESULT_OK) return@registerForActivityResult
         ringtoneUri = res.data?.getStringExtra(RingtonePickerActivity.EXTRA_URI) ?: ringtoneUri
+        val label = res.data?.getStringExtra(RingtonePickerActivity.EXTRA_LABEL)
+        if (!ringtoneUri.isNullOrBlank() && !label.isNullOrBlank()) {
+            CustomRingtones.add(this, android.net.Uri.parse(ringtoneUri), label)
+        }
         refreshUi()
     }
 

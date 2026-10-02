@@ -242,7 +242,11 @@ class MusicLibraryActivity : AppCompatActivity() {
     }
 
     private fun fetch(query: String): List<Song> {
-        return if (source == SRC_SPOTIFY) tryDeezer(query) else tryItunes(query)
+        return when (source) {
+            SRC_SPOTIFY -> tryDeezer(query)
+            SRC_ZEDGE -> tryZedge(query)
+            else -> tryItunes(query)
+        }
     }
 
     private fun tryDeezer(query: String): List<Song> {
@@ -303,16 +307,21 @@ class MusicLibraryActivity : AppCompatActivity() {
             val art = ImageView(this).apply {
                 layoutParams = LinearLayout.LayoutParams((52 * d).toInt(), (52 * d).toInt())
                 scaleType = ImageView.ScaleType.CENTER_CROP
-                setImageResource(iconOf())
-                if (night) setColorFilter(Color.WHITE)
+                background = android.graphics.drawable.GradientDrawable().apply {
+                    cornerRadius = 12 * d
+                    setColor(0xFF5B6CFF.toInt())
+                }
+                clipToOutline = true
+                outlineProvider = object : android.view.ViewOutlineProvider() {
+                    override fun getOutline(view: android.view.View, outline: android.graphics.Outline) {
+                        outline.setRoundRect(0, 0, view.width, view.height, 12 * d)
+                    }
+                }
+                setImageBitmap(letterIcon(song.title, (52 * d).toInt()))
             }
             if (song.cover.startsWith("http")) io.execute {
-                val bmp = try {
-                    val c = URL(song.cover).openConnection() as HttpURLConnection
-                    val b = BitmapFactory.decodeStream(c.inputStream)
-                    c.disconnect(); b
-                } catch (_: Exception) { null }
-                if (bmp != null) runOnUiThread { art.clearColorFilter(); art.setImageBitmap(bmp) }
+                val bmp = loadCover(song.cover)
+                if (bmp != null) runOnUiThread { art.setImageBitmap(bmp) }
             }
             val playing = playingId == song.id
             val names = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
@@ -441,6 +450,7 @@ class MusicLibraryActivity : AppCompatActivity() {
         val uri = when (source) {
             SRC_SPOTIFY -> if (q.isEmpty()) null else "spotify:search:${Uri.encode(q)}"
             SRC_YTM -> if (q.isEmpty()) null else "https://music.youtube.com/search?q=${Uri.encode(q)}"
+            SRC_ZEDGE -> if (q.isEmpty()) null else "https://www.zedge.net/find/ringtones/${Uri.encode(q)}"
             else -> if (q.isEmpty()) null else "https://www.tiktok.com/search?q=${Uri.encode(q)}"
         }
         if (uri != null) {
@@ -453,6 +463,7 @@ class MusicLibraryActivity : AppCompatActivity() {
     private fun pkg(): String = when (source) {
         SRC_YTM -> PKG_YTM
         SRC_TIKTOK -> tiktokPkg()
+        SRC_ZEDGE -> PKG_ZEDGE
         else -> PKG_SPOTIFY
     }
 
@@ -473,9 +484,68 @@ class MusicLibraryActivity : AppCompatActivity() {
         } catch (_: Exception) { true }
     }
 
-    private fun titleOf() = when (source) { SRC_YTM -> "YouTube Music"; SRC_TIKTOK -> "TikTok"; else -> "Spotify" }
-    private fun iconOf() = when (source) { SRC_YTM -> R.drawable.ic_youtube_music; SRC_TIKTOK -> R.drawable.ic_tiktok; else -> R.drawable.ic_spotify }
-    private fun defaultQuery() = when (source) { SRC_TIKTOK -> "nhac tiktok"; SRC_YTM -> "nhac tre"; else -> "vietnam pop" }
+    private fun titleOf() = when (source) { SRC_YTM -> "YouTube Music"; SRC_TIKTOK -> "TikTok"; SRC_ZEDGE -> "Zedge"; else -> "Spotify" }
+    private fun iconOf() = when (source) { SRC_YTM -> R.drawable.ic_youtube_music; SRC_TIKTOK -> R.drawable.ic_tiktok; SRC_ZEDGE -> R.drawable.ic_zedge; else -> R.drawable.ic_spotify }
+    private fun defaultQuery() = when (source) { SRC_TIKTOK -> "nhac tiktok"; SRC_YTM -> "nhac tre"; SRC_ZEDGE -> "alarm"; else -> "vietnam pop" }
+
+    private fun letterIcon(title: String, size: Int): android.graphics.Bitmap {
+        val bmp = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bmp)
+        val bg = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { color = 0xFF5B6CFF.toInt() }
+        canvas.drawRect(0f, 0f, size.toFloat(), size.toFloat(), bg)
+        val letter = title.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "Z"
+        val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            textSize = size * 0.46f
+            textAlign = android.graphics.Paint.Align.CENTER
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+        }
+        val y = size / 2f - (paint.descent() + paint.ascent()) / 2f
+        canvas.drawText(letter, size / 2f, y, paint)
+        return bmp
+    }
+
+    private fun loadCover(url: String): android.graphics.Bitmap? {
+        return try {
+            val conn = URL(url).openConnection() as HttpURLConnection
+            conn.connectTimeout = 8000
+            conn.readTimeout = 8000
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0")
+            conn.instanceFollowRedirects = true
+            val bmp = BitmapFactory.decodeStream(conn.inputStream)
+            conn.disconnect()
+            bmp
+        } catch (_: Exception) { null }
+    }
+
+    private fun tryZedge(query: String): List<Song> {
+        return try {
+            val q = query.ifBlank { "alarm" }
+            val url = "https://www.zedge.net/find/ringtones/" + URLEncoder.encode(q, "UTF-8")
+            val conn = URL(url).openConnection() as HttpURLConnection
+            conn.connectTimeout = 10000
+            conn.readTimeout = 10000
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0")
+            conn.instanceFollowRedirects = true
+            val html = conn.inputStream.bufferedReader().readText()
+            conn.disconnect()
+            val chunks = html.split("href=\"/ringtones/")
+            buildList {
+                for (chunk in chunks.drop(1).take(25)) {
+                    val id = chunk.substringBefore("\"").take(80)
+                    if (id.length < 8) continue
+                    val title = Regex("aria-label=\"Ringtone: ([^\"]+)\"").find(chunk)?.groupValues?.get(1)
+                        ?: Regex(">([^<]{2,60})</p>").find(chunk)?.groupValues?.get(1)
+                        ?: continue
+                    val cover = Regex("background-image:url\((https://[^)]+)\)").find(chunk)?.groupValues?.get(1).orEmpty()
+                    val preview = Regex("https://dw\\.zobj\\.net/download/v1/[^\"\\]+").find(chunk)?.value
+                        ?.replace("\\u0026", "&")
+                        ?: ""
+                    add(Song(id, title, "Zedge", cover, preview))
+                }
+            }
+        } catch (_: Exception) { emptyList() }
+    }
 
     private fun isNight(): Boolean {
         val mode = AppSettings.getDarkMode(this)
@@ -518,7 +588,9 @@ class MusicLibraryActivity : AppCompatActivity() {
         const val SRC_SPOTIFY = "spotify"
         const val SRC_YTM = "ytm"
         const val SRC_TIKTOK = "tiktok"
+        const val SRC_ZEDGE = "zedge"
         const val PKG_SPOTIFY = "com.spotify.music"
+        const val PKG_ZEDGE = "net.zedge.android"
         const val PKG_YTM = "com.google.android.apps.youtube.music"
         private const val TAB_SONGS = 0
         private const val TAB_FAV = 1
