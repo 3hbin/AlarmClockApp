@@ -314,46 +314,62 @@ class MusicLibraryActivity : AppCompatActivity() {
                 } catch (_: Exception) { null }
                 if (bmp != null) runOnUiThread { art.clearColorFilter(); art.setImageBitmap(bmp) }
             }
-            val wave = WaveView(this).apply {
-                layoutParams = LinearLayout.LayoutParams((36 * d).toInt(), (28 * d).toInt())
-                visibility = if (playingId == song.id) View.VISIBLE else View.GONE
-            }
+            val playing = playingId == song.id
             val names = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
             names.addView(TextView(this).apply {
                 text = song.title
-                textSize = 16f
+                textSize = 15f
+                maxLines = 2
+                ellipsize = android.text.TextUtils.TruncateAt.END
                 setTextColor(if (night) Color.WHITE else 0xFF1A1C28.toInt())
             })
             names.addView(TextView(this).apply {
-                text = song.artist
-                textSize = 13f
-                setTextColor(0xFF8A8F98.toInt())
+                text = if (playing) "Đang nghe · ${song.artist}" else song.artist
+                textSize = 12f
+                maxLines = 1
+                ellipsize = android.text.TextUtils.TruncateAt.END
+                setTextColor(if (playing) 0xFF5B6CFF.toInt() else 0xFF8A8F98.toInt())
             })
-            val heart = MaterialButton(this).apply {
-                setText(if (MusicAccounts.isFavorite(this@MusicLibraryActivity, source, song.id)) "♥" else "♡")
+            val heart = ImageView(this).apply {
+                setImageResource(if (MusicAccounts.isFavorite(this@MusicLibraryActivity, source, song.id)) R.drawable.ic_heart_filled else R.drawable.ic_heart_outline)
+                setPadding((10 * d).toInt(), (10 * d).toInt(), (6 * d).toInt(), (10 * d).toInt())
                 setOnClickListener {
                     val on = MusicAccounts.toggleFavorite(this@MusicLibraryActivity, source, song)
-                    setText(if (on) "♥" else "♡")
-                    Toast.makeText(this@MusicLibraryActivity, if (on) "Đã thêm yêu thích" else "Đã bỏ yêu thích", Toast.LENGTH_SHORT).show()
+                    setImageResource(if (on) R.drawable.ic_heart_filled else R.drawable.ic_heart_outline)
                 }
             }
-            val play = MaterialButton(this).apply {
-                setText("Nghe thử")
+            val play = ImageView(this).apply {
+                setImageResource(R.drawable.ic_play_circle)
+                setPadding((6 * d).toInt(), (8 * d).toInt(), (8 * d).toInt(), (8 * d).toInt())
                 setOnClickListener {
-                    MusicAccounts.addRecent(this@MusicLibraryActivity, source, song)
-                    playingId = song.id
-                    playPreview(song)
-                    showTracks(songs)
+                    if (playingId == song.id) {
+                        try { preview?.stop() } catch (_: Exception) {}
+                        playingId = null
+                        showTracks(songs)
+                    } else {
+                        MusicAccounts.addRecent(this@MusicLibraryActivity, source, song)
+                        playingId = song.id
+                        playPreview(song)
+                        showTracks(songs)
+                    }
                 }
             }
             row.addView(art)
-            row.addView(wave)
             row.addView(names, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-                marginStart = (8 * d).toInt()
+                marginStart = (10 * d).toInt()
+                marginEnd = (6 * d).toInt()
             })
-            row.addView(heart)
-            row.addView(play)
-            if (playingId == song.id) wave.start()
+            if (playing) {
+                val wave = WaveView(this).apply {
+                    layoutParams = LinearLayout.LayoutParams((28 * d).toInt(), (22 * d).toInt()).apply {
+                        marginEnd = (4 * d).toInt()
+                    }
+                }
+                row.addView(wave)
+                wave.start()
+            }
+            row.addView(heart, LinearLayout.LayoutParams((44 * d).toInt(), (44 * d).toInt()))
+            row.addView(play, LinearLayout.LayoutParams((44 * d).toInt(), (44 * d).toInt()))
             list.addView(row)
         }
     }
