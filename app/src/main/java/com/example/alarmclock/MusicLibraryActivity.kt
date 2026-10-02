@@ -534,11 +534,11 @@ class MusicLibraryActivity : AppCompatActivity() {
                 for (chunk in chunks.drop(1).take(25)) {
                     val id = chunk.substringBefore("\"").take(80)
                     if (id.length < 8) continue
-                    val title = Regex("aria-label=\"Ringtone: ([^\"]+)\"").find(chunk)?.groupValues?.get(1)
-                        ?: Regex(">([^<]{2,60})</p>").find(chunk)?.groupValues?.get(1)
+                    val title = Regex("""aria-label="Ringtone: ([^"]+)"""").find(chunk)?.groupValues?.get(1)
+                        ?: Regex(""">([^<]{2,60})</p>""").find(chunk)?.groupValues?.get(1)
                         ?: continue
-                    val cover = Regex("background-image:url\((https://[^)]+)\)").find(chunk)?.groupValues?.get(1).orEmpty()
-                    val preview = Regex("https://dw\\.zobj\\.net/download/v1/[^\"\\]+").find(chunk)?.value
+                    val cover = Regex("""background-image:url\((https://[^)]+)\)""").find(chunk)?.groupValues?.get(1).orEmpty()
+                    val preview = Regex("""https://dw\.zobj\.net/download/v1/[^"\\]+""").find(chunk)?.value
                         ?.replace("\\u0026", "&")
                         ?: ""
                     add(Song(id, title, "Zedge", cover, preview))
