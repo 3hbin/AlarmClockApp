@@ -72,6 +72,26 @@ object TonePlayer {
             return
         }
 
+        if (uri.startsWith("file:")) {
+            val path = try { Uri.parse(uri).path } catch (_: Exception) { null }
+            val f = if (path.isNullOrBlank()) null else java.io.File(path)
+            if (f != null && f.exists() && f.length() > 1000) {
+                try {
+                    val mp = MediaPlayer()
+                    mp.setAudioAttributes(attrs)
+                    mp.setDataSource(f.absolutePath)
+                    mp.isLooping = loop
+                    mp.prepare()
+                    mp.start()
+                    player = mp
+                    if (preview) handler.postDelayed(stopTask, 8000L)
+                    return
+                } catch (_: Exception) {}
+            }
+            if (!preview) playAppRaw(app, R.raw.ringtone_oz, loop)
+            return
+        }
+
         val parsed = try { Uri.parse(uri) } catch (_: Exception) { null }
         if (parsed != null) {
             // Ưu tiên Ringtone API cho chuông hệ thống — MediaPlayer hay fail trên Huawei.

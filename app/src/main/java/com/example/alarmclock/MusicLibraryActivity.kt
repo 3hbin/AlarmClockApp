@@ -417,8 +417,25 @@ class MusicLibraryActivity : AppCompatActivity() {
                 val dir = File(filesDir, "music_previews").apply { mkdirs() }
                 val out = File(dir, song.id + ".mp3")
                 val conn = URL(song.preview).openConnection() as HttpURLConnection
+                conn.instanceFollowRedirects = true
+                conn.connectTimeout = 15000
+                conn.readTimeout = 20000
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36")
+                conn.setRequestProperty("Referer", "https://www.zedge.net/")
+                conn.setRequestProperty("Accept", "audio/mpeg,audio/*,*/*")
+                conn.connect()
+                val type = conn.contentType.orEmpty()
+                if (conn.responseCode !in 200..299 || type.contains("text") || type.contains("html")) {
+                    conn.disconnect()
+                    throw IllegalStateException("not audio")
+                }
                 conn.inputStream.use { input -> FileOutputStream(out).use { input.copyTo(it) } }
-                conn.disconnect(); out
+                conn.disconnect()
+                if (out.length() < 8000) {
+                    out.delete()
+                    throw IllegalStateException("too small")
+                }
+                out
             } catch (_: Exception) { null }
             runOnUiThread {
                 loading.stop()

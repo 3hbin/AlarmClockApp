@@ -213,10 +213,14 @@ object CloudSyncHelper {
             if (uid(context) == null) {
                 onDone(false); return
             }
+            val histNow = ChatCloudStore.historyJson(context)
+            if (histNow.isBlank() || histNow == "[]" || !histNow.contains("\"t\"")) {
+                onDone(false); return
+            }
             val payload = hashMapOf<String, Any>(
                 "email" to AppSettings.getRecoveryEmail(context),
                 "updatedAt" to System.currentTimeMillis(),
-                "chatHistory" to ChatCloudStore.historyJson(context),
+                "chatHistory" to histNow,
                 "sessions" to ChatCloudStore.sessions(context).toString()
             )
             val key = ChatCloudStore.geminiKey(context)
@@ -261,7 +265,10 @@ object CloudSyncHelper {
                         ChatCloudStore.historyJson(context).ifBlank { hist }
                     )
                 }
-                .addOnFailureListener { onResult(null, null) }
+                .addOnFailureListener {
+                    Toast.makeText(context, "Không kéo được chat cloud. Cần đăng nhập Google.", Toast.LENGTH_LONG).show()
+                    onResult(null, null)
+                }
         } catch (_: Exception) {
             onResult(null, null)
         }
