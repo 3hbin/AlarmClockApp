@@ -57,7 +57,7 @@ object TonePlayer {
         val app = ctx.applicationContext
         val attrs = if (preview) mediaAttrs() else alarmAttrs()
 
-        if (uri.startsWith("music:spotify:") || uri.startsWith("music:ytm:")) {
+        if (uri.startsWith("music:spotify:") || uri.startsWith("music:ytm:") || uri.startsWith("music:tiktok:")) {
             openMusicApp(app, uri)
             if (!preview) playAppRaw(app, R.raw.ringtone_oz, loop)
             return
@@ -103,7 +103,7 @@ object TonePlayer {
     }
 
     private fun openMusicApp(ctx: Context, uri: String) {
-        val pkg = if (uri.startsWith("music:ytm:")) MusicLibraryActivity.PKG_YTM else MusicLibraryActivity.PKG_SPOTIFY
+        val pkg = when { uri.startsWith("music:ytm:") -> MusicLibraryActivity.PKG_YTM; uri.startsWith("music:tiktok:") -> "com.ss.android.ugc.trill"; else -> MusicLibraryActivity.PKG_SPOTIFY }
         val id = uri.substringAfter("music:spotify:").substringAfter("music:ytm:")
         val view = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
             data = android.net.Uri.parse(if (pkg == MusicLibraryActivity.PKG_SPOTIFY) "spotify:track:$id" else "https://music.youtube.com/watch?v=$id")

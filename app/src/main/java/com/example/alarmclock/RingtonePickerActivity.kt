@@ -94,6 +94,7 @@ class RingtonePickerActivity : AppCompatActivity() {
         rows += ToneRow.Header("Nhạc trực tuyến")
         rows += ToneRow.Tone("open:spotify", "Spotify", false)
         rows += ToneRow.Tone("open:ytm", "YouTube Music", false)
+        rows += ToneRow.Tone("open:tiktok", "TikTok", false)
         rows += ToneRow.Header("Âm thanh của bạn")
         val custom = CustomRingtones.list(this)
         if (custom.isEmpty()) {
@@ -139,6 +140,7 @@ class RingtonePickerActivity : AppCompatActivity() {
         if (uri == "silent:") return "Im lặng"
         if (uri.startsWith("music:spotify:")) return "Spotify"
         if (uri.startsWith("music:ytm:")) return "YouTube Music"
+        if (uri.startsWith("music:tiktok:")) return "TikTok"
         CustomRingtones.list(this).find { it.uri == uri }?.let { return it.name }
         if (uri.startsWith("app:")) return AppRingtones.labelOf(uri)
         return "Chuông tùy chọn"
@@ -212,6 +214,9 @@ class ToneAdapter(private val onPick: (ToneRow.Tone) -> Unit) :
             } else if (row.uri == "open:ytm" || row.uri.startsWith("music:ytm:")) {
                 icon.visibility = View.VISIBLE
                 icon.setImageResource(R.drawable.ic_youtube_music)
+            } else if (row.uri == "open:tiktok" || row.uri.startsWith("music:tiktok:")) {
+                icon.visibility = View.VISIBLE
+                icon.setImageResource(R.drawable.ic_tiktok)
             } else icon.visibility = View.GONE
             val night = (itemView.resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES || AppSettings.getDarkMode(itemView.context) == 1
             if (night && icon.visibility == View.VISIBLE) icon.setColorFilter(android.graphics.Color.WHITE) else icon.clearColorFilter()
@@ -221,6 +226,8 @@ class ToneAdapter(private val onPick: (ToneRow.Tone) -> Unit) :
                     act?.openMusic(MusicLibraryActivity.SRC_SPOTIFY)
                 } else if (row.uri == "open:ytm") {
                     act?.openMusic(MusicLibraryActivity.SRC_YTM)
+                } else if (row.uri == "open:tiktok") {
+                    act?.openMusic(MusicLibraryActivity.SRC_TIKTOK)
                 } else onPick(row)
             }
             itemView.findViewById<View>(R.id.btnToneMore).setOnClickListener {
