@@ -54,7 +54,10 @@ class ChatActivity : AppCompatActivity() {
     }
     private val signInLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         GoogleSignInHelper.handleResult(this, result.data)
-        if (signedIn()) showChat() else showGate("Chưa đăng nhập được. Thử lại.")
+        if (signedIn()) {
+            CloudSyncHelper.syncOnLogin(this)
+            showChat()
+        } else showGate("Chưa đăng nhập được. Thử lại.")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -119,10 +122,14 @@ class ChatActivity : AppCompatActivity() {
             if (!key.isNullOrBlank() && prefs.getString("key", "").isNullOrBlank()) {
                 prefs.edit().putString("key", key).apply()
             }
-            if (!hist.isNullOrBlank() && (prefs.getString("history", "[]") == "[]" || prefs.getString("history", "[]").isNullOrBlank())) {
-                prefs.edit().putString("history", hist).apply()
-                if (logRef?.childCount == 0 || history.length() == 0) {
-                    runOnUiThread { reloadHistoryBubbles() }
+            if (!hist.isNullOrBlank() && hist != "[]") {
+                val local = prefs.getString("history", "[]").orEmpty()
+                if (local == "[]" || local.length < hist.length) prefs.edit().putString("history", hist).apply()
+            }
+            runOnUiThread {
+                reloadHistoryBubbles()
+                if (!key.isNullOrBlank() || (hist != null && hist != "[]")) {
+                    android.widget.Toast.makeText(this, "Đã kéo lại khóa và lịch sử chat", android.widget.Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -290,7 +297,7 @@ class ChatActivity : AppCompatActivity() {
         val old = try { JSONArray(saved) } catch (_: Exception) { JSONArray() }
         addPinnedBanner()
         if (old.length() == 0) {
-            addBubble("Chào bạn. Nhắn “đặt báo thức 6:07 nhãn Toán” hoặc bấm gợi ý phía dưới.", mine = false, save = true, actions = false)
+            addBubble("Chào bạn. Nhắn “đặt báo thức 6:07 nhãn Toán” hoặc bấm gợi ý phía dưới.", mine = false, save = false, actions = false)
         } else {
             var lastDay = ""
             for (i in 0 until old.length()) {

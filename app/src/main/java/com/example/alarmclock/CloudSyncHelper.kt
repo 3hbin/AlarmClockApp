@@ -24,10 +24,9 @@ object CloudSyncHelper {
     }
 
     private fun uid(context: Context): String? {
-        val fromAuth = try { FirebaseAuth.getInstance().currentUser?.uid } catch (_: Exception) { null }
-        if (!fromAuth.isNullOrBlank()) return fromAuth
-        val email = AppSettings.getRecoveryEmail(context).ifBlank { null } ?: return null
-        return email.replace(".", "_").replace("@", "_at_")
+        val email = AppSettings.getRecoveryEmail(context).trim().lowercase()
+        if (email.isNotBlank()) return email.replace(".", "_").replace("@", "_at_")
+        return try { FirebaseAuth.getInstance().currentUser?.uid } catch (_: Exception) { null }
     }
 
     private fun doc(context: Context) =
@@ -144,9 +143,11 @@ object CloudSyncHelper {
             val payload = hashMapOf<String, Any>(
                 "email" to AppSettings.getRecoveryEmail(context),
                 "updatedAt" to System.currentTimeMillis(),
-                "geminiKey" to ChatCloudStore.geminiKey(context),
-                "chatHistory" to ChatCloudStore.historyJson(context)
+                "chatHistory" to ChatCloudStore.historyJson(context),
+                "sessions" to ChatCloudStore.sessions(context).toString()
             )
+            val key = ChatCloudStore.geminiKey(context)
+            if (key.isNotBlank()) payload["geminiKey"] = key
             doc(context).set(payload, SetOptions.merge())
                 .addOnSuccessListener { onDone(true) }
                 .addOnFailureListener { e ->
@@ -170,14 +171,17 @@ object CloudSyncHelper {
                 .addOnSuccessListener { snap ->
                     val key = snap.getString("geminiKey")
                     val hist = snap.getString("chatHistory")
+                    val sessions = snap.getString("sessions")
                     if (!key.isNullOrBlank() && ChatCloudStore.geminiKey(context).isBlank()) {
                         ChatCloudStore.saveKey(context, key)
                     }
-                    if (!hist.isNullOrBlank() && hist != "[]") {
-                        val local = ChatCloudStore.historyJson(context)
-                        if (local == "[]" || local.length < hist.length) {
-                            ChatCloudStore.saveHistory(context, hist)
-                        }
+                    val local = ChatCloudStore.historyJson(context)
+                    val localEmpty = local == "[]" || local.isBlank() || !local.contains("\"t\"")
+                    if (!hist.isNullOrBlank() && hist != "[]" && (localEmpty || local.length < hist.length)) {
+                        ChatCloudStore.saveHistory(context, hist)
+                    }
+                    if (!sessions.isNullOrBlank() && sessions != "[]") {
+                        ChatCloudStore.prefs(context).edit().putString("sessions", sessions).apply()
                     }
                     onResult(
                         ChatCloudStore.geminiKey(context).ifBlank { key },

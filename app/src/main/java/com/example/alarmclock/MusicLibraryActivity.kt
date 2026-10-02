@@ -530,7 +530,10 @@ class MusicLibraryActivity : AppCompatActivity() {
             val html = conn.inputStream.bufferedReader().readText()
             conn.disconnect()
             val chunks = html.split("href=\"/ringtones/")
+            val previews = Regex("""https://dw\.zobj\.net/download/v1/[^"\s<]+""")
+                .findAll(html).map { it.value.replace("\\u0026", "&").replace("\\/", "/") }.toList()
             buildList {
+                var i = 0
                 for (chunk in chunks.drop(1).take(25)) {
                     val id = chunk.substringBefore("\"").take(80)
                     if (id.length < 8) continue
@@ -538,9 +541,8 @@ class MusicLibraryActivity : AppCompatActivity() {
                         ?: Regex(""">([^<]{2,60})</p>""").find(chunk)?.groupValues?.get(1)
                         ?: continue
                     val cover = Regex("""background-image:url\((https://[^)]+)\)""").find(chunk)?.groupValues?.get(1).orEmpty()
-                    val preview = Regex("""https://dw\.zobj\.net/download/v1/[^"\\]+""").find(chunk)?.value
-                        ?.replace("\\u0026", "&")
-                        ?: ""
+                    val preview = previews.getOrNull(i).orEmpty()
+                    i++
                     add(Song(id, title, "Zedge", cover, preview))
                 }
             }
