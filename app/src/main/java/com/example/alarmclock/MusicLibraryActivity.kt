@@ -245,7 +245,8 @@ class MusicLibraryActivity : AppCompatActivity() {
         return if (source == SRC_SPOTIFY) tryDeezer(query) else tryItunes(query)
     }
 
-    private fun tryDeezer(query: String): List<Song> = try {
+    private fun tryDeezer(query: String): List<Song> {
+        return try {
         val url = "https://api.deezer.com/search?limit=25&q=" + URLEncoder.encode(query, "UTF-8")
         val conn = URL(url).openConnection() as HttpURLConnection
         conn.connectTimeout = 8000
@@ -264,9 +265,11 @@ class MusicLibraryActivity : AppCompatActivity() {
                     o.optString("preview")))
             }
         }
-    } catch (_: Exception) { emptyList() }
+        } catch (_: Exception) { emptyList() }
+    }
 
-    private fun tryItunes(query: String): List<Song> = try {
+    private fun tryItunes(query: String): List<Song> {
+        return try {
         val url = "https://itunes.apple.com/search?limit=25&entity=song&term=" + URLEncoder.encode(query, "UTF-8")
         val conn = URL(url).openConnection() as HttpURLConnection
         conn.connectTimeout = 10000
@@ -283,7 +286,8 @@ class MusicLibraryActivity : AppCompatActivity() {
                     o.optString("artworkUrl100"), o.optString("previewUrl")))
             }
         }
-    } catch (_: Exception) { emptyList() }
+        } catch (_: Exception) { emptyList() }
+    }
 
     private fun showTracks(songs: List<Song>) {
         list.removeAllViews()
@@ -444,12 +448,14 @@ class MusicLibraryActivity : AppCompatActivity() {
 
     private fun isInstalled(): Boolean = try { packageManager.getPackageInfo(pkg(), 0); true } catch (_: Exception) { false }
 
-    private fun online(): Boolean = try {
-        val cm = getSystemService(ConnectivityManager::class.java)
-        val net = cm.activeNetwork ?: return false
-        val caps = cm.getNetworkCapabilities(net) ?: return false
-        caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-    } catch (_: Exception) { true }
+    private fun online(): Boolean {
+        return try {
+            val cm = getSystemService(ConnectivityManager::class.java)
+            val net = cm.activeNetwork ?: return false
+            val caps = cm.getNetworkCapabilities(net) ?: return false
+            caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        } catch (_: Exception) { true }
+    }
 
     private fun titleOf() = when (source) { SRC_YTM -> "YouTube Music"; SRC_TIKTOK -> "TikTok"; else -> "Spotify" }
     private fun iconOf() = when (source) { SRC_YTM -> R.drawable.ic_youtube_music; SRC_TIKTOK -> R.drawable.ic_tiktok; else -> R.drawable.ic_spotify }
