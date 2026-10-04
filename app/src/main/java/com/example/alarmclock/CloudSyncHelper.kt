@@ -154,7 +154,7 @@ object CloudSyncHelper {
                 }
 
                 // 3) Ghi hai đường dẫn để so sánh
-                val col = FirebaseFirestore.getInstance().collection("users")
+                val col = FirebaseFirestore.getInstance(FirebaseApp.getInstance(), FirestoreRest.DB_ID).collection("users")
                 fun testWrite(label: String, id: String?) {
                     if (id.isNullOrBlank()) { put(label, "bỏ qua (không có id)"); return }
                     val ref = col.document(id).collection("data").document("diag")
@@ -254,7 +254,7 @@ object CloudSyncHelper {
     }
 
     private fun doc(context: Context) =
-        FirebaseFirestore.getInstance().collection("users").document(uid(context) ?: "anon")
+        FirebaseFirestore.getInstance(FirebaseApp.getInstance(), FirestoreRest.DB_ID).collection("users").document(uid(context) ?: "anon")
             .collection("data").document("backup")
 
     fun syncOnLogin(context: Context) {

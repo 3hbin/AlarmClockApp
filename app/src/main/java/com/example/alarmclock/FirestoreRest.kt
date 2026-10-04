@@ -22,9 +22,12 @@ object FirestoreRest {
     private const val TAG = "FirestoreRest"
     private val main = Handler(Looper.getMainLooper())
 
+    /** Tên database Firestore của dự án (database tên "default", không phải "(default)"). */
+    const val DB_ID = "default"
+
     private fun base(): String {
         val pid = FirebaseApp.getInstance().options.projectId
-        return "https://firestore.googleapis.com/v1/projects/$pid/databases/(default)/documents/"
+        return "https://firestore.googleapis.com/v1/projects/$pid/databases/$DB_ID/documents/"
     }
 
     private fun token(cb: (String?, Exception?) -> Unit) {
