@@ -81,71 +81,104 @@ object CloudSyncHelper {
         )
     }
 
-    /** Kiểm tra từng bước: Google -> Firebase Auth -> ghi/đọc Firestore (có timeout 15s). */
+    /** Chẩn đoán song song: token, mạng tới Google, ghi đường dẫn uid và đường dẫn email (timeout 15s). */
     fun diagnose(context: Context, onResult: (String) -> Unit) {
-        val sb = StringBuilder()
-        fun line(t: String) { sb.append(t).append("\n") }
+        val head = StringBuilder()
+        val results = java.util.LinkedHashMap<String, String>()
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        val labels = listOf("Token", "Mạng firestore", "Mạng securetoken", "Mạng identitytoolkit", "Ghi path UID", "Ghi path EMAIL")
+        var done = false
         fun hint(msg: String?): String = when {
             msg == null -> ""
-            msg.contains("PERMISSION_DENIED", true) -> "\n→ Firestore Rules đang chặn ghi. Sửa ở Firestore → Rules."
-            msg.contains("UNAVAILABLE", true) || msg.contains("offline", true) -> "\n→ Không chạm được server (mạng / bị chặn)."
-            msg.contains("NOT_FOUND", true) -> "\n→ Chưa tạo database Firestore (hoặc sai tên database)."
-            msg.contains("operation-not-allowed", true) || msg.contains("OPERATION_NOT_ALLOWED", true) ->
-                "\n→ Chưa bật Google trong Authentication → Sign-in method."
-            msg.contains("API key", true) || msg.contains("API_KEY", true) -> "\n→ API key trong google-services.json bị hạn chế / sai."
+            msg.contains("PERMISSION_DENIED", true) -> " → Rules chặn"
+            msg.contains("UNAVAILABLE", true) -> " → không chạm được server"
+            msg.contains("NOT_FOUND", true) -> " → chưa tạo database"
             else -> ""
         }
-        init(context)
-        val handler = android.os.Handler(android.os.Looper.getMainLooper())
-        var done = false
-        fun finish(last: String) {
+        fun finish() {
             if (done) return
             done = true
             handler.removeCallbacksAndMessages(null)
-            line(last)
+            val sb = StringBuilder(head)
+            labels.forEach { l -> sb.append(l).append(": ").append(results[l] ?: "⏱ KHÔNG phản hồi (15s)").append("\n") }
             onResult(sb.toString())
         }
-        handler.postDelayed({
-            finish("⏱ Quá 15 giây không có phản hồi từ server.\n→ Ghi bị treo: thường do mạng, Firestore chưa tạo, hoặc Firestore API bị tắt.")
-        }, 15000)
+        fun put(label: String, v: String) {
+            handler.post {
+                if (done) return@post
+                results[label] = v
+                if (results.size == labels.size) finish()
+            }
+        }
+        init(context)
+        handler.postDelayed({ finish() }, 15000)
         try {
             val acct = try {
                 com.google.android.gms.auth.api.signin.GoogleSignIn.getLastSignedInAccount(context)
             } catch (_: Exception) { null }
-            line("Email đã lưu: " + AppSettings.getRecoveryEmail(context).ifBlank { "(trống)" })
-            line("Google: " + (acct?.email ?: "(chưa đăng nhập)") + " · idToken: " + if (acct?.idToken.isNullOrBlank()) "KHÔNG có" else "có")
-            val step2 = {
+            val email = AppSettings.getRecoveryEmail(context).trim().lowercase()
+            head.append("v").append(try { context.packageManager.getPackageInfo(context.packageName, 0).versionName } catch (_: Exception) { "?" }).append("\n")
+            head.append("Google: ").append(acct?.email ?: "(chưa đăng nhập)")
+                .append(" · idToken: ").append(if (acct?.idToken.isNullOrBlank()) "KHÔNG" else "có").append("\n")
+
+            val run = {
                 val user = FirebaseAuth.getInstance().currentUser
-                line("Firebase Auth: " + (user?.uid ?: "CHƯA đăng nhập"))
-                try {
-                    val d = doc(context)
-                    line("Đường dẫn: " + d.path)
-                    val ref = d.parent.document("diag")
-                    ref.set(hashMapOf<String, Any>("t" to System.currentTimeMillis()))
-                        .addOnSuccessListener {
-                            ref.get(com.google.firebase.firestore.Source.SERVER)
-                                .addOnSuccessListener { finish("✅ Ghi + đọc từ server OK. Cloud hoạt động.") }
-                                .addOnFailureListener { e -> finish("⚠ Ghi OK nhưng đọc server lỗi: " + e.message + hint(e.message)) }
-                        }
-                        .addOnFailureListener { e -> finish("❌ Ghi lỗi: " + e.message + hint(e.message)) }
-                } catch (e: Exception) {
-                    finish("❌ Lỗi: " + e.message)
+                head.append("Firebase uid: ").append(user?.uid ?: "CHƯA đăng nhập").append("\n")
+
+                // 1) Token
+                if (user == null) put("Token", "bỏ qua (chưa đăng nhập Firebase)")
+                else {
+                    val t0 = System.currentTimeMillis()
+                    user.getIdToken(false)
+                        .addOnSuccessListener { put("Token", "✅ OK (" + (System.currentTimeMillis() - t0) + "ms)") }
+                        .addOnFailureListener { e -> put("Token", "❌ " + e.message) }
                 }
+
+                // 2) Mạng tới các host Google
+                listOf(
+                    "Mạng firestore" to "https://firestore.googleapis.com/",
+                    "Mạng securetoken" to "https://securetoken.googleapis.com/",
+                    "Mạng identitytoolkit" to "https://identitytoolkit.googleapis.com/"
+                ).forEach { (label, url) ->
+                    Thread {
+                        val t0 = System.currentTimeMillis()
+                        val r = try {
+                            val c = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+                            c.connectTimeout = 8000; c.readTimeout = 8000
+                            val code = c.responseCode
+                            c.disconnect()
+                            "✅ HTTP $code (" + (System.currentTimeMillis() - t0) + "ms)"
+                        } catch (e: Exception) { "❌ " + e.javaClass.simpleName + ": " + e.message }
+                        put(label, r)
+                    }.start()
+                }
+
+                // 3) Ghi hai đường dẫn để so sánh
+                val col = FirebaseFirestore.getInstance().collection("users")
+                fun testWrite(label: String, id: String?) {
+                    if (id.isNullOrBlank()) { put(label, "bỏ qua (không có id)"); return }
+                    val ref = col.document(id).collection("data").document("diag")
+                    val t0 = System.currentTimeMillis()
+                    ref.set(hashMapOf<String, Any>("t" to System.currentTimeMillis()))
+                        .addOnSuccessListener { put(label, "✅ OK (" + (System.currentTimeMillis() - t0) + "ms)") }
+                        .addOnFailureListener { e -> put(label, "❌ " + e.message + hint(e.message)) }
+                }
+                testWrite("Ghi path UID", user?.uid)
+                testWrite("Ghi path EMAIL", if (email.isNotBlank()) email.replace(".", "_").replace("@", "_at_") else null)
             }
-            if (FirebaseAuth.getInstance().currentUser != null) {
-                step2()
-            } else if (acct?.idToken.isNullOrBlank()) {
-                line("Không có idToken -> không đăng nhập Firebase được (dùng đường dẫn email).")
-                step2()
+
+            if (FirebaseAuth.getInstance().currentUser != null || acct?.idToken.isNullOrBlank()) {
+                run()
             } else {
                 val cred = com.google.firebase.auth.GoogleAuthProvider.getCredential(acct!!.idToken!!, null)
                 FirebaseAuth.getInstance().signInWithCredential(cred).addOnCompleteListener { t ->
-                    if (!t.isSuccessful) line("❌ Firebase Auth lỗi: " + t.exception?.message + hint(t.exception?.message))
-                    step2()
+                    if (!t.isSuccessful) head.append("❌ Firebase Auth: ").append(t.exception?.message).append("\n")
+                    run()
                 }
             }
         } catch (e: Exception) {
-            finish("❌ Lỗi: " + e.message)
+            head.append("❌ Lỗi: ").append(e.message).append("\n")
+            finish()
         }
     }
 
