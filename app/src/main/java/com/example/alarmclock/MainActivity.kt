@@ -1032,23 +1032,6 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
-    private fun showCloudCheck() {
-        Toast.makeText(this, "Đang kiểm tra cloud…", Toast.LENGTH_SHORT).show()
-        CloudSyncHelper.diagnose(this) { text ->
-            if (isFinishing || isDestroyed) return@diagnose
-            val tv = android.widget.TextView(this).apply {
-                this.text = text
-                setTextIsSelectable(true)
-                setPadding(48, 32, 48, 0)
-            }
-            androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Kiểm tra cloud")
-                .setView(tv)
-                .setPositiveButton("Đóng", null)
-                .show()
-        }
-    }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_app_lock -> {
@@ -1089,10 +1072,6 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.menu_history -> {
                 showAlarmHistoryDialog()
-                return true
-            }
-            R.id.menu_cloud_check -> {
-                showCloudCheck()
                 return true
             }
             R.id.menu_version -> {
