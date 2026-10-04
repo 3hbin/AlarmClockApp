@@ -26,10 +26,30 @@ object AlarmHistory {
         list.add(0, Event(System.currentTimeMillis(), label, hour, minute, action))
         while (list.size > MAX) list.removeAt(list.lastIndex)
         save(context, list)
+        try { CloudSyncHelper.pushHistoryQuiet(context) } catch (_: Exception) {}
     }
 
-    fun load(context: Context): List<Event> {
-        val raw = context.getSharedPreferences(PREF, Context.MODE_PRIVATE).getString(KEY, "[]") ?: "[]"
+    /** Xóa nhật ký trên máy, KHÔNG đẩy lên cloud (dùng khi đổi sang tài khoản khác). */
+    fun clearLocalOnly(context: Context) {
+        context.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().putString(KEY, "[]").apply()
+    }
+
+    fun exportJson(context: Context): String =
+        context.getSharedPreferences(PREF, Context.MODE_PRIVATE).getString(KEY, "[]") ?: "[]"
+
+    /** Gộp nhật ký từ cloud vào máy (trùng thời điểm + hành động thì bỏ). */
+    fun mergeJson(context: Context, cloudJson: String) {
+        val local = load(context)
+        val merged = (local + parse(cloudJson))
+            .distinctBy { it.timeMs to it.action }
+            .sortedByDescending { it.timeMs }
+            .take(MAX)
+        if (merged != local) save(context, merged)
+    }
+
+    fun load(context: Context): List<Event> = parse(exportJson(context))
+
+    private fun parse(raw: String): List<Event> {
         return try {
             val arr = JSONArray(raw)
             (0 until arr.length()).map { i ->
@@ -49,6 +69,7 @@ object AlarmHistory {
 
     fun clear(context: Context) {
         context.getSharedPreferences(PREF, Context.MODE_PRIVATE).edit().putString(KEY, "[]").apply()
+        try { CloudSyncHelper.pushHistoryQuiet(context) } catch (_: Exception) {}
     }
 
     fun weekSummary(context: Context): String {
