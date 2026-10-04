@@ -86,7 +86,7 @@ object CloudSyncHelper {
         val head = StringBuilder()
         val results = java.util.LinkedHashMap<String, String>()
         val handler = android.os.Handler(android.os.Looper.getMainLooper())
-        val labels = listOf("Token", "Mạng firestore", "Mạng securetoken", "Mạng identitytoolkit", "Ghi path UID", "Ghi path EMAIL")
+        val labels = listOf("Token", "Mạng firestore", "Mạng securetoken", "Mạng identitytoolkit", "Ghi path UID", "Ghi path EMAIL", "Ghi REST UID")
         var done = false
         fun hint(msg: String?): String = when {
             msg == null -> ""
@@ -163,6 +163,11 @@ object CloudSyncHelper {
                         .addOnSuccessListener { put(label, "✅ OK (" + (System.currentTimeMillis() - t0) + "ms)") }
                         .addOnFailureListener { e -> put(label, "❌ " + e.message + hint(e.message)) }
                 }
+                if (user != null) {
+                    FirestoreRest.set("users/" + user.uid + "/data/diag", hashMapOf<String, Any>("t" to System.currentTimeMillis())) { e ->
+                        put("Ghi REST UID", if (e == null) "✅ OK" else "❌ " + e.message)
+                    }
+                } else put("Ghi REST UID", "bỏ qua (chưa đăng nhập)")
                 testWrite("Ghi path UID", user?.uid)
                 testWrite("Ghi path EMAIL", if (email.isNotBlank()) email.replace(".", "_").replace("@", "_at_") else null)
             }
@@ -189,10 +194,9 @@ object CloudSyncHelper {
             val json = AlarmHistory.exportJson(context)
             ensureAuth(context) {
                 try {
-                    doc(context).set(
-                        hashMapOf<String, Any>("alarmHistory" to json, "historyUpdatedAt" to System.currentTimeMillis()),
-                        SetOptions.merge()
-                    ).addOnFailureListener { reportFailure(context, it) }
+                    fsSet(context, hashMapOf<String, Any>("alarmHistory" to json, "historyUpdatedAt" to System.currentTimeMillis())) { e ->
+                        if (e != null) reportFailure(context, e)
+                    }
                 } catch (e: Exception) { reportFailure(context, e) }
             }
         } catch (_: Exception) {}
@@ -201,12 +205,51 @@ object CloudSyncHelper {
     private fun pullHistory(context: Context) {
         ensureAuth(context) {
             try {
-                doc(context).get().addOnSuccessListener { snap ->
+                fsGet(context, onOk = { snap ->
                     val h = snap.getString("alarmHistory")
                     if (!h.isNullOrBlank()) AlarmHistory.mergeJson(context, h)
                     pushHistoryQuiet(context)
-                }.addOnFailureListener { Log.e(TAG, "pull history failed", it) }
+                }, onFail = { Log.e(TAG, "pull history failed", it) })
             } catch (_: Exception) {}
+        }
+    }
+
+    private class Snap(val data: Map<String, Any?>) {
+        fun get(k: String): Any? = data[k]
+        fun getString(k: String): String? = data[k] as? String
+    }
+
+    /** Ghi: thử HTTPS (REST) trước, lỗi thì quay về SDK gRPC. */
+    private fun fsSet(context: Context, payload: Map<String, Any>, cb: (Exception?) -> Unit) {
+        val d = doc(context)
+        FirestoreRest.set(d.path, payload) { err ->
+            if (err == null) {
+                cb(null)
+            } else {
+                Log.w(TAG, "REST set lỗi, thử gRPC: " + err.message)
+                try {
+                    d.set(payload, SetOptions.merge())
+                        .addOnSuccessListener { cb(null) }
+                        .addOnFailureListener { cb(it) }
+                } catch (e: Exception) { cb(e) }
+            }
+        }
+    }
+
+    /** Đọc: thử HTTPS (REST) trước, lỗi thì quay về SDK gRPC. */
+    private fun fsGet(context: Context, onOk: (Snap) -> Unit, onFail: (Exception) -> Unit) {
+        val d = doc(context)
+        FirestoreRest.get(d.path) { data, err ->
+            if (data != null) {
+                onOk(Snap(data))
+            } else {
+                Log.w(TAG, "REST get lỗi, thử gRPC: " + err?.message)
+                try {
+                    d.get()
+                        .addOnSuccessListener { onOk(Snap(it.data ?: emptyMap())) }
+                        .addOnFailureListener { onFail(it) }
+                } catch (e: Exception) { onFail(e) }
+            }
         }
     }
 
@@ -283,8 +326,7 @@ object CloudSyncHelper {
                         "updatedAt" to System.currentTimeMillis(),
                         "alarms" to alarmsToMaps(alarms)
                     )
-                    doc(context).set(payload, SetOptions.merge())
-                        .addOnFailureListener { reportFailure(context, it) }
+                    fsSet(context, payload) { e -> if (e != null) reportFailure(context, e) }
                 } catch (e: Exception) { reportFailure(context, e) }
             }
         } catch (_: Exception) {}
@@ -307,16 +349,16 @@ object CloudSyncHelper {
                         "alarmHistory" to AlarmHistory.exportJson(context),
                         "alarms" to alarmsToMaps(alarms)
                     )
-                    doc(context).set(payload, SetOptions.merge())
-                        .addOnSuccessListener {
+                    fsSet(context, payload) { e ->
+                        if (e == null) {
                             Toast.makeText(context, "Đã sao lưu ${alarms.size} báo thức lên Google", Toast.LENGTH_SHORT).show()
                             onDone(true)
-                        }
-                        .addOnFailureListener { e ->
+                        } else {
                             Log.e(TAG, "push failed", e)
                             Toast.makeText(context, "Lỗi sao lưu: ${e.message}", Toast.LENGTH_LONG).show()
                             onDone(false)
                         }
+                    }
                 } catch (e: Exception) {
                     Toast.makeText(context, "Firebase chưa sẵn sàng: ${e.message}", Toast.LENGTH_LONG).show()
                     onDone(false)
@@ -334,8 +376,7 @@ object CloudSyncHelper {
             if (uid(context) == null) {
                 onResult(emptyList()); return
             }
-            ensureAuth(context) { doc(context).get()
-                .addOnSuccessListener { snap ->
+            ensureAuth(context) { fsGet(context, onOk = { snap ->
                     val raw = snap.get("alarms") as? List<*>
                     val list = raw?.mapNotNull { item ->
                         val m = item as? Map<*, *> ?: return@mapNotNull null
@@ -367,11 +408,10 @@ object CloudSyncHelper {
                         } catch (_: Exception) { null }
                     } ?: emptyList()
                     onResult(list)
-                }
-                .addOnFailureListener {
+                }, onFail = {
                     Toast.makeText(context, "Tải cloud lỗi: ${it.message}", Toast.LENGTH_SHORT).show()
                     onResult(emptyList())
-                } }
+                }) }
         } catch (_: Exception) {
             onResult(emptyList())
         }
@@ -391,12 +431,16 @@ object CloudSyncHelper {
             )
             val key = ChatCloudStore.geminiKey(context)
             if (key.isNotBlank()) payload["geminiKey"] = key
-            ensureAuth(context) { doc(context).set(payload, SetOptions.merge())
-                .addOnSuccessListener { onDone(true) }
-                .addOnFailureListener { e ->
-                    Log.e(TAG, "push chat failed", e)
-                    onDone(false)
-                } }
+            ensureAuth(context) {
+                fsSet(context, payload) { e ->
+                    if (e == null) {
+                        onDone(true)
+                    } else {
+                        Log.e(TAG, "push chat failed", e)
+                        onDone(false)
+                    }
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, "push chat exception", e)
             onDone(false)
@@ -410,8 +454,7 @@ object CloudSyncHelper {
             if (uid(context) == null) {
                 onResult(null, null); return
             }
-            ensureAuth(context) { doc(context).get()
-                .addOnSuccessListener { snap ->
+            ensureAuth(context) { fsGet(context, onOk = { snap ->
                     val key = snap.getString("geminiKey")
                     val hist = snap.getString("chatHistory")
                     val sessions = snap.getString("sessions")
@@ -430,8 +473,7 @@ object CloudSyncHelper {
                         ChatCloudStore.geminiKey(context).ifBlank { key },
                         ChatCloudStore.historyJson(context).ifBlank { hist }
                     )
-                }
-                .addOnFailureListener { onResult(null, null) } }
+                }, onFail = { onResult(null, null) }) }
         } catch (_: Exception) {
             onResult(null, null)
         }
