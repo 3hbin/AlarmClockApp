@@ -22,11 +22,10 @@ object AlarmDueWatcher {
             }.timeInMillis
             val late = now - trigger
             if (late < 0 || late > GRACE_MS) continue
-            // Lần kêu kế tiếp do AlarmScheduler tính (vd. đặt đúng phút hiện tại -> ngày mai)
-            // không trùng phút này thì KHÔNG kêu ngay.
-            val next = context.getSharedPreferences("alarm_next", Context.MODE_PRIVATE)
-                .getLong("n_" + alarm.id, -1L)
-            if (next > 0 && Math.abs(next - trigger) > 60_000L) continue
+            // Báo thức vừa đặt đúng phút hiện tại đã được hẹn sang ngày mai -> không kêu ngay.
+            val skip = context.getSharedPreferences("alarm_skip", Context.MODE_PRIVATE)
+                .getLong("s_" + alarm.id, -1L)
+            if (skip == trigger) continue
             if (RingGuard.isDismissed(context, alarm.id)) continue
             if (RingGuard.alreadyFiredThisMinute(context, alarm.id)) continue
             val key = "${alarm.id}_$trigger"

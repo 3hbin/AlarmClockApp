@@ -55,10 +55,20 @@ object AlarmScheduler {
                     add(Calendar.YEAR, 1)
                     applyHour()
                 }
-            } else if (timeInMillis <= System.currentTimeMillis() + 60_000L) {
-                // Giờ vừa qua hoặc đúng phút hiện tại: hẹn ngày mai, không kêu ngay.
+            } else if (timeInMillis <= System.currentTimeMillis()) {
+                // Giờ đã qua (kể cả đặt đúng phút hiện tại): hẹn ngày mai, không kêu ngay.
+                // Nhớ phút này để AlarmDueWatcher cũng không kêu ngay.
+                try {
+                    context.getSharedPreferences("alarm_skip", Context.MODE_PRIVATE)
+                        .edit().putLong("s_" + alarm.id, timeInMillis).apply()
+                } catch (_: Exception) {}
                 add(Calendar.DAY_OF_YEAR, 1)
                 applyHour()
+            } else {
+                try {
+                    context.getSharedPreferences("alarm_skip", Context.MODE_PRIVATE)
+                        .edit().remove("s_" + alarm.id).apply()
+                } catch (_: Exception) {}
             }
             if (alarm.repeatMode == Alarm.REPEAT_WEEKDAYS) {
                 while (get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY ||
@@ -79,12 +89,6 @@ object AlarmScheduler {
                 applyHour()
             }
         }
-
-        // Ghi nhớ lần kêu thật sự kế tiếp để AlarmDueWatcher không kêu nhầm
-        try {
-            context.getSharedPreferences("alarm_next", Context.MODE_PRIVATE)
-                .edit().putLong("n_" + alarm.id, calendar.timeInMillis).apply()
-        } catch (_: Exception) {}
 
         try {
             val show = PendingIntent.getActivity(
@@ -117,8 +121,8 @@ object AlarmScheduler {
         )
         alarmManager.cancel(pendingIntent)
         try {
-            context.getSharedPreferences("alarm_next", Context.MODE_PRIVATE)
-                .edit().remove("n_" + alarmId).apply()
+            context.getSharedPreferences("alarm_skip", Context.MODE_PRIVATE)
+                .edit().remove("s_" + alarmId).apply()
         } catch (_: Exception) {}
         try { AlarmKeepAliveService.sync(context) } catch (_: Exception) {}
     }
