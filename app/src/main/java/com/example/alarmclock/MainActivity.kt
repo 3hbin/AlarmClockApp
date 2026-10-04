@@ -73,57 +73,29 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private var googleStatusView: TextView? = null
-    private var googleSignInRow: android.view.View? = null
-
     private val googleSignInLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             // 1) Google Sign-In OAuth
             val account = GoogleSignInHelper.handleResult(this, result.data)
             if (account != null) {
-                val email = account.email.orEmpty()
-                val name = account.displayName?.takeIf { it.isNotBlank() }
-                    ?: AppSettings.getGoogleDisplayName(this)
-                showSignedInState(name, email, fast = true)
-                try {
-                    BirthdayHelper.syncFromSignedInAccount(this, account) {
-                        try { CloudSyncHelper.syncOnLogin(this) } catch (_: Exception) {}
-                    }
-                } catch (_: Exception) {
-                    try { CloudSyncHelper.syncOnLogin(this) } catch (_: Exception) {}
-                }
+                Toast.makeText(this, "Đã đăng nhập: ${account.email}", Toast.LENGTH_LONG).show()
+                try { BirthdayHelper.syncFromSignedInAccount(this, account) } catch (_: Exception) {}
+                try { CloudSyncHelper.syncOnLogin(this) } catch (_: Exception) {}
                 return@registerForActivityResult
             }
             // 2) AccountPicker fallback
             val email = GoogleSignInHelper.handleAccountPicker(this, result.data)
             if (!email.isNullOrBlank()) {
-                showSignedInState(AppSettings.getGoogleDisplayName(this), email, fast = true)
+                Toast.makeText(this, "Đã đăng nhập: $email", Toast.LENGTH_LONG).show()
                 try { CloudSyncHelper.syncOnLogin(this) } catch (_: Exception) {}
                 return@registerForActivityResult
             }
-            val fail = if (result.resultCode == android.app.Activity.RESULT_CANCELED) {
-                "Google đóng nhanh — chưa chọn được tài khoản. Bấm Sign in lại, hoặc Nhập email."
+            if (result.resultCode == android.app.Activity.RESULT_CANCELED) {
+                Toast.makeText(this, "Đã hủy chọn tài khoản", Toast.LENGTH_SHORT).show()
             } else {
-                "Đăng nhập chưa xong. Bấm Sign in lại hoặc Nhập email."
+                Toast.makeText(this, "Đăng nhập chưa thành công — thử Nhập email", Toast.LENGTH_LONG).show()
             }
-            googleStatusView?.text = fail
-            googleSignInRow?.isEnabled = true
-            Toast.makeText(this, fail, Toast.LENGTH_LONG).show()
-            if (googleStatusView == null) showGoogleLoginMenu()
         }
-
-    private fun showSignedInState(name: String, email: String, fast: Boolean) {
-        val who = if (name.isNotBlank()) name else email
-        val note = if (fast) {
-            "Đã đăng nhập: $who\n$email\nMáy đã có tài khoản này nên Google đóng nhanh. Đã lưu."
-        } else {
-            "Đã đăng nhập: $who\n$email"
-        }
-        googleStatusView?.text = note
-        googleSignInRow?.isEnabled = false
-        Toast.makeText(this, "Đã đăng nhập: $who", Toast.LENGTH_LONG).show()
-        if (googleStatusView == null) showGoogleLoginMenu()
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -1258,50 +1230,28 @@ class MainActivity : AppCompatActivity() {
             current.isNotBlank() -> "Đã lưu: $current"
             else -> "Chưa đăng nhập"
         }
-        googleStatusView = status
-        val signRow = view.findViewById<View>(R.id.btnGoogleSignIn)
-        googleSignInRow = signRow
-        signRow.setOnClickListener {
-            status.text = "Đang mở Google… đừng đóng hộp thoại này"
-            signRow.isEnabled = false
+        view.findViewById<View>(R.id.btnGoogleSignIn).setOnClickListener {
             try {
-                // Đăng xuất phiên Google cũ (không xóa email đã lưu) rồi mới mở picker,
-                // tránh màn hình chọn tài khoản tự đóng trong 1 giây.
-                GoogleSignInHelper.preparePicker(this) { intent ->
-                    try {
-                        googleSignInLauncher.launch(intent)
-                    } catch (e: Exception) {
-                        signRow.isEnabled = true
-                        status.text = "Không mở Google: ${e.message}"
-                        try {
-                            googleSignInLauncher.launch(GoogleSignInHelper.accountPickerIntent())
-                        } catch (e2: Exception) {
-                            Toast.makeText(this, "Không mở Google: ${e2.message}", Toast.LENGTH_LONG).show()
-                            showGoogleEmailFallback()
-                        }
-                    }
-                }
+                // OAuth chuẩn (đã có SHA-1 + oauth_client)
+                googleSignInLauncher.launch(GoogleSignInHelper.signInIntent(this))
             } catch (e: Exception) {
-                signRow.isEnabled = true
-                status.text = "Không mở Google: ${e.message}"
-                showGoogleEmailFallback()
+                try {
+                    googleSignInLauncher.launch(GoogleSignInHelper.accountPickerIntent())
+                } catch (e2: Exception) {
+                    Toast.makeText(this, "Không mở Google: ${e2.message}", Toast.LENGTH_LONG).show()
+                    showGoogleEmailFallback()
+                }
             }
         }
-        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setView(view)
             .setPositiveButton("Đóng", null)
             .setNeutralButton(Lang.t(this, "Nhập email", "Enter email")) { _, _ -> showGoogleEmailFallback() }
             .setNegativeButton(Lang.t(this, "Đăng xuất", "Sign out")) { _, _ ->
                 GoogleSignInHelper.signOut(this)
-                googleStatusView = null
                 Toast.makeText(this, "Đã đăng xuất Google trên máy", Toast.LENGTH_SHORT).show()
             }
-            .setOnDismissListener {
-                googleStatusView = null
-                googleSignInRow = null
-            }
-            .create()
-        dialog.show()
+            .show()
     }
 
     private fun showGoogleEmailFallback() {

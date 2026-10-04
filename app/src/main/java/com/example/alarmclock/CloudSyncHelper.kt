@@ -150,23 +150,15 @@ object CloudSyncHelper {
                     )
                 }
             )
-            val email = AppSettings.getRecoveryEmail(context)
-            // Máy Huawei hay kẹt SDK offline. Ghi HTTPS trước để document hiện trên console.
-            val okRest = restWrite(context, alarms)
             doc(context).set(payload, SetOptions.merge())
                 .addOnSuccessListener {
-                    Toast.makeText(context, "Đã sao lưu ${alarms.size} báo lên $email", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Đã sao lưu ${alarms.size} báo thức lên Google", Toast.LENGTH_SHORT).show()
                     onDone(true)
                 }
                 .addOnFailureListener { e ->
-                    Log.e(TAG, "push sdk failed", e)
-                    Toast.makeText(
-                        context,
-                        if (okRest) "Đã ghi cloud ${alarms.size} báo • $email"
-                        else "Lỗi sao lưu: ${e.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    onDone(okRest)
+                    Log.e(TAG, "push failed", e)
+                    Toast.makeText(context, "Lỗi sao lưu: ${e.message}", Toast.LENGTH_LONG).show()
+                    onDone(false)
                 }
         } catch (e: Exception) {
             Toast.makeText(context, "Firebase chưa sẵn sàng: ${e.message}", Toast.LENGTH_LONG).show()
@@ -207,13 +199,8 @@ object CloudSyncHelper {
                     onResult(list)
                 }
                 .addOnFailureListener {
-                    val viaRest = restReadAlarms(context)
-                    if (viaRest != null) {
-                        onResult(viaRest)
-                    } else {
-                        Toast.makeText(context, "Tải cloud lỗi: ${it.message}\nThử HTTPS cũng không vào được.", Toast.LENGTH_LONG).show()
-                        onResult(emptyList())
-                    }
+                    Toast.makeText(context, "Tải cloud lỗi: ${it.message}", Toast.LENGTH_SHORT).show()
+                    onResult(emptyList())
                 }
         } catch (_: Exception) {
             onResult(emptyList())
@@ -226,14 +213,10 @@ object CloudSyncHelper {
             if (uid(context) == null) {
                 onDone(false); return
             }
-            val histNow = ChatCloudStore.historyJson(context)
-            if (histNow.isBlank() || histNow == "[]" || !histNow.contains("\"t\"")) {
-                onDone(false); return
-            }
             val payload = hashMapOf<String, Any>(
                 "email" to AppSettings.getRecoveryEmail(context),
                 "updatedAt" to System.currentTimeMillis(),
-                "chatHistory" to histNow,
+                "chatHistory" to ChatCloudStore.historyJson(context),
                 "sessions" to ChatCloudStore.sessions(context).toString()
             )
             val key = ChatCloudStore.geminiKey(context)
@@ -278,11 +261,7 @@ object CloudSyncHelper {
                         ChatCloudStore.historyJson(context).ifBlank { hist }
                     )
                 }
-                .addOnFailureListener {
-                    val ok = restWrite(context, AlarmRepository(context).getAlarms())
-                    Toast.makeText(context, if (ok) "Đã ghi cloud cho ${uid(context)}" else "Cloud lỗi: ${it.message}", Toast.LENGTH_LONG).show()
-                    onResult(null, null)
-                }
+                .addOnFailureListener { onResult(null, null) }
         } catch (_: Exception) {
             onResult(null, null)
         }
@@ -301,126 +280,20 @@ object CloudSyncHelper {
         } catch (_: Exception) {}
     }
 
-
-    private const val FS_PROJECT = "alarmclockapp-8984a"
-    private const val FS_KEY = "AIzaSyCB3aOGpk79YcAGR07Cr6g5aq7a3JVK-Vo"
-    private const val FS_CERT = "B3F629F3003145CA241A470A1BD998115CD85239"
-
-    private fun restUrl(context: Context): String {
-        val id = uid(context) ?: "anon"
-        return "https://firestore.googleapis.com/v1/projects/$FS_PROJECT/databases/(default)/documents/users/$id/data/backup?key=$FS_KEY"
-    }
-
-    private fun restWrite(context: Context, alarms: List<Alarm>): Boolean {
-        return try {
-            val email = AppSettings.getRecoveryEmail(context)
-            val arr = org.json.JSONArray()
-            alarms.forEach { a ->
-                arr.put(org.json.JSONObject()
-                    .put("id", a.id).put("hour", a.hour).put("minute", a.minute)
-                    .put("label", a.label).put("isEnabled", a.isEnabled)
-                    .put("repeatMode", a.repeatMode).put("snoozeMinutes", a.snoozeMinutes)
-                    .put("challengeType", a.challengeType).put("shakeTargetCount", a.shakeTargetCount)
-                    .put("skipHolidays", a.skipHolidays).put("isStrictAntiSnooze", a.isStrictAntiSnooze)
-                    .put("voiceNote", a.voiceNote ?: "")
-                    .put("useCrescendo", a.useCrescendo).put("group", a.group)
-                    .put("useWeekendSchedule", a.useWeekendSchedule)
-                    .put("weekendHour", a.weekendHour).put("weekendMinute", a.weekendMinute)
-                    .put("ringtoneUri", a.ringtoneUri ?: ""))
-            }
-            val fields = org.json.JSONObject()
-                .put("email", org.json.JSONObject().put("stringValue", email))
-                .put("alarmsJson", org.json.JSONObject().put("stringValue", arr.toString()))
-                .put("chatHistory", org.json.JSONObject().put("stringValue", ChatCloudStore.historyJson(context)))
-                .put("geminiKey", org.json.JSONObject().put("stringValue", ChatCloudStore.geminiKey(context)))
-                .put("updatedAt", org.json.JSONObject().put("integerValue", System.currentTimeMillis().toString()))
-            val body = org.json.JSONObject().put("fields", fields).toString()
-            val conn = java.net.URL(restUrl(context)).openConnection() as java.net.HttpURLConnection
-            conn.requestMethod = "PATCH"
-            conn.connectTimeout = 12000
-            conn.readTimeout = 12000
-            conn.doOutput = true
-            conn.setRequestProperty("Content-Type", "application/json")
-            conn.setRequestProperty("X-Android-Package", "com.alarmclock.dongho")
-            conn.setRequestProperty("X-Android-Cert", FS_CERT)
-            conn.outputStream.use { it.write(body.toByteArray()) }
-            val code = conn.responseCode
-            Log.i(TAG, "rest write $code")
-            code in 200..299
-        } catch (e: Exception) {
-            Log.e(TAG, "rest write", e)
-            false
-        }
-    }
-
-    private fun restReadAlarms(context: Context): List<Alarm>? {
-        return try {
-            val conn = java.net.URL(restUrl(context)).openConnection() as java.net.HttpURLConnection
-            conn.requestMethod = "GET"
-            conn.connectTimeout = 12000
-            conn.readTimeout = 12000
-            conn.setRequestProperty("X-Android-Package", "com.alarmclock.dongho")
-            conn.setRequestProperty("X-Android-Cert", FS_CERT)
-            val code = conn.responseCode
-            if (code == 404) return emptyList()
-            if (code !in 200..299) return null
-            val raw = conn.inputStream.bufferedReader().readText()
-            val fields = org.json.JSONObject(raw).optJSONObject("fields") ?: return emptyList()
-            val hist = fields.optJSONObject("chatHistory")?.optString("stringValue")
-            val key = fields.optJSONObject("geminiKey")?.optString("stringValue")
-            if (!key.isNullOrBlank()) ChatCloudStore.saveKey(context, key)
-            if (!hist.isNullOrBlank() && hist != "[]") ChatCloudStore.saveHistory(context, hist)
-            val json = fields.optJSONObject("alarmsJson")?.optString("stringValue").orEmpty()
-            if (json.isBlank()) return emptyList()
-            val arr = org.json.JSONArray(json)
-            val out = ArrayList<Alarm>()
-            for (i in 0 until arr.length()) {
-                val m = arr.optJSONObject(i) ?: continue
-                out.add(Alarm(
-                    id = m.optInt("id"),
-                    hour = m.optInt("hour"),
-                    minute = m.optInt("minute"),
-                    isEnabled = m.optBoolean("isEnabled", true),
-                    label = m.optString("label", "Báo thức"),
-                    repeatMode = m.optInt("repeatMode", 1),
-                    snoozeMinutes = m.optInt("snoozeMinutes", 5),
-                    ringtoneUri = m.optString("ringtoneUri").takeIf { it.isNotBlank() },
-                    challengeType = m.optInt("challengeType"),
-                    shakeTargetCount = m.optInt("shakeTargetCount", 10),
-                    skipHolidays = m.optBoolean("skipHolidays"),
-                    isStrictAntiSnooze = m.optBoolean("isStrictAntiSnooze"),
-                    voiceNote = m.optString("voiceNote").takeIf { it.isNotBlank() },
-                    useCrescendo = m.optBoolean("useCrescendo", true),
-                    group = m.optString("group", "Chung"),
-                    useWeekendSchedule = m.optBoolean("useWeekendSchedule"),
-                    weekendHour = m.optInt("weekendHour", -1),
-                    weekendMinute = m.optInt("weekendMinute", -1)
-                ))
-            }
-            out
-        } catch (e: Exception) {
-            Log.e(TAG, "rest read", e)
-            null
-        }
-    }
-
     private fun pullThenMerge(context: Context) {
         pullChatBackup(context) { _, _ -> }
         pullAlarms(context) { cloud ->
             val repo = AlarmRepository(context)
             val local = repo.getAlarms()
-            val toSave = if (cloud.isNotEmpty()) cloud else local
-            if (cloud.isNotEmpty()) {
-                repo.saveAlarms(cloud)
-                AlarmScheduler.rescheduleAll(context)
+            when {
+                cloud.isNotEmpty() -> {
+                    repo.saveAlarms(cloud)
+                    AlarmScheduler.rescheduleAll(context)
+                    Toast.makeText(context, "Đã khôi phục ${cloud.size} báo từ Google", Toast.LENGTH_LONG).show()
+                }
+                local.isNotEmpty() -> pushAlarms(context, local)
+                else -> Toast.makeText(context, "Google đã liên kết — chưa có báo để sao lưu", Toast.LENGTH_SHORT).show()
             }
-            val ok = restWrite(context, toSave)
-            Toast.makeText(
-                context,
-                if (ok) "Đã ghi cloud ${toSave.size} báo • ${uid(context)}"
-                else "Đăng nhập rồi nhưng cloud không ghi được",
-                Toast.LENGTH_LONG
-            ).show()
         }
     }
 }

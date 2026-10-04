@@ -165,7 +165,6 @@ class AlarmRingService : Service() {
         val isApp = ringtoneUri.startsWith("app:")
         if (!isApp) {
             TonePlayer.playUri(this, ringtoneUri, loop = true, preview = false)
-            ensureAudible()
             return
         }
         try {

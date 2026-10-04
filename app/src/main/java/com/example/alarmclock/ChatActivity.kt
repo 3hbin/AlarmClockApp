@@ -128,13 +128,8 @@ class ChatActivity : AppCompatActivity() {
             }
             runOnUiThread {
                 reloadHistoryBubbles()
-                val mail = accountEmail()
-                if (mail.isBlank()) {
-                    android.widget.Toast.makeText(this, "Chưa đăng nhập Google — chat chỉ lưu trên máy, xóa dữ liệu là mất.", android.widget.Toast.LENGTH_LONG).show()
-                } else if (!key.isNullOrBlank() || (hist != null && hist != "[]" && hist.contains("\"t\""))) {
-                    android.widget.Toast.makeText(this, "Đã kéo chat từ Google ($mail)", android.widget.Toast.LENGTH_SHORT).show()
-                } else {
-                    android.widget.Toast.makeText(this, "Đã đăng nhập $mail. Cloud chưa có chat cũ — tin mới sẽ được lưu.", android.widget.Toast.LENGTH_LONG).show()
+                if (!key.isNullOrBlank() || (hist != null && hist != "[]")) {
+                    android.widget.Toast.makeText(this, "Đã kéo lại khóa và lịch sử chat", android.widget.Toast.LENGTH_SHORT).show()
                 }
             }
         }
