@@ -73,21 +73,31 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private var googleLoginDialog: androidx.appcompat.app.AlertDialog? = null
+
+    private fun applySignedIn(email: String, name: String?) {
+        val shown = name?.takeIf { it.isNotBlank() } ?: email.substringBefore("@")
+        AppSettings.setRecoveryEmail(this, email)
+        AppSettings.setGoogleDisplayName(this, shown)
+        googleLoginDialog?.dismiss()
+        googleLoginDialog = null
+        Toast.makeText(this, "Đã đăng nhập: $shown\n$email", Toast.LENGTH_LONG).show()
+        try { CloudSyncHelper.syncOnLogin(this) } catch (_: Exception) {}
+    }
+
     private val googleSignInLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            // 1) Google Sign-In OAuth
             val account = GoogleSignInHelper.handleResult(this, result.data)
-            if (account != null) {
-                Toast.makeText(this, "Đã đăng nhập: ${account.email}", Toast.LENGTH_LONG).show()
+                ?: try { com.google.android.gms.auth.api.signin.GoogleSignIn.getLastSignedInAccount(this) } catch (_: Exception) { null }
+            val email = account?.email?.trim().orEmpty()
+            if (email.contains("@")) {
+                applySignedIn(email, account?.displayName)
                 try { BirthdayHelper.syncFromSignedInAccount(this, account) } catch (_: Exception) {}
-                try { CloudSyncHelper.syncOnLogin(this) } catch (_: Exception) {}
                 return@registerForActivityResult
             }
-            // 2) AccountPicker fallback
-            val email = GoogleSignInHelper.handleAccountPicker(this, result.data)
-            if (!email.isNullOrBlank()) {
-                Toast.makeText(this, "Đã đăng nhập: $email", Toast.LENGTH_LONG).show()
-                try { CloudSyncHelper.syncOnLogin(this) } catch (_: Exception) {}
+            val picked = GoogleSignInHelper.handleAccountPicker(this, result.data)
+            if (!picked.isNullOrBlank()) {
+                applySignedIn(picked, null)
                 return@registerForActivityResult
             }
             if (result.resultCode == android.app.Activity.RESULT_CANCELED) {
@@ -1243,7 +1253,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+        googleLoginDialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setView(view)
             .setPositiveButton("Đóng", null)
             .setNeutralButton(Lang.t(this, "Nhập email", "Enter email")) { _, _ -> showGoogleEmailFallback() }
@@ -1251,7 +1261,8 @@ class MainActivity : AppCompatActivity() {
                 GoogleSignInHelper.signOut(this)
                 Toast.makeText(this, "Đã đăng xuất Google trên máy", Toast.LENGTH_SHORT).show()
             }
-            .show()
+            .create()
+        googleLoginDialog?.show()
     }
 
     private fun showGoogleEmailFallback() {

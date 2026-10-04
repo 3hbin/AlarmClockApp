@@ -55,14 +55,10 @@ object AlarmScheduler {
                     add(Calendar.YEAR, 1)
                     applyHour()
                 }
-            } else if (timeInMillis <= System.currentTimeMillis()) {
-                val late = System.currentTimeMillis() - timeInMillis
-                if (late in 0..90_000) {
-                    timeInMillis = System.currentTimeMillis() + 1_000L
-                } else {
-                    add(Calendar.DAY_OF_YEAR, 1)
-                    applyHour()
-                }
+            } else if (timeInMillis <= System.currentTimeMillis() + 60_000L) {
+                // Giờ vừa qua hoặc đúng phút hiện tại: hẹn ngày mai, không kêu ngay.
+                add(Calendar.DAY_OF_YEAR, 1)
+                applyHour()
             }
             if (alarm.repeatMode == Alarm.REPEAT_WEEKDAYS) {
                 while (get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY ||
