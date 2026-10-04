@@ -81,6 +81,74 @@ object CloudSyncHelper {
         )
     }
 
+    /** Kiểm tra từng bước: Google -> Firebase Auth -> ghi/đọc Firestore (có timeout 15s). */
+    fun diagnose(context: Context, onResult: (String) -> Unit) {
+        val sb = StringBuilder()
+        fun line(t: String) { sb.append(t).append("\n") }
+        fun hint(msg: String?): String = when {
+            msg == null -> ""
+            msg.contains("PERMISSION_DENIED", true) -> "\n→ Firestore Rules đang chặn ghi. Sửa ở Firestore → Rules."
+            msg.contains("UNAVAILABLE", true) || msg.contains("offline", true) -> "\n→ Không chạm được server (mạng / bị chặn)."
+            msg.contains("NOT_FOUND", true) -> "\n→ Chưa tạo database Firestore (hoặc sai tên database)."
+            msg.contains("operation-not-allowed", true) || msg.contains("OPERATION_NOT_ALLOWED", true) ->
+                "\n→ Chưa bật Google trong Authentication → Sign-in method."
+            msg.contains("API key", true) || msg.contains("API_KEY", true) -> "\n→ API key trong google-services.json bị hạn chế / sai."
+            else -> ""
+        }
+        init(context)
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        var done = false
+        fun finish(last: String) {
+            if (done) return
+            done = true
+            handler.removeCallbacksAndMessages(null)
+            line(last)
+            onResult(sb.toString())
+        }
+        handler.postDelayed({
+            finish("⏱ Quá 15 giây không có phản hồi từ server.\n→ Ghi bị treo: thường do mạng, Firestore chưa tạo, hoặc Firestore API bị tắt.")
+        }, 15000)
+        try {
+            val acct = try {
+                com.google.android.gms.auth.api.signin.GoogleSignIn.getLastSignedInAccount(context)
+            } catch (_: Exception) { null }
+            line("Email đã lưu: " + AppSettings.getRecoveryEmail(context).ifBlank { "(trống)" })
+            line("Google: " + (acct?.email ?: "(chưa đăng nhập)") + " · idToken: " + if (acct?.idToken.isNullOrBlank()) "KHÔNG có" else "có")
+            val step2 = {
+                val user = FirebaseAuth.getInstance().currentUser
+                line("Firebase Auth: " + (user?.uid ?: "CHƯA đăng nhập"))
+                try {
+                    val d = doc(context)
+                    line("Đường dẫn: " + d.path)
+                    val ref = d.parent.document("diag")
+                    ref.set(hashMapOf<String, Any>("t" to System.currentTimeMillis()))
+                        .addOnSuccessListener {
+                            ref.get(com.google.firebase.firestore.Source.SERVER)
+                                .addOnSuccessListener { finish("✅ Ghi + đọc từ server OK. Cloud hoạt động.") }
+                                .addOnFailureListener { e -> finish("⚠ Ghi OK nhưng đọc server lỗi: " + e.message + hint(e.message)) }
+                        }
+                        .addOnFailureListener { e -> finish("❌ Ghi lỗi: " + e.message + hint(e.message)) }
+                } catch (e: Exception) {
+                    finish("❌ Lỗi: " + e.message)
+                }
+            }
+            if (FirebaseAuth.getInstance().currentUser != null) {
+                step2()
+            } else if (acct?.idToken.isNullOrBlank()) {
+                line("Không có idToken -> không đăng nhập Firebase được (dùng đường dẫn email).")
+                step2()
+            } else {
+                val cred = com.google.firebase.auth.GoogleAuthProvider.getCredential(acct!!.idToken!!, null)
+                FirebaseAuth.getInstance().signInWithCredential(cred).addOnCompleteListener { t ->
+                    if (!t.isSuccessful) line("❌ Firebase Auth lỗi: " + t.exception?.message + hint(t.exception?.message))
+                    step2()
+                }
+            }
+        } catch (e: Exception) {
+            finish("❌ Lỗi: " + e.message)
+        }
+    }
+
     /** Đẩy nhật ký báo thức (tắt / báo lại) lên cloud. */
     fun pushHistoryQuiet(context: Context) {
         try {

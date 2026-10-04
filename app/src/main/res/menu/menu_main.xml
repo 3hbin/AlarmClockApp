@@ -52,6 +52,11 @@
         android:title="Chat"
         app:showAsAction="never" />
     <item
+        android:id="@+id/menu_cloud_check"
+        android:icon="@drawable/ic_menu_google"
+        android:title="Kiểm tra cloud"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/menu_version"
         android:icon="@drawable/ic_menu_info"
         android:title="@string/menu_version"
