@@ -80,6 +80,12 @@ object AlarmScheduler {
             }
         }
 
+        // Ghi nhớ lần kêu thật sự kế tiếp để AlarmDueWatcher không kêu nhầm
+        try {
+            context.getSharedPreferences("alarm_next", Context.MODE_PRIVATE)
+                .edit().putLong("n_" + alarm.id, calendar.timeInMillis).apply()
+        } catch (_: Exception) {}
+
         try {
             val show = PendingIntent.getActivity(
                 context, alarm.id + 30000,
@@ -110,6 +116,10 @@ object AlarmScheduler {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         alarmManager.cancel(pendingIntent)
+        try {
+            context.getSharedPreferences("alarm_next", Context.MODE_PRIVATE)
+                .edit().remove("n_" + alarmId).apply()
+        } catch (_: Exception) {}
         try { AlarmKeepAliveService.sync(context) } catch (_: Exception) {}
     }
 
