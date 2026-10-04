@@ -23,10 +23,90 @@ object CloudSyncHelper {
         }
     }
 
+    private var warned = false
+
+    /** Ưu tiên uid Firebase Auth (khớp Firestore Rules); không có thì dùng email. */
     private fun uid(context: Context): String? {
+        val authUid = try { FirebaseAuth.getInstance().currentUser?.uid } catch (_: Exception) { null }
+        if (!authUid.isNullOrBlank()) return authUid
         val email = AppSettings.getRecoveryEmail(context).trim().lowercase()
         if (email.isNotBlank()) return email.replace(".", "_").replace("@", "_at_")
-        return try { FirebaseAuth.getInstance().currentUser?.uid } catch (_: Exception) { null }
+        return null
+    }
+
+    /** Đảm bảo đã đăng nhập Firebase Auth rồi mới ghi/đọc Firestore. */
+    private fun ensureAuth(context: Context, then: () -> Unit) {
+        try {
+            init(context)
+            if (FirebaseAuth.getInstance().currentUser != null) { then(); return }
+            val token = com.google.android.gms.auth.api.signin.GoogleSignIn
+                .getLastSignedInAccount(context)?.idToken
+            if (token.isNullOrBlank()) {
+                Log.w(TAG, "No Google idToken -> Firebase Auth skipped")
+                then(); return
+            }
+            val cred = com.google.firebase.auth.GoogleAuthProvider.getCredential(token, null)
+            FirebaseAuth.getInstance().signInWithCredential(cred).addOnCompleteListener { t ->
+                if (!t.isSuccessful) Log.e(TAG, "Firebase sign-in failed", t.exception)
+                then()
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "ensureAuth", e)
+            then()
+        }
+    }
+
+    private fun reportFailure(context: Context, e: Exception?) {
+        Log.e(TAG, "Firestore write failed", e)
+        if (!warned) {
+            warned = true
+            Toast.makeText(context, "Sao lưu cloud lỗi: ${e?.message}", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun alarmsToMaps(alarms: List<Alarm>): List<Map<String, Any>> = alarms.map { a ->
+        hashMapOf<String, Any>(
+            "id" to a.id, "hour" to a.hour, "minute" to a.minute, "label" to a.label,
+            "isEnabled" to a.isEnabled, "repeatMode" to a.repeatMode,
+            "snoozeMinutes" to a.snoozeMinutes, "challengeType" to a.challengeType,
+            "shakeTargetCount" to a.shakeTargetCount, "skipHolidays" to a.skipHolidays,
+            "isStrictAntiSnooze" to a.isStrictAntiSnooze, "voiceNote" to (a.voiceNote ?: ""),
+            "useCrescendo" to a.useCrescendo, "group" to a.group,
+            "useWeekendSchedule" to a.useWeekendSchedule, "weekendHour" to a.weekendHour,
+            "weekendMinute" to a.weekendMinute, "ringtoneUri" to (a.ringtoneUri ?: ""),
+            "routineOn" to a.routineOn, "routineWeather" to a.routineWeather,
+            "routineCalendar" to a.routineCalendar, "routineTasks" to a.routineTasks,
+            "routineTomorrow" to a.routineTomorrow, "qrToken" to a.qrToken,
+            "note" to a.note, "color" to a.color
+        )
+    }
+
+    /** Đẩy nhật ký báo thức (tắt / báo lại) lên cloud. */
+    fun pushHistoryQuiet(context: Context) {
+        try {
+            if (uid(context) == null) return
+            val json = AlarmHistory.exportJson(context)
+            ensureAuth(context) {
+                try {
+                    doc(context).set(
+                        hashMapOf<String, Any>("alarmHistory" to json, "historyUpdatedAt" to System.currentTimeMillis()),
+                        SetOptions.merge()
+                    ).addOnFailureListener { reportFailure(context, it) }
+                } catch (e: Exception) { reportFailure(context, e) }
+            }
+        } catch (_: Exception) {}
+    }
+
+    private fun pullHistory(context: Context) {
+        ensureAuth(context) {
+            try {
+                doc(context).get().addOnSuccessListener { snap ->
+                    val h = snap.getString("alarmHistory")
+                    if (!h.isNullOrBlank()) AlarmHistory.mergeJson(context, h)
+                    pushHistoryQuiet(context)
+                }.addOnFailureListener { Log.e(TAG, "pull history failed", it) }
+            } catch (_: Exception) {}
+        }
     }
 
     private fun doc(context: Context) =
@@ -48,8 +128,7 @@ object CloudSyncHelper {
         try {
             val existing = com.google.android.gms.auth.api.signin.GoogleSignIn.getLastSignedInAccount(context)
             if (existing?.email.isNullOrBlank().not()) {
-                saveAccount(context, existing!!)
-                pullThenMerge(context)
+                saveAccount(context, existing!!) { pullThenMerge(context) }
                 return
             }
         } catch (_: Exception) {}
@@ -63,24 +142,32 @@ object CloudSyncHelper {
             client.silentSignIn()
                 .addOnSuccessListener { account ->
                     if (account.email.isNullOrBlank()) return@addOnSuccessListener
-                    saveAccount(context, account)
-                    pullThenMerge(context)
+                    saveAccount(context, account) { pullThenMerge(context) }
                 }
         } catch (_: Exception) {}
     }
 
-    private fun saveAccount(context: Context, account: com.google.android.gms.auth.api.signin.GoogleSignInAccount) {
+    private fun saveAccount(
+        context: Context,
+        account: com.google.android.gms.auth.api.signin.GoogleSignInAccount,
+        onReady: () -> Unit = {}
+    ) {
         val email = account.email ?: return
         AppSettings.setRecoveryEmail(context, email)
         AppSettings.setGoogleDisplayName(context, account.displayName?.takeIf { it.isNotBlank() } ?: email)
         AppSettings.setGooglePhotoUrl(context, account.photoUrl?.toString().orEmpty())
         try {
             val token = account.idToken
-            if (!token.isNullOrBlank()) {
+            if (!token.isNullOrBlank() && FirebaseAuth.getInstance().currentUser == null) {
                 val cred = com.google.firebase.auth.GoogleAuthProvider.getCredential(token, null)
-                com.google.firebase.auth.FirebaseAuth.getInstance().signInWithCredential(cred)
+                FirebaseAuth.getInstance().signInWithCredential(cred).addOnCompleteListener { t ->
+                    if (!t.isSuccessful) Log.e(TAG, "Firebase sign-in failed", t.exception)
+                    onReady()
+                }
+                return
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) { Log.e(TAG, "saveAccount", e) }
+        onReady()
     }
 
     fun pushAlarmsQuiet(context: Context) {
@@ -88,30 +175,17 @@ object CloudSyncHelper {
             init(context)
             if (uid(context) == null) return
             val alarms = AlarmRepository(context).getAlarms()
-            val payload = hashMapOf(
-                "alarms" to alarms.map { a ->
-                    mapOf(
-                        "id" to a.id,
-                        "hour" to a.hour,
-                        "minute" to a.minute,
-                        "isEnabled" to a.isEnabled,
-                        "label" to a.label,
-                        "repeatMode" to a.repeatMode,
-                        "snoozeMinutes" to a.snoozeMinutes,
-                        "ringtoneUri" to (a.ringtoneUri ?: ""),
-                        "challengeType" to a.challengeType,
-                        "shakeTargetCount" to a.shakeTargetCount,
-                        "skipHolidays" to a.skipHolidays,
-                        "isStrictAntiSnooze" to a.isStrictAntiSnooze,
-                        "voiceNote" to (a.voiceNote ?: ""),
-                        "useCrescendo" to a.useCrescendo,
-                        "group" to a.group,
-                        "updatedAt" to System.currentTimeMillis()
+            ensureAuth(context) {
+                try {
+                    val payload = hashMapOf<String, Any>(
+                        "email" to AppSettings.getRecoveryEmail(context),
+                        "updatedAt" to System.currentTimeMillis(),
+                        "alarms" to alarmsToMaps(alarms)
                     )
-                },
-                "updatedAt" to System.currentTimeMillis()
-            )
-            doc(context).set(payload, com.google.firebase.firestore.SetOptions.merge())
+                    doc(context).set(payload, SetOptions.merge())
+                        .addOnFailureListener { reportFailure(context, it) }
+                } catch (e: Exception) { reportFailure(context, e) }
+            }
         } catch (_: Exception) {}
     }
 
@@ -122,44 +196,31 @@ object CloudSyncHelper {
                 onDone(false)
                 return
             }
-            val payload = hashMapOf<String, Any>(
-                "email" to AppSettings.getRecoveryEmail(context),
-                "updatedAt" to System.currentTimeMillis(),
-                "geminiKey" to ChatCloudStore.geminiKey(context),
-                "chatHistory" to ChatCloudStore.historyJson(context),
-                "alarms" to alarms.map { a ->
-                    hashMapOf(
-                        "id" to a.id,
-                        "hour" to a.hour,
-                        "minute" to a.minute,
-                        "label" to a.label,
-                        "isEnabled" to a.isEnabled,
-                        "repeatMode" to a.repeatMode,
-                        "snoozeMinutes" to a.snoozeMinutes,
-                        "challengeType" to a.challengeType,
-                        "shakeTargetCount" to a.shakeTargetCount,
-                        "skipHolidays" to a.skipHolidays,
-                        "isStrictAntiSnooze" to a.isStrictAntiSnooze,
-                        "voiceNote" to (a.voiceNote ?: ""),
-                        "useCrescendo" to a.useCrescendo,
-                        "group" to a.group,
-                        "useWeekendSchedule" to a.useWeekendSchedule,
-                        "weekendHour" to a.weekendHour,
-                        "weekendMinute" to a.weekendMinute,
-                        "ringtoneUri" to (a.ringtoneUri ?: "")
+            ensureAuth(context) {
+                try {
+                    val payload = hashMapOf<String, Any>(
+                        "email" to AppSettings.getRecoveryEmail(context),
+                        "updatedAt" to System.currentTimeMillis(),
+                        "geminiKey" to ChatCloudStore.geminiKey(context),
+                        "chatHistory" to ChatCloudStore.historyJson(context),
+                        "alarmHistory" to AlarmHistory.exportJson(context),
+                        "alarms" to alarmsToMaps(alarms)
                     )
-                }
-            )
-            doc(context).set(payload, SetOptions.merge())
-                .addOnSuccessListener {
-                    Toast.makeText(context, "Đã sao lưu ${alarms.size} báo thức lên Google", Toast.LENGTH_SHORT).show()
-                    onDone(true)
-                }
-                .addOnFailureListener { e ->
-                    Log.e(TAG, "push failed", e)
-                    Toast.makeText(context, "Lỗi sao lưu: ${e.message}", Toast.LENGTH_LONG).show()
+                    doc(context).set(payload, SetOptions.merge())
+                        .addOnSuccessListener {
+                            Toast.makeText(context, "Đã sao lưu ${alarms.size} báo thức lên Google", Toast.LENGTH_SHORT).show()
+                            onDone(true)
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e(TAG, "push failed", e)
+                            Toast.makeText(context, "Lỗi sao lưu: ${e.message}", Toast.LENGTH_LONG).show()
+                            onDone(false)
+                        }
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Firebase chưa sẵn sàng: ${e.message}", Toast.LENGTH_LONG).show()
                     onDone(false)
                 }
+            }
         } catch (e: Exception) {
             Toast.makeText(context, "Firebase chưa sẵn sàng: ${e.message}", Toast.LENGTH_LONG).show()
             onDone(false)
@@ -172,7 +233,7 @@ object CloudSyncHelper {
             if (uid(context) == null) {
                 onResult(emptyList()); return
             }
-            doc(context).get()
+            ensureAuth(context) { doc(context).get()
                 .addOnSuccessListener { snap ->
                     val raw = snap.get("alarms") as? List<*>
                     val list = raw?.mapNotNull { item ->
@@ -192,7 +253,15 @@ object CloudSyncHelper {
                                 skipHolidays = m["skipHolidays"] as? Boolean ?: false,
                                 isStrictAntiSnooze = m["isStrictAntiSnooze"] as? Boolean ?: false,
                                 voiceNote = (m["voiceNote"] as? String)?.takeIf { it.isNotBlank() },
-                                useCrescendo = m["useCrescendo"] as? Boolean ?: true, group = m["group"] as? String ?: "Chung", useWeekendSchedule = m["useWeekendSchedule"] as? Boolean ?: false, weekendHour = (m["weekendHour"] as? Number)?.toInt() ?: -1, weekendMinute = (m["weekendMinute"] as? Number)?.toInt() ?: -1
+                                useCrescendo = m["useCrescendo"] as? Boolean ?: true, group = m["group"] as? String ?: "Chung", useWeekendSchedule = m["useWeekendSchedule"] as? Boolean ?: false, weekendHour = (m["weekendHour"] as? Number)?.toInt() ?: -1, weekendMinute = (m["weekendMinute"] as? Number)?.toInt() ?: -1,
+                                routineOn = m["routineOn"] as? Boolean ?: false,
+                                routineWeather = m["routineWeather"] as? Boolean ?: true,
+                                routineCalendar = m["routineCalendar"] as? Boolean ?: true,
+                                routineTasks = m["routineTasks"] as? Boolean ?: true,
+                                routineTomorrow = m["routineTomorrow"] as? Boolean ?: true,
+                                qrToken = m["qrToken"] as? String ?: "",
+                                note = m["note"] as? String ?: "",
+                                color = (m["color"] as? Number)?.toInt() ?: 0xFF1A73E8.toInt()
                             )
                         } catch (_: Exception) { null }
                     } ?: emptyList()
@@ -201,7 +270,7 @@ object CloudSyncHelper {
                 .addOnFailureListener {
                     Toast.makeText(context, "Tải cloud lỗi: ${it.message}", Toast.LENGTH_SHORT).show()
                     onResult(emptyList())
-                }
+                } }
         } catch (_: Exception) {
             onResult(emptyList())
         }
@@ -221,12 +290,12 @@ object CloudSyncHelper {
             )
             val key = ChatCloudStore.geminiKey(context)
             if (key.isNotBlank()) payload["geminiKey"] = key
-            doc(context).set(payload, SetOptions.merge())
+            ensureAuth(context) { doc(context).set(payload, SetOptions.merge())
                 .addOnSuccessListener { onDone(true) }
                 .addOnFailureListener { e ->
                     Log.e(TAG, "push chat failed", e)
                     onDone(false)
-                }
+                } }
         } catch (e: Exception) {
             Log.e(TAG, "push chat exception", e)
             onDone(false)
@@ -240,7 +309,7 @@ object CloudSyncHelper {
             if (uid(context) == null) {
                 onResult(null, null); return
             }
-            doc(context).get()
+            ensureAuth(context) { doc(context).get()
                 .addOnSuccessListener { snap ->
                     val key = snap.getString("geminiKey")
                     val hist = snap.getString("chatHistory")
@@ -261,7 +330,7 @@ object CloudSyncHelper {
                         ChatCloudStore.historyJson(context).ifBlank { hist }
                     )
                 }
-                .addOnFailureListener { onResult(null, null) }
+                .addOnFailureListener { onResult(null, null) } }
         } catch (_: Exception) {
             onResult(null, null)
         }
@@ -282,6 +351,7 @@ object CloudSyncHelper {
 
     private fun pullThenMerge(context: Context) {
         pullChatBackup(context) { _, _ -> }
+        pullHistory(context)
         pullAlarms(context) { cloud ->
             val repo = AlarmRepository(context)
             val local = repo.getAlarms()
