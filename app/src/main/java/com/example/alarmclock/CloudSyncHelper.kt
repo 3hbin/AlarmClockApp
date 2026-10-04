@@ -43,10 +43,7 @@ object CloudSyncHelper {
     }
 
     /** Cài lại app: đăng nhập Google im lặng rồi kéo báo thức + chat cũ. */
-    @Volatile private var quiet = false
-
     fun restoreSilently(context: Context) {
-        quiet = true
         init(context)
         try {
             val existing = com.google.android.gms.auth.api.signin.GoogleSignIn.getLastSignedInAccount(context)
@@ -154,21 +151,22 @@ object CloudSyncHelper {
                 }
             )
             val email = AppSettings.getRecoveryEmail(context)
+            // Máy Huawei hay kẹt SDK offline. Ghi HTTPS trước để document hiện trên console.
+            val okRest = restWrite(context, alarms)
             doc(context).set(payload, SetOptions.merge())
                 .addOnSuccessListener {
                     Toast.makeText(context, "Đã sao lưu ${alarms.size} báo lên $email", Toast.LENGTH_SHORT).show()
                     onDone(true)
                 }
                 .addOnFailureListener { e ->
-                    Log.e(TAG, "push sdk failed, try rest", e)
-                    val ok = restWrite(context, alarms)
+                    Log.e(TAG, "push sdk failed", e)
                     Toast.makeText(
                         context,
-                        if (ok) "Đã ghi cloud (HTTPS) ${alarms.size} báo • $email"
+                        if (okRest) "Đã ghi cloud ${alarms.size} báo • $email"
                         else "Lỗi sao lưu: ${e.message}",
                         Toast.LENGTH_LONG
                     ).show()
-                    onDone(ok)
+                    onDone(okRest)
                 }
         } catch (e: Exception) {
             Toast.makeText(context, "Firebase chưa sẵn sàng: ${e.message}", Toast.LENGTH_LONG).show()
@@ -213,7 +211,7 @@ object CloudSyncHelper {
                     if (viaRest != null) {
                         onResult(viaRest)
                     } else {
-                        if (!quiet) Toast.makeText(context, "Tải cloud lỗi: ${it.message}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Tải cloud lỗi: ${it.message}\nThử HTTPS cũng không vào được.", Toast.LENGTH_LONG).show()
                         onResult(emptyList())
                     }
                 }
@@ -281,7 +279,8 @@ object CloudSyncHelper {
                     )
                 }
                 .addOnFailureListener {
-                    Toast.makeText(context, "Không kéo được chat cloud. Cần đăng nhập Google.", Toast.LENGTH_LONG).show()
+                    val ok = restWrite(context, AlarmRepository(context).getAlarms())
+                    Toast.makeText(context, if (ok) "Đã ghi cloud cho ${uid(context)}" else "Cloud lỗi: ${it.message}", Toast.LENGTH_LONG).show()
                     onResult(null, null)
                 }
         } catch (_: Exception) {
@@ -410,18 +409,18 @@ object CloudSyncHelper {
         pullAlarms(context) { cloud ->
             val repo = AlarmRepository(context)
             val local = repo.getAlarms()
-            when {
-                cloud.isNotEmpty() -> {
-                    repo.saveAlarms(cloud)
-                    AlarmScheduler.rescheduleAll(context)
-                    Toast.makeText(context, "Đã khôi phục ${cloud.size} báo từ Google", Toast.LENGTH_LONG).show()
-                }
-                local.isNotEmpty() -> pushAlarms(context, local)
-                else -> {
-                    // Không hiện toast đè màn hình. Vẫn ghi 1 dòng tài khoản để tab Data có dữ liệu.
-                    restWrite(context, local)
-                }
+            val toSave = if (cloud.isNotEmpty()) cloud else local
+            if (cloud.isNotEmpty()) {
+                repo.saveAlarms(cloud)
+                AlarmScheduler.rescheduleAll(context)
             }
+            val ok = restWrite(context, toSave)
+            Toast.makeText(
+                context,
+                if (ok) "Đã ghi cloud ${toSave.size} báo • ${uid(context)}"
+                else "Đăng nhập rồi nhưng cloud không ghi được",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 }
