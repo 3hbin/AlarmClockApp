@@ -55,6 +55,9 @@ object BottomNavHelper {
                         Motion.pendingFrom = -1
                     }
                     activity.startActivity(i)
+                    if (cls.name.endsWith("ChatActivity")) {
+                        // giữ màn báo thức phía sau, không xóa task
+                    }
                     if (enabled) {
                         activity.overridePendingTransition(
                             if (index > selectedIndex) R.anim.tab_in_right else R.anim.tab_in_left,

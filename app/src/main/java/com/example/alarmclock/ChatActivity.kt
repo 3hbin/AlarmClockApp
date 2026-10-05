@@ -65,11 +65,20 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        try {
-            window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-            if (signedIn()) showChat() else showGate("Chat cần đăng nhập Google để lưu lịch sử.")
-        } catch (e: Exception) {
-            showGate("Chat chưa mở được. Thử lại. " + (e.message ?: ""))
+        val hold = TextView(this).apply {
+            text = "Đang mở chat…"
+            textSize = 18f
+            gravity = Gravity.CENTER
+            setTextColor(0xFF202124.toInt())
+        }
+        setContentView(hold)
+        window.decorView.post {
+            try {
+                window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+                if (signedIn()) showChat() else showGate("Chat cần đăng nhập Google để lưu lịch sử.")
+            } catch (e: Throwable) {
+                hold.text = "Chat chưa mở được.\n" + (e.message ?: "Lỗi")
+            }
         }
     }
 
@@ -1281,7 +1290,9 @@ class ChatActivity : AppCompatActivity() {
                 click()
             }
         }
-        box.addView(row("Thư viện ảnh") { pickGallery.launch("image/*") })
+        box.addView(row("Thư viện ảnh") {
+            startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).setType("image/*"), 71)
+        })
         box.addView(row("Camera") { openCamera() })
         val web = TextView(this).apply {
             text = if (webSearchOn) "Tìm kiếm trang web: Bật" else "Tìm kiếm trang web: Tắt"
@@ -1302,20 +1313,7 @@ class ChatActivity : AppCompatActivity() {
         menuPopup = pop
     }
 
-    private val pickGallery = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        if (uri == null) return@registerForActivityResult
-        pendingImageNote = "Người dùng vừa chọn một ảnh từ thư viện."
-        inputBox.setText(inputBox.text.toString().ifBlank { "Nhìn ảnh này và giải thích giúp mình." })
-        Toast.makeText(this, "Đã thêm ảnh từ thư viện", Toast.LENGTH_SHORT).show()
-    }
-
     private var cameraFile: java.io.File? = null
-    private val takeCamera = registerForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
-        if (ok != true) return@registerForActivityResult
-        pendingImageNote = "Người dùng vừa chụp một ảnh bằng camera."
-        inputBox.setText(inputBox.text.toString().ifBlank { "Nhìn ảnh vừa chụp và giải thích giúp mình." })
-        Toast.makeText(this, "Đã thêm ảnh camera", Toast.LENGTH_SHORT).show()
-    }
 
     private fun openCamera() {
         if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
@@ -1328,7 +1326,7 @@ class ChatActivity : AppCompatActivity() {
             val file = java.io.File(dir, "cam_${System.currentTimeMillis()}.jpg")
             cameraFile = file
             val uri = androidx.core.content.FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
-            takeCamera.launch(uri)
+            startActivityForResult(Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).putExtra(android.provider.MediaStore.EXTRA_OUTPUT, uri), 72)
         } catch (e: Exception) {
             Toast.makeText(this, "Không mở được camera", Toast.LENGTH_SHORT).show()
         }
@@ -1411,6 +1409,25 @@ class ChatActivity : AppCompatActivity() {
             shareFile(file, mime)
         } catch (_: Exception) {
             Toast.makeText(this, "Không tạo được file", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    @Deprecated("picker")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == 71 && resultCode == RESULT_OK) {
+            pendingImageNote = "Người dùng vừa chọn một ảnh từ thư viện."
+            if (::inputBox.isInitialized) {
+                inputBox.setText(inputBox.text.toString().ifBlank { "Nhìn ảnh này và giải thích giúp mình." })
+            }
+            Toast.makeText(this, "Đã thêm ảnh từ thư viện", Toast.LENGTH_SHORT).show()
+        }
+        if (requestCode == 72 && resultCode == RESULT_OK) {
+            pendingImageNote = "Người dùng vừa chụp một ảnh bằng camera."
+            if (::inputBox.isInitialized) {
+                inputBox.setText(inputBox.text.toString().ifBlank { "Nhìn ảnh vừa chụp và giải thích giúp mình." })
+            }
+            Toast.makeText(this, "Đã thêm ảnh camera", Toast.LENGTH_SHORT).show()
         }
     }
 

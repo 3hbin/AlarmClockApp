@@ -57,6 +57,11 @@ class AlarmApp : Application() {
                     f.writeText(tail)
                 }
             } catch (_: Exception) {}
+            try {
+                val back = android.content.Intent(this, MainActivity::class.java)
+                back.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                startActivity(back)
+            } catch (_: Exception) {}
             prev?.uncaughtException(t, e)
         }
     }
