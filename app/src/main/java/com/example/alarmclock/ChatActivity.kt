@@ -111,7 +111,7 @@ class ChatActivity : AppCompatActivity() {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
             setPadding((24 * d).toInt(), (24 * d).toInt(), (24 * d).toInt(), (24 * d).toInt())
-            setBackgroundColor(if (ThemeFix.isNight(this)) 0xFF000000.toInt() else 0xFFF1F3F4.toInt())
+            setBackgroundColor(if (ThemeFix.isNight(this@ChatActivity)) 0xFF000000.toInt() else 0xFFF1F3F4.toInt())
             addView(TextView(context).apply {
                 text = "Đăng nhập Google"
                 textSize = 22f
@@ -268,7 +268,7 @@ class ChatActivity : AppCompatActivity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding((10 * d).toInt(), (8 * d).toInt(), (10 * d).toInt(), (12 * d).toInt())
-            setBackgroundColor(if (ThemeFix.isNight(this)) 0xFF000000.toInt() else 0xFFF1F3F4.toInt())
+            setBackgroundColor(if (ThemeFix.isNight(this@ChatActivity)) 0xFF000000.toInt() else 0xFFF1F3F4.toInt())
             addView(plusBtn, LinearLayout.LayoutParams((44 * d).toInt(), (44 * d).toInt()).apply {
                 marginEnd = (8 * d).toInt()
             })
@@ -292,7 +292,7 @@ class ChatActivity : AppCompatActivity() {
         }
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(if (ThemeFix.isNight(this)) 0xFF000000.toInt() else 0xFFF1F3F4.toInt())
+            setBackgroundColor(if (ThemeFix.isNight(this@ChatActivity)) 0xFF000000.toInt() else 0xFFF1F3F4.toInt())
             addView(header)
             addView(scroll, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
             addView(chipScroll)
