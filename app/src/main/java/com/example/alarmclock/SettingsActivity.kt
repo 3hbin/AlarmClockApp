@@ -417,6 +417,8 @@ class SettingsActivity : AppCompatActivity() {
                     Toast.makeText(this, "Không mở được cài đặt: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
+
+            refreshDndGrantButton()
         } catch (_: Exception) {}
 
 binding.switchAntiTroll.setCheckedSilent(AppSettings.isAntiTroll(this))
@@ -652,7 +654,18 @@ binding.switchAntiTroll.setCheckedSilent(AppSettings.isAntiTroll(this))
     override fun onResume() {
         super.onResume()
         try { binding.root.alpha = 1f } catch (_: Exception) {}
-        try { /* settings is not a tab */ } catch (_: Exception) {}
+        refreshDndGrantButton()
+    }
+
+    /** Nút cấp quyền biến mất khi hệ thống đã cho phép Không làm phiền. Công tắc bật không được tính. */
+    private fun refreshDndGrantButton() {
+        try {
+            val granted = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                val nm = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
+                nm.isNotificationPolicyAccessGranted
+            } else true
+            binding.btnGrantDnd.visibility = if (granted) android.view.View.GONE else android.view.View.VISIBLE
+        } catch (_: Exception) {}
     }
 
 

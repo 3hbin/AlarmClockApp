@@ -428,6 +428,7 @@ class MusicLibraryActivity : AppCompatActivity() {
             if (localFile) setDataSource(source) else setDataSource(source)
             setOnPreparedListener {
                 it.setVolume(1f, 1f)
+                it.isLooping = true
                 it.start()
             }
             setOnErrorListener { _, _, _ ->
@@ -435,7 +436,12 @@ class MusicLibraryActivity : AppCompatActivity() {
                 Toast.makeText(this@MusicLibraryActivity, "Không có tiếng. Thử bài khác.", Toast.LENGTH_SHORT).show()
                 true
             }
-            setOnCompletionListener { playingId = null }
+            setOnCompletionListener {
+                try {
+                    it.seekTo(0)
+                    it.start()
+                } catch (_: Exception) { playingId = null }
+            }
             prepareAsync()
         }
     }

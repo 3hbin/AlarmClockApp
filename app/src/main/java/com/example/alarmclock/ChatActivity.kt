@@ -42,6 +42,9 @@ class ChatActivity : AppCompatActivity() {
     private var tts: TtsHelper? = null
     private var ttsOn = false
     private lateinit var inputBox: EditText
+    private lateinit var plusBtn: ImageButton
+    private var webSearchOn = false
+    private var pendingImageNote = ""
     private var speech: android.speech.SpeechRecognizer? = null
     private var lastHeard = ""
     private var listeningMic = false
@@ -156,6 +159,18 @@ class ChatActivity : AppCompatActivity() {
             maxLines = 5
         }
         inputBox = input
+        plusBtn = ImageButton(this).apply {
+            setImageResource(R.drawable.ic_gemini_sparkle)
+            background = GradientDrawable().apply {
+                shape = GradientDrawable.OVAL
+                setColor(0xFFFFFFFF.toInt())
+                setStroke((1 * d).toInt(), 0xFFDADCE0.toInt())
+            }
+            imageTintList = null
+            contentDescription = "Thêm"
+            setPadding((8 * d).toInt(), (8 * d).toInt(), (8 * d).toInt(), (8 * d).toInt())
+            setOnClickListener { showPlusMenu(this) }
+        }
         val micBtn = ImageButton(this).apply {
             setImageResource(R.drawable.ic_chat_mic)
             background = null
@@ -231,6 +246,9 @@ class ChatActivity : AppCompatActivity() {
             gravity = Gravity.CENTER_VERTICAL
             setPadding((10 * d).toInt(), (8 * d).toInt(), (10 * d).toInt(), (12 * d).toInt())
             setBackgroundColor(0xFFF1F3F4.toInt())
+            addView(plusBtn, LinearLayout.LayoutParams((44 * d).toInt(), (44 * d).toInt()).apply {
+                marginEnd = (8 * d).toInt()
+            })
             addView(input, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
             addView(micBtn, LinearLayout.LayoutParams((40 * d).toInt(), (40 * d).toInt()))
             addView(sendBtn, LinearLayout.LayoutParams((48 * d).toInt(), (48 * d).toInt()).apply {
@@ -425,6 +443,12 @@ class ChatActivity : AppCompatActivity() {
 
     private fun submitPrompt(q: String, addUserBubble: Boolean) {
         if (q.isEmpty() || generating) return
+        val extra = buildString {
+            if (webSearchOn) append("Bật tìm kiếm trang web: hãy dựa trên thông tin công khai mới nếu có. ")
+            if (pendingImageNote.isNotBlank()) append(pendingImageNote).append(' ')
+        }
+        pendingImageNote = ""
+        val q2 = (extra + q).trim()
         val key = chatPrefs().getString("key", "").orEmpty()
         if (key.isBlank()) {
             addBubble("Chưa có khóa. Bấm Khóa và dán khóa API Gemini.", mine = false, save = true, actions = false)
@@ -432,7 +456,7 @@ class ChatActivity : AppCompatActivity() {
         }
         removeErrorCard()
         if (addUserBubble) {
-            addBubble(q, mine = true, save = true, actions = false)
+            addBubble(q2, mine = true, save = true, actions = false)
             inputBox.setText("")
         }
         val waiting = addBubble("Gemini đang trả lời…", mine = false, save = false, actions = false)
@@ -440,7 +464,7 @@ class ChatActivity : AppCompatActivity() {
         headerAvatar?.let { startSpin(it) }
         beginGeneration()
         Thread {
-            val turn = chatVm.runTurn(key, q, history.toString()) { cancelled.get() }
+            val turn = chatVm.runTurn(key, q2, history.toString()) { cancelled.get() }
             val shown = turn.answer
             val err = turn.error
             if (err == null) {
@@ -519,6 +543,7 @@ class ChatActivity : AppCompatActivity() {
             setPadding((14 * d).toInt(), (10 * d).toInt(), (14 * d).toInt(), (10 * d).toInt())
             background = bubbleBg(mine, d)
             maxWidth = (resources.displayMetrics.widthPixels - (88 * d).toInt()).coerceAtLeast((180 * d).toInt())
+            setTag(android.R.id.text1, text)
             enablePartialCopy()
         }
         val col = LinearLayout(this).apply {
@@ -561,6 +586,7 @@ class ChatActivity : AppCompatActivity() {
         val col = parent.parent as? LinearLayout ?: return
         if (col.childCount > 1) return
         col.addView(actionRow(raw))
+        col.addView(fileRow(raw))
         addPromptCopyChips(col, raw)
         scrollRef?.post { scrollRef?.fullScroll(ScrollView.FOCUS_DOWN) }
     }
@@ -664,12 +690,10 @@ class ChatActivity : AppCompatActivity() {
                 return true
             }
             override fun onActionItemClicked(mode: android.view.ActionMode, item: android.view.MenuItem): Boolean {
-                val start = selectionStart.coerceAtLeast(0)
-                val end = selectionEnd.coerceAtLeast(0)
-                val picked = if (end > start) text.subSequence(start, end).toString() else text.toString()
+                val full = (getTag(android.R.id.text1) as? String) ?: text.toString()
                 when (item.itemId) {
                     android.R.id.copy -> {
-                        copyText(picked)
+                        copyText(full)
                         mode.finish()
                         return true
                     }
@@ -781,9 +805,10 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun copyText(text: String) {
+        val full = text.trim()
         val cm = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
-        cm.setPrimaryClip(ClipData.newPlainText("chat", text))
-        Toast.makeText(this, "Đã sao chép", Toast.LENGTH_SHORT).show()
+        cm.setPrimaryClip(ClipData.newPlainText("chat", full))
+        Toast.makeText(this, "Đã sao chép cả bài (${full.length} chữ)", Toast.LENGTH_SHORT).show()
     }
 
     private fun shareText(text: String) {
@@ -1199,4 +1224,193 @@ class ChatActivity : AppCompatActivity() {
         }
         return created ?: "Gemini đang bận. Đợi một lát rồi gửi lại."
     }
+
+    private fun fileRow(raw: String): LinearLayout {
+        val d = resources.displayMetrics.density
+        fun chip(label: String, click: () -> Unit) = TextView(this).apply {
+            text = label
+            textSize = 13f
+            setTextColor(0xFF1A73E8.toInt())
+            setPadding((12 * d).toInt(), (8 * d).toInt(), (12 * d).toInt(), (8 * d).toInt())
+            background = GradientDrawable().apply {
+                cornerRadius = 16 * d
+                setColor(0xFFE8F0FE.toInt())
+            }
+            setOnClickListener { click() }
+        }
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            setPadding(0, (6 * d).toInt(), 0, 0)
+            addView(chip("TXT") { exportDoc(raw, "txt") })
+            addView(chip("PDF") { exportDoc(raw, "pdf") }, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { marginStart = (8 * d).toInt() })
+            addView(chip("Tài liệu") { exportDoc(raw, "doc") }, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { marginStart = (8 * d).toInt() })
+        }
+    }
+
+    private fun showPlusMenu(anchor: View) {
+        val d = resources.displayMetrics.density
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding((14 * d).toInt(), (12 * d).toInt(), (14 * d).toInt(), (12 * d).toInt())
+            background = GradientDrawable().apply {
+                cornerRadius = 18 * d
+                setColor(0xFFFFFFFF.toInt())
+            }
+        }
+        fun row(label: String, click: () -> Unit) = TextView(this).apply {
+            text = label
+            textSize = 16f
+            setTextColor(0xFF202124.toInt())
+            setPadding(0, (12 * d).toInt(), 0, (12 * d).toInt())
+            setOnClickListener {
+                menuPopup?.dismiss()
+                click()
+            }
+        }
+        box.addView(row("Thư viện ảnh") { pickGallery.launch("image/*") })
+        box.addView(row("Camera") { openCamera() })
+        val web = TextView(this).apply {
+            text = if (webSearchOn) "Tìm kiếm trang web: Bật" else "Tìm kiếm trang web: Tắt"
+            textSize = 16f
+            setTextColor(0xFF1A73E8.toInt())
+            setPadding(0, (12 * d).toInt(), 0, (12 * d).toInt())
+            setOnClickListener {
+                webSearchOn = !webSearchOn
+                text = if (webSearchOn) "Tìm kiếm trang web: Bật" else "Tìm kiếm trang web: Tắt"
+                Toast.makeText(this@ChatActivity, if (webSearchOn) "Đã bật tìm web" else "Đã tắt tìm web", Toast.LENGTH_SHORT).show()
+            }
+        }
+        box.addView(web)
+        box.addView(row("Tạo ảnh") { createImageCard() })
+        val pop = android.widget.PopupWindow(box, (240 * d).toInt(), LinearLayout.LayoutParams.WRAP_CONTENT, true)
+        pop.elevation = 8 * d
+        pop.showAsDropDown(anchor, 0, (-220 * d).toInt())
+        menuPopup = pop
+    }
+
+    private val pickGallery = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri == null) return@registerForActivityResult
+        pendingImageNote = "Người dùng vừa chọn một ảnh từ thư viện."
+        inputBox.setText(inputBox.text.toString().ifBlank { "Nhìn ảnh này và giải thích giúp mình." })
+        Toast.makeText(this, "Đã thêm ảnh từ thư viện", Toast.LENGTH_SHORT).show()
+    }
+
+    private var cameraFile: java.io.File? = null
+    private val takeCamera = registerForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
+        if (ok != true) return@registerForActivityResult
+        pendingImageNote = "Người dùng vừa chụp một ảnh bằng camera."
+        inputBox.setText(inputBox.text.toString().ifBlank { "Nhìn ảnh vừa chụp và giải thích giúp mình." })
+        Toast.makeText(this, "Đã thêm ảnh camera", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun openCamera() {
+        if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(arrayOf(android.Manifest.permission.CAMERA), 41)
+            Toast.makeText(this, "Hãy cho phép camera rồi bấm lại", Toast.LENGTH_SHORT).show()
+            return
+        }
+        try {
+            val dir = java.io.File(cacheDir, "chat_images").apply { mkdirs() }
+            val file = java.io.File(dir, "cam_${System.currentTimeMillis()}.jpg")
+            cameraFile = file
+            val uri = androidx.core.content.FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+            takeCamera.launch(uri)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Không mở được camera", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun createImageCard() {
+        val topic = inputBox.text?.toString()?.trim().orEmpty().ifBlank { "Bài học hôm nay" }
+        try {
+            val bmp = android.graphics.Bitmap.createBitmap(1080, 1080, android.graphics.Bitmap.Config.ARGB_8888)
+            val canvas = android.graphics.Canvas(bmp)
+            val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+            paint.color = 0xFF1A73E8.toInt()
+            canvas.drawRect(0f, 0f, 1080f, 1080f, paint)
+            paint.color = 0xFFFFFFFF.toInt()
+            canvas.drawCircle(540f, 280f, 90f, paint)
+            paint.color = 0xFF174EA6.toInt()
+            paint.textSize = 54f
+            paint.textAlign = android.graphics.Paint.Align.CENTER
+            canvas.drawText(topic.take(42), 540f, 620f, paint)
+            paint.textSize = 32f
+            paint.color = 0xFFE8F0FE.toInt()
+            canvas.drawText("Ảnh tạo trong chat", 540f, 700f, paint)
+            val dir = java.io.File(getExternalFilesDir(null), "chat_docs").apply { mkdirs() }
+            val file = java.io.File(dir, "anh_${System.currentTimeMillis()}.png")
+            java.io.FileOutputStream(file).use { bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+            shareFile(file, "image/png")
+            addBubble("Đã tạo ảnh: ${file.name}", mine = false, save = true, actions = false)
+        } catch (_: Exception) {
+            Toast.makeText(this, "Không tạo được ảnh", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun exportDoc(raw: String, kind: String) {
+        try {
+            val dir = java.io.File(getExternalFilesDir(null), "chat_docs").apply { mkdirs() }
+            val stamp = System.currentTimeMillis()
+            val file = when (kind) {
+                "pdf" -> {
+                    val f = java.io.File(dir, "bai_$stamp.pdf")
+                    val doc = android.graphics.pdf.PdfDocument()
+                    val paint = android.graphics.Paint().apply { textSize = 14f; color = 0xFF202124.toInt() }
+                    val lines = raw.replace("\r", "").split('\n').flatMap { line ->
+                        if (line.length <= 70) listOf(line) else line.chunked(70)
+                    }
+                    var pageNo = 1
+                    var y = 48f
+                    var page = doc.startPage(android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, pageNo).create())
+                    for (line in lines) {
+                        if (y > 800f) {
+                            doc.finishPage(page)
+                            pageNo++
+                            page = doc.startPage(android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, pageNo).create())
+                            y = 48f
+                        }
+                        page.canvas.drawText(line, 40f, y, paint)
+                        y += 20f
+                    }
+                    doc.finishPage(page)
+                    java.io.FileOutputStream(f).use { doc.writeTo(it) }
+                    doc.close()
+                    f
+                }
+                "doc" -> {
+                    val f = java.io.File(dir, "bai_$stamp.doc")
+                    val html = "<html><body><pre>" + raw.replace("&", "&").replace("<", "<") + "</pre></body></html>"
+                    f.writeText(html)
+                    f
+                }
+                else -> {
+                    val f = java.io.File(dir, "bai_$stamp.txt")
+                    f.writeText(raw)
+                    f
+                }
+            }
+            val mime = when (kind) {
+                "pdf" -> "application/pdf"
+                "doc" -> "application/msword"
+                else -> "text/plain"
+            }
+            shareFile(file, mime)
+        } catch (_: Exception) {
+            Toast.makeText(this, "Không tạo được file", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun shareFile(file: java.io.File, mime: String) {
+        val uri = androidx.core.content.FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+        startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+            type = mime
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }, "Mở file"))
+    }
+
 }
