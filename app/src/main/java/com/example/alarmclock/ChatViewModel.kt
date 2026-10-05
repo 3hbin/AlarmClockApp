@@ -27,11 +27,12 @@ class ChatViewModel(private val app: Context) {
         apiKey: String,
         question: String,
         historyJson: String,
-        cancelled: () -> Boolean
+        cancelled: () -> Boolean,
+        imageJpeg: ByteArray? = null
     ): Turn {
         if (cancelled()) return Turn("Đã dừng trả lời.", null, emptyList())
 
-        val api = askGemini(apiKey, question, historyJson, cancelled)
+        val api = askGemini(apiKey, question, historyJson, cancelled, imageJpeg)
         val gemini = api.out
         val merged = LinkedHashMap<String, GeminiTools.AlarmIntent>()
         (gemini.intents + localIntents(question)).forEach { i ->
@@ -133,7 +134,8 @@ class ChatViewModel(private val app: Context) {
         key: String,
         question: String,
         historyJson: String,
-        cancelled: () -> Boolean
+        cancelled: () -> Boolean,
+        imageJpeg: ByteArray? = null
     ): AskOut {
         val contents = JSONArray()
         val old = try { JSONArray(historyJson) } catch (_: Exception) { JSONArray() }
@@ -146,9 +148,17 @@ class ChatViewModel(private val app: Context) {
                     .put("parts", JSONArray().put(JSONObject().put("text", item.optString("t"))))
             )
         }
-        contents.put(
-            JSONObject().put("role", "user").put("parts", JSONArray().put(JSONObject().put("text", question)))
-        )
+        val userParts = JSONArray().put(JSONObject().put("text", question))
+        if (imageJpeg != null && imageJpeg.isNotEmpty()) {
+            val b64 = android.util.Base64.encodeToString(imageJpeg, android.util.Base64.NO_WRAP)
+            userParts.put(
+                JSONObject().put(
+                    "inline_data",
+                    JSONObject().put("mime_type", "image/jpeg").put("data", b64)
+                )
+            )
+        }
+        contents.put(JSONObject().put("role", "user").put("parts", userParts))
         var lastError: ChatApiError? = null
         repeat(2) { attempt ->
             if (cancelled()) return AskOut(GeminiTools.ModelOut("", emptyList()))

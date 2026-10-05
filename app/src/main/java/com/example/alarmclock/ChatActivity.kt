@@ -45,12 +45,15 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var plusBtn: ImageButton
     private var webSearchOn = false
     private var pendingImageNote = ""
+    private var pendingImageFile: java.io.File? = null
     private var speech: android.speech.SpeechRecognizer? = null
     private var lastHeard = ""
     private var listeningMic = false
     private var menuBtn: ImageButton? = null
     private var menuPopup: android.widget.PopupWindow? = null
     private var errorCard: android.view.View? = null
+    private var statusAnim: android.animation.ValueAnimator? = null
+    private var statusView: TextView? = null
 
     private val frames by lazy {
         IntArray(39) { resources.getIdentifier("gemini_loop_%02d".format(it), "drawable", packageName) }
@@ -462,8 +465,9 @@ class ChatActivity : AppCompatActivity() {
 
     private fun submitPrompt(q: String, addUserBubble: Boolean) {
         if (q.isEmpty() || generating) return
+        val shot = pendingImageFile
+        pendingImageFile = null
         val extra = buildString {
-            if (webSearchOn) append("Bật tìm kiếm trang web: hãy dựa trên thông tin công khai mới nếu có. ")
             if (pendingImageNote.isNotBlank()) append(pendingImageNote).append(' ')
         }
         pendingImageNote = ""
@@ -475,15 +479,20 @@ class ChatActivity : AppCompatActivity() {
         }
         removeErrorCard()
         if (addUserBubble) {
-            addBubble(q2, mine = true, save = true, actions = false)
+            addBubble(q, mine = true, save = true, actions = false)
+            if (shot != null) showImage(shot, mine = true)
             inputBox.setText("")
         }
-        val waiting = addBubble("Gemini đang trả lời…", mine = false, save = false, actions = false)
+        val waiting = addBubble("Đang tìm kiếm…", mine = false, save = false, actions = false)
+        startStatusShine(waiting)
         (waiting.tag as? ImageView)?.let { startSpin(it) }
         headerAvatar?.let { startSpin(it) }
         beginGeneration()
         Thread {
-            val turn = chatVm.runTurn(key, q2, history.toString()) { cancelled.get() }
+            val searched = if (webSearchOn) searchWeb(q) else ""
+            val asked = if (searched.isBlank()) q2 else q2 + "\n\nKết quả tìm web thật (chỉ dựa vào đoạn này, nếu không đủ thì nói chưa đủ tin):\n" + searched
+            val jpeg = shot?.takeIf { it.exists() }?.readBytes()
+            val turn = chatVm.runTurn(key, asked, history.toString(), { cancelled.get() }, jpeg)
             val shown = turn.answer
             val err = turn.error
             if (err == null) {
@@ -837,7 +846,51 @@ class ChatActivity : AppCompatActivity() {
         }, "Chia sẻ"))
     }
 
+
+    private fun startStatusShine(tv: TextView) {
+        stopStatusShine(null)
+        statusView = tv
+        val phases = arrayOf("Đang tìm kiếm…", "Đang suy nghĩ…", "Đang tạo…", "Đang trả lời…")
+        var step = 0
+        tv.text = phases[0]
+        val tick = object : Runnable {
+            override fun run() {
+                if (statusView !== tv) return
+                step = (step + 1) % phases.size
+                tv.text = phases[step]
+                tv.postDelayed(this, 1300)
+            }
+        }
+        tv.postDelayed(tick, 1300)
+        statusAnim = android.animation.ValueAnimator.ofFloat(0f, 1f).apply {
+            duration = 1200
+            repeatCount = android.animation.ValueAnimator.INFINITE
+            addUpdateListener { anim ->
+                val w = tv.width.toFloat().coerceAtLeast(1f)
+                val shift = (anim.animatedValue as Float) * (w + 80f) - 40f
+                tv.paint.shader = android.graphics.LinearGradient(
+                    shift, 0f, shift + w * 0.35f, 0f,
+                    intArrayOf(0xFF9AA0A6.toInt(), 0xFFFFFFFF.toInt(), 0xFF9AA0A6.toInt()),
+                    floatArrayOf(0f, 0.5f, 1f),
+                    android.graphics.Shader.TileMode.CLAMP
+                )
+                tv.invalidate()
+            }
+            start()
+        }
+    }
+
+    private fun stopStatusShine(tv: TextView?) {
+        statusView?.removeCallbacks(null)
+        statusView = null
+        statusAnim?.cancel()
+        statusAnim = null
+        tv?.paint?.shader = null
+        tv?.invalidate()
+    }
+
     private fun typeWords(target: TextView, full: String, done: () -> Unit) {
+        stopStatusShine(target)
         typeHandler.removeCallbacksAndMessages(null)
         val words = full.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
         if (words.size <= 8) {
@@ -1333,29 +1386,120 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun createImageCard() {
-        val topic = inputBox.text?.toString()?.trim().orEmpty().ifBlank { "Bài học hôm nay" }
-        try {
-            val bmp = android.graphics.Bitmap.createBitmap(1080, 1080, android.graphics.Bitmap.Config.ARGB_8888)
-            val canvas = android.graphics.Canvas(bmp)
-            val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
-            paint.color = 0xFF1A73E8.toInt()
-            canvas.drawRect(0f, 0f, 1080f, 1080f, paint)
-            paint.color = 0xFFFFFFFF.toInt()
-            canvas.drawCircle(540f, 280f, 90f, paint)
-            paint.color = 0xFF174EA6.toInt()
-            paint.textSize = 54f
-            paint.textAlign = android.graphics.Paint.Align.CENTER
-            canvas.drawText(topic.take(42), 540f, 620f, paint)
-            paint.textSize = 32f
-            paint.color = 0xFFE8F0FE.toInt()
-            canvas.drawText("Ảnh tạo trong chat", 540f, 700f, paint)
+        val topic = inputBox.text?.toString()?.trim().orEmpty().ifBlank { "Minh họa bài học hôm nay" }
+        val key = chatPrefs().getString("key", "").orEmpty()
+        val ref = pendingImageFile
+        if (key.isBlank()) {
+            Toast.makeText(this, "Cần khóa Gemini để AI vẽ ảnh", Toast.LENGTH_SHORT).show()
+            return
+        }
+        addBubble("Đang vẽ: $topic", mine = true, save = false, actions = false)
+        val waiting = addBubble("Đang tạo…", mine = false, save = false, actions = false)
+        startStatusShine(waiting)
+        Thread {
+            val file = drawWithGemini(key, topic, ref)
+            runOnUiThread {
+                stopStatusShine(waiting)
+                if (file == null) {
+                    waiting.text = "Chưa tạo được ảnh. Thử lại hoặc viết rõ hơn muốn vẽ gì."
+                } else {
+                    waiting.text = "Ảnh đã tạo"
+                    showImage(file, mine = false)
+                    pendingImageFile = null
+                    inputBox.setText("")
+                }
+            }
+        }.start()
+    }
+
+    private fun drawWithGemini(key: String, topic: String, ref: java.io.File?): java.io.File? {
+        return try {
+            val parts = org.json.JSONArray().put(org.json.JSONObject().put(
+                "text",
+                "Vẽ một ảnh minh họa phù hợp học sinh, rõ ràng, không chữ bậy. Chủ đề: $topic"
+            ))
+            if (ref != null && ref.exists()) {
+                val b64 = android.util.Base64.encodeToString(ref.readBytes(), android.util.Base64.NO_WRAP)
+                parts.put(org.json.JSONObject().put("inline_data", org.json.JSONObject()
+                    .put("mime_type", "image/jpeg").put("data", b64)))
+            }
+            val body = org.json.JSONObject()
+                .put("contents", org.json.JSONArray().put(org.json.JSONObject().put("role", "user").put("parts", parts)))
+                .put("generationConfig", org.json.JSONObject().put("responseModalities", org.json.JSONArray().put("TEXT").put("IMAGE")))
+            val models = arrayOf("gemini-2.5-flash-image", "gemini-2.0-flash-preview-image-generation")
+            var raw = ""
+            for (modelName in models) {
+                val url = java.net.URL("https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent?key=$key")
+                val conn = (url.openConnection() as java.net.HttpURLConnection).apply {
+                    requestMethod = "POST"
+                    setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                    doOutput = true
+                    connectTimeout = 20000
+                    readTimeout = 60000
+                }
+                conn.outputStream.use { it.write(body.toString().toByteArray()) }
+                val code = conn.responseCode
+                raw = (if (code in 200..299) conn.inputStream else conn.errorStream)?.bufferedReader()?.readText().orEmpty()
+                if (code in 200..299 && raw.contains("inlineData")) break
+            }
+            val json = org.json.JSONObject(raw)
+            val partsOut = json.getJSONArray("candidates").getJSONObject(0).getJSONObject("content").getJSONArray("parts")
+            var b64 = ""
+            for (i in 0 until partsOut.length()) {
+                val p = partsOut.getJSONObject(i)
+                val inline = p.optJSONObject("inlineData") ?: p.optJSONObject("inline_data")
+                if (inline != null) b64 = inline.optString("data")
+            }
+            if (b64.isBlank()) return null
+            val bytes = android.util.Base64.decode(b64, android.util.Base64.DEFAULT)
             val dir = java.io.File(getExternalFilesDir(null), "chat_docs").apply { mkdirs() }
             val file = java.io.File(dir, "anh_${System.currentTimeMillis()}.png")
-            java.io.FileOutputStream(file).use { bmp.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
-            shareFile(file, "image/png")
-            addBubble("Đã tạo ảnh: ${file.name}", mine = false, save = true, actions = false)
+            file.writeBytes(bytes)
+            file
         } catch (_: Exception) {
-            Toast.makeText(this, "Không tạo được ảnh", Toast.LENGTH_SHORT).show()
+            null
+        }
+    }
+
+    private fun showImage(file: java.io.File, mine: Boolean) {
+        val log = logRef ?: return
+        val d = resources.displayMetrics.density
+        val bmp = android.graphics.BitmapFactory.decodeFile(file.absolutePath) ?: return
+        val iv = android.widget.ImageView(this).apply {
+            setImageBitmap(bmp)
+            adjustViewBounds = true
+            background = bubbleBg(mine, d)
+            setPadding((6 * d).toInt(), (6 * d).toInt(), (6 * d).toInt(), (6 * d).toInt())
+            setOnClickListener { shareFile(file, "image/png") }
+        }
+        val wrap = LinearLayout(this).apply {
+            gravity = if (mine) Gravity.END else Gravity.START
+            setPadding(0, (4 * d).toInt(), 0, (8 * d).toInt())
+            addView(iv, LinearLayout.LayoutParams((260 * d).toInt(), LinearLayout.LayoutParams.WRAP_CONTENT))
+        }
+        log.addView(wrap)
+        scrollRef?.post { scrollRef?.fullScroll(android.widget.ScrollView.FOCUS_DOWN) }
+    }
+
+    private fun searchWeb(query: String): String {
+        return try {
+            val q = java.net.URLEncoder.encode(query, "UTF-8")
+            val url = java.net.URL("https://html.duckduckgo.com/html/?q=$q")
+            val conn = (url.openConnection() as java.net.HttpURLConnection).apply {
+                setRequestProperty("User-Agent", "Mozilla/5.0")
+                connectTimeout = 8000
+                readTimeout = 8000
+            }
+            val html = conn.inputStream.bufferedReader().readText()
+            val snips = Regex("result__snippet[^>]*>(.*?)</", RegexOption.DOT_MATCHES_ALL)
+                .findAll(html)
+                .map { it.groupValues[1].replace(Regex("<[^>]+>"), " ").replace("&", "&").replace("&#x27;", "'").trim() }
+                .filter { it.length > 20 }
+                .take(5)
+                .toList()
+            if (snips.isEmpty()) "" else snips.joinToString("\n") { "• $it" }
+        } catch (_: Exception) {
+            ""
         }
     }
 
@@ -1415,20 +1559,31 @@ class ChatActivity : AppCompatActivity() {
     @Deprecated("picker")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 71 && resultCode == RESULT_OK) {
-            pendingImageNote = "Người dùng vừa chọn một ảnh từ thư viện."
+        if (requestCode == 71 && resultCode == RESULT_OK && data?.data != null) {
+            pendingImageFile = copyPicked(data.data!!)
+            pendingImageNote = "Người dùng gửi kèm một ảnh. Hãy nhìn ảnh và trả lời."
             if (::inputBox.isInitialized) {
                 inputBox.setText(inputBox.text.toString().ifBlank { "Nhìn ảnh này và giải thích giúp mình." })
             }
-            Toast.makeText(this, "Đã thêm ảnh từ thư viện", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Đã thêm ảnh, bấm gửi để AI xem", Toast.LENGTH_SHORT).show()
         }
         if (requestCode == 72 && resultCode == RESULT_OK) {
-            pendingImageNote = "Người dùng vừa chụp một ảnh bằng camera."
+            pendingImageFile = cameraFile
+            pendingImageNote = "Người dùng gửi kèm một ảnh vừa chụp. Hãy nhìn ảnh và trả lời."
             if (::inputBox.isInitialized) {
                 inputBox.setText(inputBox.text.toString().ifBlank { "Nhìn ảnh vừa chụp và giải thích giúp mình." })
             }
-            Toast.makeText(this, "Đã thêm ảnh camera", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Đã thêm ảnh camera, bấm gửi để AI xem", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun copyPicked(uri: android.net.Uri): java.io.File? {
+        return try {
+            val dir = java.io.File(cacheDir, "chat_images").apply { mkdirs() }
+            val file = java.io.File(dir, "lib_${System.currentTimeMillis()}.jpg")
+            contentResolver.openInputStream(uri)?.use { input -> file.outputStream().use { input.copyTo(it) } }
+            file.takeIf { it.exists() && it.length() > 0 }
+        } catch (_: Exception) { null }
     }
 
     private fun shareFile(file: java.io.File, mime: String) {
