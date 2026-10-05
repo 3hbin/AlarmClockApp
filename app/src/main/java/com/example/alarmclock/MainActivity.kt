@@ -275,22 +275,31 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             val timeStr = "%02d:%02d".format(best!!.hour, best.minute)
-            val today = java.util.Calendar.getInstance().apply {
-                set(java.util.Calendar.HOUR_OF_DAY, best.hour)
-                set(java.util.Calendar.MINUTE, best.minute)
-                set(java.util.Calendar.SECOND, 0)
-                set(java.util.Calendar.MILLISECOND, 0)
-            }.timeInMillis
-            val late = now.timeInMillis - today
-            if (late in 0..90_000 && !RingGuard.isDismissed(this, best.id)) {
-                binding.tvNextAlarm.text = "Đang kêu • $timeStr"
+            // Chỉ hiện "Đang kêu" khi báo thức thật sự đang đổ chuông phút này.
+            // Đặt đúng phút hiện tại được hẹn sang ngày mai, không được coi là đang kêu.
+            val actuallyRinging = RingGuard.alreadyFiredThisMinute(this, best.id) &&
+                !RingGuard.isDismissed(this, best.id) &&
+                !AlarmNotificationHelper.ringingTimedOut(this)
+            if (actuallyRinging) {
+                binding.tvNextAlarm.text = Lang.t(this, "Đang kêu • $timeStr", "Ringing • $timeStr")
                 return
             }
             val diff = (bestMs - now.timeInMillis).coerceAtLeast(0)
+            val nextDay = java.util.Calendar.getInstance().apply { timeInMillis = bestMs }
+            val tomorrow = now.get(java.util.Calendar.DAY_OF_YEAR) != nextDay.get(java.util.Calendar.DAY_OF_YEAR) ||
+                now.get(java.util.Calendar.YEAR) != nextDay.get(java.util.Calendar.YEAR)
+            if (tomorrow) {
+                binding.tvNextAlarm.text = Lang.t(this, "Ngày mai • $timeStr", "Tomorrow • $timeStr")
+                return
+            }
             val h = (diff / 3_600_000).toInt()
             val m = ((diff % 3_600_000) / 60_000).toInt()
             val s = ((diff % 60_000) / 1000).toInt()
-            binding.tvNextAlarm.text = "Còn $h giờ $m phút $s giây • $timeStr"
+            binding.tvNextAlarm.text = Lang.t(
+                this,
+                "Còn $h giờ $m phút $s giây • $timeStr",
+                "$h h $m m $s s left • $timeStr"
+            )
         } catch (_: Exception) {
             try { binding.tvNextAlarm.text = getString(R.string.alarm_default_label) } catch (_: Exception) {}
         }

@@ -393,15 +393,81 @@ class MusicLibraryActivity : AppCompatActivity() {
             return
         }
         try { preview?.release() } catch (_: Exception) {}
+        preview = null
+        playingId = song.id
+        Toast.makeText(this, "Đang nghe: ${song.title}", Toast.LENGTH_SHORT).show()
+        // Zedge chặn link thiếu header — tải về rồi phát file, nếu không sẽ im lặng.
+        if (song.preview.contains("zobj.net") || song.preview.contains("zedge.net")) {
+            io.execute {
+                val file = downloadAudio(song.preview, "preview_" + song.id.hashCode())
+                runOnUiThread {
+                    if (isFinishing) return@runOnUiThread
+                    if (file == null) {
+                        playingId = null
+                        status.text = "Zedge không phát được. Thử bài khác."
+                        Toast.makeText(this, "Không có tiếng. Thử bài khác.", Toast.LENGTH_SHORT).show()
+                        return@runOnUiThread
+                    }
+                    startPlayer(file.absolutePath, true)
+                }
+            }
+        } else {
+            startPlayer(song.preview, false)
+        }
+    }
+
+    private fun startPlayer(source: String, localFile: Boolean) {
+        try { preview?.release() } catch (_: Exception) {}
         preview = MediaPlayer().apply {
-            setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build())
-            setDataSource(song.preview)
-            setOnPreparedListener { it.start() }
+            setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
+            )
+            if (localFile) setDataSource(source) else setDataSource(source)
+            setOnPreparedListener {
+                it.setVolume(1f, 1f)
+                it.start()
+            }
+            setOnErrorListener { _, _, _ ->
+                playingId = null
+                Toast.makeText(this@MusicLibraryActivity, "Không có tiếng. Thử bài khác.", Toast.LENGTH_SHORT).show()
+                true
+            }
             setOnCompletionListener { playingId = null }
             prepareAsync()
         }
-        Toast.makeText(this, "Đang nghe: ${song.title}", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun downloadAudio(url: String, name: String): File? {
+        return try {
+            val dir = File(cacheDir, "tone_preview").apply { mkdirs() }
+            val out = File(dir, name.filter { it.isLetterOrDigit() || it == '_' } + ".mp3")
+            val conn = URL(url).openConnection() as HttpURLConnection
+            conn.connectTimeout = 12000
+            conn.readTimeout = 15000
+            conn.instanceFollowRedirects = true
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36")
+            conn.setRequestProperty("Referer", "https://www.zedge.net/")
+            conn.setRequestProperty("Accept", "*/*")
+            conn.connect()
+            if (conn.responseCode !in 200..299) {
+                conn.disconnect()
+                return null
+            }
+            val type = conn.contentType.orEmpty()
+            if (type.contains("text/html")) {
+                conn.disconnect()
+                return null
+            }
+            conn.inputStream.use { input -> FileOutputStream(out).use { input.copyTo(it) } }
+            conn.disconnect()
+            if (out.length() < 800) {
+                out.delete()
+                null
+            } else out
+        } catch (_: Exception) { null }
     }
 
     private fun choose(song: Song) {
@@ -414,11 +480,13 @@ class MusicLibraryActivity : AppCompatActivity() {
         loading.start()
         io.execute {
             val file = try {
-                val dir = File(filesDir, "music_previews").apply { mkdirs() }
-                val out = File(dir, song.id + ".mp3")
-                val conn = URL(song.preview).openConnection() as HttpURLConnection
-                conn.inputStream.use { input -> FileOutputStream(out).use { input.copyTo(it) } }
-                conn.disconnect(); out
+                val saved = downloadAudio(song.preview, "save_" + song.id.hashCode())
+                if (saved == null) null else {
+                    val dir = File(filesDir, "music_previews").apply { mkdirs() }
+                    val out = File(dir, song.id.filter { it.isLetterOrDigit() || it == '_' || it == '-' }.take(60) + ".mp3")
+                    saved.copyTo(out, overwrite = true)
+                    out
+                }
             } catch (_: Exception) { null }
             runOnUiThread {
                 loading.stop()
@@ -528,10 +596,12 @@ class MusicLibraryActivity : AppCompatActivity() {
             conn.setRequestProperty("User-Agent", "Mozilla/5.0")
             conn.instanceFollowRedirects = true
             val html = conn.inputStream.bufferedReader().readText()
+                .replace("\\u0026", "&")
+                .replace("\\/", "/")
             conn.disconnect()
             val chunks = html.split("href=\"/ringtones/")
-            val previews = Regex("""https://dw\.zobj\.net/download/v1/[^"\s<]+""")
-                .findAll(html).map { it.value.replace("\\u0026", "&").replace("\\/", "/") }.toList()
+            val previews = Regex("""https://dw\.zobj\.net/download/v1/[^"\\\s<]+""")
+                .findAll(html).map { it.value.trim().trimEnd('\\') }.filter { it.contains("special=") || it.contains(".mp3") }.toList()
             buildList {
                 var i = 0
                 for (chunk in chunks.drop(1).take(25)) {
