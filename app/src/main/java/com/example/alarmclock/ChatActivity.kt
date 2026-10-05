@@ -483,16 +483,20 @@ class ChatActivity : AppCompatActivity() {
             if (shot != null) showImage(shot, mine = true)
             inputBox.setText("")
         }
-        val waiting = addBubble("Đang tìm kiếm…", mine = false, save = false, actions = false)
-        startStatusShine(waiting)
+        val needSearch = webSearchOn || looksCurrent(q)
+        val first = if (needSearch) "Đang tìm kiếm…" else "Đang suy nghĩ…"
+        val waiting = addBubble(first, mine = false, save = false, actions = false)
+        startStatusShine(waiting, first)
         (waiting.tag as? ImageView)?.let { startSpin(it) }
         headerAvatar?.let { startSpin(it) }
         beginGeneration()
         Thread {
-            val searched = if (webSearchOn) searchWeb(q) else ""
-            val asked = if (searched.isBlank()) q2 else q2 + "\n\nKết quả tìm web thật (chỉ dựa vào đoạn này, nếu không đủ thì nói chưa đủ tin):\n" + searched
+            val searched = if (webSearchOn || looksCurrent(q)) searchWeb(q) else ""
+            runOnUiThread { setStatus(waiting, "Đang suy nghĩ…") }
+            val asked = if (searched.isBlank()) q2 else q2 + "\n\nKết quả tìm web thật (chỉ dựa vào đoạn này, nếu tin nói đã ngừng hoặc khai tử thì phải trả lời đã ngừng, không nói còn hoạt động. Nếu không đủ thì nói chưa đủ tin):\n" + searched
             val jpeg = shot?.takeIf { it.exists() }?.readBytes()
             val turn = chatVm.runTurn(key, asked, history.toString(), { cancelled.get() }, jpeg)
+            runOnUiThread { setStatus(waiting, "Đang trả lời…") }
             val shown = turn.answer
             val err = turn.error
             if (err == null) {
@@ -847,33 +851,49 @@ class ChatActivity : AppCompatActivity() {
     }
 
 
-    private fun startStatusShine(tv: TextView) {
-        stopStatusShine(null)
+    private var statusBars: LinearLayout? = null
+
+    private fun setStatus(tv: TextView, label: String) {
+        if (statusView !== tv) return
+        tv.text = label
+    }
+
+    private fun startStatusShine(tv: TextView, label: String) {
+        stopStatusShine(tv)
         statusView = tv
-        val phases = arrayOf("Đang tìm kiếm…", "Đang suy nghĩ…", "Đang tạo…", "Đang trả lời…")
-        var step = 0
-        tv.text = phases[0]
-        val tick = object : Runnable {
-            override fun run() {
-                if (statusView !== tv) return
-                step = (step + 1) % phases.size
-                tv.text = phases[step]
-                tv.postDelayed(this, 1300)
+        tv.setTextColor(0xFFE0E0E0.toInt())
+        tv.text = label
+        val d = tv.resources.displayMetrics.density
+        val bars = LinearLayout(tv.context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, (8 * d).toInt(), 0, 0)
+            listOf(168, 112).forEach { wDp ->
+                addView(android.view.View(tv.context).apply {
+                    background = android.graphics.drawable.GradientDrawable().apply {
+                        cornerRadius = 8 * d
+                        setColor(0xFFE0E0E0.toInt())
+                    }
+                }, LinearLayout.LayoutParams((wDp * d).toInt(), (12 * d).toInt()).apply {
+                    topMargin = (6 * d).toInt()
+                })
             }
         }
-        tv.postDelayed(tick, 1300)
-        statusAnim = android.animation.ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 1200
+        (tv.parent as? LinearLayout)?.addView(bars)
+        statusBars = bars
+        statusAnim = android.animation.ValueAnimator.ofFloat(-0.4f, 1.4f).apply {
+            duration = 1500
             repeatCount = android.animation.ValueAnimator.INFINITE
+            interpolator = android.view.animation.LinearInterpolator()
             addUpdateListener { anim ->
                 val w = tv.width.toFloat().coerceAtLeast(1f)
-                val shift = (anim.animatedValue as Float) * (w + 80f) - 40f
-                tv.paint.shader = android.graphics.LinearGradient(
-                    shift, 0f, shift + w * 0.35f, 0f,
-                    intArrayOf(0xFF9AA0A6.toInt(), 0xFFFFFFFF.toInt(), 0xFF9AA0A6.toInt()),
+                val x = (anim.animatedValue as Float) * w
+                val shader = android.graphics.LinearGradient(
+                    x, 0f, x + w * 0.45f, 0f,
+                    intArrayOf(0xFFE0E0E0.toInt(), 0xFFF5F5F5.toInt(), 0xFFE0E0E0.toInt()),
                     floatArrayOf(0f, 0.5f, 1f),
                     android.graphics.Shader.TileMode.CLAMP
                 )
+                tv.paint.shader = shader
                 tv.invalidate()
             }
             start()
@@ -885,7 +905,10 @@ class ChatActivity : AppCompatActivity() {
         statusView = null
         statusAnim?.cancel()
         statusAnim = null
+        statusBars?.let { (it.parent as? LinearLayout)?.removeView(it) }
+        statusBars = null
         tv?.paint?.shader = null
+        tv?.setTextColor(0xFF202124.toInt())
         tv?.invalidate()
     }
 
@@ -1395,7 +1418,7 @@ class ChatActivity : AppCompatActivity() {
         }
         addBubble("Đang vẽ: $topic", mine = true, save = false, actions = false)
         val waiting = addBubble("Đang tạo…", mine = false, save = false, actions = false)
-        startStatusShine(waiting)
+        startStatusShine(waiting, "Đang tạo…")
         Thread {
             val file = drawWithGemini(key, topic, ref)
             runOnUiThread {
@@ -1481,26 +1504,39 @@ class ChatActivity : AppCompatActivity() {
         scrollRef?.post { scrollRef?.fullScroll(android.widget.ScrollView.FOCUS_DOWN) }
     }
 
+    private fun looksCurrent(q: String): Boolean {
+        val s = q.lowercase()
+        return listOf("còn hoạt động", "khai tử", "đã ngừng", "hiện tại", "mới nhất", "còn không", "shutdown", "discontinued").any { s.contains(it) }
+    }
+
     private fun searchWeb(query: String): String {
-        return try {
+        val bits = mutableListOf<String>()
+        try {
             val q = java.net.URLEncoder.encode(query, "UTF-8")
-            val url = java.net.URL("https://html.duckduckgo.com/html/?q=$q")
-            val conn = (url.openConnection() as java.net.HttpURLConnection).apply {
+            val conn = (java.net.URL("https://html.duckduckgo.com/html/?q=$q").openConnection() as java.net.HttpURLConnection).apply {
                 setRequestProperty("User-Agent", "Mozilla/5.0")
                 connectTimeout = 8000
                 readTimeout = 8000
             }
             val html = conn.inputStream.bufferedReader().readText()
-            val snips = Regex("result__snippet[^>]*>(.*?)</", RegexOption.DOT_MATCHES_ALL)
-                .findAll(html)
-                .map { it.groupValues[1].replace(Regex("<[^>]+>"), " ").replace("&", "&").replace("&#x27;", "'").trim() }
-                .filter { it.length > 20 }
-                .take(5)
-                .toList()
-            if (snips.isEmpty()) "" else snips.joinToString("\n") { "• $it" }
-        } catch (_: Exception) {
-            ""
-        }
+            Regex("result__snippet[^>]*>(.*?)</a>", RegexOption.DOT_MATCHES_ALL).findAll(html).forEach {
+                val snip = it.groupValues[1].replace(Regex("<[^>]+>"), " ").replace("&", "&").replace("&#x27;", "'").trim()
+                if (snip.length > 20) bits.add(snip)
+            }
+        } catch (_: Exception) {}
+        try {
+            val q = java.net.URLEncoder.encode(query, "UTF-8")
+            val conn = (java.net.URL("https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=$q&format=json&srlimit=2").openConnection() as java.net.HttpURLConnection).apply {
+                setRequestProperty("User-Agent", "AlarmClock/1.0")
+                connectTimeout = 8000
+                readTimeout = 8000
+            }
+            val raw = conn.inputStream.bufferedReader().readText()
+            Regex("\"snippet\":\"(.*?)\"").findAll(raw).forEach {
+                bits.add(it.groupValues[1].replace("\\n", " ").replace("\"", "\""))
+            }
+        } catch (_: Exception) {}
+        return bits.distinct().take(5).joinToString("\n") { "• $it" }
     }
 
     private fun exportDoc(raw: String, kind: String) {
