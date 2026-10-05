@@ -562,7 +562,7 @@ class ChatActivity : AppCompatActivity() {
             setPadding((14 * d).toInt(), (10 * d).toInt(), (14 * d).toInt(), (10 * d).toInt())
             background = bubbleBg(mine, d)
             maxWidth = (resources.displayMetrics.widthPixels - (88 * d).toInt()).coerceAtLeast((180 * d).toInt())
-            setTag(android.R.id.text1, text)
+            setTag(R.id.chat_full_text, text)
             enablePartialCopy()
         }
         val col = LinearLayout(this).apply {
@@ -709,7 +709,7 @@ class ChatActivity : AppCompatActivity() {
                 return true
             }
             override fun onActionItemClicked(mode: android.view.ActionMode, item: android.view.MenuItem): Boolean {
-                val full = (getTag(android.R.id.text1) as? String) ?: text.toString()
+                val full = (getTag(R.id.chat_full_text) as? String) ?: text.toString()
                 when (item.itemId) {
                     android.R.id.copy -> {
                         copyText(full)
