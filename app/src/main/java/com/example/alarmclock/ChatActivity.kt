@@ -65,8 +65,12 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-        if (signedIn()) showChat() else showGate("Chat cần đăng nhập Google để lưu lịch sử.")
+        try {
+            window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+            if (signedIn()) showChat() else showGate("Chat cần đăng nhập Google để lưu lịch sử.")
+        } catch (e: Exception) {
+            showGate("Chat chưa mở được. Thử lại. " + (e.message ?: ""))
+        }
     }
 
     private fun signedIn(): Boolean {
@@ -116,6 +120,12 @@ class ChatActivity : AppCompatActivity() {
     }
 
     private fun showChat() {
+        try { showChatBody() } catch (e: Exception) {
+            showGate("Chat lỗi khi mở: " + (e.message ?: "không rõ"))
+        }
+    }
+
+    private fun showChatBody() {
         val prefs = chatPrefs()
         val d = resources.displayMetrics.density
         val email = accountEmail()

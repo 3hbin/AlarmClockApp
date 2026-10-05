@@ -521,7 +521,7 @@ object CloudSyncHelper {
                     Toast.makeText(context, "Tài khoản mới chưa có báo thức nào", Toast.LENGTH_SHORT).show()
                 }
                 local.isNotEmpty() -> pushAlarms(context, local)
-                else -> Toast.makeText(context, "Google đã liên kết — chưa có báo để sao lưu", Toast.LENGTH_SHORT).show()
+                else -> { /* không hiện toast khi chưa có báo */ }
             }
         }
     }
