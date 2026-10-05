@@ -54,13 +54,13 @@
 
     <!-- Settings -->
     <string name="settings_title">Cài đặt</string>
-    <string name="lang_section">Language</string>
-    <string name="lang_hint">English only. System default follows the device date/time format.</string>
-    <string name="lang_app">App language</string>
-    <string name="lang_system">🌐  System default</string>
-    <string name="lang_pick_title">Choose language (%1$d)</string>
-    <string name="lang_search_hint">🔍  Search language…</string>
-    <string name="lang_count">%1$d language(s)</string>
+    <string name="lang_section">Ngôn ngữ</string>
+    <string name="lang_hint">Chỉ tiếng Anh. Theo hệ thống dùng định dạng ngày giờ của máy.</string>
+    <string name="lang_app">Ngôn ngữ ứng dụng</string>
+    <string name="lang_system">🌐  Theo hệ thống</string>
+    <string name="lang_pick_title">Chọn ngôn ngữ (%1$d)</string>
+    <string name="lang_search_hint">🔍  Tìm ngôn ngữ…</string>
+    <string name="lang_count">%1$d ngôn ngữ</string>
     <string name="lang_selected">✓  %1$s</string>
     <string name="volume_alarm">Âm lượng báo thức</string>
     <string name="vibrate_mode">Chế độ rung</string>
@@ -94,23 +94,32 @@
     <string name="recovery_email_save">Lưu email khôi phục</string>
     <string name="recovery_email_saved">Đã lưu email khôi phục</string>
     <string name="dark_mode_changed">Đã đổi chế độ tối</string>
-    <string name="nav_style_title">Bottom bar style</string>
-    <string name="nav_style_hint">Choose the bottom navigation look (applies on every screen).</string>
-    <string name="nav_style_curved">Curved (nút tròn nổi)</string>
+    <string name="nav_style_title">Kiểu thanh dưới</string>
+    <string name="nav_style_hint">Chọn giao diện thanh điều hướng dưới (áp dụng cho mọi màn hình).</string>
+    <string name="nav_style_curved">Cong (nút tròn nổi)</string>
     <string name="nav_style_persistent">Glassmorphism (kính mờ)</string>
-    <string name="nav_style_changed">Bottom bar style updated</string>
+    <string name="nav_style_changed">Đã đổi kiểu thanh dưới</string>
     <string name="nav_style_google">Google Material 3</string>
-    <string name="nav_alarm">Alarm</string>\n    <string name="nav_world">World</string>\n    <string name="nav_stopwatch">Stopwatch</string>\n    <string name="nav_timer">Timer</string>\n    <string name="nav_gallery">Photos</string>\n    <string name="nav_settings">Settings</string>
-    <string name="nav_bedtime">Bedtime</string>\n    <string name="test_face_scan">📷 Face scan test</string>\n    <string name="test_face_expr">😊 Expression test</string>\n    <string name="test_menu_title">What do you want to do?</string>\n    <string name="settings_pin_title">🔒 Settings lock (PIN)</string>
-    <string name="settings_pin_hint">Stop others from changing alarms. Forgot PIN → recover via Gmail.</string>
-    <string name="settings_pin_save">Save PIN</string>
-    <string name="settings_pin_clear">Clear PIN</string>
-    <string name="settings_pin_unlocked">Not locked — anyone can open Settings</string>
-    <string name="test_section">Face challenge tests</string>
-    <string name="test_section_hint">Or long-press the Settings tab on the bottom bar</string>
-    <string name="test_face_scan_btn">📷 Face scan test</string>
-    <string name="test_face_expr_btn">😊 Expression test</string>
-    <string name="quick_nap">Power nap</string>
+    <string name="nav_alarm">Báo</string>
+    <string name="nav_world">Thế giới</string>
+    <string name="nav_stopwatch">Bấm</string>
+    <string name="nav_timer">Đếm</string>
+    <string name="nav_gallery">Ảnh</string>
+    <string name="nav_settings">Cài</string>
+    <string name="nav_bedtime">Ngủ</string>
+    <string name="test_face_scan">📷 Test quét mặt</string>
+    <string name="test_face_expr">😊 Test biểu cảm</string>
+    <string name="test_menu_title">Bạn muốn làm gì?</string>
+    <string name="settings_pin_title">🔒 Khóa Cài đặt (PIN)</string>
+    <string name="settings_pin_hint">Chống người khác vào Cài đặt sửa báo thức. Quên PIN → dùng Gmail khôi phục.</string>
+    <string name="settings_pin_save">Lưu PIN</string>
+    <string name="settings_pin_clear">Xóa PIN</string>
+    <string name="settings_pin_unlocked">Chưa khóa — ai cũng vào được Cài đặt</string>
+    <string name="test_section">Test thử thách mặt</string>
+    <string name="test_section_hint">Hoặc giữ tab ⚙️ Cài ở thanh dưới</string>
+    <string name="test_face_scan_btn">📷 Test quét mặt</string>
+    <string name="test_face_expr_btn">😊 Test biểu cảm (Cười / Giận / 🤞 …)</string>
+    <string name="quick_nap">Ngủ gật</string>
 
     <string name="hide_ongoing_notif">Ẩn thông báo đang hoạt động</string>
     <string name="pin_new_hint">PIN mới (≥4 số)</string>

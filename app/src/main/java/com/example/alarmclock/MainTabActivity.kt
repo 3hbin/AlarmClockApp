@@ -35,6 +35,7 @@ class MainTabActivity : AppCompatActivity() {
         try {
             binding = ActivityTabHostBinding.inflate(layoutInflater)
             setContentView(binding.root)
+        try { ThemeFix.apply(this, findViewById(android.R.id.content)) } catch (_: Exception) {}
         try { EventManager.applyChrome(this) } catch (_: Exception) {}
         } catch (e: Exception) {
             // Layout lỗi → về MainActivity

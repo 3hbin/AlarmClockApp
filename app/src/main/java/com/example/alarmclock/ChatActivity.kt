@@ -75,6 +75,7 @@ class ChatActivity : AppCompatActivity() {
             setTextColor(0xFF202124.toInt())
         }
         setContentView(hold)
+        try { ThemeFix.apply(this, findViewById(android.R.id.content)) } catch (_: Exception) {}
         window.decorView.post {
             try {
                 window.setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
@@ -110,7 +111,7 @@ class ChatActivity : AppCompatActivity() {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
             setPadding((24 * d).toInt(), (24 * d).toInt(), (24 * d).toInt(), (24 * d).toInt())
-            setBackgroundColor(0xFFF1F3F4.toInt())
+            setBackgroundColor(if (ThemeFix.isNight(this)) 0xFF000000.toInt() else 0xFFF1F3F4.toInt())
             addView(TextView(context).apply {
                 text = "Đăng nhập Google"
                 textSize = 22f
@@ -267,7 +268,7 @@ class ChatActivity : AppCompatActivity() {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding((10 * d).toInt(), (8 * d).toInt(), (10 * d).toInt(), (12 * d).toInt())
-            setBackgroundColor(0xFFF1F3F4.toInt())
+            setBackgroundColor(if (ThemeFix.isNight(this)) 0xFF000000.toInt() else 0xFFF1F3F4.toInt())
             addView(plusBtn, LinearLayout.LayoutParams((44 * d).toInt(), (44 * d).toInt()).apply {
                 marginEnd = (8 * d).toInt()
             })
@@ -291,7 +292,7 @@ class ChatActivity : AppCompatActivity() {
         }
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(0xFFF1F3F4.toInt())
+            setBackgroundColor(if (ThemeFix.isNight(this)) 0xFF000000.toInt() else 0xFFF1F3F4.toInt())
             addView(header)
             addView(scroll, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
             addView(chipScroll)
@@ -571,7 +572,7 @@ class ChatActivity : AppCompatActivity() {
         val tv = TextView(this).apply {
             this.text = formatted
             textSize = 16f
-            setTextColor(if (mine) 0xFFFFFFFF.toInt() else 0xFF202124.toInt())
+            setTextColor(0xFFFFFFFF.toInt())
             setPadding((14 * d).toInt(), (10 * d).toInt(), (14 * d).toInt(), (10 * d).toInt())
             background = bubbleBg(mine, d)
             maxWidth = (resources.displayMetrics.widthPixels - (88 * d).toInt()).coerceAtLeast((180 * d).toInt())

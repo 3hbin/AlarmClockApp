@@ -28,6 +28,7 @@ class BedtimeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_bedtime)
+        try { ThemeFix.apply(this, findViewById(android.R.id.content)) } catch (_: Exception) {}
         try { EventManager.applyChrome(this) } catch (_: Exception) {}
         findViewById<MaterialToolbar>(R.id.toolbarBedtime).title = getString(R.string.title_bedtime)
         try { BottomNavHelper.bind(this, findViewById(R.id.curvedNav), 5) } catch (_: Exception) {}

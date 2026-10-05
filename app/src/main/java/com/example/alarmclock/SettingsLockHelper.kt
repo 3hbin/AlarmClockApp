@@ -87,26 +87,71 @@ object SettingsLockHelper {
 
         val code = "%06d".format(Random.nextInt(0, 1_000_000))
         AppSettings.setRecoveryCode(activity, code)
+        Toast.makeText(activity, "Đang gửi mã tới $email…", Toast.LENGTH_SHORT).show()
+        Thread {
+            val sent = sendByGmailApi(activity, email, code)
+            activity.runOnUiThread {
+                if (activity.isFinishing) return@runOnUiThread
+                if (sent) {
+                    Toast.makeText(activity, "Đã gửi mã. Mở hộp thư đến của $email", Toast.LENGTH_LONG).show()
+                    showOtpDialog(activity, email, onUnlocked)
+                } else {
+                    MaterialAlertDialogBuilder(activity)
+                        .setTitle("Chưa gửi được")
+                        .setMessage("Gmail chưa cho phép app gửi thư. Bấm Cho phép, đồng ý một lần, rồi bấm Quên PIN lại.")
+                        .setPositiveButton("Cho phép") { _, _ -> requestGmailSend(activity) }
+                        .setNegativeButton("Đóng", null)
+                        .show()
+                }
+            }
+        }.start()
+    }
 
-        MaterialAlertDialogBuilder(activity)
-            .setTitle("Gửi mã qua Gmail")
-            .setMessage(
-                "App không có máy chủ — không tự gửi email.\n\n" +
-                    "Sẽ mở Gmail với sẵn nội dung tới:\n📧 $email\n\n" +
-                    "1. Bấm «Mở Gmail»\n" +
-                    "2. Trong Gmail bấm Gửi\n" +
-                    "3. Vào Hộp thư đến lấy mã 6 số\n" +
-                    "4. Quay lại app nhập mã\n\n" +
-                    "Mã hết hạn sau 15 phút."
+    private fun requestGmailSend(activity: Activity) {
+        try {
+            val email = AppSettings.getRecoveryEmail(activity)
+            val account = android.accounts.Account(email, "com.google")
+            val token = com.google.android.gms.auth.GoogleAuthUtil.getToken(
+                activity, account, "oauth2:https://www.googleapis.com/auth/gmail.send"
             )
-            .setPositiveButton("Mở Gmail") { _, _ ->
-                openGmailRecovery(activity, email, code)
-                showOtpDialog(activity, email, onUnlocked)
+            if (token.isNotBlank()) Toast.makeText(activity, "Đã cho phép. Bấm Quên PIN lại.", Toast.LENGTH_LONG).show()
+        } catch (e: com.google.android.gms.auth.UserRecoverableAuthException) {
+            activity.startActivity(e.intent)
+        } catch (e: Exception) {
+            Toast.makeText(activity, "Không xin được quyền Gmail", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun sendByGmailApi(activity: Activity, email: String, code6: String): Boolean {
+        return try {
+            val account = android.accounts.Account(email, "com.google")
+            val token = com.google.android.gms.auth.GoogleAuthUtil.getToken(
+                activity, account, "oauth2:https://www.googleapis.com/auth/gmail.send"
+            )
+            val mime = buildString {
+                appendLine("From: $email")
+                appendLine("To: $email")
+                appendLine("Subject: =?UTF-8?B?" + android.util.Base64.encodeToString("[Đồng hồ báo thức] Mã khôi phục PIN".toByteArray(), android.util.Base64.NO_WRAP) + "?=")
+                appendLine("Content-Type: text/plain; charset=UTF-8")
+                appendLine()
+                appendLine("Mã khôi phục PIN Cài đặt: $code6")
+                appendLine("Hiệu lực: 15 phút.")
+                appendLine("Nếu không phải bạn yêu cầu, hãy bỏ qua thư này.")
             }
-            .setNegativeButton("Hủy") { _, _ ->
-                if (activity is SettingsActivity) activity.finish()
+            val raw = android.util.Base64.encodeToString(mime.toByteArray(Charsets.UTF_8), android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP)
+            val conn = (java.net.URL("https://gmail.googleapis.com/gmail/v1/users/me/messages/send").openConnection() as java.net.HttpURLConnection).apply {
+                requestMethod = "POST"
+                doOutput = true
+                setRequestProperty("Authorization", "Bearer $token")
+                setRequestProperty("Content-Type", "application/json; charset=UTF-8")
+                connectTimeout = 12000
+                readTimeout = 12000
             }
-            .show()
+            conn.outputStream.use { it.write(("{\"raw\":\"$raw\"}").toByteArray()) }
+            conn.responseCode in 200..299
+        } catch (_: Exception) {
+            false
+        }
     }
 
     fun openGmailRecovery(activity: Activity, recoveryEmail: String, code6: String) {
@@ -229,7 +274,9 @@ object SettingsLockHelper {
 
         fun readCode(): String = boxes.joinToString("") { it.text?.toString().orEmpty() }
 
+        var done = false
         fun tryUnlock(code: String): Boolean {
+            if (done) return true
             if (code.length != 6 || !code.all { it.isDigit() }) {
                 Toast.makeText(activity, "Nhập đủ 6 số", Toast.LENGTH_SHORT).show()
                 return false
@@ -238,6 +285,7 @@ object SettingsLockHelper {
                 Toast.makeText(activity, "Sai mã hoặc đã hết hạn", Toast.LENGTH_SHORT).show()
                 return false
             }
+            done = true
             AppSettings.clearRecoveryCode(activity)
             AppSettings.clearSettingsPin(activity)
             AppSettings.settingsUnlockedThisSession = true

@@ -61,6 +61,7 @@ class WorldClockActivity : AppCompatActivity() {
         try {
             binding = ActivityWorldClockBinding.inflate(layoutInflater)
             setContentView(binding.root)
+        try { ThemeFix.apply(this, binding.root) } catch (_: Exception) {}
         try { EventManager.applyChrome(this) } catch (_: Exception) {}
         try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
         } catch (e: Exception) {

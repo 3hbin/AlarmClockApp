@@ -1,6 +1,8 @@
 package com.example.alarmclock
 
+import android.app.Activity
 import android.app.Application
+import android.os.Bundle
 import android.util.Log
 import java.io.File
 import java.io.PrintWriter
@@ -24,6 +26,18 @@ class AlarmApp : Application() {
             AppSettings.setLanguage(this, "en")
         }
         LocaleHelper.applySavedLocale(this)
+
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityResumed(activity: Activity) {
+                try { UiTranslate.apply(activity) } catch (_: Exception) {}
+            }
+            override fun onActivityCreated(a: Activity, b: Bundle?) {}
+            override fun onActivityStarted(a: Activity) {}
+            override fun onActivityPaused(a: Activity) {}
+            override fun onActivityStopped(a: Activity) {}
+            override fun onActivitySaveInstanceState(a: Activity, b: Bundle) {}
+            override fun onActivityDestroyed(a: Activity) {}
+        })
         try { Lang.sync(this) } catch (_: Exception) {}
         CloudSyncHelper.init(this)
         try { CloudSyncHelper.restoreSilently(this) } catch (_: Exception) {}

@@ -68,6 +68,7 @@ class StopwatchActivity : AppCompatActivity() {
         try {
             binding = ActivityStopwatchBinding.inflate(layoutInflater)
             setContentView(binding.root)
+        try { ThemeFix.apply(this, findViewById(android.R.id.content)) } catch (_: Exception) {}
         try { EventManager.applyChrome(this) } catch (_: Exception) {}
         try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
         } catch (e: Exception) {

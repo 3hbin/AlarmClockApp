@@ -28,6 +28,7 @@ class SettingsActivity : AppCompatActivity() {
         try {
             binding = ActivitySettingsBinding.inflate(layoutInflater)
             setContentView(binding.root)
+        try { ThemeFix.apply(this, binding.root) } catch (_: Exception) {}
         try { EventManager.applyChrome(this) } catch (_: Exception) {}
         } catch (e: Exception) {
             val tv = android.widget.TextView(this)
