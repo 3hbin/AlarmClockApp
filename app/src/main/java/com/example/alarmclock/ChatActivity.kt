@@ -175,9 +175,14 @@ class ChatActivity : AppCompatActivity() {
         val input = EditText(this).apply {
             hint = "Nhắn tin với Gemini"
             setPadding((16 * d).toInt(), (12 * d).toInt(), (16 * d).toInt(), (12 * d).toInt())
+            val night = ThemeFix.isNight(this@ChatActivity)
             background = GradientDrawable().apply {
                 cornerRadius = 24 * d
-                setColor(0xFFFFFFFF.toInt())
+                setColor(if (night) 0xFF1E1E1E.toInt() else 0xFFFFFFFF.toInt())
+            }
+            if (night) {
+                setTextColor(0xFFFFFFFF.toInt())
+                setHintTextColor(0xFFB0B0B0.toInt())
             }
             maxLines = 5
         }
@@ -186,8 +191,9 @@ class ChatActivity : AppCompatActivity() {
             setImageResource(R.drawable.ic_gemini_sparkle)
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
-                setColor(0xFFFFFFFF.toInt())
-                setStroke((1 * d).toInt(), 0xFFDADCE0.toInt())
+                val night = ThemeFix.isNight(this@ChatActivity)
+                setColor(if (night) 0xFF1E1E1E.toInt() else 0xFFFFFFFF.toInt())
+                setStroke((1 * d).toInt(), if (night) 0xFF3A3A3A.toInt() else 0xFFDADCE0.toInt())
             }
             imageTintList = null
             contentDescription = "Thêm"
@@ -218,14 +224,18 @@ class ChatActivity : AppCompatActivity() {
             setImageResource(R.drawable.ic_chat_back)
             background = null
             contentDescription = "Quay lại"
+            if (ThemeFix.isNight(this@ChatActivity)) {
+                imageTintList = android.content.res.ColorStateList.valueOf(0xFFFFFFFF.toInt())
+            }
             setOnClickListener { finish() }
         }
         val header = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding((4 * d).toInt(), (8 * d).toInt(), (8 * d).toInt(), (8 * d).toInt())
-            setBackgroundColor(0xFFFFFFFF.toInt())
-            elevation = 3 * d
+            val night = ThemeFix.isNight(this@ChatActivity)
+            setBackgroundColor(if (night) 0xFF000000.toInt() else 0xFFFFFFFF.toInt())
+            elevation = if (night) 0f else 3 * d
             addView(back, LinearLayout.LayoutParams((40 * d).toInt(), (40 * d).toInt()))
             addView(headerAvatar, LinearLayout.LayoutParams((40 * d).toInt(), (40 * d).toInt()).apply {
                 marginStart = (4 * d).toInt()
@@ -236,13 +246,13 @@ class ChatActivity : AppCompatActivity() {
                 addView(TextView(context).apply {
                     text = displayName
                     textSize = 17f
-                    setTextColor(0xFF1A1C28.toInt())
+                    setTextColor(if (ThemeFix.isNight(this@ChatActivity)) 0xFFFFFFFF.toInt() else 0xFF1A1C28.toInt())
                     paint.isFakeBoldText = true
                 })
                 addView(TextView(context).apply {
                     text = email.ifBlank { "Đã đăng nhập" }
                     textSize = 12f
-                    setTextColor(0xFF5F6368.toInt())
+                    setTextColor(if (ThemeFix.isNight(this@ChatActivity)) 0xFFE8E8E8.toInt() else 0xFF5F6368.toInt())
                     maxLines = 1
                 })
             }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
@@ -250,6 +260,9 @@ class ChatActivity : AppCompatActivity() {
                 setImageResource(R.drawable.ic_chat_menu)
                 background = null
                 contentDescription = "Menu chat"
+                if (ThemeFix.isNight(this@ChatActivity)) {
+                    imageTintList = android.content.res.ColorStateList.valueOf(0xFFFFFFFF.toInt())
+                }
                 setOnClickListener { showChatMenu() }
                 menuBtn = this
             }, LinearLayout.LayoutParams((40 * d).toInt(), (40 * d).toInt()))
@@ -417,11 +430,12 @@ class ChatActivity : AppCompatActivity() {
         return TextView(this).apply {
             text = label
             textSize = 13f
-            setTextColor(0xFF1A73E8.toInt())
+            val night = ThemeFix.isNight(this@ChatActivity)
+            setTextColor(if (night) 0xFFFFFFFF.toInt() else 0xFF1A73E8.toInt())
             setPadding((12 * d).toInt(), (8 * d).toInt(), (12 * d).toInt(), (8 * d).toInt())
             background = GradientDrawable().apply {
                 cornerRadius = 16 * d
-                setColor(0xFFE8F0FE.toInt())
+                setColor(if (night) 0xFF1E1E1E.toInt() else 0xFFE8F0FE.toInt())
             }
             val lp = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -572,7 +586,7 @@ class ChatActivity : AppCompatActivity() {
         val tv = TextView(this).apply {
             this.text = formatted
             textSize = 16f
-            setTextColor(if (mine) 0xFFFFFFFF.toInt() else 0xFF202124.toInt())
+            setTextColor(if (mine || ThemeFix.isNight(this@ChatActivity)) 0xFFFFFFFF.toInt() else 0xFF202124.toInt())
             setPadding((14 * d).toInt(), (10 * d).toInt(), (14 * d).toInt(), (10 * d).toInt())
             background = bubbleBg(mine, d)
             maxWidth = (resources.displayMetrics.widthPixels - (88 * d).toInt()).coerceAtLeast((180 * d).toInt())
@@ -760,7 +774,7 @@ class ChatActivity : AppCompatActivity() {
             setColor(0xFF1A73E8.toInt())
         } else {
             cornerRadii = floatArrayOf(6 * d, 6 * d, r, r, r, r, r, r)
-            setColor(0xFFFFFFFF.toInt())
+            setColor(if (ThemeFix.isNight(this@ChatActivity)) 0xFF1E1E1E.toInt() else 0xFFFFFFFF.toInt())
         }
     }
 
