@@ -572,7 +572,7 @@ class ChatActivity : AppCompatActivity() {
         val tv = TextView(this).apply {
             this.text = formatted
             textSize = 16f
-            setTextColor(0xFFFFFFFF.toInt())
+            setTextColor(if (mine) 0xFFFFFFFF.toInt() else 0xFF202124.toInt())
             setPadding((14 * d).toInt(), (10 * d).toInt(), (14 * d).toInt(), (10 * d).toInt())
             background = bubbleBg(mine, d)
             maxWidth = (resources.displayMetrics.widthPixels - (88 * d).toInt()).coerceAtLeast((180 * d).toInt())

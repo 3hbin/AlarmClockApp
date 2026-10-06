@@ -28,8 +28,11 @@ object ThemeFix {
 
     private fun paint(v: View) {
         if (v is TextView && v !is MaterialButton && v !is EditText) {
-            val c = v.currentTextColor
-            if (Color.alpha(c) > 40 && !isBright(c)) v.setTextColor(Color.WHITE)
+            val skip = v.getTag(R.id.chat_full_text) != null
+            if (!skip) {
+                val c = v.currentTextColor
+                if (Color.alpha(c) > 40 && !isBright(c)) v.setTextColor(Color.WHITE)
+            }
         }
         if (v is ViewGroup) {
             val bg = v.background
