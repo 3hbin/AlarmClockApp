@@ -41,11 +41,16 @@ class MusicLibraryActivity : AppCompatActivity() {
     private lateinit var source: String
     private lateinit var list: LinearLayout
     private lateinit var status: TextView
-    private lateinit var loginBtn: MaterialButton
-    private lateinit var storeBtn: MaterialButton
     private lateinit var loading: WaveView
     private var tab = TAB_SONGS
-    private var waitingLink = false
+    private var page = 0
+    private var loadingMore = false
+    private var hasMore = true
+    private var currentQuery = ""
+    private val shown = ArrayList<Song>()
+    private val seen = HashSet<String>()
+    private var pullStartY = 0f
+    private var pulling = false
     private val io = Executors.newFixedThreadPool(3)
     private var preview: MediaPlayer? = null
     private var playingId: String? = null
@@ -100,24 +105,10 @@ class MusicLibraryActivity : AppCompatActivity() {
             orientation = LinearLayout.HORIZONTAL
             setPadding((16 * d).toInt(), (8 * d).toInt(), (16 * d).toInt(), 0)
         }
-        loginBtn = MaterialButton(this).apply {
-            setText("Đăng nhập")
-            setOnClickListener { openApp(search.text.toString()) }
-        }
-        storeBtn = MaterialButton(this).apply {
-            setText("Tải app")
-            setOnClickListener { openStore() }
-        }
-        actions.addView(loginBtn, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
-        actions.addView(storeBtn, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-            marginStart = (8 * d).toInt()
-        })
         actions.addView(MaterialButton(this).apply {
             setText("Tìm")
             setOnClickListener { tab = TAB_SONGS; loadSongs(search.text.toString()) }
-        }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply {
-            marginStart = (8 * d).toInt()
-        })
+        }, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
         root.addView(actions)
 
         val tabs = LinearLayout(this).apply {
@@ -137,19 +128,44 @@ class MusicLibraryActivity : AppCompatActivity() {
         list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val scroll = NestedScrollView(this)
         scroll.addView(list)
+        scroll.setOnScrollChangeListener { v, _, scrollY, _, _ ->
+            val child = (v as NestedScrollView).getChildAt(0) ?: return@setOnScrollChangeListener
+            if (tab == TAB_SONGS && hasMore && !loadingMore && scrollY + v.height >= child.height - 280) {
+                loadMore()
+            }
+        }
+        scroll.setOnTouchListener { v, e ->
+            val nsv = v as NestedScrollView
+            when (e.actionMasked) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    pullStartY = e.y
+                    pulling = nsv.scrollY <= 8
+                }
+                android.view.MotionEvent.ACTION_MOVE -> {
+                    if (pulling && tab == TAB_SONGS && nsv.scrollY <= 8 && e.y - pullStartY > 90) {
+                        status.text = "Thả để lấy bài mới"
+                    }
+                }
+                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                    val dy = e.y - pullStartY
+                    val atTop = nsv.scrollY <= 8
+                    val child = nsv.getChildAt(0)
+                    val atBottom = child != null && nsv.scrollY + nsv.height >= child.height - 40
+                    if (tab == TAB_SONGS && ((atTop && pulling && dy > 140) || (atBottom && dy < -140))) {
+                        refreshRandom()
+                    }
+                    pulling = false
+                }
+            }
+            false
+        }
         root.addView(scroll, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
         setContentView(root)
-        refreshGate(search)
+        loadSongs(search.text.toString())
     }
 
     override fun onResume() {
         super.onResume()
-        if (waitingLink && isInstalled()) {
-            waitingLink = false
-            MusicAccounts.setLinked(this, source, true)
-            Toast.makeText(this, "Đã liên kết ${titleOf()}", Toast.LENGTH_SHORT).show()
-        }
-        refreshGate(null)
     }
 
     override fun onDestroy() {
@@ -159,25 +175,6 @@ class MusicLibraryActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    private fun refreshGate(search: EditText?) {
-        val linked = MusicAccounts.isLinked(this, source)
-        val installed = isInstalled()
-        storeBtn.visibility = if (installed) View.GONE else View.VISIBLE
-        loginBtn.visibility = if (linked) View.GONE else View.VISIBLE
-        if (!installed) {
-            status.text = "Chưa tải ${titleOf()}. Bấm Tải app để vào Google Play."
-            showEmpty()
-            return
-        }
-        if (!linked) {
-            status.text = "Chưa đăng nhập. Bấm Đăng nhập để mở ${titleOf()}."
-            showEmpty()
-            return
-        }
-        if (tab == TAB_FAV) showSaved(MusicAccounts.favorites(this, source), "Chưa có bài yêu thích.")
-        else if (tab == TAB_RECENT) showSaved(MusicAccounts.recent(this, source), "Chưa có bài gần đây.")
-        else if (list.childCount == 0) loadSongs(search?.text?.toString().orEmpty())
-    }
 
     private fun showEmpty() {
         loading.stop()
@@ -194,42 +191,74 @@ class MusicLibraryActivity : AppCompatActivity() {
     }
 
     private fun loadSongs(query: String) {
-        if (!isInstalled() || !MusicAccounts.isLinked(this, source)) {
-            refreshGate(null)
-            return
-        }
+        page = 0
+        hasMore = true
+        shown.clear()
+        currentQuery = query.trim().ifBlank { defaultQuery() }
+        list.removeAllViews()
+        requestPage(reset = true)
+    }
+
+    private fun loadMore() {
+        if (tab != TAB_SONGS || !hasMore || loadingMore) return
+        page += 1
+        requestPage(reset = false)
+    }
+
+    private fun refreshRandom() {
+        if (tab != TAB_SONGS || loadingMore) return
+        page = (0..40).random()
+        hasMore = true
+        shown.clear()
+        list.removeAllViews()
+        if (currentQuery.isBlank()) currentQuery = defaultQuery()
+        requestPage(reset = true, randomPick = true)
+    }
+
+    private fun requestPage(reset: Boolean, randomPick: Boolean = false) {
         if (!online()) {
             status.text = "Không có mạng. Bật mạng rồi bấm Tìm."
             loading.stop()
             loading.visibility = View.GONE
-            list.removeAllViews()
+            if (reset) list.removeAllViews()
             return
         }
-        val q = query.trim().ifBlank { defaultQuery() }
-        status.text = "Đang tải bài…"
-        list.removeAllViews()
+        loadingMore = true
+        status.text = if (randomPick) "Đang lấy bài mới…" else if (reset) "Đang tải bài…" else "Đang tải thêm…"
         loading.visibility = View.VISIBLE
         loading.start()
+        val q = currentQuery
+        val p = page
         io.execute {
-            val songs = fetch(q)
+            val pool = ArrayList<Song>()
+            val tries = if (randomPick) 4 else 1
+            repeat(tries) { n ->
+                val pickPage = if (randomPick) (0..48).random() else p + n
+                val batch = fetch(q, pickPage).shuffled()
+                batch.forEach { if (it.id !in seen && pool.none { s -> s.id == it.id }) pool.add(it) }
+                if (pool.size >= 25) return@repeat
+            }
             runOnUiThread {
                 if (isDestroyed) return@runOnUiThread
+                loadingMore = false
                 loading.stop()
                 loading.visibility = View.GONE
-                if (songs.isEmpty()) status.text = "Không thấy bài. Thử tên khác."
-                else {
-                    status.text = "${titleOf()} · ${songs.size} bài"
-                    showTracks(songs)
+                val fresh = pool.filter { it.id !in seen && shown.none { s -> s.id == it.id } }
+                if (fresh.isEmpty()) {
+                    hasMore = false
+                    status.text = if (shown.isEmpty()) "Hết bài mới. Kéo xuống để thử lại." else "${titleOf()} · ${shown.size} bài"
+                    return@runOnUiThread
                 }
+                fresh.forEach { seen.add(it.id) }
+                shown.addAll(fresh)
+                hasMore = true
+                status.text = "${titleOf()} · ${shown.size} bài · kéo để lấy bài mới"
+                if (reset) showTracks(shown) else appendTracks(fresh)
             }
         }
     }
 
     private fun showSaved(songs: List<Song>, empty: String) {
-        if (!MusicAccounts.isLinked(this, source)) {
-            refreshGate(null)
-            return
-        }
         loading.stop()
         loading.visibility = View.GONE
         if (songs.isEmpty()) {
@@ -241,17 +270,18 @@ class MusicLibraryActivity : AppCompatActivity() {
         }
     }
 
-    private fun fetch(query: String): List<Song> {
+    private fun fetch(query: String, page: Int): List<Song> {
         return when (source) {
-            SRC_SPOTIFY -> tryDeezer(query)
-            SRC_ZEDGE -> tryZedge(query)
-            else -> tryItunes(query)
+            SRC_SPOTIFY -> tryDeezer(query, page)
+            SRC_ZEDGE -> tryZedge(query, page)
+            else -> tryItunes(query, page)
         }
     }
 
-    private fun tryDeezer(query: String): List<Song> {
+    private fun tryDeezer(query: String, page: Int): List<Song> {
         return try {
-        val url = "https://api.deezer.com/search?limit=25&q=" + URLEncoder.encode(query, "UTF-8")
+        val index = page * 25
+        val url = "https://api.deezer.com/search?limit=25&index=$index&q=" + URLEncoder.encode(query, "UTF-8")
         val conn = URL(url).openConnection() as HttpURLConnection
         conn.connectTimeout = 8000
         conn.readTimeout = 8000
@@ -272,9 +302,10 @@ class MusicLibraryActivity : AppCompatActivity() {
         } catch (_: Exception) { emptyList() }
     }
 
-    private fun tryItunes(query: String): List<Song> {
+    private fun tryItunes(query: String, page: Int): List<Song> {
         return try {
-        val url = "https://itunes.apple.com/search?limit=25&entity=song&term=" + URLEncoder.encode(query, "UTF-8")
+        val offset = page * 25
+        val url = "https://itunes.apple.com/search?limit=25&offset=$offset&entity=song&term=" + URLEncoder.encode(query, "UTF-8")
         val conn = URL(url).openConnection() as HttpURLConnection
         conn.connectTimeout = 10000
         conn.readTimeout = 10000
@@ -293,11 +324,11 @@ class MusicLibraryActivity : AppCompatActivity() {
         } catch (_: Exception) { emptyList() }
     }
 
-    private fun showTracks(songs: List<Song>) {
-        list.removeAllViews()
+    private fun appendTracks(songs: List<Song>) {
         val d = resources.displayMetrics.density
         val night = isNight()
         songs.forEach { song ->
+
             val row = LinearLayout(this).apply {
                 orientation = LinearLayout.HORIZONTAL
                 gravity = Gravity.CENTER_VERTICAL
@@ -354,12 +385,12 @@ class MusicLibraryActivity : AppCompatActivity() {
                     if (playingId == song.id) {
                         try { preview?.stop() } catch (_: Exception) {}
                         playingId = null
-                        showTracks(songs)
+                        showTracks(shown)
                     } else {
                         MusicAccounts.addRecent(this@MusicLibraryActivity, source, song)
                         playingId = song.id
                         playPreview(song)
-                        showTracks(songs)
+                        showTracks(shown)
                     }
                 }
             }
@@ -381,6 +412,11 @@ class MusicLibraryActivity : AppCompatActivity() {
             row.addView(play, LinearLayout.LayoutParams((44 * d).toInt(), (44 * d).toInt()))
             list.addView(row)
         }
+    }
+
+    private fun showTracks(songs: List<Song>) {
+        list.removeAllViews()
+        appendTracks(songs)
     }
 
     private fun playPreview(song: Song) {
@@ -592,10 +628,10 @@ class MusicLibraryActivity : AppCompatActivity() {
         } catch (_: Exception) { null }
     }
 
-    private fun tryZedge(query: String): List<Song> {
+    private fun tryZedge(query: String, page: Int): List<Song> {
         return try {
             val q = query.ifBlank { "alarm" }
-            val url = "https://www.zedge.net/find/ringtones/" + URLEncoder.encode(q, "UTF-8")
+            val url = "https://www.zedge.net/find/ringtones/" + URLEncoder.encode(q, "UTF-8") + "?page=" + (page + 1)
             val conn = URL(url).openConnection() as HttpURLConnection
             conn.connectTimeout = 10000
             conn.readTimeout = 10000
@@ -610,7 +646,7 @@ class MusicLibraryActivity : AppCompatActivity() {
                 .findAll(html).map { it.value.trim().trimEnd('\\') }.filter { it.contains("special=") || it.contains(".mp3") }.toList()
             buildList {
                 var i = 0
-                for (chunk in chunks.drop(1).take(25)) {
+                for (chunk in chunks.drop(1).drop(page * 12).take(25)) {
                     val id = chunk.substringBefore("\"").take(80)
                     if (id.length < 8) continue
                     val title = Regex("""aria-label="Ringtone: ([^"]+)"""").find(chunk)?.groupValues?.get(1)
