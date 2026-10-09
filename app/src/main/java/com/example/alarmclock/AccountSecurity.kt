@@ -38,7 +38,7 @@ object AccountSecurity {
     }
 
     fun attach(activity: android.app.Activity, root: android.view.View) {
-        val host = root.findViewById<LinearLayout>(R.id.settingsSecurityHost) ?: findHost(root) ?: return
+        val host = findHost(root) ?: return
         if (host.findViewWithTag<android.view.View>("security_block") != null) return
         val d = activity.resources.displayMetrics.density
         val box = LinearLayout(activity).apply {

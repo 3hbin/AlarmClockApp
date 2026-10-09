@@ -236,7 +236,7 @@ class MusicLibraryActivity : AppCompatActivity() {
                     batch.forEach { song ->
                         if (pool.none { sameSong(it, song) }) pool.add(song)
                     }
-                    if (pool.size >= 30) return@queryLoop
+                    if (pool.size >= 30) break@queryLoop
                 }
             }
             runOnUiThread {
