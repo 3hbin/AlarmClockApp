@@ -142,16 +142,14 @@ class MusicLibraryActivity : AppCompatActivity() {
                     pulling = nsv.scrollY <= 8
                 }
                 android.view.MotionEvent.ACTION_MOVE -> {
-                    if (pulling && tab == TAB_SONGS && nsv.scrollY <= 8 && e.y - pullStartY > 90) {
+                    if (pulling && tab == TAB_SONGS && nsv.scrollY <= 4 && e.y - pullStartY > 160) {
                         status.text = "Thả để lấy bài mới"
                     }
                 }
                 android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
                     val dy = e.y - pullStartY
-                    val atTop = nsv.scrollY <= 8
-                    val child = nsv.getChildAt(0)
-                    val atBottom = child != null && nsv.scrollY + nsv.height >= child.height - 40
-                    if (tab == TAB_SONGS && ((atTop && pulling && dy > 140) || (atBottom && dy < -140))) {
+                    val atTop = nsv.scrollY <= 4
+                    if (tab == TAB_SONGS && atTop && pulling && dy > 220 && !loadingMore) {
                         refreshRandom()
                     }
                     pulling = false
@@ -209,8 +207,6 @@ class MusicLibraryActivity : AppCompatActivity() {
         if (tab != TAB_SONGS || loadingMore) return
         page = (0..40).random()
         hasMore = true
-        shown.clear()
-        list.removeAllViews()
         if (currentQuery.isBlank()) currentQuery = defaultQuery()
         requestPage(reset = true, randomPick = true)
     }
@@ -231,31 +227,60 @@ class MusicLibraryActivity : AppCompatActivity() {
         val p = page
         io.execute {
             val pool = ArrayList<Song>()
-            val tries = if (randomPick) 4 else 1
-            repeat(tries) { n ->
-                val pickPage = if (randomPick) (0..48).random() else p + n
-                val batch = fetch(q, pickPage).shuffled()
-                batch.forEach { if (it.id !in seen && pool.none { s -> s.id == it.id }) pool.add(it) }
-                if (pool.size >= 25) return@repeat
+            val tries = if (randomPick) 6 else 1
+            val queries = if (randomPick) altQueries(q) else listOf(q)
+            for (queryTry in queries) {
+                repeat(tries) { n ->
+                    val pickPage = if (randomPick) (0..24).random() else p + n
+                    val batch = fetch(queryTry, pickPage).shuffled()
+                    batch.forEach { song ->
+                        if (pool.none { sameSong(it, song) }) pool.add(song)
+                    }
+                    if (pool.size >= 30) return@for
+                }
             }
             runOnUiThread {
                 if (isDestroyed) return@runOnUiThread
                 loadingMore = false
                 loading.stop()
                 loading.visibility = View.GONE
-                val fresh = pool.filter { it.id !in seen && shown.none { s -> s.id == it.id } }
+                val blocked = if (randomPick) shown else shown
+                val fresh = pool.filter { song -> blocked.none { sameSong(it, song) } && (randomPick || song.id !in seen) }
                 if (fresh.isEmpty()) {
-                    hasMore = false
-                    status.text = if (shown.isEmpty()) "Hết bài mới. Kéo xuống để thử lại." else "${titleOf()} · ${shown.size} bài"
+                    status.text = if (shown.isEmpty()) "Không thấy bài mới. Kéo xuống để thử lại." else "${titleOf()} · ${shown.size} bài · chưa có bài mới"
                     return@runOnUiThread
                 }
-                fresh.forEach { seen.add(it.id) }
-                shown.addAll(fresh)
+                val pick = fresh.shuffled().take(25)
+                pick.forEach { seen.add(it.id) }
+                if (randomPick) {
+                    shown.clear()
+                    shown.addAll(pick)
+                    showTracks(shown)
+                } else {
+                    shown.addAll(pick)
+                    if (reset) showTracks(shown) else appendTracks(pick)
+                }
                 hasMore = true
-                status.text = "${titleOf()} · ${shown.size} bài · kéo để lấy bài mới"
-                if (reset) showTracks(shown) else appendTracks(fresh)
+                status.text = "${titleOf()} · ${shown.size} bài · kéo xuống để lấy bài mới"
             }
         }
+    }
+
+
+    private fun sameSong(a: Song, b: Song): Boolean {
+        if (a.id == b.id) return true
+        return a.title.trim().lowercase() == b.title.trim().lowercase() &&
+            a.artist.trim().lowercase() == b.artist.trim().lowercase()
+    }
+
+    private fun altQueries(base: String): List<String> {
+        val extra = when (source) {
+            SRC_ZEDGE -> listOf("alarm", "ringtone", "morning alarm", "rooster", "bell", "notification", "clock", "chime")
+            SRC_TIKTOK -> listOf("nhac tiktok", "tiktok remix", "nhac tre", "viral song", "lofi")
+            SRC_YTM -> listOf("nhac tre", "vpop", "pop viet", "lofi", "acoustic")
+            else -> listOf("vietnam pop", "vpop", "nhac tre", "pop", "lofi")
+        }
+        return (listOf(base) + extra).distinct()
     }
 
     private fun showSaved(songs: List<Song>, empty: String) {
