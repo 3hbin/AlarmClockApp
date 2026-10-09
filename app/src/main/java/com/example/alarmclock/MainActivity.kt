@@ -1285,11 +1285,16 @@ class MainActivity : AppCompatActivity() {
         }
         googleLoginDialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setView(view)
-            .setPositiveButton("Đóng", null)
+            .setPositiveButton(Lang.t(this, "Chuyển tài khoản", "Switch account")) { _, _ ->
+                GoogleSignInHelper.signOut(this)
+                try { googleSignInLauncher.launch(GoogleSignInHelper.accountPickerIntent()) }
+                catch (_: Exception) { showGoogleEmailFallback() }
+            }
             .setNeutralButton(Lang.t(this, "Nhập email", "Enter email")) { _, _ -> showGoogleEmailFallback() }
             .setNegativeButton(Lang.t(this, "Đăng xuất", "Sign out")) { _, _ ->
                 GoogleSignInHelper.signOut(this)
-                Toast.makeText(this, "Đã đăng xuất Google trên máy", Toast.LENGTH_SHORT).show()
+                AccountSecurity.removeDevice(this, AccountSecurity.deviceId(this))
+                Toast.makeText(this, Lang.t(this, "Đã đăng xuất Google trên máy", "Signed out of Google on this phone"), Toast.LENGTH_SHORT).show()
             }
             .create()
         googleLoginDialog?.show()

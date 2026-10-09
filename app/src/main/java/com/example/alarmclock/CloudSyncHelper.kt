@@ -34,6 +34,8 @@ object CloudSyncHelper {
         return null
     }
 
+    fun accountId(context: Context): String? = uid(context)
+
     /** Đảm bảo đã đăng nhập Firebase Auth rồi mới ghi/đọc Firestore. */
     private fun ensureAuth(context: Context, then: () -> Unit) {
         try {

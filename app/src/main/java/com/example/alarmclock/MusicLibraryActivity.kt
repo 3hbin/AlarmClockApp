@@ -229,14 +229,14 @@ class MusicLibraryActivity : AppCompatActivity() {
             val pool = ArrayList<Song>()
             val tries = if (randomPick) 6 else 1
             val queries = if (randomPick) altQueries(q) else listOf(q)
-            for (queryTry in queries) {
+            queryLoop@ for (queryTry in queries) {
                 repeat(tries) { n ->
                     val pickPage = if (randomPick) (0..24).random() else p + n
                     val batch = fetch(queryTry, pickPage).shuffled()
                     batch.forEach { song ->
                         if (pool.none { sameSong(it, song) }) pool.add(song)
                     }
-                    if (pool.size >= 30) return@for
+                    if (pool.size >= 30) return@queryLoop
                 }
             }
             runOnUiThread {

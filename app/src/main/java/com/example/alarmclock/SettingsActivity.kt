@@ -474,6 +474,7 @@ binding.switchAntiTroll.setCheckedSilent(AppSettings.isAntiTroll(this))
             }
         }
         try { refreshBirthday() } catch (_: Exception) {}
+        try { AccountSecurity.attach(this, binding.root) } catch (_: Exception) {}
         binding.btnSyncBirthday.setOnClickListener {
             try { BirthdayHelper.syncNow(this) { refreshBirthday() } } catch (_: Exception) {}
         }
