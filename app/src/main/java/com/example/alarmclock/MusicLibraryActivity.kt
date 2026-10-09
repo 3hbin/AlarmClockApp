@@ -555,7 +555,6 @@ class MusicLibraryActivity : AppCompatActivity() {
 
     private fun openApp(query: String) {
         if (!isInstalled()) { openStore(); return }
-        waitingLink = true
         val q = query.trim()
         val uri = when (source) {
             SRC_SPOTIFY -> if (q.isEmpty()) null else "spotify:search:${Uri.encode(q)}"
