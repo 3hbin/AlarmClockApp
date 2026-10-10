@@ -10,6 +10,7 @@ import android.widget.EditText
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -22,6 +23,19 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private lateinit var binding: ActivitySettingsBinding
+
+    private val accountPickerLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            val email = GoogleSignInHelper.handleAccountPicker(this, result.data)
+            if (!email.isNullOrBlank()) {
+                GoogleSignInHelper.signOut(this)
+                AppSettings.setRecoveryEmail(this, email)
+                AppSettings.setGoogleDisplayName(this, email.substringBefore("@"))
+                bindGoogleProfileRow()
+                Toast.makeText(this, Lang.t(this, "Đã chuyển tài khoản: $email", "Switched account: $email"), Toast.LENGTH_LONG).show()
+                try { CloudSyncHelper.syncOnLogin(this) } catch (_: Exception) {}
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -474,6 +488,7 @@ binding.switchAntiTroll.setCheckedSilent(AppSettings.isAntiTroll(this))
             }
         }
         try { refreshBirthday() } catch (_: Exception) {}
+        AccountSecurity.onSwitchAccount = { accountPickerLauncher.launch(GoogleSignInHelper.accountPickerIntent()) }
         try { AccountSecurity.attach(this, binding.root) } catch (_: Exception) {}
         binding.btnSyncBirthday.setOnClickListener {
             try { BirthdayHelper.syncNow(this) { refreshBirthday() } } catch (_: Exception) {}

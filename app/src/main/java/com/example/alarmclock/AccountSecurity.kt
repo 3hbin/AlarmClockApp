@@ -104,8 +104,14 @@ object AccountSecurity {
         setPadding(0, 4, 0, 8)
     }
 
+    var onSwitchAccount: (() -> Unit)? = null
+
     private fun switchAccount(activity: android.app.Activity) {
-        GoogleSignInHelper.signOut(activity)
+        val launch = onSwitchAccount
+        if (launch != null) {
+            launch()
+            return
+        }
         try {
             activity.startActivity(GoogleSignInHelper.accountPickerIntent())
         } catch (_: Exception) {

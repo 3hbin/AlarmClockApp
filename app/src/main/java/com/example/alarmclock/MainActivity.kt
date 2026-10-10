@@ -1286,7 +1286,6 @@ class MainActivity : AppCompatActivity() {
         googleLoginDialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setView(view)
             .setPositiveButton(Lang.t(this, "Chuyển tài khoản", "Switch account")) { _, _ ->
-                GoogleSignInHelper.signOut(this)
                 try { googleSignInLauncher.launch(GoogleSignInHelper.accountPickerIntent()) }
                 catch (_: Exception) { showGoogleEmailFallback() }
             }

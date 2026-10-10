@@ -282,9 +282,6 @@ class ChatActivity : AppCompatActivity() {
             gravity = Gravity.CENTER_VERTICAL
             setPadding((10 * d).toInt(), (8 * d).toInt(), (10 * d).toInt(), (12 * d).toInt())
             setBackgroundColor(if (ThemeFix.isNight(this@ChatActivity)) 0xFF000000.toInt() else 0xFFF1F3F4.toInt())
-            addView(plusBtn, LinearLayout.LayoutParams((44 * d).toInt(), (44 * d).toInt()).apply {
-                marginEnd = (8 * d).toInt()
-            })
             addView(input, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
             addView(micBtn, LinearLayout.LayoutParams((40 * d).toInt(), (40 * d).toInt()))
             addView(sendBtn, LinearLayout.LayoutParams((48 * d).toInt(), (48 * d).toInt()).apply {
@@ -474,7 +471,6 @@ class ChatActivity : AppCompatActivity() {
         try { activeConn?.disconnect() } catch (_: Exception) {}
         try { chatVm.disconnect() } catch (_: Exception) {}
         typeHandler.removeCallbacksAndMessages(null)
-        headerAvatar?.let { stopSpin(it) }
         endGeneration()
     }
 
@@ -502,8 +498,6 @@ class ChatActivity : AppCompatActivity() {
         val first = if (needSearch) "Đang tìm kiếm…" else "Đang suy nghĩ…"
         val waiting = addBubble(first, mine = false, save = false, actions = false)
         startStatusShine(waiting, first)
-        (waiting.tag as? ImageView)?.let { startSpin(it) }
-        headerAvatar?.let { startSpin(it) }
         beginGeneration()
         Thread {
             val searched = if (webSearchOn || looksCurrent(q)) searchWeb(q) else ""
@@ -524,8 +518,7 @@ class ChatActivity : AppCompatActivity() {
             runOnUiThread {
                 if (isFinishing || isDestroyed) return@runOnUiThread
                 (waiting.tag as? ImageView)?.let { stopSpin(it) }
-                headerAvatar?.let { stopSpin(it) }
-                if (err != null && err.canRetry) {
+                        if (err != null && err.canRetry) {
                     hideWaitingRow(waiting)
                     showErrorCard(err)
                     endGeneration()
@@ -879,22 +872,6 @@ class ChatActivity : AppCompatActivity() {
         tv.setTextColor(0xFFE0E0E0.toInt())
         tv.text = label
         val d = tv.resources.displayMetrics.density
-        val bars = LinearLayout(tv.context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(0, (8 * d).toInt(), 0, 0)
-            listOf(168, 112).forEach { wDp ->
-                addView(android.view.View(tv.context).apply {
-                    background = android.graphics.drawable.GradientDrawable().apply {
-                        cornerRadius = 8 * d
-                        setColor(0xFFE0E0E0.toInt())
-                    }
-                }, LinearLayout.LayoutParams((wDp * d).toInt(), (12 * d).toInt()).apply {
-                    topMargin = (6 * d).toInt()
-                })
-            }
-        }
-        (tv.parent as? LinearLayout)?.addView(bars)
-        statusBars = bars
         statusAnim = android.animation.ValueAnimator.ofFloat(-0.4f, 1.4f).apply {
             duration = 1500
             repeatCount = android.animation.ValueAnimator.INFINITE
