@@ -95,11 +95,35 @@ class TimerFragment : Fragment() {
         binding.btnDelete.setOnClickListener { stopTimer() }
         binding.btnStopRing.setOnClickListener { dismissDone() }
 
-        if (TimerService.isActive && TimerService.remainingMs > 0) {
-            timeLeftInMillis = TimerService.remainingMs
+        // Khôi phục từ service hoặc SharedPreferences
+        val sp = requireContext().getSharedPreferences("timer_state", android.content.Context.MODE_PRIVATE)
+        val savedRem = sp.getLong("remaining", 0L)
+        val savedRunning = sp.getBoolean("running", false)
+        val savedEnd = sp.getLong("end_elapsed", 0L)
+
+        val rem = when {
+            TimerService.isActive && TimerService.remainingMs > 0 -> TimerService.remainingMs
+            savedRunning && savedEnd > 0 -> {
+                val left = savedEnd - android.os.SystemClock.elapsedRealtime()
+                if (left > 0) left else 0L
+            }
+            savedRem > 0 -> savedRem
+            else -> 0L
+        }
+
+        if (rem > 0) {
+            timeLeftInMillis = rem
             if (totalMillis < timeLeftInMillis) totalMillis = timeLeftInMillis
-            isRunning = true
+            isRunning = savedRunning || (TimerService.isActive)
             renderRun()
+            // Nếu service chưa chạy thì khởi động lại
+            if (!TimerService.isActive) {
+                requireContext().startService(
+                    android.content.Intent(requireContext(), TimerService::class.java)
+                        .setAction(TimerService.ACTION_RESUME)
+                        .putExtra(TimerService.EXTRA_MS, rem)
+                )
+            }
         } else {
             renderDigits()
             showSetup()

@@ -68,6 +68,16 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // MD3 Loading khi mở chat
+        val loading = Md3Loading.show(this, "Đang mở chat AI")
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            try { loading.dismiss() } catch (_: Exception) {}
+            if (!isNetworkAvailable()) {
+                Md3Loading.showNoNetwork(this, "Không có mạng — không mở được chat AI")
+            }
+        }, 1200)
+
         val hold = TextView(this).apply {
             text = "Đang mở chat…"
             textSize = 18f
@@ -1628,6 +1638,14 @@ class ChatActivity : AppCompatActivity() {
             putExtra(Intent.EXTRA_STREAM, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }, "Mở file"))
+    }
+
+
+    private fun isNetworkAvailable(): Boolean {
+        return try {
+            val cm = getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+            cm.activeNetwork != null
+        } catch (_: Exception) { false }
     }
 
 }

@@ -45,6 +45,8 @@ class SettingsActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val loading = Md3Loading.show(this, "Đang mở cài đặt…")
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ try { loading.dismiss() } catch (_: Exception) {} }, 700)
         try {
             binding = ActivitySettingsBinding.inflate(layoutInflater)
             setContentView(binding.root)

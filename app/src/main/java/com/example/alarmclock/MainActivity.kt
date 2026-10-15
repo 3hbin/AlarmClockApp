@@ -198,7 +198,7 @@ class MainActivity : AppCompatActivity() {
             changeDuration = 120
         }
 
-        binding.swipeRefresh.setColorSchemeColors(0xFF9AA0B4.toInt())
+        binding.swipeRefresh.setColorSchemeColors(0xFF6750A4.toInt(), 0xFF625B71.toInt())
         binding.swipeRefresh.setProgressBackgroundColorSchemeColor(0x00FFFFFF)
         binding.swipeRefresh.setOnRefreshListener {
             alarms.clear()
@@ -1119,8 +1119,12 @@ class MainActivity : AppCompatActivity() {
             .setMessage("Mã đã gửi tới $email")
             .setView(input)
             .setPositiveButton("Xác nhận") { _, _ ->
-                if (input.text.toString() == code) onOk()
-                else Toast.makeText(this, "Sai mã", Toast.LENGTH_SHORT).show()
+                val loading = Md3Loading.show(this, "Đang kiểm tra mã…")
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                    loading.dismiss()
+                    if (input.text.toString() == code) onOk()
+                    else Toast.makeText(this, "Sai mã", Toast.LENGTH_SHORT).show()
+                }, 900)
             }
             .setNegativeButton("Hủy", null)
             .show()
@@ -1141,7 +1145,22 @@ class MainActivity : AppCompatActivity() {
                 if (name.isBlank()) return@setPositiveButton
                 requireOtpThen(email) {
                     AppSettings.setGoogleDisplayName(this, name)
-                    Toast.makeText(this, "Đã đổi tên", Toast.LENGTH_SHORT).show()
+                    // Cập nhật lên Firebase để lần đăng nhập sau không bị ghi đè
+                    val user = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                    if (user != null) {
+                        val req = com.google.firebase.auth.UserProfileChangeRequest.Builder()
+                            .setDisplayName(name)
+                            .build()
+                        user.updateProfile(req)
+                            .addOnSuccessListener {
+                                Toast.makeText(this, "Đã đổi tên", Toast.LENGTH_SHORT).show()
+                            }
+                            .addOnFailureListener { e ->
+                                Toast.makeText(this, "Đã lưu local, Firebase lỗi: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
+                    } else {
+                        Toast.makeText(this, "Đã đổi tên", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
             .setNegativeButton("Hủy", null)
@@ -1507,14 +1526,18 @@ class MainActivity : AppCompatActivity() {
             showProfileEditDialog()
         }
         view.findViewById<View>(R.id.btnLogout)?.setOnClickListener {
-            try { GoogleSignInHelper.signOut(this) } catch (_: Exception) {}
-            try { com.google.firebase.auth.FirebaseAuth.getInstance().signOut() } catch (_: Exception) {}
-            AppSettings.setGoogleDisplayName(this, "")
-            AppSettings.setRecoveryEmail(this, "")
-            AppSettings.setGooglePhotoUrl(this, ""); AppSettings.clearProfilePhoto(this)
-            status.text = "Chưa đăng nhập"
-            Toast.makeText(this, Lang.t(this, "Đã đăng xuất", "Signed out"), Toast.LENGTH_SHORT).show()
-            googleLoginDialog?.dismiss()
+            val loading = Md3Loading.show(this, null)
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                try { GoogleSignInHelper.signOut(this) } catch (_: Exception) {}
+                try { com.google.firebase.auth.FirebaseAuth.getInstance().signOut() } catch (_: Exception) {}
+                AppSettings.setGoogleDisplayName(this, "")
+                AppSettings.setRecoveryEmail(this, "")
+                AppSettings.setGooglePhotoUrl(this, "")
+                status.text = "Chưa đăng nhập"
+                loading.dismiss()
+                Toast.makeText(this, Lang.t(this, "Đã đăng xuất", "Signed out"), Toast.LENGTH_SHORT).show()
+                googleLoginDialog?.dismiss()
+            }, 3000)
         }
         googleLoginDialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setView(view)
@@ -1542,14 +1565,28 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Email hoặc mật khẩu không hợp lệ", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+            val loading = Md3Loading.show(this, "Đang đăng nhập…")
             com.google.firebase.auth.FirebaseAuth.getInstance()
                 .signInWithEmailAndPassword(email, pass)
                 .addOnSuccessListener { res ->
-                    val name = res.user?.displayName.orEmpty().ifBlank { email.substringBefore("@") }
+                    loading.dismiss()
+                    val localName = AppSettings.getGoogleDisplayName(this)
+                    val fbName = res.user?.displayName.orEmpty()
+                    val name = when {
+                        localName.isNotBlank() && localName != email.substringBefore("@") -> localName
+                        fbName.isNotBlank() -> fbName
+                        else -> email.substringBefore("@")
+                    }
                     saveEmailSession(email, name)
+                    // Khôi phục ảnh hồ sơ local nếu còn file
+                    val photoPath = AppSettings.getProfilePhotoPath(this)
+                    if (photoPath.isNotBlank() && java.io.File(photoPath).exists()) {
+                        AppSettings.setProfilePhotoPath(this, photoPath)
+                    }
                     dlg.dismiss()
                 }
                 .addOnFailureListener { e ->
+                    try { loading.dismiss() } catch (_: Exception) {}
                     Toast.makeText(this, e.message ?: "Đăng nhập thất bại", Toast.LENGTH_LONG).show()
                 }
         }

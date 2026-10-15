@@ -43,6 +43,8 @@ class CalendarAgendaActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val loading = Md3Loading.show(this, "Đang mở lịch…")
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ try { loading.dismiss() } catch (_: Exception) {} }, 600)
         window.decorView.post { try { EventManager.applyChrome(this) } catch (_: Exception) {} }
         binding = ActivityCalendarAgendaBinding.inflate(layoutInflater)
         setContentView(binding.root)

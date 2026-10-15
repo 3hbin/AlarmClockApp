@@ -86,7 +86,7 @@ class WorldClockActivity : AppCompatActivity() {
         (binding.recyclerView.itemAnimator as? androidx.recyclerview.widget.SimpleItemAnimator)
             ?.supportsChangeAnimations = false
 
-        binding.swipeRefresh.setColorSchemeColors(0xFF3F51B5.toInt(), 0xFF7E57C2.toInt())
+        binding.swipeRefresh.setColorSchemeColors(0xFF6750A4.toInt(), 0xFF625B71.toInt())
         binding.swipeRefresh.setOnRefreshListener {
             adapter.notifyItemRangeChanged(0, adapter.itemCount, PAYLOAD_TIME)
             binding.swipeRefresh.isRefreshing = false

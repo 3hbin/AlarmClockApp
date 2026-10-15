@@ -29,7 +29,7 @@ class TimerService : Service() {
                 timeLeftMs = intent.getLongExtra(EXTRA_MS, 0L)
                 if (timeLeftMs <= 0) {
                     stopSelf()
-                    return START_NOT_STICKY
+                    return START_STICKY
                 }
                 startCountdown()
             }
@@ -70,7 +70,7 @@ class TimerService : Service() {
                 if (!isRunning && timeLeftMs > 0) startCountdown()
             }
         }
-        return START_NOT_STICKY
+        return START_STICKY
     }
 
     private fun startCountdown() {
@@ -81,6 +81,7 @@ class TimerService : Service() {
         remainingMs = timeLeftMs
 
         startForeground(AlarmNotificationHelper.NOTIF_ID_TIMER, buildNotification(timeLeftMs, true))
+        saveState()
         TimerDoneController.scheduleExact(this, timeLeftMs)
 
         countDownTimer = object : CountDownTimer(timeLeftMs, 1000) {
@@ -125,6 +126,7 @@ class TimerService : Service() {
         })
         // Vẫn foreground nhưng paused — user có thể Resume từ notification
         startForeground(AlarmNotificationHelper.NOTIF_ID_TIMER, buildNotification(timeLeftMs, false))
+        saveState()
     }
 
     private fun stopEverything() {
@@ -138,6 +140,7 @@ class TimerService : Service() {
         TimerDoneController.stopVibrate(this)
         stopForeground(STOP_FOREGROUND_REMOVE)
         NotificationManagerCompat.from(this).cancel(AlarmNotificationHelper.NOTIF_ID_TIMER)
+        clearState()
     }
 
     private fun buildNotification(ms: Long, running: Boolean): Notification {
@@ -214,10 +217,26 @@ class TimerService : Service() {
     }
 
     override fun onTaskRemoved(rootIntent: Intent?) {
-        TimerDoneController.dismiss(this)
-        stopEverything()
-        stopSelf()
+        // Giữ đếm ngược chạy khi user vuốt app khỏi recent.
+        // Chỉ dừng nếu user đã bấm Dừng.
+        if (!isRunning && remainingMs <= 0L) {
+            stopEverything()
+            stopSelf()
+        }
         super.onTaskRemoved(rootIntent)
+    }
+
+
+    private fun saveState() {
+        getSharedPreferences("timer_state", MODE_PRIVATE).edit()
+            .putLong("end_elapsed", if (isRunning) endAtElapsed else 0L)
+            .putLong("remaining", remainingMs)
+            .putBoolean("running", isRunning)
+            .apply()
+    }
+
+    private fun clearState() {
+        getSharedPreferences("timer_state", MODE_PRIVATE).edit().clear().apply()
     }
 
     companion object {
