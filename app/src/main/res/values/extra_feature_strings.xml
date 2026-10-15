@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="birthday_section">Sinh nhật (tài khoản Google)</string>
+    <string name="birthday_empty">Chưa có ngày sinh — đăng nhập Google hoặc chọn tay</string>
+    <string name="birthday_status">Sinh nhật: %1$s (%2$s)</string>
+    <string name="birthday_source_google">từ Google</string>
+    <string name="birthday_source_manual">nhập tay</string>
+    <string name="birthday_sync_google">Lấy ngày sinh từ Google</string>
+    <string name="birthday_pick_manual">Chọn ngày sinh nhật</string>
+    <string name="birthday_saved">Đã lưu sinh nhật %1$s — báo thức hàng năm lúc 8:00</string>
+    <string name="birthday_from_google">Đã lấy sinh nhật Google: %1$s</string>
+    <string name="birthday_google_fail">Google chưa trả ngày sinh. Chọn tay giúp nhé.</string>
+    <string name="birthday_google_empty">Tài khoản Google chưa công khai ngày sinh. Chọn tay giúp nhé.</string>
+    <string name="birthday_need_google">Cần đăng nhập Google trước, hoặc chọn ngày tay.</string>
+    <string name="birthday_need_permission">Cần cấp quyền xem ngày sinh trên Google.</string>
+    <string name="birthday_alarm_label">Sinh nhật %1$s</string>
+    <string name="ringtone_soft_chime">Chuông êm</string>
+    <string name="ringtone_soft_bell">Chuông nhẹ</string>
+</resources>

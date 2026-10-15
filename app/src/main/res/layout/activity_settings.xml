@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingTop="8dp" android:paddingBottom="16dp">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/sec_tools" android:textStyle="bold" android:textSize="13sp" android:letterSpacing="0.06"
+    android:textColor="?attr/colorPrimary" android:layout_marginTop="24dp" android:layout_marginBottom="8dp"
+    android:layout_marginStart="4dp"/>
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent"
+    android:layout_height="wrap_content" app:cardCornerRadius="16dp" app:cardElevation="0dp"
+    app:strokeWidth="1dp" app:strokeColor="#26808080">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="6dp">
+<com.google.android.material.button.MaterialButton android:id="@+id/btnOpenHistory"
+    style="@style/Widget.Material3.Button.TextButton" android:layout_width="match_parent"
+    android:layout_height="wrap_content" android:gravity="start|center_vertical"
+    android:text="Nhật ký báo thức" android:textAlignment="viewStart" android:textSize="15sp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnOpenScreensaver"
+    style="@style/Widget.Material3.Button.TextButton" android:layout_width="match_parent"
+    android:layout_height="wrap_content" android:gravity="start|center_vertical"
+    android:text="Trình bảo vệ màn hình" android:textAlignment="viewStart" android:textSize="15sp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnOpenGuide"
+    style="@style/Widget.Material3.Button.TextButton" android:layout_width="match_parent"
+    android:layout_height="wrap_content" android:gravity="start|center_vertical"
+    android:text="Hướng dẫn sử dụng" android:textAlignment="viewStart" android:textSize="15sp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnOpenCloud"
+    style="@style/Widget.Material3.Button.TextButton" android:layout_width="match_parent"
+    android:layout_height="wrap_content" android:gravity="start|center_vertical"
+    android:text="Kiểm tra cloud" android:textAlignment="viewStart" android:textSize="15sp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnOpenPrivacy"
+    style="@style/Widget.Material3.Button.TextButton" android:layout_width="match_parent"
+    android:layout_height="wrap_content" android:gravity="start|center_vertical"
+    android:text="Chính sách quyền riêng tư" android:textAlignment="viewStart" android:textSize="15sp"/>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/sec_appearance" android:textStyle="bold" android:textSize="13sp" android:letterSpacing="0.06"
+    android:textColor="?attr/colorPrimary" android:layout_marginTop="24dp" android:layout_marginBottom="8dp"
+    android:layout_marginStart="4dp"/>
+<com.google.android.material.card.MaterialCardView android:id="@+id/cardLanguage"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    app:cardCornerRadius="16dp" app:cardElevation="0dp" app:strokeWidth="1dp" app:strokeColor="#26808080"
+    android:clickable="true" android:focusable="true" android:foreground="?attr/selectableItemBackground">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:padding="16dp" android:gravity="center_vertical">
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+            android:layout_weight="1" android:orientation="vertical">
+            <TextView android:id="@+id/tvLanguageTitle" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="@string/lang_app" android:textSize="16sp"/>
+            <TextView android:id="@+id/tvLanguageValue" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="@string/lang_system" android:textSize="13sp"
+                android:textColor="?android:attr/textColorSecondary" android:layout_marginTop="2dp"/>
+        </LinearLayout>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="›" android:textSize="22sp" android:textColor="?android:attr/textColorSecondary"/>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+<View android:layout_width="match_parent" android:layout_height="10dp"/>
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent"
+    android:layout_height="wrap_content" app:cardCornerRadius="16dp" app:cardElevation="0dp"
+    app:strokeWidth="1dp" app:strokeColor="#26808080">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="16dp">
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/nav_style_title" android:textStyle="bold" android:textSize="15sp" android:layout_marginTop="0dp" android:layout_marginBottom="4dp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/nav_style_hint" android:textSize="12sp" android:textColor="?android:attr/textColorSecondary" android:layout_marginBottom="4dp"/>
+<RadioGroup android:id="@+id/rgNavStyle" android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="vertical" android:layout_marginBottom="0dp">
+<RadioButton android:id="@+id/rbNavGoogle" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="@string/nav_style_google"/>
+<RadioButton android:id="@+id/rbNavPersistent" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="@string/nav_style_persistent"/>
+<RadioButton android:id="@+id/rbNavCurved" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="@string/nav_style_curved"/>
+</RadioGroup>
+<View android:layout_width="match_parent" android:layout_height="1dp"
+    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/font_size" android:textStyle="bold" android:textSize="15sp" android:layout_marginTop="0dp" android:layout_marginBottom="4dp"/>
+<RadioGroup android:id="@+id/rgFontScale" android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="horizontal" android:layout_marginBottom="0dp">
+<RadioButton android:id="@+id/rbFontSmall" android:layout_width="0dp"
+        android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/font_small"/>
+<RadioButton android:id="@+id/rbFontNormal" android:layout_width="0dp"
+        android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/font_medium"/>
+<RadioButton android:id="@+id/rbFontLarge" android:layout_width="0dp"
+        android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/font_large"/>
+</RadioGroup>
+<View android:layout_width="match_parent" android:layout_height="1dp"
+    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/dark_mode" android:textStyle="bold" android:textSize="15sp" android:layout_marginTop="0dp" android:layout_marginBottom="4dp"/>
+<RadioGroup android:id="@+id/rgDarkMode" android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="vertical" android:layout_marginBottom="0dp">
+<RadioButton android:id="@+id/rbDarkSystem" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="@string/dark_system"/>
+<RadioButton android:id="@+id/rbDarkOn" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="@string/dark_on"/>
+<RadioButton android:id="@+id/rbDarkOff" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:text="@string/dark_off"/>
+</RadioGroup>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+<View android:layout_width="match_parent" android:layout_height="10dp"/>
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent"
+    android:layout_height="wrap_content" app:cardCornerRadius="16dp" app:cardElevation="0dp"
+    app:strokeWidth="1dp" app:strokeColor="#26808080">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="16dp">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+        android:text="@string/format_24h" android:textSize="16sp"/>
+    <com.example.alarmclock.LoadSwitchView android:id="@+id/switch24h"
+        android:layout_width="52dp" android:layout_height="32dp"/>
+</LinearLayout>
+<View android:layout_width="match_parent" android:layout_height="1dp"
+    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+        android:text="Tự đổi icon theo buổi" android:textSize="16sp"/>
+    <com.example.alarmclock.LoadSwitchView android:id="@+id/switchAutoIcon"
+        android:layout_width="52dp" android:layout_height="32dp"/>
+</LinearLayout>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="Tắt sẽ khóa icon buổi tối và thoát app." android:textSize="12sp" android:textColor="?android:attr/textColorSecondary" android:layout_marginBottom="0dp"/>
+<View android:layout_width="match_parent" android:layout_height="1dp"
+    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+        android:text="@string/animation_title" android:textSize="16sp"/>
+    <com.example.alarmclock.LoadSwitchView android:id="@+id/switchAnimation"
+        android:layout_width="52dp" android:layout_height="32dp"/>
+</LinearLayout>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/animation_hint" android:textSize="12sp" android:textColor="?android:attr/textColorSecondary" android:layout_marginBottom="0dp"/>
+<View android:layout_width="match_parent" android:layout_height="1dp"
+    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+        android:text="@string/pure_ringtone" android:textSize="16sp"/>
+    <com.example.alarmclock.LoadSwitchView android:id="@+id/switchPure"
+        android:layout_width="52dp" android:layout_height="32dp"/>
+</LinearLayout>
+<View android:layout_width="match_parent" android:layout_height="1dp"
+    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+<com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/swEventTheme"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="Chủ đề sự kiện" android:checked="true" android:textSize="16sp"/>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/lang_hint" android:textSize="12sp" android:textColor="?android:attr/textColorSecondary" android:layout_marginBottom="0dp" android:layout_marginTop="8dp" android:layout_marginStart="4dp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/sec_alarm" android:textStyle="bold" android:textSize="13sp" android:letterSpacing="0.06"
+    android:textColor="?attr/colorPrimary" android:layout_marginTop="24dp" android:layout_marginBottom="8dp"
+    android:layout_marginStart="4dp"/>
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent"
+    android:layout_height="wrap_content" app:cardCornerRadius="16dp" app:cardElevation="0dp"
+    app:strokeWidth="1dp" app:strokeColor="#26808080">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="16dp">
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/volume_alarm" android:textStyle="bold" android:textSize="15sp" android:layout_marginTop="0dp" android:layout_marginBottom="4dp"/>
+<TextView android:id="@+id/tvVolumeValue" android:layout_width="match_parent"
+    android:layout_height="wrap_content" android:text="80%" android:textColor="?android:attr/textColorSecondary"/>
+<SeekBar android:id="@+id/seekVolume" android:layout_width="match_parent"
+    android:layout_height="wrap_content" android:max="100"/>
+<View android:layout_width="match_parent" android:layout_height="1dp"
+    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+        android:text="@string/vibrate_mode" android:textSize="16sp"/>
+    <com.example.alarmclock.LoadSwitchView android:id="@+id/switchVibrate"
+        android:layout_width="52dp" android:layout_height="32dp"/>
+</LinearLayout>
+<View android:layout_width="match_parent" android:layout_height="1dp"
+    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/snooze_default" android:textStyle="bold" android:textSize="15sp" android:layout_marginTop="0dp" android:layout_marginBottom="4dp"/>
+<RadioGroup android:id="@+id/rgSnoozeDefault" android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="horizontal" android:layout_marginBottom="0dp">
+<RadioButton android:id="@+id/rbSnooze5" android:layout_width="0dp"
+        android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/min_5"/>
+<RadioButton android:id="@+id/rbSnooze10" android:layout_width="0dp"
+        android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/min_10"/>
+<RadioButton android:id="@+id/rbSnooze15" android:layout_width="0dp"
+        android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/min_15"/>
+</RadioGroup>
+<View android:layout_width="match_parent" android:layout_height="1dp"
+    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+<TextView android:id="@+id/tvRingDurationTitle" android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="Thời lượng đổ chuông" android:textStyle="bold" android:textSize="15sp" android:layout_marginTop="0dp" android:layout_marginBottom="4dp"/>
+<TextView android:id="@+id/tvRingDurationHint" android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="Hết giờ tự tắt, không kêu suốt ngày" android:textSize="12sp" android:textColor="?android:attr/textColorSecondary" android:layout_marginBottom="4dp"/>
+<RadioGroup android:id="@+id/rgRingDuration" android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="horizontal" android:layout_marginBottom="0dp">
+<RadioButton android:id="@+id/rbRing1" android:layout_width="0dp"
+        android:layout_height="wrap_content" android:layout_weight="1" android:text="1p"/>
+<RadioButton android:id="@+id/rbRing5" android:layout_width="0dp"
+        android:layout_height="wrap_content" android:layout_weight="1" android:text="5p"/>
+<RadioButton android:id="@+id/rbRing10" android:layout_width="0dp"
+        android:layout_height="wrap_content" android:layout_weight="1" android:text="10p"/>
+<RadioButton android:id="@+id/rbRing15" android:layout_width="0dp"
+        android:layout_height="wrap_content" android:layout_weight="1" android:text="15p"/>
+<RadioButton android:id="@+id/rbRing30" android:layout_width="0dp"
+        android:layout_height="wrap_content" android:layout_weight="1" android:text="30p"/>
+</RadioGroup>
+<View android:layout_width="match_parent" android:layout_height="1dp"
+    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:id="@+id/tvPauseHome" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+        android:text="Đang ở nhà — tạm dừng báo thức" android:textSize="16sp"/>
+    <com.example.alarmclock.LoadSwitchView android:id="@+id/switchPauseHome"
+        android:layout_width="52dp" android:layout_height="32dp"/>
+</LinearLayout>
+<View android:layout_width="match_parent" android:layout_height="1dp"
+    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+        android:text="Bật chế độ tập trung" android:textSize="16sp"/>
+    <com.example.alarmclock.LoadSwitchView android:id="@+id/switchFocusMode"
+        android:layout_width="52dp" android:layout_height="32dp"/>
+</LinearLayout>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="Khi báo thức kêu: bật DND (chỉ chuông báo thức), ẩn thanh hệ thống. Cần cấp quyền Không làm phiền." android:textSize="12sp" android:textColor="?android:attr/textColorSecondary" android:layout_marginBottom="0dp" android:layout_marginTop="6dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnGrantDnd"
+    style="@style/Button.Soft.Outline"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Cấp quyền Không làm phiền"
+    android:layout_marginTop="8dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnAllowBackground"
+    style="@style/Widget.Material3.Button.TonalButton"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Cho phép chạy nền / Tắt tối ưu pin"
+    android:layout_marginTop="8dp"/>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/sec_security" android:textStyle="bold" android:textSize="13sp" android:letterSpacing="0.06"
+    android:textColor="?attr/colorPrimary" android:layout_marginTop="24dp" android:layout_marginBottom="8dp"
+    android:layout_marginStart="4dp"/>
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent"
+    android:layout_height="wrap_content" app:cardCornerRadius="16dp" app:cardElevation="0dp"
+    app:strokeWidth="1dp" app:strokeColor="#26808080">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="16dp">
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/settings_pin_title" android:textStyle="bold" android:textSize="15sp" android:layout_marginTop="0dp" android:layout_marginBottom="4dp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/settings_pin_hint" android:textSize="12sp" android:textColor="?android:attr/textColorSecondary" android:layout_marginBottom="6dp"/>
+<com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <com.google.android.material.textfield.TextInputEditText android:id="@+id/edtSettingsPin"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:hint="@string/pin_new_hint" android:inputType="numberPassword" android:maxLength="12"/>
+</com.google.android.material.textfield.TextInputLayout>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="horizontal" android:layout_marginTop="8dp">
+    <com.google.android.material.button.MaterialButton android:id="@+id/btnSaveSettingsPin"
+        android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+        android:text="@string/settings_pin_save" android:layout_marginEnd="4dp"
+        style="@style/Widget.Material3.Button.TonalButton"/>
+    <com.google.android.material.button.MaterialButton android:id="@+id/btnClearSettingsPin"
+        android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+        android:text="@string/settings_pin_clear" android:layout_marginStart="4dp"
+        style="@style/Widget.Material3.Button.OutlinedButton"/>
+</LinearLayout>
+<TextView android:id="@+id/tvSettingsPinStatus" android:layout_width="match_parent"
+    android:layout_height="wrap_content" android:textSize="13sp" android:layout_marginTop="8dp"/>
+<View android:layout_width="match_parent" android:layout_height="1dp"
+    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/anti_troll_title" android:textStyle="bold" android:textSize="15sp" android:layout_marginTop="0dp" android:layout_marginBottom="4dp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/anti_troll_desc" android:textSize="12sp" android:textColor="?android:attr/textColorSecondary" android:layout_marginBottom="8dp"/>
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+        android:text="@string/anti_troll_enable" android:textSize="16sp"/>
+    <com.example.alarmclock.LoadSwitchView android:id="@+id/switchAntiTroll"
+        android:layout_width="52dp" android:layout_height="32dp"/>
+</LinearLayout>
+<com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent"
+    android:layout_height="wrap_content" android:hint="@string/anti_troll_pin_hint" android:layout_marginTop="8dp">
+    <com.google.android.material.textfield.TextInputEditText android:id="@+id/etAntiTrollPin"
+        android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="numberPassword"/>
+</com.google.android.material.textfield.TextInputLayout>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnSaveAntiTrollPin"
+    style="@style/Widget.Material3.Button.TonalButton"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/anti_troll_pin_save"
+    android:layout_marginTop="8dp"/>
+<View android:layout_width="match_parent" android:layout_height="1dp"
+    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/gallery_protect" android:textStyle="bold" android:textSize="15sp" android:layout_marginTop="0dp" android:layout_marginBottom="4dp"/>
+<com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent"
+    android:layout_height="wrap_content" android:hint="@string/gallery_pw_hint" android:layout_marginTop="4dp">
+    <com.google.android.material.textfield.TextInputEditText android:id="@+id/etGalleryPw"
+        android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textPassword"/>
+</com.google.android.material.textfield.TextInputLayout>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnSetGalleryPw"
+    style="@style/Widget.Material3.Button.TonalButton"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/gallery_pw_set"
+    android:layout_marginTop="8dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnClearGalleryPw"
+    style="@style/Widget.Material3.Button.OutlinedButton"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/gallery_pw_clear"
+    android:layout_marginTop="8dp"/>
+<View android:layout_width="match_parent" android:layout_height="1dp"
+    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/recovery_email_hint" android:textStyle="bold" android:textSize="15sp" android:layout_marginTop="0dp" android:layout_marginBottom="4dp"/>
+<com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent"
+    android:layout_height="wrap_content" android:hint="@string/recovery_email_hint" android:layout_marginTop="4dp">
+    <com.google.android.material.textfield.TextInputEditText android:id="@+id/etRecoveryEmail"
+        android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textEmailAddress"/>
+</com.google.android.material.textfield.TextInputLayout>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnSaveRecovery"
+    style="@style/Widget.Material3.Button.OutlinedButton"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/recovery_email_save"
+    android:layout_marginTop="8dp"/>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/birthday_section" android:textStyle="bold" android:textSize="13sp" android:letterSpacing="0.06"
+    android:textColor="?attr/colorPrimary" android:layout_marginTop="24dp" android:layout_marginBottom="8dp"
+    android:layout_marginStart="4dp"/>
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent"
+    android:layout_height="wrap_content" app:cardCornerRadius="16dp" app:cardElevation="0dp"
+    app:strokeWidth="1dp" app:strokeColor="#26808080">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="16dp">
+<TextView android:id="@+id/tvBirthdayStatus" android:layout_width="match_parent"
+    android:layout_height="wrap_content" android:text="@string/birthday_empty" android:textSize="14sp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnSyncBirthday"
+    style="@style/Widget.Material3.Button.TonalButton"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/birthday_sync_google"
+    android:layout_marginTop="8dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnSetBirthday"
+    style="@style/Widget.Material3.Button.OutlinedButton"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/birthday_pick_manual"
+    android:layout_marginTop="8dp"/>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/sec_test" android:textStyle="bold" android:textSize="13sp" android:letterSpacing="0.06"
+    android:textColor="?attr/colorPrimary" android:layout_marginTop="24dp" android:layout_marginBottom="8dp"
+    android:layout_marginStart="4dp"/>
+<com.google.android.material.card.MaterialCardView android:layout_width="match_parent"
+    android:layout_height="wrap_content" app:cardCornerRadius="16dp" app:cardElevation="0dp"
+    app:strokeWidth="1dp" app:strokeColor="#26808080">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="16dp">
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="@string/test_section_hint" android:textSize="12sp" android:textColor="?android:attr/textColorSecondary" android:layout_marginBottom="4dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnTestFace"
+    style="@style/Widget.Material3.Button.OutlinedButton"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/test_face_scan_btn"
+    android:layout_marginTop="6dp"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/btnTestExpr"
+    style="@style/Widget.Material3.Button.OutlinedButton"
+    android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/test_face_expr_btn"
+    android:layout_marginTop="8dp"/>
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>
+<View android:layout_width="match_parent" android:layout_height="16dp"/>
+    </LinearLayout>
+</ScrollView>
+</LinearLayout>
