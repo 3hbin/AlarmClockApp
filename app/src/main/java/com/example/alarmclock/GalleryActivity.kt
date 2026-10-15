@@ -133,7 +133,7 @@ class GalleryActivity : AppCompatActivity() {
             .setCancelable(false)
             .setNegativeButton("Hủy", null)
             .create()
-        view.findViewById<android.widget.Button>(R.id.btnConfirmOtp)?.setOnClickListener {
+        view.findViewById<android.view.View>(R.id.btnConfirm)?.setOnClickListener {
             val entered = boxes.joinToString("") { it.text?.toString().orEmpty() }
             if (entered == expectedCode) {
                 AppSettings.clearGalleryPassword(this)
