@@ -267,11 +267,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
-                app:indicatorColor="@color/primary"
+                app:indicatorColor="?attr/colorPrimary"
                 app:indicatorSize="260dp"
-                app:trackColor="@color/surface_variant"
-                app:trackCornerRadius="8dp"
-                app:trackThickness="10dp" />
+                app:trackColor="?attr/colorSurfaceVariant"
+                app:trackCornerRadius="12dp"
+                app:trackThickness="12dp"
+                app:indicatorInset="0dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"

@@ -77,9 +77,13 @@ class GalleryActivity : AppCompatActivity() {
         binding.btnRefresh.text = Lang.t(this, "Làm mới", "Refresh")
         try { binding.tvEmpty.text = Lang.t(this, "Chưa có ảnh nào", "No photos yet") } catch (_: Exception) {}
         binding.btnRefresh.setOnClickListener { if (unlocked) loadPhotos() }
-        binding.swipeRefresh.setColorSchemeColors(0xFF6750A4.toInt(), 0xFF625B71.toInt())
+        binding.swipeRefresh.setColorSchemeColors(com.google.android.material.color.MaterialColors.getColor(this, com.google.android.material.R.attr.colorPrimary, 0xFF6750A4.toInt()))
         binding.swipeRefresh.setOnRefreshListener {
-            if (unlocked) loadPhotos() else binding.swipeRefresh.isRefreshing = false
+            val wavy = Md3Loading.showWavy(this, "Đang tải lại…")
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                try { wavy.dismiss() } catch (_: Exception) {}
+                if (unlocked) loadPhotos() else binding.swipeRefresh.isRefreshing = false
+            }, 1000)
         }
     }
 
