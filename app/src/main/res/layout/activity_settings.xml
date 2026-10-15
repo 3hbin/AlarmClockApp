@@ -325,7 +325,8 @@
 <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
     android:text="@string/gallery_protect" android:textStyle="bold" android:textSize="15sp" android:layout_marginTop="0dp" android:layout_marginBottom="4dp"/>
 <com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent"
-    android:layout_height="wrap_content" android:hint="@string/gallery_pw_hint" android:layout_marginTop="4dp">
+    android:layout_height="wrap_content" android:hint="@string/gallery_pw_hint" android:layout_marginTop="4dp"
+    app:passwordToggleEnabled="true" app:endIconMode="password_toggle">
     <com.google.android.material.textfield.TextInputEditText android:id="@+id/etGalleryPw"
         android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textPassword"/>
 </com.google.android.material.textfield.TextInputLayout>

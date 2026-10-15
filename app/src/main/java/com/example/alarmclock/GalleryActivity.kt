@@ -101,10 +101,52 @@ class GalleryActivity : AppCompatActivity() {
             Toast.makeText(this, "Email không khớp (${maskEmail(recovery)})", Toast.LENGTH_LONG).show()
             return
         }
-        AppSettings.clearGalleryPassword(this)
-        unlocked = true
-        Toast.makeText(this, "Đã xác minh email — mật khẩu đã xóa", Toast.LENGTH_LONG).show()
-        showGallery()
+        // Send OTP via Gmail bot
+        val code = (100000..999999).random().toString()
+        Toast.makeText(this, "Đang gửi mã OTP tới ${maskEmail(recovery)}...", Toast.LENGTH_SHORT).show()
+        Thread {
+            val sent = try { GmailBot.sendOtp(recovery, code) } catch (_: Exception) { false }
+            runOnUiThread {
+                if (sent) {
+                    showGalleryOtpDialog(recovery, code)
+                } else {
+                    Toast.makeText(this, "Không gửi được OTP. Thử lại.", Toast.LENGTH_LONG).show()
+                }
+            }
+        }.start()
+    }
+
+    private fun showGalleryOtpDialog(email: String, expectedCode: String) {
+        val view = layoutInflater.inflate(R.layout.dialog_otp, null)
+        val boxes = listOf(
+            view.findViewById<android.widget.EditText>(R.id.otp1),
+            view.findViewById<android.widget.EditText>(R.id.otp2),
+            view.findViewById<android.widget.EditText>(R.id.otp3),
+            view.findViewById<android.widget.EditText>(R.id.otp4),
+            view.findViewById<android.widget.EditText>(R.id.otp5),
+            view.findViewById<android.widget.EditText>(R.id.otp6)
+        )
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("Mã OTP từ Gmail")
+            .setMessage("Nhập mã 6 số đã gửi tới ${maskEmail(email)}")
+            .setView(view)
+            .setCancelable(false)
+            .setNegativeButton("Hủy", null)
+            .create()
+        view.findViewById<android.widget.Button>(R.id.btnConfirmOtp)?.setOnClickListener {
+            val entered = boxes.joinToString("") { it.text?.toString().orEmpty() }
+            if (entered == expectedCode) {
+                AppSettings.clearGalleryPassword(this)
+                unlocked = true
+                Toast.makeText(this, "Đúng mã — mật khẩu đã xóa", Toast.LENGTH_LONG).show()
+                dialog.dismiss()
+                showGallery()
+            } else {
+                Toast.makeText(this, "Sai mã", Toast.LENGTH_SHORT).show()
+            }
+        }
+        dialog.show()
+        boxes[0].requestFocus()
     }
 
     private fun maskEmail(email: String): String {

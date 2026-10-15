@@ -35,7 +35,9 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Mật khẩu bộ sưu tập">
+                android:hint="Mật khẩu bộ sưu tập"
+                app:passwordToggleEnabled="true"
+                app:endIconMode="password_toggle">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etPassword"
                     android:layout_width="match_parent"
