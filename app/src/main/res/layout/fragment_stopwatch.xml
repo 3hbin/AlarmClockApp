@@ -12,9 +12,9 @@
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
         app:title="@string/title_stopwatch"
-        app:titleTextColor="@android:color/white"
+        app:titleTextColor="@color/on_primary"
         app:navigationIcon="@android:drawable/ic_menu_close_clear_cancel"
-        app:navigationIconTint="@android:color/white" />
+        app:navigationIconTint="@color/on_primary" />
 
     <TextView
         android:id="@+id/tvTime"

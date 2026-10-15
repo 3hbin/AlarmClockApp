@@ -12,7 +12,7 @@
         android:layout_height="?attr/actionBarSize"
         android:background="@color/primary"
         app:title="@string/title_bedtime"
-        app:titleTextColor="@android:color/white" />
+        app:titleTextColor="@color/on_primary" />
 
     <ScrollView
         android:layout_width="match_parent"

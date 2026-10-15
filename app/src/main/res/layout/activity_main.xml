@@ -13,7 +13,7 @@
         android:layout_height="?attr/actionBarSize"
         android:background="@color/primary"
         app:title="@string/app_name"
-        app:titleTextColor="@android:color/white" />
+        app:titleTextColor="@color/on_primary" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -265,7 +265,7 @@
             android:layout_marginBottom="12dp"
             android:src="@android:drawable/ic_input_add"
             app:backgroundTint="@color/primary"
-            app:tint="@android:color/white"
+            app:tint="@color/on_primary"
             app:elevation="4dp"
             app:borderWidth="0dp" />
     </FrameLayout>

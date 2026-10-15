@@ -11,9 +11,9 @@
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
         app:title="@string/title_world_clock"
-        app:titleTextColor="@android:color/white"
+        app:titleTextColor="@color/on_primary"
         app:navigationIcon="@android:drawable/ic_menu_close_clear_cancel"
-        app:navigationIconTint="@android:color/white" />
+        app:navigationIconTint="@color/on_primary" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"

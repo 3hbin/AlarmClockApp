@@ -150,9 +150,10 @@ class MainActivity : AppCompatActivity() {
             setSupportActionBar(binding.toolbar)
             supportActionBar?.setDisplayShowTitleEnabled(true)
             binding.toolbar.title = getString(R.string.app_name)
-            binding.toolbar.setTitleTextColor(0xFFFFFFFF.toInt())
-            // Overflow 3 chấm màu trắng trên nền xanh
-            binding.toolbar.overflowIcon?.setTint(0xFFFFFFFF.toInt())
+            val onPrimary = androidx.core.content.ContextCompat.getColor(this, R.color.on_primary)
+            binding.toolbar.setTitleTextColor(onPrimary)
+            // Overflow 3 chấm cùng màu chữ trên header (Material You)
+            binding.toolbar.overflowIcon?.setTint(onPrimary)
         } catch (_: Exception) {}
 
         repo = AlarmRepository(this)
@@ -389,9 +390,7 @@ class MainActivity : AppCompatActivity() {
             val primary = ev?.primary ?: androidx.core.content.ContextCompat.getColor(this, R.color.primary)
             window.decorView.setBackgroundColor(surface)
             window.statusBarColor = primary
-            val night = ev != null || (resources.configuration.uiMode and
-                android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
-                android.content.res.Configuration.UI_MODE_NIGHT_YES
+            val night = androidx.core.graphics.ColorUtils.calculateLuminance(primary) <= 0.5
             if (android.os.Build.VERSION.SDK_INT >= 23) {
                 var flags = window.decorView.systemUiVisibility
                 flags = if (night) flags and android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()

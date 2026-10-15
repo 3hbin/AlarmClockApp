@@ -27,6 +27,8 @@ class LoadingAnimationView @JvmOverloads constructor(
 ) : View(context, attrs) {
 
     enum class Style {
+        /** Material You: hình khối biến đổi (morph) xoay trên nền primaryContainer — màu theo hình nền */
+        MATERIAL_YOU,
         /** 1 chấm xanh scale — giống Circle Loader Samsung */
         SAMSUNG_PULSE,
         /** 4 chấm quay, 1 cyan — kiểu Material / Google */
@@ -74,6 +76,12 @@ class LoadingAnimationView @JvmOverloads constructor(
         color = animColor
     }
     private val rect = RectF()
+    private val shapePath = android.graphics.Path()
+    /** nền tròn của loader (primaryContainer) */
+    var containerColor: Int = 0xFFD9E1FE.toInt()
+    private val morphShapes = arrayOf(
+        Pair(3, 0.17f), Pair(4, 0.12f), Pair(5, 0.10f), Pair(7, 0.08f), Pair(2, 0.13f), Pair(6, 0.09f)
+    )
     private var progress = 0f
 
     private val anim = ValueAnimator.ofFloat(0f, 1f).apply {
@@ -93,50 +101,19 @@ class LoadingAnimationView @JvmOverloads constructor(
 
     /** Gọi khi muốn reset style theo hãng máy hiện tại. */
     fun applyBrandDefault() {
-        style = brandDefaultStyle()
-        // Màu theo hãng (gần palette UI gốc)
-        when (detectBrand()) {
-            Brand.SAMSUNG -> {
-                animColor = 0xFF2196F3.toInt()
-                accentColor = 0xFF2196F3.toInt()
-            }
-            Brand.GOOGLE -> {
-                animColor = 0xFF4285F4.toInt()
-                accentColor = 0xFF34A853.toInt()
-            }
-            Brand.XIAOMI -> {
-                animColor = 0xFFFF6900.toInt()
-                accentColor = 0xFFFF6900.toInt()
-            }
-            Brand.OPPO, Brand.REALME, Brand.ONEPLUS -> {
-                animColor = 0xFF00C853.toInt()
-                accentColor = 0xFF00C853.toInt()
-            }
-            Brand.HUAWEI, Brand.HONOR -> {
-                animColor = 0xFFCF0A2C.toInt()
-                accentColor = 0xFFCF0A2C.toInt()
-            }
-            Brand.VIVO -> {
-                animColor = 0xFF415FFF.toInt()
-                accentColor = 0xFF415FFF.toInt()
-            }
-            Brand.LG -> {
-                animColor = 0xFFA50034.toInt()
-                accentColor = 0xFFA50034.toInt()
-            }
-            Brand.MOTOROLA -> {
-                animColor = 0xFFE1140A.toInt()
-                accentColor = 0xFFE1140A.toInt()
-            }
-            Brand.SONY -> {
-                animColor = 0xFF000000.toInt()
-                accentColor = 0xFF000000.toInt()
-            }
-            else -> {
-                animColor = 0xFF3F51B5.toInt()
-                accentColor = 0xFF00E5C0.toInt()
-            }
-        }
+        style = Style.MATERIAL_YOU
+        // Màu lấy từ theme Material You (Android 12+ = màu hình nền)
+        try {
+            animColor = com.google.android.material.color.MaterialColors.getColor(
+                this, com.google.android.material.R.attr.colorPrimary, 0xFF4351B7.toInt()
+            )
+            containerColor = com.google.android.material.color.MaterialColors.getColor(
+                this, com.google.android.material.R.attr.colorPrimaryContainer, 0xFFD9E1FE.toInt()
+            )
+            accentColor = com.google.android.material.color.MaterialColors.getColor(
+                this, com.google.android.material.R.attr.colorTertiary, 0xFF7E4B6A.toInt()
+            )
+        } catch (_: Exception) {}
     }
 
     private enum class Brand {
@@ -165,7 +142,10 @@ class LoadingAnimationView @JvmOverloads constructor(
         }
     }
 
-    private fun brandDefaultStyle(): Style = when (detectBrand()) {
+    private fun brandDefaultStyle(): Style = Style.MATERIAL_YOU
+
+    @Suppress("unused")
+    private fun legacyBrandStyle(): Style = when (detectBrand()) {
         Brand.SAMSUNG -> Style.SAMSUNG_PULSE
         Brand.GOOGLE -> Style.GOOGLE_ORBIT
         Brand.XIAOMI -> Style.WAVE_DOTS
@@ -200,6 +180,7 @@ class LoadingAnimationView @JvmOverloads constructor(
         paint.color = animColor
         paint.alpha = 255
         when (style) {
+            Style.MATERIAL_YOU -> drawMaterialYou(canvas, cx, cy, size)
             Style.SAMSUNG_PULSE -> drawSamsungPulse(canvas, cx, cy, size)
             Style.GOOGLE_ORBIT -> drawGoogleOrbit(canvas, cx, cy, size)
             Style.WAVE_DOTS, Style.STAGGERED_DOTS_WAVE -> drawStaggeredWave(canvas, cx, cy, size)
@@ -210,6 +191,42 @@ class LoadingAnimationView @JvmOverloads constructor(
             Style.DISCRETE_CIRCULAR -> drawDiscreteCircular(canvas, cx, cy, size)
             Style.HORIZONTAL_DOTS -> drawHorizontalDots(canvas, cx, cy, size)
         }
+    }
+
+    /** Material You: hình khối morph (tam giác → vuông → cookie…) xoay, nền tròn primaryContainer. */
+    private fun drawMaterialYou(canvas: Canvas, cx: Float, cy: Float, size: Float) {
+        val t = android.os.SystemClock.uptimeMillis()
+        paint.style = Paint.Style.FILL
+        paint.alpha = 255
+        paint.color = containerColor
+        canvas.drawCircle(cx, cy, size * 0.5f, paint)
+
+        val cycle = 640L
+        val idx = ((t / cycle) % morphShapes.size).toInt()
+        val f = (t % cycle).toFloat() / cycle
+        val k = ((f - 0.25f) / 0.6f).coerceIn(0f, 1f)
+        val e = k * k * (3f - 2f * k)
+        val a = morphShapes[idx]
+        val b = morphShapes[(idx + 1) % morphShapes.size]
+        val rot = (t % 3200L).toFloat() / 3200f * (2f * PI.toFloat())
+        val pulse = 0.94f + 0.06f * sin(t / 380.0).toFloat()
+        val base = size * 0.29f * pulse
+
+        shapePath.reset()
+        val steps = 96
+        for (i in 0..steps) {
+            val th = 2f * PI.toFloat() * i / steps
+            val ra = 1f + a.second * cos((a.first * th).toDouble()).toFloat()
+            val rb = 1f + b.second * cos((b.first * th).toDouble()).toFloat()
+            val r = base * ((1f - e) * ra + e * rb)
+            val ang = th + rot
+            val x = cx + cos(ang.toDouble()).toFloat() * r
+            val y = cy + sin(ang.toDouble()).toFloat() * r
+            if (i == 0) shapePath.moveTo(x, y) else shapePath.lineTo(x, y)
+        }
+        shapePath.close()
+        paint.color = animColor
+        canvas.drawPath(shapePath, paint)
     }
 
     /** Video 1: 1 chấm xanh giữa — scale pulse (chỉ Samsung). Không logo. */

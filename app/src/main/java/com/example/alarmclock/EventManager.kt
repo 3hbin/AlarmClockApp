@@ -125,12 +125,12 @@ object EventManager {
 
     fun activeColor(context: Context): Int {
         if (isThemeEnabled(context)) palette()?.primary?.let { return it }
-        return Color.parseColor("#4F5BFF")
+        return androidx.core.content.ContextCompat.getColor(context, R.color.primary)
     }
 
     fun surfaceColor(context: Context): Int {
         if (isThemeEnabled(context)) palette()?.surface?.let { return it }
-        return Color.parseColor("#F7F8FC")
+        return androidx.core.content.ContextCompat.getColor(context, R.color.surface)
     }
 
 
@@ -158,17 +158,21 @@ object EventManager {
     fun applyChrome(activity: Activity) {
         val evOn = isThemeEnabled(activity)
         val pal = if (evOn) palette() else null
-        val primary = pal?.primary ?: Color.parseColor("#4F5BFF")
-        val surface = pal?.surface ?: Color.parseColor("#F7F8FC")
+        val primary = pal?.primary ?: androidx.core.content.ContextCompat.getColor(activity, R.color.primary)
+        val surface = pal?.surface ?: androidx.core.content.ContextCompat.getColor(activity, R.color.surface)
+        val onPrimary = if (pal != null) Color.WHITE
+            else androidx.core.content.ContextCompat.getColor(activity, R.color.on_primary)
         val accent = pal?.accent ?: primary
-        val fabIcon = pal?.primaryDark ?: Color.WHITE
+        val fabIcon = pal?.primaryDark ?: onPrimary
         try {
             activity.window.statusBarColor = primary
             if (Build.VERSION.SDK_INT >= 21) activity.window.navigationBarColor = surface
             if (Build.VERSION.SDK_INT >= 23) {
                 val d = activity.window.decorView
                 var flags = d.systemUiVisibility
-                flags = if (pal != null) flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+                // Icon thanh trạng thái tối khi nền sáng, sáng khi nền tối (theo độ sáng thật của màu)
+                val lightBg = androidx.core.graphics.ColorUtils.calculateLuminance(primary) > 0.5
+                flags = if (!lightBg) flags and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
                 else flags or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
                 d.systemUiVisibility = flags
             }
@@ -191,7 +195,7 @@ object EventManager {
                         val stroke = try { v.strokeWidth } catch (_: Exception) { 0 }
                         if (stroke <= 0 && !v.isCheckable) {
                             v.backgroundTintList = android.content.res.ColorStateList.valueOf(primary)
-                            v.setTextColor(Color.WHITE)
+                            v.setTextColor(onPrimary)
                         }
                     }
                     if (v is com.example.alarmclock.CurvedBottomNavView) {

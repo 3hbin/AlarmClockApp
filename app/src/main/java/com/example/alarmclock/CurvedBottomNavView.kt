@@ -83,10 +83,20 @@ class CurvedBottomNavView @JvmOverloads constructor(
         return ui == android.content.res.Configuration.UI_MODE_NIGHT_YES
     }
 
-    private val barBg: Int get() = if (isNight()) 0xFF1A1C28.toInt() else Color.WHITE
-    private val pageBg: Int get() = if (isNight()) 0xFF12131A.toInt() else 0xFFF7F8FC.toInt()
-    private val inactiveIcon: Int get() = if (isNight()) 0xFF8B90A5.toInt() else 0xFF6B7280.toInt()
-    private val labelInactive: Int get() = if (isNight()) 0xFF8B90A5.toInt() else 0xFF9AA0B4.toInt()
+    // Material You: màu lấy từ resource (Android 12+ tự đổi theo hình nền)
+    private fun res(id: Int): Int = androidx.core.content.ContextCompat.getColor(context, id)
+    private val themed: Boolean get() = try {
+        EventManager.isThemeEnabled(context) && EventManager.palette() != null
+    } catch (_: Exception) { false }
+    private val barBg: Int get() = res(R.color.surface_container)
+    private val pageBg: Int get() = res(R.color.surface)
+    private val inactiveIcon: Int get() = res(R.color.on_surface_variant)
+    private val labelInactive: Int get() = res(R.color.on_surface_variant)
+    /** Nền "viên thuốc" của tab đang chọn: secondary container (M3) hoặc màu sự kiện */
+    private val indicatorColor: Int get() =
+        if (themed) (accent and 0x00FFFFFF) or 0x38000000 else res(R.color.secondary_container)
+    private val onIndicator: Int get() = if (themed) accent else res(R.color.on_secondary_container)
+    private val onPrimaryColor: Int get() = if (themed) Color.WHITE else res(R.color.on_primary)
     private val labelActive: Int get() = if (navStyle == Style.GOOGLE) accentGoogle else eventAccent
 
     // Không setShadowLayer — gây crash trên Huawei khi kết hợp SOFTWARE layer
@@ -183,20 +193,21 @@ class CurvedBottomNavView @JvmOverloads constructor(
     }
 
     fun slideIndicatorFrom(fromIndex: Int) {
-        if (!AppSettings.isAnimationEnabled(context)) return
-        post {
-            try {
-                selAnim?.cancel()
-                animX = centerX(fromIndex)
-                selPos = fromIndex.toFloat()
-                invalidate()
-                selectIndex(selectedIndex, true)
-            } catch (_: Exception) {}
-        }
+        // Thanh đã trượt sang tab mới ngay trên màn hình trước khi chuyển màn.
+        // Ở màn mới chỉ giữ nguyên vị trí cuối — KHÔNG chạy lại hiệu ứng (trước đây chạy 2 lần → giật).
+        selAnim?.cancel()
+        selPos = selectedIndex.toFloat()
+        invalidate()
     }
 
     /** true = tự đọc kiểu thanh từ Cài đặt mỗi khi màn hình hiện lại */
     var followSettings = false
+
+    /** Trả về false → bỏ qua lần chạm này (chống bấm dồn), thanh đứng yên, không giật lùi. */
+    var canSelect: (() -> Boolean)? = null
+
+    /** Activity đã bind thanh này (tránh bind lại mỗi lần onResume). */
+    var boundTo: Any? = null
 
     private fun syncStyleFromSettings() {
         try {
@@ -228,7 +239,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
                 run {
                     selAnim?.cancel()
                     selAnim = ValueAnimator.ofFloat(selPos, index.toFloat()).apply {
-                        duration = 300L
+                        duration = 260L
                         interpolator = DecelerateInterpolator(1.5f)
                         addUpdateListener {
                             selPos = it.animatedValue as Float
@@ -632,8 +643,8 @@ class CurvedBottomNavView @JvmOverloads constructor(
         }
 
         // thân kính: gradient trong suốt
-        val topC = if (night) Color.argb(190, 44, 47, 68) else Color.argb(215, 255, 255, 255)
-        val botC = if (night) Color.argb(170, 24, 26, 38) else Color.argb(165, 245, 247, 255)
+        val topC = (barBg and 0x00FFFFFF) or ((if (night) 200 else 220) shl 24)
+        val botC = (barBg and 0x00FFFFFF) or ((if (night) 170 else 170) shl 24)
         glassFill.shader = android.graphics.LinearGradient(
             0f, barT, 0f, barB, topC, botC, android.graphics.Shader.TileMode.CLAMP
         )
@@ -683,7 +694,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
         for (i in 0 until n) {
             val c = (1f - kotlin.math.abs(i - pos)).coerceIn(0f, 1f)
             val cxI = innerL + slot * (i + 0.5f)
-            val color = blend(inactiveIcon, accent, c)
+            val color = blend(inactiveIcon, onIndicator, c)
             drawIconAt(canvas, i, cxI, cy - dp(5f) * c, floatIconSize * (1f + 0.08f * c), color)
             if (c > 0.1f) {
                 val label = items[i].label
@@ -751,7 +762,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
             val c = (1f - kotlin.math.abs(i - pos)).coerceIn(0f, 1f)
             val cxI = slot * (i + 0.5f)
             val y = barCy + (bcy - barCy) * c
-            drawIconAt(canvas, i, cxI, y, dp(24f), blend(inactiveIcon, Color.WHITE, c))
+            drawIconAt(canvas, i, cxI, y, dp(24f), blend(inactiveIcon, onPrimaryColor, c))
         }
     }
 
@@ -818,7 +829,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
         }
 
         // Thân thanh
-        floatBarPaint.color = if (isNight()) 0xFF1F2130.toInt() else Color.WHITE
+        floatBarPaint.color = barBg
         rect.set(barL, barT, barR, barB)
         canvas.drawRoundRect(rect, radius, radius, floatBarPaint)
         floatStroke.color = if (isNight()) 0x22FFFFFF else 0x12000000
@@ -849,7 +860,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
         val pc = c0 + (c1 - c0) * f
         val pillH = floatBarH - dp(16f)
         val pillT = barT + (floatBarH - pillH) / 2f
-        floatPill.color = (accent and 0x00FFFFFF) or (if (isNight()) 0x40000000 else 0x26000000)
+        floatPill.color = indicatorColor
         rect.set(pc - selW / 2f, pillT, pc + selW / 2f, pillT + pillH)
         canvas.drawRoundRect(rect, pillH / 2f, pillH / 2f, floatPill)
 
@@ -865,7 +876,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
             val textW = floatText.measureText(label)
             val groupW = floatIconSize + floatGap + textW
             val iconCx = cellCx + (-groupW / 2f + floatIconSize / 2f) * c
-            val color = blend(inactiveIcon, accent, c)
+            val color = blend(inactiveIcon, onIndicator, c)
 
             val d = iconDrawables.getOrNull(i)
             if (d != null) {
@@ -924,7 +935,7 @@ class CurvedBottomNavView @JvmOverloads constructor(
                         val isLong = event.eventTime - downTime >= ViewConfiguration.getLongPressTimeout()
                         if (isLong) {
                             onItemLongClick?.invoke(i, items[i])
-                        } else if (i != selectedIndex) {
+                        } else if (i != selectedIndex && canSelect?.invoke() != false) {
                             performClick()
                             selectIndex(i, true)
                             onItemSelected?.invoke(i, items[i])

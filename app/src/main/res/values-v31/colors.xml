@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material You động (Android 12+): lấy màu từ hình nền -->
+    <color name="primary">@android:color/system_accent1_600</color>
+    <color name="primary_dark">@android:color/system_accent1_700</color>
+    <color name="primary_container">@android:color/system_accent1_100</color>
+    <color name="on_primary">@android:color/system_accent1_0</color>
+    <color name="on_primary_container">@android:color/system_accent1_900</color>
+    <color name="secondary">@android:color/system_accent2_600</color>
+    <color name="secondary_container">@android:color/system_accent2_100</color>
+    <color name="on_secondary_container">@android:color/system_accent2_900</color>
+    <color name="tertiary">@android:color/system_accent3_600</color>
+    <color name="tertiary_container">@android:color/system_accent3_100</color>
+    <color name="surface">@android:color/system_neutral1_10</color>
+    <color name="surface_card">@android:color/system_neutral1_0</color>
+    <color name="surface_container">@android:color/system_neutral1_50</color>
+    <color name="surface_container_high">@android:color/system_neutral1_100</color>
+    <color name="surface_variant">@android:color/system_neutral2_100</color>
+    <color name="outline">@android:color/system_neutral2_200</color>
+    <color name="outline_variant">@android:color/system_neutral2_200</color>
+    <color name="text_primary">@android:color/system_neutral1_900</color>
+    <color name="text_secondary">@android:color/system_neutral2_700</color>
+    <color name="text_tertiary">@android:color/system_neutral2_500</color>
+    <color name="on_surface">@android:color/system_neutral1_900</color>
+    <color name="on_surface_variant">@android:color/system_neutral2_700</color>
+    <color name="danger">#B3261E</color>
+    <color name="error">#B3261E</color>
+    <color name="nav_bar_bg">@android:color/system_neutral1_50</color>
+    <color name="nav_icon_inactive">@android:color/system_neutral2_700</color>
+    <color name="seed">@android:color/system_accent1_500</color>
+    <color name="ripple">#1F000000</color>
+</resources>

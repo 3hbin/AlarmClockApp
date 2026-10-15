@@ -30,6 +30,14 @@ object BottomNavHelper {
     private var lastNavAt = 0L
 
     fun bind(activity: AppCompatActivity, nav: CurvedBottomNavView, selectedIndex: Int) {
+        // Đã bind cho đúng activity này rồi (onResume gọi lại) → chỉ đồng bộ kiểu + tab chọn,
+        // không dựng lại thanh (dựng lại làm thanh nhảy/giật).
+        if (nav.boundTo === activity) {
+            try { nav.selectIndex(selectedIndex, animate = false) } catch (_: Exception) {}
+            return
+        }
+        nav.boundTo = activity
+        nav.canSelect = { android.os.SystemClock.uptimeMillis() - lastNavAt >= 350L }
         // Kiểu thanh lấy từ Cài đặt (nổi / kính lỏng / cong)
         try {
             nav.navStyle = when (AppSettings.getBottomNavStyle(activity)) {
@@ -48,7 +56,7 @@ object BottomNavHelper {
             if (index == selectedIndex) return@setOnItemSelectedListener
             // Chống bấm liên tiếp làm tab nhảy loạn
             val nowMs = android.os.SystemClock.uptimeMillis()
-            if (nowMs - lastNavAt < 450L) {
+            if (nowMs - lastNavAt < 350L) {
                 try { nav.selectIndex(selectedIndex, animate = false) } catch (_: Exception) {}
                 return@setOnItemSelectedListener
             }
