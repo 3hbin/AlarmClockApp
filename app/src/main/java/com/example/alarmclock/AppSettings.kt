@@ -95,6 +95,15 @@ object AppSettings {
         prefs(context).edit().putString("google_photo_url", url).apply()
     fun getGooglePhotoUrl(context: Context) =
         prefs(context).getString("google_photo_url", "") ?: ""
+    /** Ảnh hồ sơ người dùng tự chọn từ thư viện (ưu tiên hơn ảnh Google) */
+    fun setProfilePhotoPath(context: Context, path: String) =
+        prefs(context).edit().putString("profile_photo_path", path).apply()
+    fun getProfilePhotoPath(context: Context) =
+        prefs(context).getString("profile_photo_path", "") ?: ""
+    fun clearProfilePhoto(context: Context) {
+        try { java.io.File(getProfilePhotoPath(context)).delete() } catch (_: Exception) {}
+        prefs(context).edit().remove("profile_photo_path").apply()
+    }
     fun isStatusNotificationEnabled(context: Context) = false
     fun setStatusNotificationEnabled(context: Context, on: Boolean) {
         prefs(context).edit().putBoolean("status_notif_enabled", false).apply()

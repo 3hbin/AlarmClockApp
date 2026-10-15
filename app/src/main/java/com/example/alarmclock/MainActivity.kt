@@ -1040,6 +1040,44 @@ class MainActivity : AppCompatActivity() {
     }
 
 
+    /** Chọn ảnh hồ sơ từ thư viện (không cần xin quyền) */
+    private val profilePhotoPicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) saveProfilePhoto(uri)
+    }
+
+    private fun saveProfilePhoto(uri: android.net.Uri) {
+        Toast.makeText(this, "Đang lưu ảnh…", Toast.LENGTH_SHORT).show()
+        Thread {
+            try {
+                val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                contentResolver.openInputStream(uri)?.use {
+                    android.graphics.BitmapFactory.decodeStream(it, null, bounds)
+                }
+                var sample = 1
+                while (bounds.outWidth / sample > 1024 || bounds.outHeight / sample > 1024) sample *= 2
+                val opts = android.graphics.BitmapFactory.Options().apply { inSampleSize = sample }
+                val src = contentResolver.openInputStream(uri)?.use {
+                    android.graphics.BitmapFactory.decodeStream(it, null, opts)
+                } ?: throw IllegalStateException("decode")
+                val side = minOf(src.width, src.height)
+                val square = android.graphics.Bitmap.createBitmap(
+                    src, (src.width - side) / 2, (src.height - side) / 2, side, side
+                )
+                val out = android.graphics.Bitmap.createScaledBitmap(square, 512, 512, true)
+                val f = java.io.File(filesDir, "profile_photo.jpg")
+                f.outputStream().use { out.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, it) }
+                AppSettings.setProfilePhotoPath(this, f.absolutePath)
+                runOnUiThread {
+                    Toast.makeText(this, "Đã đổi ảnh hồ sơ", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    Toast.makeText(this, "Không đổi được ảnh: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }.start()
+    }
+
     private fun showProfileEditDialog() {
         val items = arrayOf(
             "Đổi ảnh hồ sơ",
@@ -1052,9 +1090,13 @@ class MainActivity : AppCompatActivity() {
             .setTitle("Thông tin hồ sơ")
             .setItems(items) { _, which ->
                 when (which) {
-                    0 -> Toast.makeText(this, "Chọn ảnh từ thư viện", Toast.LENGTH_SHORT).show()
+                    0 -> try { profilePhotoPicker.launch("image/*") } catch (e: Exception) {
+                        Toast.makeText(this, "Không mở được thư viện ảnh", Toast.LENGTH_SHORT).show()
+                    }
                     1 -> showEditNameDialog()
-                    2 -> Toast.makeText(this, "Sửa ngày sinh", Toast.LENGTH_SHORT).show()
+                    2 -> try { BirthdayHelper.pickManual(this) } catch (e: Exception) {
+                        Toast.makeText(this, "Không mở được bảng chọn ngày sinh", Toast.LENGTH_SHORT).show()
+                    }
                     3 -> showChangePasswordDialog()
                     4 -> showChangeEmailDialog()
                 }
@@ -1404,7 +1446,12 @@ class MainActivity : AppCompatActivity() {
             status.text = "Đã đăng nhập"
             val url = AppSettings.getGooglePhotoUrl(this)
             val img = view.findViewById<android.widget.ImageView>(R.id.imgAvatar)
-            if (url.isNotBlank() && img != null) {
+            val localPhoto = AppSettings.getProfilePhotoPath(this)
+            if (img != null && localPhoto.isNotBlank() && java.io.File(localPhoto).exists()) {
+                try {
+                    img.setImageBitmap(android.graphics.BitmapFactory.decodeFile(localPhoto))
+                } catch (_: Exception) {}
+            } else if (url.isNotBlank() && img != null) {
                 Thread {
                     try {
                         val conn = java.net.URL(url).openConnection() as java.net.HttpURLConnection
@@ -1464,7 +1511,7 @@ class MainActivity : AppCompatActivity() {
             try { com.google.firebase.auth.FirebaseAuth.getInstance().signOut() } catch (_: Exception) {}
             AppSettings.setGoogleDisplayName(this, "")
             AppSettings.setRecoveryEmail(this, "")
-            AppSettings.setGooglePhotoUrl(this, "")
+            AppSettings.setGooglePhotoUrl(this, ""); AppSettings.clearProfilePhoto(this)
             status.text = "Chưa đăng nhập"
             Toast.makeText(this, Lang.t(this, "Đã đăng xuất", "Signed out"), Toast.LENGTH_SHORT).show()
             googleLoginDialog?.dismiss()
