@@ -87,7 +87,7 @@
         android:layout_height="wrap_content" android:text="@string/nav_style_curved"/>
 </RadioGroup>
 <View android:layout_width="match_parent" android:layout_height="1dp"
-    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:background="#1F808080"
     android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
     android:text="@string/font_size" android:textStyle="bold" android:textSize="15sp" android:layout_marginTop="0dp" android:layout_marginBottom="4dp"/>
@@ -101,7 +101,7 @@
         android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/font_large"/>
 </RadioGroup>
 <View android:layout_width="match_parent" android:layout_height="1dp"
-    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:background="#1F808080"
     android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
     android:text="@string/dark_mode" android:textStyle="bold" android:textSize="15sp" android:layout_marginTop="0dp" android:layout_marginBottom="4dp"/>
@@ -130,7 +130,7 @@
         android:layout_width="52dp" android:layout_height="32dp"/>
 </LinearLayout>
 <View android:layout_width="match_parent" android:layout_height="1dp"
-    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:background="#1F808080"
     android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
     android:orientation="horizontal" android:gravity="center_vertical">
@@ -142,7 +142,7 @@
 <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
     android:text="Tắt sẽ khóa icon buổi tối và thoát app." android:textSize="12sp" android:textColor="?android:attr/textColorSecondary" android:layout_marginBottom="0dp"/>
 <View android:layout_width="match_parent" android:layout_height="1dp"
-    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:background="#1F808080"
     android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
     android:orientation="horizontal" android:gravity="center_vertical">
@@ -154,7 +154,7 @@
 <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
     android:text="@string/animation_hint" android:textSize="12sp" android:textColor="?android:attr/textColorSecondary" android:layout_marginBottom="0dp"/>
 <View android:layout_width="match_parent" android:layout_height="1dp"
-    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:background="#1F808080"
     android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
     android:orientation="horizontal" android:gravity="center_vertical">
@@ -164,7 +164,7 @@
         android:layout_width="52dp" android:layout_height="32dp"/>
 </LinearLayout>
 <View android:layout_width="match_parent" android:layout_height="1dp"
-    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:background="#1F808080"
     android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/swEventTheme"
     android:layout_width="match_parent" android:layout_height="wrap_content"
@@ -189,7 +189,7 @@
 <SeekBar android:id="@+id/seekVolume" android:layout_width="match_parent"
     android:layout_height="wrap_content" android:max="100"/>
 <View android:layout_width="match_parent" android:layout_height="1dp"
-    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:background="#1F808080"
     android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
     android:orientation="horizontal" android:gravity="center_vertical">
@@ -199,7 +199,7 @@
         android:layout_width="52dp" android:layout_height="32dp"/>
 </LinearLayout>
 <View android:layout_width="match_parent" android:layout_height="1dp"
-    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:background="#1F808080"
     android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
     android:text="@string/snooze_default" android:textStyle="bold" android:textSize="15sp" android:layout_marginTop="0dp" android:layout_marginBottom="4dp"/>
@@ -213,7 +213,7 @@
         android:layout_height="wrap_content" android:layout_weight="1" android:text="@string/min_15"/>
 </RadioGroup>
 <View android:layout_width="match_parent" android:layout_height="1dp"
-    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:background="#1F808080"
     android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 <TextView android:id="@+id/tvRingDurationTitle" android:layout_width="match_parent" android:layout_height="wrap_content"
     android:text="Thời lượng đổ chuông" android:textStyle="bold" android:textSize="15sp" android:layout_marginTop="0dp" android:layout_marginBottom="4dp"/>
@@ -233,7 +233,7 @@
         android:layout_height="wrap_content" android:layout_weight="1" android:text="30p"/>
 </RadioGroup>
 <View android:layout_width="match_parent" android:layout_height="1dp"
-    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:background="#1F808080"
     android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
     android:orientation="horizontal" android:gravity="center_vertical">
@@ -243,7 +243,7 @@
         android:layout_width="52dp" android:layout_height="32dp"/>
 </LinearLayout>
 <View android:layout_width="match_parent" android:layout_height="1dp"
-    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:background="#1F808080"
     android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
     android:orientation="horizontal" android:gravity="center_vertical">
@@ -297,7 +297,7 @@
 <TextView android:id="@+id/tvSettingsPinStatus" android:layout_width="match_parent"
     android:layout_height="wrap_content" android:textSize="13sp" android:layout_marginTop="8dp"/>
 <View android:layout_width="match_parent" android:layout_height="1dp"
-    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:background="#1F808080"
     android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
     android:text="@string/anti_troll_title" android:textStyle="bold" android:textSize="15sp" android:layout_marginTop="0dp" android:layout_marginBottom="4dp"/>
@@ -320,7 +320,7 @@
     android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/anti_troll_pin_save"
     android:layout_marginTop="8dp"/>
 <View android:layout_width="match_parent" android:layout_height="1dp"
-    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:background="#1F808080"
     android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
     android:text="@string/gallery_protect" android:textStyle="bold" android:textSize="15sp" android:layout_marginTop="0dp" android:layout_marginBottom="4dp"/>
@@ -338,7 +338,7 @@
     android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/gallery_pw_clear"
     android:layout_marginTop="8dp"/>
 <View android:layout_width="match_parent" android:layout_height="1dp"
-    android:background="?android:attr/textColorSecondary" android:alpha="0.12"
+    android:background="#1F808080"
     android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
     android:text="@string/recovery_email_hint" android:textStyle="bold" android:textSize="15sp" android:layout_marginTop="0dp" android:layout_marginBottom="4dp"/>
