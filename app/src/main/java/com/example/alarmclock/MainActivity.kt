@@ -1031,6 +1031,13 @@ class MainActivity : AppCompatActivity() {
                 updateItem?.isVisible = true
                 updateItem?.title = "v$current → ${info.tag} • Cập nhật"
                 try { updateItem?.setIcon(R.drawable.ic_system_update) } catch (_: Exception) {}
+                // Hiện full-screen cập nhật
+                try {
+                    startActivity(android.content.Intent(this, UpdateFullScreenActivity::class.java).apply {
+                        putExtra("tag", info.tag)
+                        putExtra("current", current)
+                    })
+                } catch (_: Exception) {}
             } else {
                 pendingUpdateTag = null
                 updateItem?.isVisible = true

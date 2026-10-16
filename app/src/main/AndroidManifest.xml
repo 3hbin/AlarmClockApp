@@ -71,6 +71,9 @@
 
         <!-- Không gắn LAUNCHER ở đây — icon launcher do activity-alias quản lý.
              MainActivity luôn enabled để Intent tab Báo hoạt động. -->
+        <activity android:name=".UpdateFullScreenActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AlarmClock.FullScreen" />
         <activity android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
