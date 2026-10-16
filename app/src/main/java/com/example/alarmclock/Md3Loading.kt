@@ -18,14 +18,11 @@ import com.google.android.material.progressindicator.LinearProgressIndicator
  */
 object Md3Loading {
 
-    private fun primary(ctx: Context): Int =
-        MaterialColors.getColor(ctx, com.google.android.material.R.attr.colorPrimary, 0xFF6750A4.toInt())
+    private fun primary(ctx: Context): Int = themeColor(ctx, "colorPrimary", 0xFF6750A4.toInt())
 
-    private fun onSurface(ctx: Context): Int =
-        MaterialColors.getColor(ctx, com.google.android.material.R.attr.colorOnSurface, 0xFF1C1B1F.toInt())
+    private fun onSurface(ctx: Context): Int = themeColor(ctx, "colorOnSurface", 0xFF1C1B1F.toInt())
 
-    private fun surface(ctx: Context): Int =
-        MaterialColors.getColor(ctx, com.google.android.material.R.attr.colorSurface, 0xFFFFFFFF.toInt())
+    private fun surface(ctx: Context): Int = themeColor(ctx, "colorSurface", 0xFFFFFFFF.toInt())
 
     fun show(context: Context, message: String? = null, cancelable: Boolean = false): Dialog {
         val density = context.resources.displayMetrics.density
@@ -78,7 +75,7 @@ object Md3Loading {
         }
         val icon = ImageView(context).apply {
             setImageResource(android.R.drawable.ic_dialog_alert)
-            setColorFilter(MaterialColors.getColor(context, com.google.android.material.R.attr.colorError, 0xFFB3261E.toInt()))
+            setColorFilter(themeColor(context, "colorError", 0xFFB3261E.toInt()))
             layoutParams = LinearLayout.LayoutParams((56 * density).toInt(), (56 * density).toInt())
         }
         root.addView(icon)
@@ -122,7 +119,7 @@ object Md3Loading {
             trackThickness = (8 * density).toInt()
             trackCornerRadius = (4 * density).toInt()
             setIndicatorColor(primary(context))
-            trackColor = MaterialColors.getColor(context, com.google.android.material.R.attr.colorSurfaceVariant, 0xFFE7E0EC.toInt())
+            trackColor = themeColor(context, "colorSurfaceVariant", 0xFFE7E0EC.toInt())
             layoutParams = LinearLayout.LayoutParams(
                 (220 * density).toInt(),
                 ViewGroup.LayoutParams.WRAP_CONTENT
@@ -147,6 +144,15 @@ object Md3Loading {
         dialog.window?.setDimAmount(0.4f)
         dialog.show()
         return dialog
+    }
+
+
+    private fun themeColor(ctx: Context, attrName: String, fallback: Int): Int {
+        return try {
+            val tv = android.util.TypedValue()
+            val attrId = ctx.resources.getIdentifier(attrName, "attr", ctx.packageName)
+            if (attrId != 0 && ctx.theme.resolveAttribute(attrId, tv, true)) tv.data else fallback
+        } catch (_: Exception) { fallback }
     }
 
 }

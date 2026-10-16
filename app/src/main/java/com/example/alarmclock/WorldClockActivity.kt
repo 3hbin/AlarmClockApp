@@ -86,7 +86,7 @@ class WorldClockActivity : AppCompatActivity() {
         (binding.recyclerView.itemAnimator as? androidx.recyclerview.widget.SimpleItemAnimator)
             ?.supportsChangeAnimations = false
 
-        binding.swipeRefresh.setColorSchemeColors(com.google.android.material.color.MaterialColors.getColor(this, com.google.android.material.R.attr.colorPrimary, 0xFF6750A4.toInt()))
+        binding.swipeRefresh.setColorSchemeColors(0xFF6750A4.toInt())
         binding.swipeRefresh.setOnRefreshListener {
             val wavy = Md3Loading.showWavy(this, "Đang tải lại…")
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({

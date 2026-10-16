@@ -104,15 +104,9 @@ class LoadingAnimationView @JvmOverloads constructor(
         style = Style.MATERIAL_YOU
         // Màu lấy từ theme Material You (Android 12+ = màu hình nền)
         try {
-            animColor = com.google.android.material.color.MaterialColors.getColor(
-                this, com.google.android.material.R.attr.colorPrimary, 0xFF4351B7.toInt()
-            )
-            containerColor = com.google.android.material.color.MaterialColors.getColor(
-                this, com.google.android.material.R.attr.colorPrimaryContainer, 0xFFD9E1FE.toInt()
-            )
-            accentColor = com.google.android.material.color.MaterialColors.getColor(
-                this, com.google.android.material.R.attr.colorTertiary, 0xFF7E4B6A.toInt()
-            )
+            animColor = 0xFF6750A4.toInt()
+            containerColor = 0xFFD9E1FE.toInt()
+            accentColor = 0xFF7E4B6A.toInt()
         } catch (_: Exception) {}
     }
 

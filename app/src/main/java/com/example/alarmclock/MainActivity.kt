@@ -198,7 +198,7 @@ class MainActivity : AppCompatActivity() {
             changeDuration = 120
         }
 
-        binding.swipeRefresh.setColorSchemeColors(com.google.android.material.color.MaterialColors.getColor(this, com.google.android.material.R.attr.colorPrimary, 0xFF6750A4.toInt()))
+        binding.swipeRefresh.setColorSchemeColors(0xFF6750A4.toInt())
         binding.swipeRefresh.setProgressBackgroundColorSchemeColor(0x00FFFFFF)
         binding.swipeRefresh.setOnRefreshListener {
             val wavy = Md3Loading.showWavy(this, "Đang tải lại…")
