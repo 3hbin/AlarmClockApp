@@ -56,6 +56,9 @@ class AlarmListFragment : Fragment() {
                         repo.saveAlarms(alarms)
                         adapter.notifyDataSetChanged()
                         updateNextAlarmBanner()
+                        // Đẩy danh sách mới lên cloud để thiết bị khác không kêu
+                        try { CloudSyncHelper.pushAlarms(ctx, alarms) } catch (_: Exception) {}
+                        Toast.makeText(ctx, "Đã xóa", Toast.LENGTH_SHORT).show()
                     }
                     .setNegativeButton("Hủy", null)
                     .show()

@@ -511,11 +511,15 @@ object CloudSyncHelper {
             val local = repo.getAlarms()
             if (me.isNotBlank()) prefs.edit().putString("owner", me).apply()
             when {
-                cloud.isNotEmpty() -> {
-                    if (switched) local.forEach { AlarmScheduler.cancel(context, it.id) }
+                cloud.isNotEmpty() && local.isEmpty() -> {
+                    // Chỉ khôi phục nếu máy chưa có báo thức nào
                     repo.saveAlarms(cloud)
                     AlarmScheduler.rescheduleAll(context)
                     Toast.makeText(context, "Đã khôi phục ${cloud.size} báo từ Google", Toast.LENGTH_LONG).show()
+                }
+                cloud.isNotEmpty() && local.isNotEmpty() -> {
+                    // Máy đã có báo thức — đẩy lên cloud, không ghi đè
+                    pushAlarms(context, local)
                 }
                 switched -> {
                     local.forEach { AlarmScheduler.cancel(context, it.id) }

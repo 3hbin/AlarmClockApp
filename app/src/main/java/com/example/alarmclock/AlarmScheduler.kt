@@ -90,6 +90,7 @@ object AlarmScheduler {
             }
         }
 
+        // Đặt cả setAlarmClock lẫn setExact để chắc chắn kêu khi app ở nền
         try {
             val show = PendingIntent.getActivity(
                 context, alarm.id + 30000,
@@ -100,7 +101,8 @@ object AlarmScheduler {
                 AlarmManager.AlarmClockInfo(calendar.timeInMillis, show),
                 pendingIntent
             )
-        } catch (se: SecurityException) {
+        } catch (_: Exception) {}
+        try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 alarmManager.setExactAndAllowWhileIdle(
                     AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent
@@ -108,7 +110,7 @@ object AlarmScheduler {
             } else {
                 alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
             }
-        }
+        } catch (_: Exception) {}
         try { AlarmKeepAliveService.sync(context) } catch (_: Exception) {}
     }
 
