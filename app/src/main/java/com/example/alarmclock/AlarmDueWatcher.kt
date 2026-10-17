@@ -12,13 +12,27 @@ object AlarmDueWatcher {
         val now = System.currentTimeMillis()
         val prefs = context.getSharedPreferences("due_fired", Context.MODE_PRIVATE)
         val alarms = try { AlarmRepository(context).getAlarms() } catch (_: Exception) { return }
+        // Giống AlarmScheduler: tạm dừng ở nhà / nghỉ hôm nay thì không kêu.
+        if (AppSettings.isPauseAlarmsAtHome(context)) return
+        if (DayOff.isPausedToday(context)) return
         for (alarm in alarms) {
             if (!alarm.isEnabled) continue
+            // Sinh nhật / hàng năm do AlarmReceiver xử lý (cần kiểm tra ngày tháng).
+            if (alarm.repeatMode == Alarm.REPEAT_YEARLY || alarm.id == BirthdayHelper.ALARM_ID) continue
+            val today = Calendar.getInstance()
+            // Giờ kêu của hôm nay (có tính lịch riêng cuối tuần).
+            val (h, m) = alarm.hourFor(today)
+            val dow = today.get(Calendar.DAY_OF_WEEK)
+            // T2–T6 không kêu T7/CN.
+            if (alarm.repeatMode == Alarm.REPEAT_WEEKDAYS &&
+                (dow == Calendar.SATURDAY || dow == Calendar.SUNDAY)) continue
+            if (alarm.skipHolidays && VietnamHolidays.isHoliday(today)) continue
+            if (DayOff.isSkipped(context, today)) continue
             val trigger = Calendar.getInstance().apply {
                 set(Calendar.SECOND, 0)
                 set(Calendar.MILLISECOND, 0)
-                set(Calendar.HOUR_OF_DAY, alarm.hour)
-                set(Calendar.MINUTE, alarm.minute)
+                set(Calendar.HOUR_OF_DAY, h)
+                set(Calendar.MINUTE, m)
             }.timeInMillis
             val late = now - trigger
             if (late < 0 || late > GRACE_MS) continue

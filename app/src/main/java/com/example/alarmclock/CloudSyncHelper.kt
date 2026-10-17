@@ -335,6 +335,9 @@ object CloudSyncHelper {
     }
 
     fun pushAlarms(context: Context, alarms: List<Alarm> = AlarmRepository(context).getAlarms(), onDone: (Boolean) -> Unit = {}) {
+        // Đồng bộ báo thức giữa thiết bị đã tắt — mỗi máy giữ báo thức riêng
+        onDone(true); return
+        @Suppress("UNREACHABLE_CODE")
         try {
             init(context)
             if (uid(context) == null) {
@@ -504,6 +507,9 @@ object CloudSyncHelper {
 
         pullChatBackup(context) { _, _ -> }
         pullHistory(context)
+        // Không kéo báo thức từ cloud — mỗi thiết bị giữ riêng
+        if (true) return
+        @Suppress("UNREACHABLE_CODE")
         pullAlarms(context, onError = {
             Toast.makeText(context, "Không tải được cloud — giữ nguyên báo thức trên máy", Toast.LENGTH_LONG).show()
         }) { cloud ->
