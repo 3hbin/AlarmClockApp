@@ -15,10 +15,24 @@ class AlarmKeepAliveService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    private val dueHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val dueCheck = object : Runnable {
+        override fun run() {
+            try { AlarmDueWatcher.fireIfDue(applicationContext) } catch (_: Exception) {}
+            dueHandler.postDelayed(this, 5000L)
+        }
+    }
+
     override fun onCreate() {
         super.onCreate()
         ensureChannel()
         startForegroundSafe(buildNotification(enabledCount(this)))
+        dueHandler.post(dueCheck)
+    }
+
+    override fun onDestroy() {
+        dueHandler.removeCallbacks(dueCheck)
+        super.onDestroy()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
