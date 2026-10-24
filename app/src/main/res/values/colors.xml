@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Material You (M3) baseline - palette tạo từ seed #5B6CFF -->
+    <color name="primary">#4351B7</color>
+    <color name="primary_dark">#2F379B</color>
+    <color name="primary_container">#D9E1FE</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="on_primary_container">#10005D</color>
+    <color name="secondary">#5A5B7A</color>
+    <color name="secondary_container">#DEE0FE</color>
+    <color name="on_secondary_container">#191832</color>
+    <color name="tertiary">#7E4B6A</color>
+    <color name="tertiary_container">#FFD4ED</color>
+    <color name="surface">#F7F9FF</color>
+    <color name="surface_card">#FFFFFF</color>
+    <color name="surface_container">#EBEEF6</color>
+    <color name="surface_container_high">#E5E8F0</color>
+    <color name="surface_variant">#DDE2F2</color>
+    <color name="outline">#C1C6D5</color>
+    <color name="outline_variant">#C1C6D5</color>
+    <color name="text_primary">#1A1B21</color>
+    <color name="text_secondary">#434653</color>
+    <color name="text_tertiary">#737784</color>
+    <color name="on_surface">#1A1B21</color>
+    <color name="on_surface_variant">#434653</color>
+    <color name="danger">#B3261E</color>
+    <color name="error">#B3261E</color>
+    <color name="nav_bar_bg">#EBEEF6</color>
+    <color name="nav_icon_inactive">#434653</color>
+    <color name="seed">#5B6CFF</color>
+    <color name="ripple">#1F000000</color>
+    <color name="success">#22C55E</color>
+    <color name="warning">#F59E0B</color>
+    <color name="purple_500">#4351B7</color>
+    <color name="purple_700">#2F379B</color>
+    <color name="teal_200">#5A5B7A</color>
+    <color name="ic_launcher_background">#4F5BFF</color>
+    <color name="ic_launcher_morning_bg">#FFB8D4F0</color>
+    <color name="ic_launcher_noon_bg">#FF4BA3F0</color>
+    <color name="ic_launcher_evening_bg">#FFFFB070</color>
+    <color name="ic_launcher_night_bg">#FF1A1A4A</color>
+</resources>

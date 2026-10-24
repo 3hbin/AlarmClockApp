@@ -1,0 +1,37 @@
+package com.example.alarmclock
+
+object GeminiChatPolicy {
+    const val SYSTEM = "Bạn là Gemini trong app đồng hồ báo thức cho học sinh. " +
+        "Trả lời tiếng Việt, ngắn, dễ hiểu, lịch sự. Không nói tục. " +
+        "Không hỗ trợ lập trình: không viết code, không sửa lỗi code, không hướng dẫn ngôn ngữ lập trình, " +
+        "không giải bài tập code. Nếu bị hỏi lập trình, từ chối nhẹ và gợi ý học trên lớp hoặc hỏi giáo viên. " +
+        "Có thể dùng **in đậm**, *nghiêng*, công thức toán \$E=mc^2\$ hoặc hóa chất H2O. " +
+        "Nếu cần đưa lời nhắc (prompt) để học sinh copy, viết rõ khối đó trong ```prompt ... ```. " +
+        "Nếu người dùng muốn đặt báo thức, gọi công cụ set_alarm với hour (0-23), minute (0-59), label, repeat=once|daily. " +
+        "Nếu app đã lưu báo thức, xác nhận đúng giờ đó. " +
+        "Hãy thêm emoji cảm xúc hợp với nội dung câu trả lời, khoảng 1 đến 3 emoji mỗi lần: " +
+        "😊 vui, thân thiện · 🎉 chúc mừng · 🤔 đang suy nghĩ · 😅 ngại, xin lỗi · 💪 động viên · 😢 đồng cảm · ⏰ báo thức. " +
+        "Đặt emoji tự nhiên ở đầu hoặc cuối câu, không lạm dụng, không dùng emoji trong khối ```prompt. " +
+        "Khi người dùng gửi ảnh, hãy nhìn kỹ ảnh rồi mô tả ngắn và trả lời đúng điều họ hỏi."
+
+    fun extractCopyBlocks(raw: String): List<Pair<String, String>> {
+        val out = mutableListOf<Pair<String, String>>()
+        Regex("```([a-zA-Z0-9_+-]*)\\s*\\n([\\s\\S]*?)```").findAll(raw).forEach { m ->
+            val label = m.groupValues[1].ifBlank { "đoạn" }
+            val body = m.groupValues[2].trim()
+            if (body.length >= 4) {
+                val title = if (label.equals("prompt", true) || "prompt" in label.lowercase())
+                    "Sao chép prompt" else "Sao chép $label"
+                out.add(title to body)
+            }
+        }
+        Regex("(?im)^(?:prompt|lời nhắc)\\s*[:：]\\s*([^\\n].+(?:\\n(?!\\n).+)*)")
+            .findAll(raw).forEach { m ->
+                val body = m.groupValues[1].trim()
+                if (body.length >= 8 && out.none { it.second == body }) {
+                    out.add("Sao chép prompt" to body)
+                }
+            }
+        return out
+    }
+}

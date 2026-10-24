@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_clock_analog_desc">Đồng hồ kim, thứ, ngày tháng năm và báo thức sắp tới</string>
+    <string name="widget_clock_digital_desc">Đồng hồ số, thứ, ngày tháng năm và báo thức sắp tới</string>
+</resources>

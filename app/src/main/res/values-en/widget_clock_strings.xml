@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_clock_analog_desc">Analog clock, weekday, date and next alarm</string>
+    <string name="widget_clock_digital_desc">Digital clock, weekday, date and next alarm</string>
+</resources>

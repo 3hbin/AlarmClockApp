@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="20dp"
+    android:background="#F5F7FA">
+
+    <com.example.alarmclock.AnalogClockView
+        android:id="@+id/analogClock"
+        android:layout_width="280dp"
+        android:layout_height="280dp"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:id="@+id/tvAnalogDigital"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="#212121"
+        android:fontFamily="sans-serif-medium" />
+
+    <TextView
+        android:id="@+id/tvAnalogDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:textColor="#607D8B"
+        android:layout_marginTop="4dp" />
+</LinearLayout>

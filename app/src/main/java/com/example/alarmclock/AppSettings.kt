@@ -1,0 +1,274 @@
+package com.example.alarmclock
+
+import android.content.Context
+import androidx.appcompat.app.AppCompatDelegate
+
+object AppSettings {
+    private const val PREF = "app_settings"
+
+    fun prefs(context: Context) =
+        context.getSharedPreferences(PREF, Context.MODE_PRIVATE)
+
+    // Pure alarm
+    fun setPureAlarmOnly(context: Context, enabled: Boolean) =
+        prefs(context).edit().putBoolean("pure_alarm", enabled).apply()
+    fun isPureAlarmOnly(context: Context) = prefs(context).getBoolean("pure_alarm", false)
+
+    fun setFaceCaptureOnFail(context: Context, enabled: Boolean) =
+        prefs(context).edit().putBoolean("face_capture_fail", enabled).apply()
+    fun isFaceCaptureOnFail(context: Context) = prefs(context).getBoolean("face_capture_fail", true)
+
+    // Volume 0..100
+    fun setAlarmVolume(context: Context, vol: Int) =
+        prefs(context).edit().putInt("alarm_volume", vol.coerceIn(0, 100)).apply()
+    fun getAlarmVolume(context: Context) = prefs(context).getInt("alarm_volume", 80)
+
+    // Vibrate
+    fun setVibrate(context: Context, on: Boolean) =
+        prefs(context).edit().putBoolean("vibrate", on).apply()
+    fun isVibrate(context: Context) = prefs(context).getBoolean("vibrate", true)
+
+    // Default snooze minutes
+    fun setDefaultSnooze(context: Context, min: Int) =
+        prefs(context).edit().putInt("default_snooze", min).apply()
+    fun getDefaultSnooze(context: Context) = prefs(context).getInt("default_snooze", 5)
+
+    // Dark mode: 0 system, 1 on, 2 off
+    fun setDarkMode(context: Context, mode: Int) {
+        prefs(context).edit().putInt("dark_mode", mode).apply()
+        applyDarkMode(mode)
+    }
+    fun getDarkMode(context: Context) = prefs(context).getInt("dark_mode", 0)
+    fun applyDarkMode(mode: Int) {
+        AppCompatDelegate.setDefaultNightMode(
+            when (mode) {
+                1 -> AppCompatDelegate.MODE_NIGHT_YES
+                2 -> AppCompatDelegate.MODE_NIGHT_NO
+                else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+            }
+        )
+    }
+
+    // 24h format
+    fun setUse24h(context: Context, use24: Boolean) =
+        prefs(context).edit().putBoolean("use_24h", use24).apply()
+    fun isUse24h(context: Context) = prefs(context).getBoolean("use_24h", true)
+
+    fun setAnimationEnabled(context: Context, on: Boolean) =
+        prefs(context).edit().putBoolean("ui_animation", on).apply()
+    fun isAnimationEnabled(context: Context) = prefs(context).getBoolean("ui_animation", true)
+
+    /** Cỡ chữ: 0=bé (0.85), 1=vừa (1.0), 2=to (1.30) */
+    fun setFontScaleMode(context: Context, mode: Int) =
+        prefs(context).edit().putInt("font_scale_mode", mode.coerceIn(0, 2)).apply()
+    fun getFontScaleMode(context: Context) = prefs(context).getInt("font_scale_mode", 1)
+    fun getFontScale(context: Context): Float = when (getFontScaleMode(context)) {
+        0 -> 0.85f
+        2 -> 1.30f
+        else -> 1.0f
+    }
+
+    // Gallery password (simple hash store)
+    fun setGalleryPassword(context: Context, plain: String) {
+        val hash = plain.hashCode().toString()
+        prefs(context).edit().putString("gallery_pw", hash).apply()
+    }
+    fun hasGalleryPassword(context: Context) =
+        !prefs(context).getString("gallery_pw", null).isNullOrBlank()
+    fun checkGalleryPassword(context: Context, plain: String): Boolean {
+        val stored = prefs(context).getString("gallery_pw", null) ?: return false
+        return stored == plain.hashCode().toString()
+    }
+    fun clearGalleryPassword(context: Context) =
+        prefs(context).edit().remove("gallery_pw").apply()
+
+    // Recovery email (Google)
+    fun setRecoveryEmail(context: Context, email: String) =
+        prefs(context).edit().putString("recovery_email", email.trim().lowercase()).apply()
+    fun getRecoveryEmail(context: Context) =
+        prefs(context).getString("recovery_email", "") ?: ""
+    fun setGoogleDisplayName(context: Context, name: String) =
+        prefs(context).edit().putString("google_display_name", name).apply()
+    fun getGoogleDisplayName(context: Context) =
+        prefs(context).getString("google_display_name", "") ?: ""
+    fun setGooglePhotoUrl(context: Context, url: String) =
+        prefs(context).edit().putString("google_photo_url", url).apply()
+    fun getGooglePhotoUrl(context: Context) =
+        prefs(context).getString("google_photo_url", "") ?: ""
+    /** Ảnh hồ sơ người dùng tự chọn từ thư viện (ưu tiên hơn ảnh Google) */
+    fun setProfilePhotoPath(context: Context, path: String) =
+        prefs(context).edit().putString("profile_photo_path", path).apply()
+    fun getProfilePhotoPath(context: Context) =
+        prefs(context).getString("profile_photo_path", "") ?: ""
+    fun clearProfilePhoto(context: Context) {
+        try { java.io.File(getProfilePhotoPath(context)).delete() } catch (_: Exception) {}
+        prefs(context).edit().remove("profile_photo_path").apply()
+    }
+    fun isStatusNotificationEnabled(context: Context) = false
+    fun setStatusNotificationEnabled(context: Context, on: Boolean) {
+        prefs(context).edit().putBoolean("status_notif_enabled", false).apply()
+    }
+
+    // Anti-troll: chống người khác tắt báo thức
+    fun setAntiTroll(context: Context, on: Boolean) =
+        prefs(context).edit().putBoolean("anti_troll", on).apply()
+    fun isAntiTroll(context: Context) = prefs(context).getBoolean("anti_troll", false)
+
+    /** Chế độ tập trung (DND) khi báo thức kêu — ẩn thông báo khác */
+    fun setFocusModeOnAlarm(context: Context, on: Boolean) =
+        prefs(context).edit().putBoolean("focus_mode_on_alarm", on).apply()
+    fun isFocusModeOnAlarm(context: Context) =
+        prefs(context).getBoolean("focus_mode_on_alarm", true)
+
+    fun setAntiTrollPin(context: Context, pin: String) =
+        prefs(context).edit().putString("anti_troll_pin", pin).apply()
+    fun getAntiTrollPin(context: Context) =
+        prefs(context).getString("anti_troll_pin", "") ?: ""
+    fun hasAntiTrollPin(context: Context) = getAntiTrollPin(context).length >= 4
+
+    fun checkAntiTrollPin(context: Context, input: String): Boolean {
+        val pin = getAntiTrollPin(context)
+        return pin.isNotEmpty() && pin == input
+    }
+
+
+    // ===== Khóa Cài đặt (PIN) =====
+    fun setSettingsPin(context: Context, plain: String) {
+        val hash = plain.hashCode().toString()
+        prefs(context).edit().putString("settings_pin", hash).apply()
+    }
+    fun hasSettingsPin(context: Context) =
+        !prefs(context).getString("settings_pin", null).isNullOrBlank()
+    fun checkSettingsPin(context: Context, plain: String): Boolean {
+        val stored = prefs(context).getString("settings_pin", null) ?: return false
+        return stored == plain.hashCode().toString()
+    }
+    fun clearSettingsPin(context: Context) =
+        prefs(context).edit().remove("settings_pin").apply()
+
+    /** Session unlock Cài đặt — hết khi tắt app / process chết */
+    @Volatile var settingsUnlockedThisSession: Boolean = false
+
+    /** Session unlock toàn app (giống ngân hàng) */
+    @Volatile var appUnlockedThisSession: Boolean = false
+
+    /** Khóa cả app mỗi lần mở (dùng chung PIN Cài đặt) */
+    fun setAppLockEnabled(context: Context, on: Boolean) =
+        prefs(context).edit().putBoolean("app_lock_full", on).apply()
+    fun isAppLockEnabled(context: Context) =
+        prefs(context).getBoolean("app_lock_full", false) && hasSettingsPin(context)
+
+    // Mã khôi phục PIN (6 số), hết hạn 15 phút
+    fun setRecoveryCode(context: Context, code: String) {
+        prefs(context).edit()
+            .putString("settings_recovery_code", code)
+            .putLong("settings_recovery_exp", System.currentTimeMillis() + 15 * 60 * 1000L)
+            .apply()
+    }
+    fun checkRecoveryCode(context: Context, input: String): Boolean {
+        val code = prefs(context).getString("settings_recovery_code", null) ?: return false
+        val exp = prefs(context).getLong("settings_recovery_exp", 0L)
+        if (System.currentTimeMillis() > exp) return false
+        return code == input.trim()
+    }
+    fun clearRecoveryCode(context: Context) =
+        prefs(context).edit().remove("settings_recovery_code").remove("settings_recovery_exp").apply()
+
+    // Language (ISO / BCP-47). "system" = follow device.
+    fun setLanguage(context: Context, code: String) =
+        prefs(context).edit().putString("app_language", code).apply()
+
+    fun isEnglishUi(context: Context): Boolean {
+        val code = getLanguage(context)
+        if (code.equals("en", true)) return true
+        if (code == LanguageCatalog.SYSTEM || code.isBlank())
+            return java.util.Locale.getDefault().language.equals("en", true)
+        return false
+    }
+
+    fun getLanguage(context: Context): String =
+        prefs(context).getString("app_language", LanguageCatalog.SYSTEM) ?: LanguageCatalog.SYSTEM
+
+    /** Bottom nav: 0 = curved, 1 = persistent, 2 = google nav */
+    const val NAV_CURVED = 0
+    const val NAV_GLASS = 1       // Glassmorphism kính mờ
+    const val NAV_PERSISTENT = 1  // alias glass
+    const val NAV_GOOGLE = 2      // Thanh nổi (flutter_floating_bottom_bar)
+    const val NAV_FLOATING = 2
+    @Deprecated("Use NAV_GLASS") const val NAV_LIQUID_GLASS = 1
+
+    fun setBottomNavStyle(context: Context, style: Int) =
+        prefs(context).edit().putInt("bottom_nav_style", style).apply()
+
+    fun hasExplicitNavStyle(context: Context): Boolean =
+        prefs(context).contains("bottom_nav_style")
+
+    fun setRoutineTasksText(context: Context, text: String) =
+        prefs(context).edit().putString("routine_tasks", text).apply()
+    fun getRoutineTasksText(context: Context) =
+        prefs(context).getString("routine_tasks", "") ?: ""
+
+    fun setTtsVoiceName(context: Context, name: String) =
+        prefs(context).edit().putString("tts_voice_name", name).apply()
+    fun getTtsVoiceName(context: Context) =
+        prefs(context).getString("tts_voice_name", "") ?: ""
+    fun setTtsPitch(context: Context, pitch: Float) =
+        prefs(context).edit().putFloat("tts_pitch", pitch).apply()
+    fun getTtsPitch(context: Context) =
+        prefs(context).getFloat("tts_pitch", 1.0f)
+    fun setTtsVoiceLabel(context: Context, label: String) =
+        prefs(context).edit().putString("tts_voice_label", label).apply()
+    fun getTtsVoiceLabel(context: Context) =
+        prefs(context).getString("tts_voice_label", "Theo hệ thống") ?: "Theo hệ thống"
+
+    /** Gói ứng dụng giọng đọc (Google, Samsung…). Rỗng = mặc định của hệ thống. */
+    fun setTtsEngine(context: Context, pkg: String) =
+        prefs(context).edit().putString("tts_engine", pkg).apply()
+    fun getTtsEngine(context: Context) =
+        prefs(context).getString("tts_engine", "") ?: ""
+
+    fun setChatTtsMale(context: Context, male: Boolean) =
+        prefs(context).edit().putBoolean("chat_tts_male", male).apply()
+    fun isChatTtsMale(context: Context) = prefs(context).getBoolean("chat_tts_male", true)
+    fun setChatTtsRate(context: Context, rate: Float) =
+        prefs(context).edit().putFloat("chat_tts_rate", rate.coerceIn(0.7f, 1.3f)).apply()
+    fun getChatTtsRate(context: Context) = prefs(context).getFloat("chat_tts_rate", 0.95f)
+
+    fun setMorningBriefing(context: Context, on: Boolean) =
+        prefs(context).edit().putBoolean("morning_briefing", on).apply()
+    fun isMorningBriefing(context: Context) =
+        prefs(context).getBoolean("morning_briefing", false)
+
+    /** Thời lượng đổ chuông tối đa (phút). Hết giờ tự tắt, không kêu 24/7. */
+    fun setRingDurationMinutes(context: Context, min: Int) =
+        prefs(context).edit().putInt("ring_duration_min", min.coerceIn(1, 30)).apply()
+    /** Cho phép AI trong Chat tìm Google và đọc trang web (mặc định bật). */
+    fun isChatWebSearch(context: Context): Boolean =
+        prefs(context).getBoolean("chat_web_search", true)
+    fun setChatWebSearch(context: Context, on: Boolean) =
+        prefs(context).edit().putBoolean("chat_web_search", on).apply()
+
+    /** Kiểu tắt báo thức: 0 = nút bấm, 1 = vuốt để tắt. */
+    fun getDismissStyle(context: Context): Int =
+        prefs(context).getInt("dismiss_style", 0)
+    fun setDismissStyle(context: Context, style: Int) =
+        prefs(context).edit().putInt("dismiss_style", style).apply()
+
+    fun getRingDurationMinutes(context: Context) =
+        prefs(context).getInt("ring_duration_min", 10)
+
+    /** Khi ở nhà: tạm dừng toàn bộ lịch báo thức để máy khỏi thức 24/7. */
+    fun setPauseAlarmsAtHome(context: Context, on: Boolean) =
+        prefs(context).edit().putBoolean("pause_alarms_home", on).apply()
+    fun isPauseAlarmsAtHome(context: Context) =
+        prefs(context).getBoolean("pause_alarms_home", false)
+
+    fun getBottomNavStyle(context: Context): Int {
+        // Mặc định: thanh nổi (flutter_floating_bottom_bar). Người dùng chọn trong Cài đặt.
+        return try {
+            prefs(context).getInt("bottom_nav_style", NAV_GOOGLE).let {
+                if (it == NAV_CURVED || it == NAV_GLASS || it == NAV_GOOGLE) it else NAV_GOOGLE
+            }
+        } catch (_: Exception) { NAV_GOOGLE }
+    }
+}
