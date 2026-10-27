@@ -143,6 +143,19 @@ object AccountSecurity {
         activity.recreate()
     }
 
+    /**
+     * Ghi máy này vào danh sách thiết bị trên cloud. Gọi khi mở app và ngay sau khi đăng nhập,
+     * để máy mới hiện trong danh sách mà không cần mở màn Bảo mật trước.
+     */
+    fun registerThisDevice(context: Context) {
+        try {
+            val accountId = CloudSyncHelper.accountId(context)
+            if (accountId.isNullOrBlank()) return
+            if (FirebaseApp.getApps(context).isEmpty()) FirebaseApp.initializeApp(context)
+            pushDevice(context, accountId, deviceMap(context))
+        } catch (_: Exception) {}
+    }
+
     private fun registerAndWatch(activity: android.app.Activity, list: TextView) {
         val accountId = CloudSyncHelper.accountId(activity)
         if (accountId.isNullOrBlank()) {
@@ -163,9 +176,16 @@ object AccountSecurity {
             .collection("users").document(accountId)
             .collection("data").document("devices")
             .addSnapshotListener { snap, err ->
-                if (err != null || snap == null || !snap.exists()) {
+                if (err != null || snap == null) {
                     activity.runOnUiThread {
                         list.text = Lang.t(activity, "Không tải được danh sách thiết bị.", "Could not load devices.")
+                    }
+                    return@addSnapshotListener
+                }
+                if (!snap.exists()) {
+                    // Chưa có dữ liệu: đang ghi lần đầu, không báo lỗi
+                    activity.runOnUiThread {
+                        list.text = Lang.t(activity, "Đang tải thiết bị…", "Loading devices…")
                     }
                     return@addSnapshotListener
                 }
@@ -201,8 +221,8 @@ object AccountSecurity {
             if (idx >= 0) current[idx] = me else current.add(me)
             ref.set(mapOf("list" to current, "updated" to System.currentTimeMillis()))
         }.addOnFailureListener {
-            // Tạo mới nếu chưa có
-            ref.set(mapOf("list" to listOf(me), "updated" to System.currentTimeMillis()))
+            // Đọc lỗi (mạng/chưa có tài liệu): chỉ tạo mới khi ghi thử không có dữ liệu cũ để giữ
+            ref.set(mapOf("list" to listOf(me), "updated" to System.currentTimeMillis()), com.google.firebase.firestore.SetOptions.merge())
         }
     }
 

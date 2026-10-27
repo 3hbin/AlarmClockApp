@@ -50,6 +50,7 @@ object CloudSyncHelper {
             val cred = com.google.firebase.auth.GoogleAuthProvider.getCredential(token, null)
             FirebaseAuth.getInstance().signInWithCredential(cred).addOnCompleteListener { t ->
                 if (!t.isSuccessful) Log.e(TAG, "Firebase sign-in failed", t.exception)
+                else try { AccountSecurity.registerThisDevice(context) } catch (_: Exception) {}
                 then()
             }
         } catch (e: Exception) {
@@ -180,6 +181,7 @@ object CloudSyncHelper {
                 val cred = com.google.firebase.auth.GoogleAuthProvider.getCredential(acct!!.idToken!!, null)
                 FirebaseAuth.getInstance().signInWithCredential(cred).addOnCompleteListener { t ->
                     if (!t.isSuccessful) head.append("❌ Firebase Auth: ").append(t.exception?.message).append("\n")
+                    else try { AccountSecurity.registerThisDevice(context) } catch (_: Exception) {}
                     run()
                 }
             }
@@ -316,6 +318,7 @@ object CloudSyncHelper {
                 val cred = com.google.firebase.auth.GoogleAuthProvider.getCredential(token, null)
                 FirebaseAuth.getInstance().signInWithCredential(cred).addOnCompleteListener { t ->
                     if (!t.isSuccessful) Log.e(TAG, "Firebase sign-in failed", t.exception)
+                    else try { AccountSecurity.registerThisDevice(context) } catch (_: Exception) {}
                     onReady()
                 }
                 return
