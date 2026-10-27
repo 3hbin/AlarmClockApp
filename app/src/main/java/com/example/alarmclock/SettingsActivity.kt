@@ -72,7 +72,7 @@ class SettingsActivity : AppCompatActivity() {
         try { EventManager.applyChrome(this) } catch (_: Exception) {}
         } catch (e: Exception) {
             val tv = android.widget.TextView(this)
-            tv.text = "Cài đặt"
+            tv.text = UiTranslate.tr("Cài đặt")
             tv.textSize = 20f
             tv.setPadding(48, 48, 48, 48)
             setContentView(tv)
@@ -85,6 +85,31 @@ class SettingsActivity : AppCompatActivity() {
             binding.swEventTheme.setOnCheckedChangeListener { _, on ->
                 EventManager.setThemeEnabled(this, on)
                 try { EventManager.applyChrome(this) } catch (_: Exception) {}
+            }
+        } catch (_: Exception) {}
+        try {
+            val sw = findViewById<com.google.android.material.switchmaterial.SwitchMaterial>(R.id.swWallpaperTheme)
+            sw?.isChecked = WallpaperTheme.isEnabled(this)
+            sw?.setOnCheckedChangeListener { _, on ->
+                WallpaperTheme.setEnabled(this, on)
+                if (on && WallpaperTheme.palette(this) == null) {
+                    // Máy không cho đọc màu hình nền: xin quyền đọc ảnh/bộ nhớ (Android ≤ 12)
+                    if (android.os.Build.VERSION.SDK_INT < 33 &&
+                        androidx.core.content.ContextCompat.checkSelfPermission(
+                            this, android.Manifest.permission.READ_EXTERNAL_STORAGE
+                        ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                    ) {
+                        requestPermissions(arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE), 93)
+                    } else {
+                        android.widget.Toast.makeText(
+                            this,
+                            Lang.t(this, "Máy không cho app đọc màu hình nền", "This phone doesn't let the app read wallpaper colors"),
+                            android.widget.Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+                WallpaperTheme.markApplied(this)
+                recreate()
             }
         } catch (_: Exception) {}
         try {
@@ -133,50 +158,50 @@ class SettingsActivity : AppCompatActivity() {
             binding.btnSaveSettingsPin.setOnClickListener {
                 val pin = binding.edtSettingsPin.text?.toString()?.trim().orEmpty()
                 if (pin.length < 4 || !pin.all { it.isDigit() }) {
-                    Toast.makeText(this, "PIN tối thiểu 4 chữ số", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, UiTranslate.tr("PIN tối thiểu 4 chữ số"), Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
                 val email = AppSettings.getRecoveryEmail(this)
                 if (email.isBlank()) {
-                    Toast.makeText(this, "Nên lưu Gmail khôi phục trước (phía dưới)", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, UiTranslate.tr("Nên lưu Gmail khôi phục trước (phía dưới)"), Toast.LENGTH_LONG).show()
                 }
                 AppSettings.setSettingsPin(this, pin)
                 AppSettings.settingsUnlockedThisSession = true
                 binding.edtSettingsPin.setText("")
                 refreshSettingsPinStatus()
-                Toast.makeText(this, "Đã khóa Cài đặt bằng PIN", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Đã khóa Cài đặt bằng PIN"), Toast.LENGTH_SHORT).show()
             }
             binding.btnClearSettingsPin.setOnClickListener {
                 if (!AppSettings.hasSettingsPin(this)) {
-                    Toast.makeText(this, "Chưa đặt PIN", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, UiTranslate.tr("Chưa đặt PIN"), Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
                 // Xác nhận bằng PIN hiện tại
                 val input = android.widget.EditText(this).apply {
-                    hint = "Nhập PIN hiện tại để xóa"
+                    hint = UiTranslate.tr("Nhập PIN hiện tại để xóa")
                     inputType = android.text.InputType.TYPE_CLASS_NUMBER or
                         android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
                     setPadding(48, 32, 48, 32)
                 }
                 com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-                    .setTitle("Xóa PIN Cài đặt?")
+                    .setTitle(UiTranslate.tr("Xóa PIN Cài đặt?"))
                     .setView(input)
-                    .setPositiveButton("Xóa") { _, _ ->
+                    .setPositiveButton(UiTranslate.tr("Xóa")) { _, _ ->
                         val pin = input.text?.toString()?.trim().orEmpty()
                         if (AppSettings.checkSettingsPin(this, pin)) {
                             AppSettings.clearSettingsPin(this)
                             refreshSettingsPinStatus()
-                            Toast.makeText(this, "Đã xóa PIN Cài đặt", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, UiTranslate.tr("Đã xóa PIN Cài đặt"), Toast.LENGTH_SHORT).show()
                         } else {
                             Toast.makeText(this, "Sai PIN", Toast.LENGTH_SHORT).show()
                         }
                     }
-                    .setNeutralButton("Quên PIN?") { _, _ ->
+                    .setNeutralButton(UiTranslate.tr("Quên PIN?")) { _, _ ->
                         SettingsLockHelper.showForgotFlow(this) {
                             refreshSettingsPinStatus()
                         }
                     }
-                    .setNegativeButton("Hủy", null)
+                    .setNegativeButton(UiTranslate.tr("Hủy"), null)
                     .show()
             }
         } catch (_: Exception) {}
@@ -204,7 +229,7 @@ class SettingsActivity : AppCompatActivity() {
                     else -> 1
                 }
                 AppSettings.setFontScaleMode(this, mode)
-                Toast.makeText(this, "Đã đổi cỡ chữ — mở lại màn hình để áp dụng", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Đã đổi cỡ chữ — mở lại màn hình để áp dụng"), Toast.LENGTH_SHORT).show()
                 recreate()
             }
         } catch (_: Exception) {}
@@ -379,6 +404,7 @@ class SettingsActivity : AppCompatActivity() {
             sw.setLoading(true)
             sw.postDelayed({
                 AppSettings.setAnimationEnabled(this, on)
+                try { Fx.applyGlobal(this) } catch (_: Throwable) {}
                 sw.setLoading(false)
             }, 220)
         }
@@ -397,14 +423,14 @@ class SettingsActivity : AppCompatActivity() {
         binding.switchAutoIcon.setOnCheckedChangeListener { sw, on ->
             if (on) {
                 DynamicIconHelper.setAutoIcon(this, true)
-                android.widget.Toast.makeText(this, "Đã bật đổi icon theo buổi", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(this, UiTranslate.tr("Đã bật đổi icon theo buổi"), android.widget.Toast.LENGTH_SHORT).show()
                 return@setOnCheckedChangeListener
             }
             sw.setCheckedSilent(true)
             com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-                .setTitle("Tắt đổi icon")
-                .setMessage("Chắc chắn muốn tắt nó sẽ bị văng ra ngoài")
-                .setPositiveButton("Có") { _, _ ->
+                .setTitle(UiTranslate.tr("Tắt đổi icon"))
+                .setMessage(UiTranslate.tr("Chắc chắn muốn tắt nó sẽ bị văng ra ngoài"))
+                .setPositiveButton(UiTranslate.tr("Có")) { _, _ ->
                     val loading = android.app.ProgressDialog(this).apply {
                         setMessage("Đang đặt icon buổi tối…")
                         setCancelable(false)
@@ -420,7 +446,7 @@ class SettingsActivity : AppCompatActivity() {
                         android.os.Process.killProcess(android.os.Process.myPid())
                     }, 3000)
                 }
-                .setNegativeButton("Không", null)
+                .setNegativeButton(UiTranslate.tr("Không"), null)
                 .show()
         }
 
@@ -448,7 +474,7 @@ class SettingsActivity : AppCompatActivity() {
                             val nm = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
                             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M
                                 && !nm.isNotificationPolicyAccessGranted) {
-                                Toast.makeText(this, "Cần cấp quyền Không làm phiền (nút bên dưới)", Toast.LENGTH_LONG).show()
+                                Toast.makeText(this, UiTranslate.tr("Cần cấp quyền Không làm phiền (nút bên dưới)"), Toast.LENGTH_LONG).show()
                             }
                         } catch (_: Exception) {}
                     }
@@ -501,7 +527,7 @@ binding.switchAntiTroll.setCheckedSilent(AppSettings.isAntiTroll(this))
         binding.btnSaveRecovery.setOnClickListener {
             val email = binding.etRecoveryEmail.text?.toString()?.trim().orEmpty()
             if (email.isBlank() || !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                Toast.makeText(this, "Nhập email hợp lệ (vd: you@gmail.com)", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Nhập email hợp lệ (vd: you@gmail.com)"), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             AppSettings.setRecoveryEmail(this, email)
@@ -732,6 +758,31 @@ binding.switchAntiTroll.setCheckedSilent(AppSettings.isAntiTroll(this))
         AppSettings.setGooglePhotoUrl(this, "")
         Toast.makeText(this, Lang.t(this, "Đã đăng xuất", "Signed out"), Toast.LENGTH_SHORT).show()
         bindGoogleProfileRow()
+    }
+
+    @Deprecated("permissions")
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 93) {
+            if (grantResults.isNotEmpty() && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                WallpaperTheme.invalidate()
+                Thread {
+                    try { RingTheme.snapshotWallpaper(applicationContext) } catch (_: Throwable) {}
+                    runOnUiThread {
+                        if (!isFinishing && !isDestroyed) {
+                            WallpaperTheme.markApplied(this)
+                            recreate()
+                        }
+                    }
+                }.start()
+            } else {
+                android.widget.Toast.makeText(
+                    this,
+                    Lang.t(this, "Chưa cấp quyền đọc hình nền", "Wallpaper permission not granted"),
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
+            }
+        }
     }
 
     private fun bindGoogleProfileRow() {

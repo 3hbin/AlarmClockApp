@@ -32,6 +32,6 @@ object YouTubeMusicHelper {
                 return
             } catch (_: Exception) { }
         }
-        Toast.makeText(context, "Không mở được YouTube Music", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, UiTranslate.tr("Không mở được YouTube Music"), Toast.LENGTH_SHORT).show()
     }
 }

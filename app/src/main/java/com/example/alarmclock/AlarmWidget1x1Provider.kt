@@ -22,6 +22,7 @@ class AlarmWidget1x1Provider : AppWidgetProvider() {
     companion object {
         fun build(context: Context): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_alarm_1x1)
+            views.setTextViewText(R.id.tvWidget1x1Title, Lang.t(context, "Báo", "Alarm"))
             val next = WidgetUpdateHelper.nearestAlarm(context)
             if (next == null) {
                 views.setTextViewText(R.id.tvWidget1x1Time, "--:--")

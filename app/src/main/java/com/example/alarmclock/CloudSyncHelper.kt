@@ -270,7 +270,7 @@ object CloudSyncHelper {
     fun syncOnLogin(context: Context) {
         init(context)
         if (uid(context) == null) {
-            Toast.makeText(context, "Chưa có tài khoản Google để sao lưu", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, UiTranslate.tr("Chưa có tài khoản Google để sao lưu"), Toast.LENGTH_SHORT).show()
             return
         }
         pullThenMerge(context)
@@ -616,7 +616,7 @@ object CloudSyncHelper {
         if (true) return
         @Suppress("UNREACHABLE_CODE")
         pullAlarms(context, onError = {
-            Toast.makeText(context, "Không tải được cloud — giữ nguyên báo thức trên máy", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, UiTranslate.tr("Không tải được cloud — giữ nguyên báo thức trên máy"), Toast.LENGTH_LONG).show()
         }) { cloud ->
             val repo = AlarmRepository(context)
             val local = repo.getAlarms()
@@ -635,7 +635,7 @@ object CloudSyncHelper {
                 switched -> {
                     local.forEach { AlarmScheduler.cancel(context, it.id) }
                     repo.saveAlarms(emptyList())
-                    Toast.makeText(context, "Tài khoản mới chưa có báo thức nào", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, UiTranslate.tr("Tài khoản mới chưa có báo thức nào"), Toast.LENGTH_SHORT).show()
                 }
                 local.isNotEmpty() -> pushAlarms(context, local)
                 else -> { /* không hiện toast khi chưa có báo */ }

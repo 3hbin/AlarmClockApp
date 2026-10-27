@@ -69,6 +69,7 @@ class StopwatchActivity : AppCompatActivity() {
         try {
             binding = ActivityStopwatchBinding.inflate(layoutInflater)
             setContentView(binding.root)
+            try { Motion.fadeScaleIn(binding.viewDial) } catch (_: Exception) {}
         try { ThemeFix.apply(this, findViewById(android.R.id.content)) } catch (_: Exception) {}
         try { EventManager.applyChrome(this) } catch (_: Exception) {}
         try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
@@ -168,10 +169,10 @@ class StopwatchActivity : AppCompatActivity() {
         }
         ContextCompat.startForegroundService(this, intent)
         isRunning = true
-        binding.btnStartPause.text = "Tạm dừng"
-        binding.btnLapReset.text = "Lượt"
+        binding.btnStartPause.text = UiTranslate.tr("Tạm dừng")
+        binding.btnLapReset.text = UiTranslate.tr("Lượt")
         startUiTick()
-        Toast.makeText(this, "Bấm giờ chạy nền — thoát app vẫn chạy (xem thông báo)", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, UiTranslate.tr("Bấm giờ chạy nền — thoát app vẫn chạy (xem thông báo)"), Toast.LENGTH_SHORT).show()
     }
 
     private fun pause() {
@@ -181,8 +182,8 @@ class StopwatchActivity : AppCompatActivity() {
         isRunning = false
         stopUiTick()
         updateDisplay()
-        binding.btnStartPause.text = "Tiếp tục"
-        binding.btnLapReset.text = "Đặt lại"
+        binding.btnStartPause.text = UiTranslate.tr("Tiếp tục")
+        binding.btnLapReset.text = UiTranslate.tr("Đặt lại")
     }
 
     private fun reset() {
@@ -194,8 +195,8 @@ class StopwatchActivity : AppCompatActivity() {
         saveLaps()
         lapAdapter.notifyDataSetChanged()
         updateDisplay()
-        binding.btnStartPause.text = "Bắt đầu"
-        binding.btnLapReset.text = "Đặt lại"
+        binding.btnStartPause.text = UiTranslate.tr("Bắt đầu")
+        binding.btnLapReset.text = UiTranslate.tr("Đặt lại")
     }
 
     private fun addLap() {

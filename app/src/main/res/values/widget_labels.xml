@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_label_1x1">Báo thức 1x1</string>
+    <string name="widget_label_2x2">Báo thức 2x2</string>
+    <string name="widget_label_4x2">Báo thức 4x2</string>
+    <string name="widget_label_clock_analog">Đồng hồ kim</string>
+    <string name="widget_label_clock_digital">Đồng hồ số</string>
+</resources>

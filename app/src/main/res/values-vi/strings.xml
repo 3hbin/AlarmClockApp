@@ -96,7 +96,7 @@
     <string name="dark_mode_changed">Đã đổi chế độ tối</string>
     <string name="nav_style_title">Kiểu thanh dưới</string>
     <string name="nav_style_hint">Chọn giao diện thanh điều hướng dưới (áp dụng cho mọi màn hình).</string>
-    <string name="nav_style_curved">Cong (curved navigation bar)</string>
+    <string name="nav_style_curved">Cong (thanh điều hướng cong)</string>
     <string name="nav_style_persistent">Kính lỏng (liquid_glass_bar)</string>
     <string name="nav_style_changed">Đã đổi kiểu thanh dưới</string>
     <string name="nav_style_google">Thanh nổi (flutter_floating_bottom_bar)</string>

@@ -114,7 +114,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
     ) { res ->
         if (res.resultCode == RESULT_OK) dismissAlarm(AlarmRepository(this))
-        else android.widget.Toast.makeText(this, "Chưa quét đúng mã QR", android.widget.Toast.LENGTH_SHORT).show()
+        else android.widget.Toast.makeText(this, UiTranslate.tr("Chưa quét đúng mã QR"), android.widget.Toast.LENGTH_SHORT).show()
     }
 
     // ---------------------------------------------------------------- vân tay / khuôn mặt
@@ -126,12 +126,12 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
         androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()
     ) { res ->
         if (res.resultCode == RESULT_OK) dismissAlarm(AlarmRepository(this))
-        else android.widget.Toast.makeText(this, "Chưa xác minh — báo thức vẫn kêu", android.widget.Toast.LENGTH_SHORT).show()
+        else android.widget.Toast.makeText(this, UiTranslate.tr("Chưa xác minh — báo thức vẫn kêu"), android.widget.Toast.LENGTH_SHORT).show()
     }
 
     private fun showBiometricButton() {
         binding.btnDismiss.visibility = View.VISIBLE
-        binding.btnDismiss.text = "Xác thực vân tay / khuôn mặt để tắt"
+        binding.btnDismiss.text = UiTranslate.tr("Xác thực vân tay / khuôn mặt để tắt")
         binding.btnDismiss.setOnClickListener { startBiometric(false) }
     }
 
@@ -151,7 +151,7 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
                     dismissAlarm(AlarmRepository(this))
                 },
                 onMismatch = {
-                    Toast.makeText(this, "Không khớp — thử lại", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, UiTranslate.tr("Không khớp — thử lại"), Toast.LENGTH_SHORT).show()
                     if (AppSettings.isFaceCaptureOnFail(this)) {
                         try { QuickIntruderCapture.snap(this, this) } catch (_: Exception) {}
                     }
@@ -194,9 +194,9 @@ class AlarmRingActivity : AppCompatActivity(), SensorEventListener {
             }
         } catch (_: Exception) {}
         // Máy không có khóa màn hình lẫn vân tay: không thể xác minh → cho tắt trực tiếp để không bị kẹt
-        Toast.makeText(this, "Máy chưa đặt khóa màn hình / vân tay — tắt trực tiếp", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, UiTranslate.tr("Máy chưa đặt khóa màn hình / vân tay — tắt trực tiếp"), Toast.LENGTH_LONG).show()
         binding.btnDismiss.visibility = View.VISIBLE
-        binding.btnDismiss.text = "Tắt báo thức"
+        binding.btnDismiss.text = UiTranslate.tr("Tắt báo thức")
         binding.btnDismiss.setOnClickListener { dismissAlarm(AlarmRepository(this)) }
     }
 
@@ -219,11 +219,11 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
                 )
             }
             startActivity(intent)
-            Toast.makeText(this, "Đang mở quét mặt… đưa mặt vào khung", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Đang mở quét mặt… đưa mặt vào khung"), Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Toast.makeText(this, "Không mở được quét mặt: ${e.message}", Toast.LENGTH_LONG).show()
             binding.btnDismiss.visibility = View.VISIBLE
-            binding.btnDismiss.text = "Lỗi mở quét — bấm thử lại"
+            binding.btnDismiss.text = UiTranslate.tr("Lỗi mở quét — bấm thử lại")
             binding.btnDismiss.setOnClickListener { launchFaceChallenge(mode) }
         }
     }
@@ -248,9 +248,9 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
                 binding.btnDismiss.text =
                     "Thử lại (${allStepIndex + 1}/${allChain.size})"
             } else if (isExpr) {
-                binding.btnDismiss.text = "Bắt đầu: 10 biểu cảm dễ"
+                binding.btnDismiss.text = UiTranslate.tr("Bắt đầu: 10 biểu cảm dễ")
             } else {
-                binding.btnDismiss.text = "Bắt đầu quét mặt lại"
+                binding.btnDismiss.text = UiTranslate.tr("Bắt đầu quét mặt lại")
             }
             if (!isStrictAntiSnooze && !AppSettings.isAntiTroll(this) && !runningAll) {
                 binding.btnSnooze.visibility = View.VISIBLE
@@ -421,7 +421,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
 
         binding.btnSnooze.setOnClickListener {
             if (AppSettings.isAntiTroll(this) || isStrictAntiSnooze) {
-                Toast.makeText(this, "Chế độ chống troll: không được hoãn!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Chế độ chống troll: không được hoãn!"), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             snoozeAlarm(label)
@@ -526,7 +526,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
             Alarm.CHALLENGE_QR -> {
                 binding.btnSnooze.visibility = View.GONE
                 binding.btnDismiss.visibility = View.VISIBLE
-                binding.btnDismiss.text = "Quét mã QR để tắt"
+                binding.btnDismiss.text = UiTranslate.tr("Quét mã QR để tắt")
                 binding.btnDismiss.setOnClickListener { launchQrChallenge() }
                 if (!isStrictAntiSnooze && !AppSettings.isAntiTroll(this)) {
                     binding.btnSnooze.visibility = View.VISIBLE
@@ -727,7 +727,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
                     )
                 } catch (_: Exception) {}
                 if (readTimerLeft <= 0) {
-                    Toast.makeText(this@AlarmRingActivity, "Hết 10 giây — câu mới!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@AlarmRingActivity, UiTranslate.tr("Hết 10 giây — câu mới!"), Toast.LENGTH_SHORT).show()
                     // Không cộng readIndex — làm lại câu khác
                     pickNewSentence()
                     return
@@ -794,7 +794,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
                 stopReadTimer()
                 readIndex++
                 if (readIndex >= readNeed) {
-                    Toast.makeText(this, "Xong chọn từ!", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, UiTranslate.tr("Xong chọn từ!"), Toast.LENGTH_SHORT).show()
                     onChallengeStepComplete()
                 } else {
                     Toast.makeText(this, "Đúng! Câu tiếp (${readIndex}/$readNeed)", Toast.LENGTH_SHORT).show()
@@ -803,7 +803,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
             }
         } else {
             // Sai — rung nhẹ / toast
-            Toast.makeText(this, "Sai thứ tự — chọn từ đúng tiếp theo", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Sai thứ tự — chọn từ đúng tiếp theo"), Toast.LENGTH_SHORT).show()
             chip.animate().translationX(12f).setDuration(40)
                 .withEndAction { chip.animate().translationX(-12f).setDuration(40)
                     .withEndAction { chip.animate().translationX(0f).setDuration(40).start() }
@@ -843,7 +843,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
             autoClickStrikes++
             binding.tvTapHint.text = "Phát hiện bấm quá nhanh — có thể auto-click ($autoClickStrikes)"
             if (autoClickStrikes >= 8) {
-                Toast.makeText(this, "Auto-click bị chặn! Bấm chậm hơn bằng tay.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, UiTranslate.tr("Auto-click bị chặn! Bấm chậm hơn bằng tay."), Toast.LENGTH_LONG).show()
                 // Phạt: trừ 15 lần
                 tapCount = (tapCount - 15).coerceAtLeast(0)
                 autoClickStrikes = 0
@@ -866,7 +866,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
                 if (autoClickStrikes >= 5) {
                     tapCount = (tapCount - 20).coerceAtLeast(0)
                     autoClickStrikes = 0
-                    Toast.makeText(this, "Phát hiện auto-click — trừ 20 lần", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, UiTranslate.tr("Phát hiện auto-click — trừ 20 lần"), Toast.LENGTH_LONG).show()
                 }
                 binding.tvTapProgress.text = "$tapCount / $tapNeed"
                 return
@@ -884,7 +884,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
         currentShakeCount = 0
         lastShakeTime = 0L
         binding.tvShakeProgress.text = getString(R.string.shake_progress, currentShakeCount, shakeTargetCount)
-        Toast.makeText(this, "Lắc mạnh điện thoại để đếm!", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, UiTranslate.tr("Lắc mạnh điện thoại để đếm!"), Toast.LENGTH_SHORT).show()
 
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as? SensorManager
         // Ưu tiên LINEAR (không trọng lực) nếu có — nhạy hơn trên một số máy Huawei
@@ -895,7 +895,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
             Toast.makeText(this, getString(R.string.no_accelerometer), Toast.LENGTH_LONG).show()
             binding.layoutShakeChallenge.visibility = View.GONE
             binding.btnDismiss.visibility = View.VISIBLE
-            binding.btnDismiss.text = "Tắt (không có cảm biến)"
+            binding.btnDismiss.text = UiTranslate.tr("Tắt (không có cảm biến)")
             binding.btnDismiss.setOnClickListener { onChallengeStepComplete() }
             return
         }
@@ -911,14 +911,14 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
                 (challengeType == Alarm.CHALLENGE_SHAKE || challengeType == Alarm.CHALLENGE_SHAKE100)
             ) {
                 binding.btnDismiss.visibility = View.VISIBLE
-                binding.btnDismiss.text = "Cảm biến chậm — bấm để +1 lắc"
+                binding.btnDismiss.text = UiTranslate.tr("Cảm biến chậm — bấm để +1 lắc")
                 binding.btnDismiss.setOnClickListener {
                     currentShakeCount++
                     binding.tvShakeProgress.text =
                         getString(R.string.shake_progress, currentShakeCount, shakeTargetCount)
                     if (currentShakeCount >= shakeTargetCount) onChallengeStepComplete()
                 }
-                Toast.makeText(this, "Cảm biến không nhận — dùng nút bên dưới", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, UiTranslate.tr("Cảm biến không nhận — dùng nút bên dưới"), Toast.LENGTH_LONG).show()
             }
         }, 12_000L)
     }
@@ -981,7 +981,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
                 binding.root.postDelayed(this, 2000)
             }
         })
-        Toast.makeText(this, "🛡️ Chống troll: cần mã PIN / thử thách để tắt", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, UiTranslate.tr("🛡️ Chống troll: cần mã PIN / thử thách để tắt"), Toast.LENGTH_LONG).show()
     }
 
     private fun requestDismiss(repo: AlarmRepository) {
@@ -992,7 +992,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
         }
         // Có thử thách → không tắt trực tiếp (kể cả khi nút đỏ đang hiện = "Bắt đầu quét…")
         if (challengeType != Alarm.CHALLENGE_NONE) {
-            Toast.makeText(this, "Hãy hoàn thành thử thách trước!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Hãy hoàn thành thử thách trước!"), Toast.LENGTH_SHORT).show()
             return
         }
         if (AppSettings.isAntiTroll(this) && AppSettings.hasAntiTrollPin(this)) {
@@ -1046,7 +1046,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
                 dialog?.dismiss()
                 dismissAlarm(repo)
             } else {
-                Toast.makeText(this, "Sai PIN! Báo thức vẫn kêu.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, UiTranslate.tr("Sai PIN! Báo thức vẫn kêu."), Toast.LENGTH_LONG).show()
                 entered.clear()
                 refreshDots()
                 dotsRow.animate().translationX(18f * d).setDuration(60).withEndAction {
@@ -1112,11 +1112,11 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
             addView(grid)
         }
         dialog = MaterialAlertDialogBuilder(this)
-            .setTitle("Xác minh tắt báo thức")
-            .setMessage("Nhập PIN để tắt — chống người khác troll")
+            .setTitle(UiTranslate.tr("Xác minh tắt báo thức"))
+            .setMessage(UiTranslate.tr("Nhập PIN để tắt — chống người khác troll"))
             .setView(box)
             .setCancelable(false)
-            .setNegativeButton("Hủy", null)
+            .setNegativeButton(UiTranslate.tr("Hủy"), null)
             .create()
         dialog?.show()
     }
@@ -1124,7 +1124,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         if (AppSettings.isAntiTroll(this) || isStrictAntiSnooze || challengeType != Alarm.CHALLENGE_NONE) {
-            Toast.makeText(this, "Không thể thoát — hãy tắt đúng cách!", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Không thể thoát — hãy tắt đúng cách!"), Toast.LENGTH_SHORT).show()
             return
         }
         super.onBackPressed()
@@ -1207,7 +1207,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
         if (runningAll) {
             allStepIndex++
             if (allStepIndex >= allChain.size) {
-                Toast.makeText(this, "Hoàn thành TẤT CẢ thử thách!", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, UiTranslate.tr("Hoàn thành TẤT CẢ thử thách!"), Toast.LENGTH_LONG).show()
                 runningAll = false
                 challengeType = Alarm.CHALLENGE_ALL
                 dismissAlarm(AlarmRepository(this))
@@ -1433,7 +1433,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
             setPadding(0, 16, 0, 48)
         }
         val dismiss = com.google.android.material.button.MaterialButton(this).apply {
-            text = "Tắt"
+            text = UiTranslate.tr("Tắt")
             setOnClickListener {
                 try { AlarmNotificationHelper.cancelRinging(this@AlarmRingActivity) } catch (_: Exception) {}
                 try { stopService(android.content.Intent(this@AlarmRingActivity, AlarmRingService::class.java)) } catch (_: Exception) {}
@@ -1441,7 +1441,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
             }
         }
         val snooze = com.google.android.material.button.MaterialButton(this).apply {
-            text = "Báo lại 5 phút"
+            text = UiTranslate.tr("Báo lại 5 phút")
             setOnClickListener {
                 try { snoozeAlarm(intent.getStringExtra("ALARM_LABEL") ?: "Báo thức") } catch (_: Exception) { finish() }
             }

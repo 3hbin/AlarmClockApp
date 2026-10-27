@@ -28,6 +28,11 @@ class BedtimeActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_bedtime)
+        try {
+            val cards = findViewById<android.view.ViewGroup>(R.id.rowSchedule).parent as android.view.ViewGroup
+            Motion.stagger(cards)
+            for (i in 0 until cards.childCount) Motion.pressable(cards.getChildAt(i))
+        } catch (_: Exception) {}
         try { ThemeFix.apply(this, findViewById(android.R.id.content)) } catch (_: Exception) {}
         try { EventManager.applyChrome(this) } catch (_: Exception) {}
         findViewById<MaterialToolbar>(R.id.toolbarBedtime).title = getString(R.string.title_bedtime)

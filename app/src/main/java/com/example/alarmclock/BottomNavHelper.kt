@@ -100,7 +100,7 @@ object BottomNavHelper {
 
     fun showFaceTestMenu(activity: AppCompatActivity) {
         MaterialAlertDialogBuilder(activity)
-            .setTitle("Bạn muốn làm gì?")
+            .setTitle(UiTranslate.tr("Bạn muốn làm gì?"))
             .setItems(arrayOf("Test quét mặt", "Test 10 biểu cảm", "Đóng")) { _, which ->
                 when (which) {
                     0 -> activity.startActivity(

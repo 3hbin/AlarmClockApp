@@ -67,7 +67,7 @@ class RingtonePickerActivity : AppCompatActivity() {
                     val i = Intent(Intent.ACTION_GET_CONTENT).setType("audio/*").addCategory(Intent.CATEGORY_OPENABLE)
                     startActivity(Intent.createChooser(i, "Chọn nhạc"))
                 } catch (_: Exception) {
-                    Toast.makeText(this, "Không mở được trình chọn tệp", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, UiTranslate.tr("Không mở được trình chọn tệp"), Toast.LENGTH_SHORT).show()
                 }
             }
         }

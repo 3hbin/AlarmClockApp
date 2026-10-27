@@ -10,7 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 class PrivacyPolicyActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        title = "Chính sách quyền riêng tư"
+        title = UiTranslate.tr("Chính sách quyền riêng tư")
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         val url = "https://3hbin.github.io/AlarmClockApp/privacy.html"
         val root = LinearLayout(this).apply {
@@ -42,7 +42,7 @@ class PrivacyPolicyActivity : AppCompatActivity() {
         try {
             web.loadUrl(url)
         } catch (e: Exception) {
-            hint.text = "Không mở được trang. Bấm dòng link phía trên hoặc mở trình duyệt."
+            hint.text = UiTranslate.tr("Không mở được trang. Bấm dòng link phía trên hoặc mở trình duyệt.")
         }
     }
 

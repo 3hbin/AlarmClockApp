@@ -15,7 +15,7 @@ class NextAlarmActivity : AppCompatActivity() {
             setPadding(48, 120, 48, 48)
         }
         val title = TextView(this).apply {
-            text = "Báo thức kế tiếp"
+            text = UiTranslate.tr("Báo thức kế tiếp")
             setTextColor(0xFFFFFFFF.toInt())
             textSize = 18f
         }

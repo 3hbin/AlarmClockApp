@@ -254,7 +254,7 @@ object AlarmNotificationHelper {
         try {
             ensureChannels(context)
             val timeStr = String.format("%02d:%02d", hour, minute)
-            val title = "Báo thức đã đặt"
+            val title = UiTranslate.tr("Báo thức đã đặt")
             val text = if (!label.isNullOrBlank()) "$timeStr · $label" else timeStr
 
             val open = Intent(context, MainActivity::class.java)

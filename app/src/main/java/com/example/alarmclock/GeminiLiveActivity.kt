@@ -56,7 +56,7 @@ class GeminiLiveActivity : AppCompatActivity() {
             clipToOutline = true
         }
         status = TextView(this).apply {
-            text = "Bấm mic để nói"
+            text = UiTranslate.tr("Bấm mic để nói")
             textSize = 15f
             gravity = Gravity.CENTER
             setTextColor(0xFFB9BCC2.toInt())
@@ -113,7 +113,7 @@ class GeminiLiveActivity : AppCompatActivity() {
             setImageResource(R.drawable.ic_live_cc)
             background = null
             imageTintList = android.content.res.ColorStateList.valueOf(0xFFFFFFFF.toInt())
-            contentDescription = "Bật/tắt phụ đề"
+            contentDescription = UiTranslate.tr("Bật/tắt phụ đề")
             setOnClickListener {
                 captionsOn = !captionsOn
                 alpha = if (captionsOn) 1f else 0.45f
@@ -183,7 +183,7 @@ class GeminiLiveActivity : AppCompatActivity() {
         try { recognizer?.cancel() } catch (_: Exception) {}
         listening = false
         paintMic(false)
-        status.text = "Bấm mic để nói"
+        status.text = UiTranslate.tr("Bấm mic để nói")
     }
 
     /** Chữ phụ đề: "Tôi:" và "Gemini:" in đậm. */
@@ -210,11 +210,11 @@ class GeminiLiveActivity : AppCompatActivity() {
 
     private fun onMic() {
         if (busy) {
-            Toast.makeText(this, "Đang trả lời, đợi chút", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Đang trả lời, đợi chút"), Toast.LENGTH_SHORT).show()
             return
         }
         if (listening) {
-            status.text = "Đang gửi…"
+            status.text = UiTranslate.tr("Đang gửi…")
             try { recognizer?.stopListening() } catch (_: Exception) {}
             val heard = lastHeard.trim()
             if (heard.length >= 2) {
@@ -236,13 +236,13 @@ class GeminiLiveActivity : AppCompatActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 71 && grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) startListen()
-        else Toast.makeText(this, "Cần quyền micro để Live", Toast.LENGTH_SHORT).show()
+        else Toast.makeText(this, UiTranslate.tr("Cần quyền micro để Live"), Toast.LENGTH_SHORT).show()
     }
 
     private fun startListen() {
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-            status.text = "Máy không có nhận giọng nói"
-            Toast.makeText(this, "Cần Google app / nhận giọng nói", Toast.LENGTH_LONG).show()
+            status.text = UiTranslate.tr("Máy không có nhận giọng nói")
+            Toast.makeText(this, UiTranslate.tr("Cần Google app / nhận giọng nói"), Toast.LENGTH_LONG).show()
             return
         }
         try { tts?.stop() } catch (_: Exception) {}
@@ -251,23 +251,23 @@ class GeminiLiveActivity : AppCompatActivity() {
         val rec = try {
             SpeechRecognizer.createSpeechRecognizer(this)
         } catch (_: Exception) {
-            status.text = "Không mở được micro"
+            status.text = UiTranslate.tr("Không mở được micro")
             return
         }
         recognizer = rec
         rec.setRecognitionListener(object : RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) {
-                status.text = "Đang nghe… nói đi"
+                status.text = UiTranslate.tr("Đang nghe… nói đi")
             }
             override fun onBeginningOfSpeech() {
-                status.text = "Đã nghe thấy"
+                status.text = UiTranslate.tr("Đã nghe thấy")
             }
             override fun onRmsChanged(rmsdB: Float) {
                 glow.level = ((rmsdB + 2f) / 12f).coerceIn(0f, 1f)
             }
             override fun onBufferReceived(buffer: ByteArray?) {}
             override fun onEndOfSpeech() {
-                status.text = "Đang gửi…"
+                status.text = UiTranslate.tr("Đang gửi…")
             }
             override fun onError(error: Int) {
                 listening = false
@@ -293,7 +293,7 @@ class GeminiLiveActivity : AppCompatActivity() {
                 val text = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                     ?.firstOrNull().orEmpty().trim().ifBlank { lastHeard.trim() }
                 if (text.length < 2) {
-                    status.text = "Chưa nghe rõ. Bấm mic nói lại."
+                    status.text = UiTranslate.tr("Chưa nghe rõ. Bấm mic nói lại.")
                     return
                 }
                 ask(text)
@@ -319,13 +319,13 @@ class GeminiLiveActivity : AppCompatActivity() {
         }
         listening = true
         paintMic(true)
-        status.text = "Đang nghe…"
+        status.text = UiTranslate.tr("Đang nghe…")
         try {
             rec.startListening(intent)
         } catch (_: Exception) {
             listening = false
             paintMic(false)
-            status.text = "Không bật được nghe"
+            status.text = UiTranslate.tr("Không bật được nghe")
         }
     }
 
@@ -344,7 +344,7 @@ class GeminiLiveActivity : AppCompatActivity() {
         val local = try { ChatViewModel(this).applySpokenCommand(question) } catch (_: Exception) { null }
         val key = ChatCloudStore.geminiKey(this)
         if (key.isBlank() && local?.createdNote == null) {
-            status.text = "Chưa có khóa Gemini. Mở Chat bấm Khóa."
+            status.text = UiTranslate.tr("Chưa có khóa Gemini. Mở Chat bấm Khóa.")
             return
         }
         val localNote = local?.createdNote
@@ -356,7 +356,7 @@ class GeminiLiveActivity : AppCompatActivity() {
             val answer = if (localNote != null) localNote else callGemini(key, question)
             runOnUiThread {
                 busy = false
-                status.text = "Đang đọc…"
+                status.text = UiTranslate.tr("Đang đọc…")
                 val clean = TtsHelper.forSpeech(answer).ifBlank { "Mình chưa nghe rõ." }
                 val parts = clean.split(Regex("(?<=[.!?…])\\s+")).filter { it.isNotBlank() }
                 if (parts.size <= 1) {
@@ -368,7 +368,7 @@ class GeminiLiveActivity : AppCompatActivity() {
                     var i = 0
                     fun next() {
                         if (i >= parts.size) {
-                            status.text = "Bấm mic để nói tiếp"
+                            status.text = UiTranslate.tr("Bấm mic để nói tiếp")
                             show(styled(question, clean))
                             glow.state = LiveGlowView.State.IDLE
                             return

@@ -7,7 +7,7 @@ object RingtonePreview {
     fun play(context: Context, uri: String?, name: String? = null) {
         if (uri.isNullOrBlank() || uri == "silent:") {
             TonePlayer.stop()
-            Toast.makeText(context, "Im lặng — không phát", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, UiTranslate.tr("Im lặng — không phát"), Toast.LENGTH_SHORT).show()
             return
         }
         TonePlayer.playUri(context, uri, loop = true, preview = true)

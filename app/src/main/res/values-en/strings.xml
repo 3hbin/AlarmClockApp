@@ -94,7 +94,7 @@
     <string name="dark_mode_changed">Dark mode updated</string>
     <string name="nav_style_title">Bottom bar style</string>
     <string name="nav_style_hint">Choose the bottom navigation look (applies on every screen).</string>
-    <string name="nav_style_curved">Curved bar (curved navigation bar)</string>
+    <string name="nav_style_curved">Curved navigation bar</string>
     <string name="nav_style_persistent">Liquid glass (liquid_glass_bar)</string>
     <string name="nav_style_changed">Bottom bar style updated</string>
     <string name="nav_style_google">Floating bar (flutter_floating_bottom_bar)</string>

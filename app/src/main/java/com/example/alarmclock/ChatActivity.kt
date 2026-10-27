@@ -84,7 +84,7 @@ class ChatActivity : AppCompatActivity() {
         }, 1200)
 
         val hold = TextView(this).apply {
-            text = "Đang mở chat…"
+            text = UiTranslate.tr("Đang mở chat…")
             textSize = 18f
             gravity = Gravity.CENTER
             setTextColor(0xFF202124.toInt())
@@ -175,7 +175,7 @@ class ChatActivity : AppCompatActivity() {
                 // hist chỉ khác null khi máy vừa được khôi phục chat từ tài khoản
                 if (hist != null && hist != "[]" && !generating) {
                     reloadHistoryBubbles()
-                    android.widget.Toast.makeText(this, "Đã khôi phục lịch sử chat", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(this, UiTranslate.tr("Đã khôi phục lịch sử chat"), android.widget.Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -193,7 +193,7 @@ class ChatActivity : AppCompatActivity() {
         }
         scrollRef = scroll
         val input = EditText(this).apply {
-            hint = "Nhắn tin với Gemini"
+            hint = UiTranslate.tr("Nhắn tin với Gemini")
             setPadding((16 * d).toInt(), (12 * d).toInt(), (16 * d).toInt(), (12 * d).toInt())
             val night = ThemeFix.isNight(this@ChatActivity)
             background = GradientDrawable().apply {
@@ -218,14 +218,14 @@ class ChatActivity : AppCompatActivity() {
                 setStroke((1 * d).toInt(), if (night) 0xFF3A3A3A.toInt() else 0xFFDADCE0.toInt())
             }
             imageTintList = null
-            contentDescription = "Thêm"
+            contentDescription = UiTranslate.tr("Thêm")
             setPadding((8 * d).toInt(), (8 * d).toInt(), (8 * d).toInt(), (8 * d).toInt())
             setOnClickListener { showPlusMenu(this) }
         }
         val micBtn = ImageButton(this).apply {
             setImageResource(R.drawable.ic_chat_mic)
             background = null
-            contentDescription = "Nói"
+            contentDescription = UiTranslate.tr("Nói")
             imageTintList = android.content.res.ColorStateList.valueOf(0xFF5F6368.toInt())
             setOnClickListener { toggleChatMic() }
         }
@@ -233,10 +233,10 @@ class ChatActivity : AppCompatActivity() {
             setImageResource(R.drawable.ic_chat_send)
             background = sendBg(false)
             setPadding((12 * d).toInt(), (12 * d).toInt(), (12 * d).toInt(), (12 * d).toInt())
-            contentDescription = "Gửi"
+            contentDescription = UiTranslate.tr("Gửi")
         }
         val keyBtn = TextView(this).apply {
-            text = "Khóa"
+            text = UiTranslate.tr("Khóa")
             setTextColor(0xFF1A73E8.toInt())
             setPadding((8 * d).toInt(), 0, (8 * d).toInt(), 0)
             gravity = Gravity.CENTER
@@ -245,7 +245,7 @@ class ChatActivity : AppCompatActivity() {
         val back = ImageButton(this).apply {
             setImageResource(R.drawable.ic_chat_back)
             background = null
-            contentDescription = "Quay lại"
+            contentDescription = UiTranslate.tr("Quay lại")
             if (ThemeFix.isNight(this@ChatActivity)) {
                 imageTintList = android.content.res.ColorStateList.valueOf(0xFFFFFFFF.toInt())
             }
@@ -302,14 +302,14 @@ class ChatActivity : AppCompatActivity() {
         val galleryBtn = ImageButton(this).apply {
             setImageResource(R.drawable.ic_chat_gallery)
             background = null
-            contentDescription = "Chọn ảnh từ thư viện"
+            contentDescription = UiTranslate.tr("Chọn ảnh từ thư viện")
             imageTintList = android.content.res.ColorStateList.valueOf(0xFF5F6368.toInt())
             setOnClickListener { openGallery() }
         }
         val cameraBtn = ImageButton(this).apply {
             setImageResource(R.drawable.ic_chat_camera)
             background = null
-            contentDescription = "Chụp ảnh"
+            contentDescription = UiTranslate.tr("Chụp ảnh")
             imageTintList = android.content.res.ColorStateList.valueOf(0xFF5F6368.toInt())
             setOnClickListener { openCamera() }
         }
@@ -352,7 +352,7 @@ class ChatActivity : AppCompatActivity() {
         val removeBtn = ImageButton(this).apply {
             setImageResource(R.drawable.ic_chat_close)
             imageTintList = android.content.res.ColorStateList.valueOf(0xFFFFFFFF.toInt())
-            contentDescription = "Bỏ ảnh"
+            contentDescription = UiTranslate.tr("Bỏ ảnh")
             background = GradientDrawable().apply {
                 shape = GradientDrawable.OVAL
                 setColor(0xFF5F6368.toInt())
@@ -377,7 +377,7 @@ class ChatActivity : AppCompatActivity() {
 
         val night0 = ThemeFix.isNight(this@ChatActivity)
         val disclaimer = TextView(this).apply {
-            text = "Gemini có thể sai, hãy kiểm tra thông tin."
+            text = UiTranslate.tr("Gemini có thể sai, hãy kiểm tra thông tin.")
             textSize = 11.5f
             gravity = Gravity.CENTER
             setTextColor(if (night0) 0xFF9AA0A6.toInt() else 0xFF5F6368.toInt())
@@ -403,20 +403,20 @@ class ChatActivity : AppCompatActivity() {
 
         keyBtn.setOnClickListener {
             val box = EditText(this).apply {
-                hint = "Dán khóa API Gemini"
+                hint = UiTranslate.tr("Dán khóa API Gemini")
                 setText(prefs.getString("key", "").orEmpty())
             }
             androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Khóa Gemini")
-                .setMessage("Lấy khóa miễn phí tại aistudio.google.com rồi dán vào đây. Khóa được lưu theo tài khoản Google.")
+                .setTitle(UiTranslate.tr("Khóa Gemini"))
+                .setMessage(UiTranslate.tr("Lấy khóa miễn phí tại aistudio.google.com rồi dán vào đây. Khóa được lưu theo tài khoản Google."))
                 .setView(box)
-                .setPositiveButton("Lưu") { _, _ ->
+                .setPositiveButton(UiTranslate.tr("Lưu")) { _, _ ->
                     val key = box.text.toString().trim()
                     prefs.edit().putString("key", key).apply()
                     CloudSyncHelper.pushChatBackup(this)
                     addBubble("Đã lưu khóa vào tài khoản Google.", mine = false, save = true, actions = false)
                 }
-                .setNegativeButton("Hủy", null)
+                .setNegativeButton(UiTranslate.tr("Hủy"), null)
                 .show()
         }
 
@@ -478,7 +478,7 @@ class ChatActivity : AppCompatActivity() {
             elevation = 4 * d
         }
         val title = TextView(this).apply {
-            text = "Xin chào 👋"
+            text = UiTranslate.tr("Xin chào 👋")
             textSize = 24f
             paint.isFakeBoldText = true
             gravity = Gravity.CENTER
@@ -486,7 +486,7 @@ class ChatActivity : AppCompatActivity() {
             setPadding(0, (14 * d).toInt(), 0, (4 * d).toInt())
         }
         val sub = TextView(this).apply {
-            text = "Mình có thể đặt báo thức, giải đáp câu hỏi và nhìn ảnh bạn gửi."
+            text = UiTranslate.tr("Mình có thể đặt báo thức, giải đáp câu hỏi và nhìn ảnh bạn gửi.")
             textSize = 14f
             gravity = Gravity.CENTER
             setTextColor(if (night) 0xFFB0B0B0.toInt() else 0xFF5F6368.toInt())
@@ -583,7 +583,7 @@ class ChatActivity : AppCompatActivity() {
             }
         }
         box.addView(TextView(this).apply {
-            text = "Đã ghim"
+            text = UiTranslate.tr("Đã ghim")
             textSize = 13f
             paint.isFakeBoldText = true
             setTextColor(0xFFB06000.toInt())
@@ -637,7 +637,7 @@ class ChatActivity : AppCompatActivity() {
         cancelled.set(false)
         sendBtn.setImageResource(R.drawable.ic_chat_stop)
         sendBtn.background = sendBg(true)
-        sendBtn.contentDescription = "Dừng"
+        sendBtn.contentDescription = UiTranslate.tr("Dừng")
     }
 
     private fun endGeneration() {
@@ -646,7 +646,7 @@ class ChatActivity : AppCompatActivity() {
         activeConn = null
         sendBtn.setImageResource(R.drawable.ic_chat_send)
         sendBtn.background = sendBg(false)
-        sendBtn.contentDescription = "Gửi"
+        sendBtn.contentDescription = UiTranslate.tr("Gửi")
     }
 
     private fun stopGeneration() {
@@ -792,11 +792,11 @@ class ChatActivity : AppCompatActivity() {
             setPadding(0, (4 * d).toInt(), (6 * d).toInt(), (4 * d).toInt())
         }
         val edit = TextView(this).apply {
-            text = "✏️ Sửa"
+            text = UiTranslate.tr("✏️ Sửa")
             textSize = 12f
             setTextColor(0xFF5F6368.toInt())
             setPadding((10 * d).toInt(), (4 * d).toInt(), (10 * d).toInt(), (4 * d).toInt())
-            contentDescription = "Sửa tin nhắn"
+            contentDescription = UiTranslate.tr("Sửa tin nhắn")
             setOnClickListener { editMessage(ts) }
         }
         return LinearLayout(this).apply {
@@ -811,7 +811,7 @@ class ChatActivity : AppCompatActivity() {
     /** Sửa tin nhắn của mình: bỏ tin này và mọi câu trả lời sau nó, đưa chữ (và ảnh) về ô nhập để gửi lại. */
     private fun editMessage(ts: Long) {
         if (generating) {
-            Toast.makeText(this, "Đợi AI trả lời xong rồi sửa nhé", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Đợi AI trả lời xong rồi sửa nhé"), Toast.LENGTH_SHORT).show()
             return
         }
         var idx = -1
@@ -820,7 +820,7 @@ class ChatActivity : AppCompatActivity() {
             if (o.optInt("m") == 1 && o.optLong("ts") == ts) { idx = i; break }
         }
         if (idx < 0) {
-            Toast.makeText(this, "Không tìm thấy tin nhắn này", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Không tìm thấy tin nhắn này"), Toast.LENGTH_SHORT).show()
             return
         }
         val item = history.getJSONObject(idx)
@@ -843,7 +843,7 @@ class ChatActivity : AppCompatActivity() {
             val f = java.io.File(chatImageDir(), img)
             if (f.exists()) setPendingImage(f, "Người dùng gửi kèm một ảnh. Hãy nhìn ảnh và trả lời.", text)
         }
-        Toast.makeText(this, "Sửa xong bấm gửi để hỏi lại", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, UiTranslate.tr("Sửa xong bấm gửi để hỏi lại"), Toast.LENGTH_SHORT).show()
     }
 
     private fun addBubble(text: String, mine: Boolean, save: Boolean, actions: Boolean, ts: Long = 0L): TextView {
@@ -1090,7 +1090,7 @@ class ChatActivity : AppCompatActivity() {
                 setPadding(0, (6 * d).toInt(), 0, (8 * d).toInt())
             })
             card.addView(TextView(this).apply {
-                text = "Sao chép prompt"
+                text = UiTranslate.tr("Sao chép prompt")
                 gravity = Gravity.CENTER
                 textSize = 14f
                 setTextColor(0xFFFFFFFF.toInt())
@@ -1332,7 +1332,7 @@ class ChatActivity : AppCompatActivity() {
     private fun newChat() {
         ChatCloudStore.startNewChat(this, history)
         reloadHistoryBubbles()
-        Toast.makeText(this, "Chat mới", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, UiTranslate.tr("Chat mới"), Toast.LENGTH_SHORT).show()
     }
 
     private fun showOldChats() {
@@ -1344,7 +1344,7 @@ class ChatActivity : AppCompatActivity() {
             if ((o.optJSONArray("messages")?.length() ?: 0) > 0) list.add(o)
         }
         if (list.isEmpty()) {
-            Toast.makeText(this, "Chưa có chat cũ", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Chưa có chat cũ"), Toast.LENGTH_SHORT).show()
             return
         }
         list.sortByDescending { it.optLong("ts") }
@@ -1358,7 +1358,7 @@ class ChatActivity : AppCompatActivity() {
             setBackgroundColor(if (night) 0xFF121212.toInt() else 0xFFFFFFFF.toInt())
         }
         col.addView(TextView(this).apply {
-            text = "Chat cũ"
+            text = UiTranslate.tr("Chat cũ")
             textSize = 20f
             paint.isFakeBoldText = true
             setTextColor(if (night) 0xFFFFFFFF.toInt() else 0xFF1A1C28.toInt())
@@ -1409,12 +1409,12 @@ class ChatActivity : AppCompatActivity() {
                 textSize = 18f
                 gravity = Gravity.CENTER
                 setPadding((12 * d).toInt(), (8 * d).toInt(), (6 * d).toInt(), (8 * d).toInt())
-                contentDescription = "Xóa chat"
+                contentDescription = UiTranslate.tr("Xóa chat")
                 setOnClickListener {
                     androidx.appcompat.app.AlertDialog.Builder(this@ChatActivity)
-                        .setTitle("Xóa cuộc chat này?")
+                        .setTitle(UiTranslate.tr("Xóa cuộc chat này?"))
                         .setMessage(title)
-                        .setPositiveButton("Xóa") { _, _ ->
+                        .setPositiveButton(UiTranslate.tr("Xóa")) { _, _ ->
                             ChatCloudStore.deleteSession(this@ChatActivity, id)
                             if (id == curId) {
                                 while (history.length() > 0) history.remove(0)
@@ -1424,7 +1424,7 @@ class ChatActivity : AppCompatActivity() {
                             sheet.dismiss()
                             showOldChats()
                         }
-                        .setNegativeButton("Hủy", null)
+                        .setNegativeButton(UiTranslate.tr("Hủy"), null)
                         .show()
                 }
             }
@@ -1464,14 +1464,14 @@ class ChatActivity : AppCompatActivity() {
     private fun showPins() {
         val pins = ChatCloudStore.pins(this)
         if (pins.length() == 0) {
-            Toast.makeText(this, "Chưa ghim tin nào", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Chưa ghim tin nào"), Toast.LENGTH_SHORT).show()
             return
         }
         val items = Array(pins.length()) { pins.optString(it).take(60) }
         androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Tin đã ghim")
+            .setTitle(UiTranslate.tr("Tin đã ghim"))
             .setItems(items) { _, which -> copyText(pins.optString(which)) }
-            .setNegativeButton("Đóng", null)
+            .setNegativeButton(UiTranslate.tr("Đóng"), null)
             .show()
     }
 
@@ -1498,7 +1498,7 @@ class ChatActivity : AppCompatActivity() {
                         3 -> AppSettings.setChatTtsRate(this, 1.15f)
                     }
                     reloadTts()
-                    Toast.makeText(this, "Đã lưu giọng đọc", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, UiTranslate.tr("Đã lưu giọng đọc"), Toast.LENGTH_SHORT).show()
                 }
             }
             .show()
@@ -1507,7 +1507,7 @@ class ChatActivity : AppCompatActivity() {
     private fun summarizeChat() {
         val key = chatPrefs().getString("key", "").orEmpty()
         if (key.isBlank()) {
-            Toast.makeText(this, "Chưa có khóa Gemini", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Chưa có khóa Gemini"), Toast.LENGTH_SHORT).show()
             return
         }
         val clip = StringBuilder()
@@ -1518,7 +1518,7 @@ class ChatActivity : AppCompatActivity() {
             clip.append(o.optString("t")).append('\n')
         }
         if (clip.isBlank()) {
-            Toast.makeText(this, "Chưa có gì để tóm tắt", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Chưa có gì để tóm tắt"), Toast.LENGTH_SHORT).show()
             return
         }
         val waiting = addBubble("Đang tóm tắt cuộc chat…", mine = false, save = false, actions = false)
@@ -1555,7 +1555,7 @@ class ChatActivity : AppCompatActivity() {
 
     private fun startChatListen() {
         if (!android.speech.SpeechRecognizer.isRecognitionAvailable(this)) {
-            Toast.makeText(this, "Máy không nhận giọng nói", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Máy không nhận giọng nói"), Toast.LENGTH_SHORT).show()
             return
         }
         lastHeard = ""
@@ -1564,7 +1564,7 @@ class ChatActivity : AppCompatActivity() {
         speech = rec
         rec.setRecognitionListener(object : android.speech.RecognitionListener {
             override fun onReadyForSpeech(params: android.os.Bundle?) {
-                inputBox.hint = "Đang nghe…"
+                inputBox.hint = UiTranslate.tr("Đang nghe…")
             }
             override fun onBeginningOfSpeech() {}
             override fun onRmsChanged(rmsdB: Float) {}
@@ -1572,12 +1572,12 @@ class ChatActivity : AppCompatActivity() {
             override fun onEndOfSpeech() { listeningMic = false }
             override fun onError(error: Int) {
                 listeningMic = false
-                inputBox.hint = "Nhắn tin với Gemini"
+                inputBox.hint = UiTranslate.tr("Nhắn tin với Gemini")
                 if (lastHeard.length >= 2) inputBox.setText(lastHeard)
             }
             override fun onResults(results: android.os.Bundle?) {
                 listeningMic = false
-                inputBox.hint = "Nhắn tin với Gemini"
+                inputBox.hint = UiTranslate.tr("Nhắn tin với Gemini")
                 val text = results?.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION)
                     ?.firstOrNull().orEmpty().ifBlank { lastHeard }
                 if (text.isNotBlank()) inputBox.setText(text)
@@ -1773,7 +1773,7 @@ class ChatActivity : AppCompatActivity() {
     private fun openCamera() {
         if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(android.Manifest.permission.CAMERA), 41)
-            Toast.makeText(this, "Hãy cho phép camera rồi bấm lại", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Hãy cho phép camera rồi bấm lại"), Toast.LENGTH_SHORT).show()
             return
         }
         try {
@@ -1783,7 +1783,7 @@ class ChatActivity : AppCompatActivity() {
             val uri = androidx.core.content.FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
             startActivityForResult(Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE).putExtra(android.provider.MediaStore.EXTRA_OUTPUT, uri), 72)
         } catch (e: Exception) {
-            Toast.makeText(this, "Không mở được camera", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Không mở được camera"), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -1792,7 +1792,7 @@ class ChatActivity : AppCompatActivity() {
         val key = chatPrefs().getString("key", "").orEmpty()
         val ref = pendingImageFile
         if (key.isBlank()) {
-            Toast.makeText(this, "Cần khóa Gemini để AI vẽ ảnh", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Cần khóa Gemini để AI vẽ ảnh"), Toast.LENGTH_SHORT).show()
             return
         }
         addBubble("Đang vẽ: $topic", mine = true, save = false, actions = false)
@@ -1803,9 +1803,9 @@ class ChatActivity : AppCompatActivity() {
             runOnUiThread {
                 stopStatusShine(waiting)
                 if (file == null) {
-                    waiting.text = "Chưa tạo được ảnh. Thử lại hoặc viết rõ hơn muốn vẽ gì."
+                    waiting.text = UiTranslate.tr("Chưa tạo được ảnh. Thử lại hoặc viết rõ hơn muốn vẽ gì.")
                 } else {
-                    waiting.text = "Ảnh đã tạo"
+                    waiting.text = UiTranslate.tr("Ảnh đã tạo")
                     showImage(file, mine = false)
                     pendingImageFile = null
                     inputBox.setText("")
@@ -1975,7 +1975,7 @@ class ChatActivity : AppCompatActivity() {
             }
             shareFile(file, mime)
         } catch (_: Exception) {
-            Toast.makeText(this, "Không tạo được file", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Không tạo được file"), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -1985,7 +1985,7 @@ class ChatActivity : AppCompatActivity() {
         if (requestCode == 71 && resultCode == RESULT_OK && data?.data != null) {
             val f = copyPicked(data.data!!)
             if (f == null) {
-                Toast.makeText(this, "Không đọc được ảnh này", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Không đọc được ảnh này"), Toast.LENGTH_SHORT).show()
             } else {
                 setPendingImage(f, "Người dùng gửi kèm một ảnh. Hãy nhìn ảnh và trả lời.", "Nhìn ảnh này và giải thích giúp mình.")
             }
@@ -1993,7 +1993,7 @@ class ChatActivity : AppCompatActivity() {
         if (requestCode == 72 && resultCode == RESULT_OK) {
             val f = cameraFile?.takeIf { it.exists() && it.length() > 0 }
             if (f == null) {
-                Toast.makeText(this, "Không lấy được ảnh vừa chụp", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Không lấy được ảnh vừa chụp"), Toast.LENGTH_SHORT).show()
             } else {
                 setPendingImage(f, "Người dùng gửi kèm một ảnh vừa chụp. Hãy nhìn ảnh và trả lời.", "Nhìn ảnh vừa chụp và giải thích giúp mình.")
             }
@@ -2007,7 +2007,7 @@ class ChatActivity : AppCompatActivity() {
             if (grantResults.isNotEmpty() && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 openCamera()
             } else {
-                Toast.makeText(this, "Cần cho phép camera để chụp ảnh", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Cần cho phép camera để chụp ảnh"), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -2016,7 +2016,7 @@ class ChatActivity : AppCompatActivity() {
         try {
             startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).setType("image/*"), 71)
         } catch (_: Exception) {
-            Toast.makeText(this, "Không mở được thư viện ảnh", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Không mở được thư viện ảnh"), Toast.LENGTH_SHORT).show()
         }
     }
 

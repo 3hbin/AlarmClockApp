@@ -101,9 +101,9 @@ class MainActivity : AppCompatActivity() {
                 return@registerForActivityResult
             }
             if (result.resultCode == android.app.Activity.RESULT_CANCELED) {
-                Toast.makeText(this, "Đã hủy chọn tài khoản", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Đã hủy chọn tài khoản"), Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, "Đăng nhập chưa thành công — thử Nhập email", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, UiTranslate.tr("Đăng nhập chưa thành công — thử Nhập email"), Toast.LENGTH_LONG).show()
             }
         }
 
@@ -394,6 +394,13 @@ class MainActivity : AppCompatActivity() {
             Thread { try { LocationPlaceHelper.resolve(this) } catch (_: Exception) {} }.start()
         }
         super.onResume()
+        // Hình nền điện thoại vừa đổi → vẽ lại giao diện theo màu mới
+        try {
+            if (WallpaperTheme.consumeChanged(this)) {
+                recreate()
+                return
+            }
+        } catch (_: Exception) {}
         forceShowUi()
         try { binding.root.alpha = 1f } catch (_: Exception) {}
         try { Motion.playTabEnter(this) } catch (_: Exception) {}
@@ -464,30 +471,30 @@ class MainActivity : AppCompatActivity() {
         // Che nội dung khi đang khóa
         try { binding.root.alpha = 1f } catch (_: Exception) {}
         val input = EditText(this).apply {
-            hint = "Nhập PIN mở app"
+            hint = UiTranslate.tr("Nhập PIN mở app")
             inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
             setPadding(48, 32, 48, 32)
         }
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("🔒 App đã khóa")
-            .setMessage("Nhập PIN để mở Báo thức Challenge")
+            .setTitle(UiTranslate.tr("🔒 App đã khóa"))
+            .setMessage(UiTranslate.tr("Nhập PIN để mở Báo thức Challenge"))
             .setView(input)
             .setCancelable(false)
-            .setPositiveButton("Mở") { _, _ ->
+            .setPositiveButton(UiTranslate.tr("Mở")) { _, _ ->
                 val pin = input.text?.toString()?.trim().orEmpty()
                 if (AppSettings.checkSettingsPin(this, pin)) {
                     AppSettings.appUnlockedThisSession = true
                     AppSettings.settingsUnlockedThisSession = true
                     appLockDialogShowing = false
                     try { binding.root.alpha = 1f } catch (_: Exception) {}
-                    Toast.makeText(this, "Đã mở khóa", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, UiTranslate.tr("Đã mở khóa"), Toast.LENGTH_SHORT).show()
                 } else {
                     appLockDialogShowing = false
                     Toast.makeText(this, "Sai PIN", Toast.LENGTH_SHORT).show()
                     maybeRequireAppLock()
                 }
             }
-            .setNeutralButton("Quên PIN?") { _, _ ->
+            .setNeutralButton(UiTranslate.tr("Quên PIN?")) { _, _ ->
                 appLockDialogShowing = false
                 SettingsLockHelper.requireUnlock(this) {
                     AppSettings.appUnlockedThisSession = true
@@ -546,7 +553,7 @@ class MainActivity : AppCompatActivity() {
             "😊 Test 10 biểu cảm dễ"
         )
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Bạn muốn làm gì?")
+            .setTitle(UiTranslate.tr("Bạn muốn làm gì?"))
             .setItems(items) { _, which ->
                 when (which) {
                     0 -> showAddDialog()
@@ -562,7 +569,7 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
             }
-            .setNegativeButton("Hủy", null)
+            .setNegativeButton(UiTranslate.tr("Hủy"), null)
             .show()
     }
 
@@ -807,7 +814,7 @@ class MainActivity : AppCompatActivity() {
         val builtIn = AppRingtones.alarms
         val choices = builtIn.map { it.label }.toMutableList().also { it.add("Chọn nhạc hệ thống…") }.toTypedArray()
         MaterialAlertDialogBuilder(this)
-            .setTitle("Nhạc báo thức")
+            .setTitle(UiTranslate.tr("Nhạc báo thức"))
             .setItems(choices) { _, which ->
                 when {
                     which in builtIn.indices -> {
@@ -955,14 +962,14 @@ class MainActivity : AppCompatActivity() {
                     1 -> {
                         val et = EditText(this).apply { setText(alarm.note); hint = "Ghi chú ngắn" }
                         MaterialAlertDialogBuilder(this)
-                            .setTitle("Ghi chú")
+                            .setTitle(UiTranslate.tr("Ghi chú"))
                             .setView(et)
-                            .setPositiveButton("Lưu") { _, _ ->
+                            .setPositiveButton(UiTranslate.tr("Lưu")) { _, _ ->
                                 alarm.note = et.text.toString().trim()
                                 repo.saveAlarms(alarms)
                                 adapter.notifyDataSetChanged()
                             }
-                            .setNegativeButton("Hủy", null)
+                            .setNegativeButton(UiTranslate.tr("Hủy"), null)
                             .show()
                     }
                     2 -> {
@@ -1075,7 +1082,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun saveProfilePhoto(uri: android.net.Uri) {
-        Toast.makeText(this, "Đang lưu ảnh…", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, UiTranslate.tr("Đang lưu ảnh…"), Toast.LENGTH_SHORT).show()
         Thread {
             try {
                 val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
@@ -1097,7 +1104,7 @@ class MainActivity : AppCompatActivity() {
                 f.outputStream().use { out.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, it) }
                 AppSettings.setProfilePhotoPath(this, f.absolutePath)
                 runOnUiThread {
-                    Toast.makeText(this, "Đã đổi ảnh hồ sơ", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, UiTranslate.tr("Đã đổi ảnh hồ sơ"), Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 runOnUiThread {
@@ -1116,21 +1123,21 @@ class MainActivity : AppCompatActivity() {
             "Đổi email"
         )
         androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Thông tin hồ sơ")
+            .setTitle(UiTranslate.tr("Thông tin hồ sơ"))
             .setItems(items) { _, which ->
                 when (which) {
                     0 -> try { profilePhotoPicker.launch("image/*") } catch (e: Exception) {
-                        Toast.makeText(this, "Không mở được thư viện ảnh", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, UiTranslate.tr("Không mở được thư viện ảnh"), Toast.LENGTH_SHORT).show()
                     }
                     1 -> showEditNameDialog()
                     2 -> try { BirthdayHelper.pickManual(this) } catch (e: Exception) {
-                        Toast.makeText(this, "Không mở được bảng chọn ngày sinh", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, UiTranslate.tr("Không mở được bảng chọn ngày sinh"), Toast.LENGTH_SHORT).show()
                     }
                     3 -> showChangePasswordDialog()
                     4 -> showChangeEmailDialog()
                 }
             }
-            .setNegativeButton("Đóng", null)
+            .setNegativeButton(UiTranslate.tr("Đóng"), null)
             .show()
     }
 
@@ -1140,36 +1147,36 @@ class MainActivity : AppCompatActivity() {
         Thread { GmailBot.sendOtp(email, code) }.start()
         Toast.makeText(this, "Đang gửi mã tới $email", Toast.LENGTH_SHORT).show()
         val input = android.widget.EditText(this).apply {
-            hint = "Nhập mã 6 số"
+            hint = UiTranslate.tr("Nhập mã 6 số")
             inputType = android.text.InputType.TYPE_CLASS_NUMBER
         }
         androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Xác nhận OTP")
+            .setTitle(UiTranslate.tr("Xác nhận OTP"))
             .setMessage("Mã đã gửi tới $email")
             .setView(input)
-            .setPositiveButton("Xác nhận") { _, _ ->
+            .setPositiveButton(UiTranslate.tr("Xác nhận")) { _, _ ->
                 val loading = Md3Loading.show(this, "Đang kiểm tra mã…")
                 android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                     loading.dismiss()
                     if (input.text.toString() == code) onOk()
-                    else Toast.makeText(this, "Sai mã", Toast.LENGTH_SHORT).show()
+                    else Toast.makeText(this, UiTranslate.tr("Sai mã"), Toast.LENGTH_SHORT).show()
                 }, 900)
             }
-            .setNegativeButton("Hủy", null)
+            .setNegativeButton(UiTranslate.tr("Hủy"), null)
             .show()
     }
 
     private fun showEditNameDialog() {
         val email = AppSettings.getRecoveryEmail(this)
-        if (email.isBlank()) { Toast.makeText(this, "Chưa có email", Toast.LENGTH_SHORT).show(); return }
+        if (email.isBlank()) { Toast.makeText(this, UiTranslate.tr("Chưa có email"), Toast.LENGTH_SHORT).show(); return }
         val input = android.widget.EditText(this).apply {
             setText(AppSettings.getGoogleDisplayName(this@MainActivity))
-            hint = "Tên mới"
+            hint = UiTranslate.tr("Tên mới")
         }
         androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Sửa tên")
+            .setTitle(UiTranslate.tr("Sửa tên"))
             .setView(input)
-            .setPositiveButton("Lưu") { _, _ ->
+            .setPositiveButton(UiTranslate.tr("Lưu")) { _, _ ->
                 val name = input.text.toString().trim()
                 if (name.isBlank()) return@setPositiveButton
                 requireOtpThen(email) {
@@ -1182,68 +1189,68 @@ class MainActivity : AppCompatActivity() {
                             .build()
                         user.updateProfile(req)
                             .addOnSuccessListener {
-                                Toast.makeText(this, "Đã đổi tên", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this, UiTranslate.tr("Đã đổi tên"), Toast.LENGTH_SHORT).show()
                             }
                             .addOnFailureListener { e ->
                                 Toast.makeText(this, "Đã lưu local, Firebase lỗi: ${e.message}", Toast.LENGTH_LONG).show()
                             }
                     } else {
-                        Toast.makeText(this, "Đã đổi tên", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, UiTranslate.tr("Đã đổi tên"), Toast.LENGTH_SHORT).show()
                     }
                 }
             }
-            .setNegativeButton("Hủy", null)
+            .setNegativeButton(UiTranslate.tr("Hủy"), null)
             .show()
     }
 
     private fun showChangePasswordDialog() {
         val email = AppSettings.getRecoveryEmail(this)
-        if (email.isBlank()) { Toast.makeText(this, "Chưa có email", Toast.LENGTH_SHORT).show(); return }
+        if (email.isBlank()) { Toast.makeText(this, UiTranslate.tr("Chưa có email"), Toast.LENGTH_SHORT).show(); return }
         val input = android.widget.EditText(this).apply {
-            hint = "Mật khẩu mới"
+            hint = UiTranslate.tr("Mật khẩu mới")
             inputType = android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
         }
         androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Đổi mật khẩu")
+            .setTitle(UiTranslate.tr("Đổi mật khẩu"))
             .setView(input)
-            .setPositiveButton("Đổi") { _, _ ->
+            .setPositiveButton(UiTranslate.tr("Đổi")) { _, _ ->
                 val pass = input.text.toString()
-                if (pass.length < 6) { Toast.makeText(this, "Mật khẩu quá ngắn", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
+                if (pass.length < 6) { Toast.makeText(this, UiTranslate.tr("Mật khẩu quá ngắn"), Toast.LENGTH_SHORT).show(); return@setPositiveButton }
                 requireOtpThen(email) {
                     com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
                         ?.updatePassword(pass)
-                        ?.addOnSuccessListener { Toast.makeText(this, "Đã đổi mật khẩu", Toast.LENGTH_SHORT).show() }
+                        ?.addOnSuccessListener { Toast.makeText(this, UiTranslate.tr("Đã đổi mật khẩu"), Toast.LENGTH_SHORT).show() }
                         ?.addOnFailureListener { e -> Toast.makeText(this, e.message, Toast.LENGTH_LONG).show() }
                 }
             }
-            .setNegativeButton("Hủy", null)
+            .setNegativeButton(UiTranslate.tr("Hủy"), null)
             .show()
     }
 
     private fun showChangeEmailDialog() {
         val email = AppSettings.getRecoveryEmail(this)
-        if (email.isBlank()) { Toast.makeText(this, "Chưa có email", Toast.LENGTH_SHORT).show(); return }
+        if (email.isBlank()) { Toast.makeText(this, UiTranslate.tr("Chưa có email"), Toast.LENGTH_SHORT).show(); return }
         val input = android.widget.EditText(this).apply {
-            hint = "Email mới"
+            hint = UiTranslate.tr("Email mới")
             inputType = android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
         }
         androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Đổi email")
+            .setTitle(UiTranslate.tr("Đổi email"))
             .setView(input)
-            .setPositiveButton("Đổi") { _, _ ->
+            .setPositiveButton(UiTranslate.tr("Đổi")) { _, _ ->
                 val newEmail = input.text.toString().trim()
-                if (!newEmail.contains("@")) { Toast.makeText(this, "Email không hợp lệ", Toast.LENGTH_SHORT).show(); return@setPositiveButton }
+                if (!newEmail.contains("@")) { Toast.makeText(this, UiTranslate.tr("Email không hợp lệ"), Toast.LENGTH_SHORT).show(); return@setPositiveButton }
                 requireOtpThen(email) {
                     com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
                         ?.updateEmail(newEmail)
                         ?.addOnSuccessListener {
                             AppSettings.setRecoveryEmail(this, newEmail)
-                            Toast.makeText(this, "Đã đổi email", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, UiTranslate.tr("Đã đổi email"), Toast.LENGTH_SHORT).show()
                         }
                         ?.addOnFailureListener { e -> Toast.makeText(this, e.message, Toast.LENGTH_LONG).show() }
                 }
             }
-            .setNegativeButton("Hủy", null)
+            .setNegativeButton(UiTranslate.tr("Hủy"), null)
             .show()
     }
 
@@ -1358,11 +1365,11 @@ class MainActivity : AppCompatActivity() {
                     hasPin && which == 2 -> {
                         if (fullOn) {
                             AppSettings.setAppLockEnabled(this, false)
-                            Toast.makeText(this, "Chỉ còn khóa Cài đặt", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, UiTranslate.tr("Chỉ còn khóa Cài đặt"), Toast.LENGTH_SHORT).show()
                         } else {
                             AppSettings.setAppLockEnabled(this, true)
                             AppSettings.appUnlockedThisSession = true
-                            Toast.makeText(this, "Đã bật khóa cả app — mỗi lần mở cần PIN", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this, UiTranslate.tr("Đã bật khóa cả app — mỗi lần mở cần PIN"), Toast.LENGTH_LONG).show()
                         }
                     }
                     hasPin && which == 3 -> {
@@ -1370,34 +1377,34 @@ class MainActivity : AppCompatActivity() {
                         AppSettings.setAppLockEnabled(this, false)
                         AppSettings.settingsUnlockedThisSession = true
                         AppSettings.appUnlockedThisSession = true
-                        Toast.makeText(this, "Đã tắt App lock", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, UiTranslate.tr("Đã tắt App lock"), Toast.LENGTH_SHORT).show()
                     }
                     hasPin && which == 4 -> {
                         AppSettings.appUnlockedThisSession = false
                         AppSettings.settingsUnlockedThisSession = false
-                        Toast.makeText(this, "Đã khóa — cần PIN để tiếp tục", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, UiTranslate.tr("Đã khóa — cần PIN để tiếp tục"), Toast.LENGTH_SHORT).show()
                         maybeRequireAppLock()
                     }
                 }
             }
-            .setNegativeButton("Đóng", null)
+            .setNegativeButton(UiTranslate.tr("Đóng"), null)
             .show()
     }
 
     private fun promptSetPin(enableFull: Boolean = true) {
         val input = EditText(this).apply {
-            hint = "PIN ≥ 4 số"
+            hint = UiTranslate.tr("PIN ≥ 4 số")
             inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
             setPadding(48, 32, 48, 32)
         }
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Đặt PIN App lock")
+            .setTitle(UiTranslate.tr("Đặt PIN App lock"))
             .setMessage(if (enableFull) "PIN này khóa cả app mỗi lần mở (và Cài đặt)." else "Đổi PIN hiện tại.")
             .setView(input)
-            .setPositiveButton("Lưu") { _, _ ->
+            .setPositiveButton(UiTranslate.tr("Lưu")) { _, _ ->
                 val pin = input.text?.toString()?.trim().orEmpty()
                 if (pin.length < 4) {
-                    Toast.makeText(this, "PIN cần ≥ 4 số", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, UiTranslate.tr("PIN cần ≥ 4 số"), Toast.LENGTH_SHORT).show()
                 } else {
                     AppSettings.setSettingsPin(this, pin)
                     if (enableFull) AppSettings.setAppLockEnabled(this, true)
@@ -1410,7 +1417,7 @@ class MainActivity : AppCompatActivity() {
                     ).show()
                 }
             }
-            .setNegativeButton("Hủy", null)
+            .setNegativeButton(UiTranslate.tr("Hủy"), null)
             .show()
     }
 
@@ -1491,7 +1498,7 @@ class MainActivity : AppCompatActivity() {
             val isEmail = user?.providerData?.any { it.providerId == "password" } == true
             view.findViewById<View>(R.id.tvViewProfile)?.visibility =
                 if (isEmail) android.view.View.VISIBLE else android.view.View.GONE
-            status.text = "Đã đăng nhập"
+            status.text = UiTranslate.tr("Đã đăng nhập")
             val url = AppSettings.getGooglePhotoUrl(this)
             val img = view.findViewById<android.widget.ImageView>(R.id.imgAvatar)
             val localPhoto = AppSettings.getProfilePhotoPath(this)
@@ -1514,7 +1521,7 @@ class MainActivity : AppCompatActivity() {
         } else {
             profile?.visibility = android.view.View.GONE
             buttons?.visibility = android.view.View.VISIBLE
-            status.text = "Chưa đăng nhập"
+            status.text = UiTranslate.tr("Chưa đăng nhập")
         }
         view.findViewById<View>(R.id.btnGoogleSignIn).setOnClickListener {
             try {
@@ -1547,7 +1554,7 @@ class MainActivity : AppCompatActivity() {
         view.findViewById<View>(R.id.btnForgotPin)?.setOnClickListener {
             googleLoginDialog?.dismiss()
             SettingsLockHelper.showForgotFlow(this) {
-                Toast.makeText(this, "Đã mở khóa", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Đã mở khóa"), Toast.LENGTH_SHORT).show()
             }
         }
         view.findViewById<View>(R.id.tvViewProfile)?.setOnClickListener {
@@ -1562,7 +1569,7 @@ class MainActivity : AppCompatActivity() {
                 AppSettings.setGoogleDisplayName(this, "")
                 AppSettings.setRecoveryEmail(this, "")
                 AppSettings.setGooglePhotoUrl(this, "")
-                status.text = "Chưa đăng nhập"
+                status.text = UiTranslate.tr("Chưa đăng nhập")
                 loading.dismiss()
                 Toast.makeText(this, Lang.t(this, "Đã đăng xuất", "Signed out"), Toast.LENGTH_SHORT).show()
                 googleLoginDialog?.dismiss()
@@ -1591,7 +1598,7 @@ class MainActivity : AppCompatActivity() {
             val email = view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etEmail).text?.toString()?.trim().orEmpty()
             val pass = view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etPassword).text?.toString().orEmpty()
             if (!email.contains("@") || pass.length < 6) {
-                Toast.makeText(this, "Email hoặc mật khẩu không hợp lệ", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Email hoặc mật khẩu không hợp lệ"), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             val loading = Md3Loading.show(this, "Đang đăng nhập…")
@@ -1638,7 +1645,7 @@ class MainActivity : AppCompatActivity() {
             val name = view.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etName).text?.toString()?.trim().orEmpty()
             val terms = view.findViewById<android.widget.CheckBox>(R.id.cbTerms).isChecked
             if (!email.contains("@") || pass.length < 6 || pass != confirm || name.isBlank() || !terms) {
-                Toast.makeText(this, "Kiểm tra lại thông tin và đồng ý điều khoản", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Kiểm tra lại thông tin và đồng ý điều khoản"), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             com.google.firebase.auth.FirebaseAuth.getInstance()
@@ -1693,7 +1700,7 @@ class MainActivity : AppCompatActivity() {
                     seconds--
                     handler.postDelayed(this, 1000)
                 } else {
-                    tvResend.text = "Gửi lại mã"
+                    tvResend.text = UiTranslate.tr("Gửi lại mã")
                     tvResend.setTextColor(0xFF1A73E8.toInt())
                     tvResend.isClickable = true
                 }
@@ -1705,7 +1712,7 @@ class MainActivity : AppCompatActivity() {
                 val newCode = "%06d".format(kotlin.random.Random.nextInt(0, 1_000_000))
                 AppSettings.setRecoveryCode(this, newCode)
                 Thread { GmailBot.sendOtp(email, newCode) }.start()
-                Toast.makeText(this, "Đã gửi lại mã", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Đã gửi lại mã"), Toast.LENGTH_SHORT).show()
                 seconds = 59
                 handler.post(tick)
             }
@@ -1714,10 +1721,10 @@ class MainActivity : AppCompatActivity() {
         view.findViewById<View>(R.id.btnConfirm).setOnClickListener {
             val entered = boxes.joinToString("") { it.text?.toString().orEmpty() }
             if (entered == code) {
-                Toast.makeText(this, "Xác minh thành công", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Xác minh thành công"), Toast.LENGTH_SHORT).show()
                 dlg.dismiss()
             } else {
-                Toast.makeText(this, "Sai mã OTP", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Sai mã OTP"), Toast.LENGTH_SHORT).show()
             }
         }
         view.findViewById<View>(R.id.tvBackLogin).setOnClickListener {
@@ -1741,18 +1748,18 @@ class MainActivity : AppCompatActivity() {
         }
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setTitle("Email Google")
-            .setMessage("Lưu Gmail để khôi phục PIN và gửi nhật ký.")
+            .setMessage(UiTranslate.tr("Lưu Gmail để khôi phục PIN và gửi nhật ký."))
             .setView(input)
-            .setPositiveButton("Lưu") { _, _ ->
+            .setPositiveButton(UiTranslate.tr("Lưu")) { _, _ ->
                 val email = input.text?.toString()?.trim().orEmpty()
                 if (email.contains("@")) {
                     AppSettings.setRecoveryEmail(this, email)
                     Toast.makeText(this, "Đã lưu $email", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(this, "Email không hợp lệ", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, UiTranslate.tr("Email không hợp lệ"), Toast.LENGTH_SHORT).show()
                 }
             }
-            .setNegativeButton("Hủy", null)
+            .setNegativeButton(UiTranslate.tr("Hủy"), null)
             .show()
     }
 
@@ -1782,17 +1789,17 @@ class MainActivity : AppCompatActivity() {
         val msg = if (lines.isEmpty()) "$summary\n\nChưa có nhật ký.\nBáo thức tắt/báo lại sẽ được ghi tại đây."
         else "$summary\n\n" + lines.take(40).joinToString("\n")
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Nhật ký báo thức")
+            .setTitle(UiTranslate.tr("Nhật ký báo thức"))
             .setMessage(msg)
-            .setPositiveButton("Đóng", null)
-            .setNeutralButton("Xóa nhật ký") { _, _ ->
+            .setPositiveButton(UiTranslate.tr("Đóng"), null)
+            .setNeutralButton(UiTranslate.tr("Xóa nhật ký")) { _, _ ->
                 AlarmHistory.clear(this)
-                Toast.makeText(this, "Đã xóa nhật ký", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Đã xóa nhật ký"), Toast.LENGTH_SHORT).show()
             }
-            .setNegativeButton("Gửi Gmail") { _, _ ->
+            .setNegativeButton(UiTranslate.tr("Gửi Gmail")) { _, _ ->
                 val email = AppSettings.getRecoveryEmail(this)
                 if (email.isBlank()) {
-                    Toast.makeText(this, "Vào «Đăng nhập Google» để lưu email trước", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, UiTranslate.tr("Vào «Đăng nhập Google» để lưu email trước"), Toast.LENGTH_LONG).show()
                     showGoogleLoginMenu()
                 } else {
                     sendHistoryToGmail(email)
@@ -1809,7 +1816,7 @@ class MainActivity : AppCompatActivity() {
             packageManager.getPackageInfo(packageName, 0).longVersionCode
         } catch (_: Exception) { 95L }
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("ℹ️ Phiên bản")
+            .setTitle(UiTranslate.tr("ℹ️ Phiên bản"))
             .setMessage("Báo thức Challenge\nPhiên bản: v$ver\nMã bản dựng: $code\n\nQuét mặt · Thử thách · App lock · Lịch lễ")
             .setPositiveButton("OK", null)
             .show()
@@ -1825,10 +1832,10 @@ class MainActivity : AppCompatActivity() {
                     val uri = android.net.Uri.parse("https://apkpure.com/p/com.alarmclock.dongho")
                     startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, uri))
                 } catch (_: Exception) {
-                    android.widget.Toast.makeText(this, "Không mở được trình duyệt", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(this, UiTranslate.tr("Không mở được trình duyệt"), android.widget.Toast.LENGTH_SHORT).show()
                 }
             }
-            .setNegativeButton("Hủy", null)
+            .setNegativeButton(UiTranslate.tr("Hủy"), null)
             .show()
     }
 

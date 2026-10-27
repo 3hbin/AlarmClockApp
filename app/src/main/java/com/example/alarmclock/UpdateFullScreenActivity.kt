@@ -36,7 +36,7 @@ class UpdateFullScreenActivity : AppCompatActivity() {
         root.addView(icon)
 
         val title = TextView(this).apply {
-            text = "Có bản cập nhật mới"
+            text = UiTranslate.tr("Có bản cập nhật mới")
             textSize = 24f
             setTextColor(0xFFFFFFFF.toInt())
             gravity = android.view.Gravity.CENTER
@@ -53,7 +53,7 @@ class UpdateFullScreenActivity : AppCompatActivity() {
         root.addView(msg)
 
         val btnUpdate = MaterialButton(this).apply {
-            text = "Cập nhật ngay"
+            text = UiTranslate.tr("Cập nhật ngay")
             setOnClickListener {
                 try {
                     startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://apkpure.com/search?q=com.alarmclock.dongho")))
@@ -64,7 +64,7 @@ class UpdateFullScreenActivity : AppCompatActivity() {
         root.addView(btnUpdate)
 
         val btnLater = MaterialButton(this).apply {
-            text = "Để sau"
+            text = UiTranslate.tr("Để sau")
             setOnClickListener { finish() }
             layoutParams = android.widget.LinearLayout.LayoutParams(
                 android.widget.LinearLayout.LayoutParams.WRAP_CONTENT,

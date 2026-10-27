@@ -41,30 +41,30 @@ object SettingsLockHelper {
 
     fun showPinDialog(activity: Activity, onUnlocked: () -> Unit) {
         val input = EditText(activity).apply {
-            hint = "Nhập PIN Cài đặt (≥4 số)"
+            hint = UiTranslate.tr("Nhập PIN Cài đặt (≥4 số)")
             inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
             setPadding(48, 32, 48, 32)
         }
         MaterialAlertDialogBuilder(activity)
-            .setTitle("🔒 Khóa Cài đặt")
-            .setMessage("Nhập PIN để mở Cài đặt (chống người khác sửa).")
+            .setTitle(UiTranslate.tr("🔒 Khóa Cài đặt"))
+            .setMessage(UiTranslate.tr("Nhập PIN để mở Cài đặt (chống người khác sửa)."))
             .setView(input)
             .setCancelable(false)
-            .setPositiveButton("Mở") { _, _ ->
+            .setPositiveButton(UiTranslate.tr("Mở")) { _, _ ->
                 val pin = input.text?.toString()?.trim().orEmpty()
                 if (AppSettings.checkSettingsPin(activity, pin)) {
                     AppSettings.settingsUnlockedThisSession = true
-                    Toast.makeText(activity, "Đã mở khóa Cài đặt", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(activity, UiTranslate.tr("Đã mở khóa Cài đặt"), Toast.LENGTH_SHORT).show()
                     onUnlocked()
                 } else {
                     Toast.makeText(activity, "Sai PIN", Toast.LENGTH_SHORT).show()
                     showPinDialog(activity, onUnlocked)
                 }
             }
-            .setNeutralButton("Quên PIN?") { _, _ ->
+            .setNeutralButton(UiTranslate.tr("Quên PIN?")) { _, _ ->
                 showForgotFlow(activity, onUnlocked)
             }
-            .setNegativeButton("Hủy") { _, _ ->
+            .setNegativeButton(UiTranslate.tr("Hủy")) { _, _ ->
                 if (activity is SettingsActivity) activity.finish()
             }
             .show()
@@ -74,13 +74,13 @@ object SettingsLockHelper {
         val email = AppSettings.getRecoveryEmail(activity)
         if (email.isBlank() || !email.contains("@")) {
             MaterialAlertDialogBuilder(activity)
-                .setTitle("Chưa có Gmail khôi phục")
+                .setTitle(UiTranslate.tr("Chưa có Gmail khôi phục"))
                 .setMessage(
                     "Vào Cài đặt → lưu địa chỉ Gmail khôi phục trước khi đặt PIN.\n\n" +
                         "Không có Gmail thì không gửi được mã qua hộp thư Google."
                 )
-                .setPositiveButton("Thử PIN lại") { _, _ -> showPinDialog(activity, onUnlocked) }
-                .setNegativeButton("Đóng", null)
+                .setPositiveButton(UiTranslate.tr("Thử PIN lại")) { _, _ -> showPinDialog(activity, onUnlocked) }
+                .setNegativeButton(UiTranslate.tr("Đóng"), null)
                 .show()
             return
         }
@@ -97,10 +97,10 @@ object SettingsLockHelper {
                     showOtpDialog(activity, email, onUnlocked)
                 } else {
                     MaterialAlertDialogBuilder(activity)
-                        .setTitle("Chưa gửi được")
-                        .setMessage("Gmail chưa cho phép app gửi thư. Bấm Cho phép, đồng ý một lần, rồi bấm Quên PIN lại.")
-                        .setPositiveButton("Cho phép") { _, _ -> requestGmailSend(activity) }
-                        .setNegativeButton("Đóng", null)
+                        .setTitle(UiTranslate.tr("Chưa gửi được"))
+                        .setMessage(UiTranslate.tr("Gmail chưa cho phép app gửi thư. Bấm Cho phép, đồng ý một lần, rồi bấm Quên PIN lại."))
+                        .setPositiveButton(UiTranslate.tr("Cho phép")) { _, _ -> requestGmailSend(activity) }
+                        .setNegativeButton(UiTranslate.tr("Đóng"), null)
                         .show()
                 }
             }
@@ -114,11 +114,11 @@ object SettingsLockHelper {
             val token = com.google.android.gms.auth.GoogleAuthUtil.getToken(
                 activity, account, "oauth2:https://www.googleapis.com/auth/gmail.send"
             )
-            if (token.isNotBlank()) Toast.makeText(activity, "Đã cho phép. Bấm Quên PIN lại.", Toast.LENGTH_LONG).show()
+            if (token.isNotBlank()) Toast.makeText(activity, UiTranslate.tr("Đã cho phép. Bấm Quên PIN lại."), Toast.LENGTH_LONG).show()
         } catch (e: com.google.android.gms.auth.UserRecoverableAuthException) {
             activity.startActivity(e.intent)
         } catch (e: Exception) {
-            Toast.makeText(activity, "Không xin được quyền Gmail", Toast.LENGTH_LONG).show()
+            Toast.makeText(activity, UiTranslate.tr("Không xin được quyền Gmail"), Toast.LENGTH_LONG).show()
         }
     }
 
@@ -181,7 +181,7 @@ object SettingsLockHelper {
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             activity.startActivity(gmail)
-            Toast.makeText(activity, "Đã mở Gmail — bấm Gửi để nhận mã trong hộp thư", Toast.LENGTH_LONG).show()
+            Toast.makeText(activity, UiTranslate.tr("Đã mở Gmail — bấm Gửi để nhận mã trong hộp thư"), Toast.LENGTH_LONG).show()
             return
         } catch (_: Exception) {
         }
@@ -226,7 +226,7 @@ object SettingsLockHelper {
         }
 
         root.addView(TextView(activity).apply {
-            text = "Nhập mã 6 số trong Gmail"
+            text = UiTranslate.tr("Nhập mã 6 số trong Gmail")
             textSize = 16f
             setPadding(0, 0, 0, dp(6))
         })
@@ -255,7 +255,7 @@ object SettingsLockHelper {
         root.addView(row)
 
         val btnConfirm = MaterialButton(activity).apply {
-            text = "Xác nhận mã"
+            text = UiTranslate.tr("Xác nhận mã")
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -264,7 +264,7 @@ object SettingsLockHelper {
         root.addView(btnConfirm)
 
         val btnGmail = MaterialButton(activity).apply {
-            text = "Mở lại Gmail nếu chưa nhận được mã"
+            text = UiTranslate.tr("Mở lại Gmail nếu chưa nhận được mã")
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
@@ -280,11 +280,11 @@ object SettingsLockHelper {
         fun tryUnlock(code: String): Boolean {
             if (done) return true
             if (code.length != 6 || !code.all { it.isDigit() }) {
-                Toast.makeText(activity, "Nhập đủ 6 số", Toast.LENGTH_SHORT).show()
+                Toast.makeText(activity, UiTranslate.tr("Nhập đủ 6 số"), Toast.LENGTH_SHORT).show()
                 return false
             }
             if (!AppSettings.checkRecoveryCode(activity, code)) {
-                Toast.makeText(activity, "Sai mã hoặc đã hết hạn", Toast.LENGTH_SHORT).show()
+                Toast.makeText(activity, UiTranslate.tr("Sai mã hoặc đã hết hạn"), Toast.LENGTH_SHORT).show()
                 return false
             }
             done = true
@@ -328,10 +328,10 @@ object SettingsLockHelper {
         }
 
         val dialog = MaterialAlertDialogBuilder(activity)
-            .setTitle("Mã từ Gmail")
+            .setTitle(UiTranslate.tr("Mã từ Gmail"))
             .setView(root)
             .setCancelable(false)
-            .setNegativeButton("Hủy") { _, _ ->
+            .setNegativeButton(UiTranslate.tr("Hủy")) { _, _ ->
                 if (activity is SettingsActivity) activity.finish()
             }
             .create()
@@ -342,7 +342,7 @@ object SettingsLockHelper {
         btnGmail.setOnClickListener {
             val stored = AppSettings.prefs(activity).getString("settings_recovery_code", null)
             if (stored.isNullOrBlank()) {
-                Toast.makeText(activity, "Mã hết hạn — bấm Quên PIN lại", Toast.LENGTH_LONG).show()
+                Toast.makeText(activity, UiTranslate.tr("Mã hết hạn — bấm Quên PIN lại"), Toast.LENGTH_LONG).show()
             } else {
                 openGmailRecovery(activity, email, stored)
             }

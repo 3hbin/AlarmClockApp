@@ -64,6 +64,9 @@ class AddEditAlarmActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_add_edit_alarm)
+        try {
+            Motion.stagger(findViewById<android.view.View>(R.id.rowLabel).parent as android.view.ViewGroup, step = 30)
+        } catch (_: Exception) {}
         try { EventManager.applyChrome(this) } catch (_: Exception) {}
 
                 alarmId = intent.getIntExtra("ALARM_ID", -1)
@@ -134,13 +137,13 @@ class AddEditAlarmActivity : AppCompatActivity() {
         findViewById<android.view.View>(R.id.rowVoice).setOnClickListener {
             val et = EditText(this).apply { setText(voiceNote ?: ""); hint = Lang.t("Lời chào khi thức", "Wake-up note") }
             MaterialAlertDialogBuilder(this)
-                .setTitle("Ghi chú giọng nói (TTS)")
+                .setTitle(UiTranslate.tr("Ghi chú giọng nói (TTS)"))
                 .setView(et)
-                .setPositiveButton("Lưu") { _, _ ->
+                .setPositiveButton(UiTranslate.tr("Lưu")) { _, _ ->
                     voiceNote = et.text.toString().ifBlank { null }
                     refreshUi()
                 }
-                .setNegativeButton("Xóa") { _, _ ->
+                .setNegativeButton(UiTranslate.tr("Xóa")) { _, _ ->
                     voiceNote = null
                     refreshUi()
                 }
@@ -180,10 +183,10 @@ class AddEditAlarmActivity : AppCompatActivity() {
         findViewById<MaterialButton>(R.id.btnSave).setOnClickListener { save() }
         findViewById<MaterialButton>(R.id.btnDelete).apply {
             if (isEdit) {
-                text = "Xoá"
+                text = UiTranslate.tr("Xoá")
                 setOnClickListener { deleteAlarm() }
             } else {
-                text = "Hủy"
+                text = UiTranslate.tr("Hủy")
                 setOnClickListener { finish() }
             }
         }
@@ -267,7 +270,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
         val labels = arrayOf("Chỉ 1 lần", "Hàng ngày", "Thứ 2 – Thứ 6")
         val modes = intArrayOf(Alarm.REPEAT_ONCE, Alarm.REPEAT_DAILY, Alarm.REPEAT_WEEKDAYS)
         MaterialAlertDialogBuilder(this)
-            .setTitle("Lặp lại")
+            .setTitle(UiTranslate.tr("Lặp lại"))
             .setItems(labels) { _, which ->
                 repeatMode = modes[which]
                 applyChipsFromMode()
@@ -290,10 +293,10 @@ class AddEditAlarmActivity : AppCompatActivity() {
             adjustViewBounds = true
         }
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Mã QR thử thách")
+            .setTitle(UiTranslate.tr("Mã QR thử thách"))
             .setMessage("Chụp hoặc lưu mã này, dán ra khỏi giường. Khi chuông reo phải quét đúng mã mới tắt được.\n\nMã: $token")
             .setView(iv)
-            .setPositiveButton("Đã lưu") { _, _ -> }
+            .setPositiveButton(UiTranslate.tr("Đã lưu")) { _, _ -> }
             .show()
     }
 
@@ -317,7 +320,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
         val labels = types.map { Alarm.challengeLabel(it) }.toTypedArray()
         val cur = types.indexOf(challengeType).coerceAtLeast(0)
         MaterialAlertDialogBuilder(this)
-            .setTitle("Thử thách khi tắt báo thức")
+            .setTitle(UiTranslate.tr("Thử thách khi tắt báo thức"))
             .setSingleChoiceItems(labels, cur) { d, which ->
                 challengeType = types[which]
                 if (challengeType == Alarm.CHALLENGE_QR) showQrSetup()
@@ -340,7 +343,7 @@ class AddEditAlarmActivity : AppCompatActivity() {
             if (before(now)) add(Calendar.DAY_OF_YEAR, 1)
         }
         val sameDay = now.get(Calendar.DAY_OF_YEAR) == target.get(Calendar.DAY_OF_YEAR)
-        return if (sameDay) "Chuông báo sắp tới: Hôm nay" else "Chuông báo sắp tới: Ngày mai"
+        return if (sameDay) "Hôm nay" else "Ngày mai"
     }
 
     private fun refreshUi() {
@@ -387,18 +390,18 @@ class AddEditAlarmActivity : AppCompatActivity() {
     private fun pickGroup() {
         val options = arrayOf("Chung", "Học", "Tập", "Làm việc", "Khác")
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Nhóm báo thức")
+            .setTitle(UiTranslate.tr("Nhóm báo thức"))
             .setItems(options) { _, which ->
                 if (options[which] == "Khác") {
                     val et = android.widget.EditText(this).apply { setText(groupName); hint = "Tên nhóm" }
                     com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-                        .setTitle("Tên nhóm")
+                        .setTitle(UiTranslate.tr("Tên nhóm"))
                         .setView(et)
                         .setPositiveButton("OK") { _, _ ->
                             groupName = et.text.toString().trim().ifBlank { "Chung" }
                             refreshUi()
                         }
-                        .setNegativeButton("Hủy", null)
+                        .setNegativeButton(UiTranslate.tr("Hủy"), null)
                         .show()
                 } else {
                     groupName = options[which]
@@ -487,15 +490,15 @@ class AddEditAlarmActivity : AppCompatActivity() {
     private fun deleteAlarm() {
         if (!isEdit) return
         MaterialAlertDialogBuilder(this)
-            .setTitle("Xoá báo thức?")
-            .setPositiveButton("Xoá") { _, _ ->
+            .setTitle(UiTranslate.tr("Xoá báo thức?"))
+            .setPositiveButton(UiTranslate.tr("Xoá")) { _, _ ->
                 val repo = AlarmRepository(this)
                 val list = repo.getAlarms()
                 AlarmScheduler.cancel(this, alarmId)
                 repo.saveAlarms(list.filter { it.id != alarmId })
                 finish()
             }
-            .setNegativeButton("Hủy", null)
+            .setNegativeButton(UiTranslate.tr("Hủy"), null)
             .show()
     }
 }

@@ -44,7 +44,7 @@ class QrChallengeActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) startCam()
         else {
-            Toast.makeText(this, "Cần quyền camera để quét QR", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, UiTranslate.tr("Cần quyền camera để quét QR"), Toast.LENGTH_LONG).show()
             finish()
         }
     }
@@ -85,13 +85,13 @@ class QrChallengeActivity : AppCompatActivity() {
         if (done) return
         val value = codes.firstOrNull { !it.rawValue.isNullOrBlank() }?.rawValue ?: return
         runOnUiThread {
-            findViewById<TextView>(R.id.tvQrStatus).text = "Đã thấy mã…"
+            findViewById<TextView>(R.id.tvQrStatus).text = UiTranslate.tr("Đã thấy mã…")
             if (expected.isBlank() || value.trim() == expected.trim()) {
                 done = true
                 setResult(RESULT_OK)
                 finish()
             } else {
-                findViewById<TextView>(R.id.tvQrStatus).text = "Sai mã. Quét đúng mã đã lưu."
+                findViewById<TextView>(R.id.tvQrStatus).text = UiTranslate.tr("Sai mã. Quét đúng mã đã lưu.")
             }
         }
     }

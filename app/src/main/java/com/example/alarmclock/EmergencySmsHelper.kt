@@ -46,11 +46,11 @@ object EmergencySmsHelper {
     fun sendAlert(context: Context, locationText: String = ""): Boolean {
         val phone = getPhone(context)
         if (phone.isBlank()) {
-            Toast.makeText(context, "Chưa đặt số điện thoại cứu viện", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, UiTranslate.tr("Chưa đặt số điện thoại cứu viện"), Toast.LENGTH_LONG).show()
             return false
         }
         if (!canSend(context)) {
-            Toast.makeText(context, "Chưa cấp quyền Gửi SMS", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, UiTranslate.tr("Chưa cấp quyền Gửi SMS"), Toast.LENGTH_LONG).show()
             return false
         }
         val body = buildString {

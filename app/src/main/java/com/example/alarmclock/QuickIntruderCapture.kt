@@ -26,7 +26,7 @@ object QuickIntruderCapture {
             != PackageManager.PERMISSION_GRANTED
         ) {
             Log.w(TAG, "No camera permission")
-            Toast.makeText(context, "Chưa có quyền camera — không chụp được", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, UiTranslate.tr("Chưa có quyền camera — không chụp được"), Toast.LENGTH_SHORT).show()
             return
         }
 

@@ -431,7 +431,7 @@ class CalendarAgendaActivity : AppCompatActivity() {
         recycler.adapter = AgendaAdapter(items, accentColor()) { openInsertEvent(it) }
         if (items.isEmpty()) {
             val empty = TextView(this).apply {
-                text = "Không có sự kiện ngày này\nBấm + để thêm"
+                text = UiTranslate.tr("Không có sự kiện ngày này\nBấm + để thêm")
                 gravity = Gravity.CENTER
                 setTextColor(0xFF5F6368.toInt())
                 setPadding(24, 48, 24, 24)

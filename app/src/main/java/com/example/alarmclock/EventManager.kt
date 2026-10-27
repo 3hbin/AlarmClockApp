@@ -123,13 +123,19 @@ object EventManager {
 
     fun currentName(): String = palette()?.title ?: ""
 
+    /** Bảng màu đang dùng: theo hình nền (nếu bật) rồi mới đến chủ đề sự kiện. */
+    fun effectivePalette(context: Context): EventPalette? {
+        if (WallpaperTheme.isEnabled(context)) WallpaperTheme.palette(context)?.let { return it }
+        return if (isThemeEnabled(context)) palette() else null
+    }
+
     fun activeColor(context: Context): Int {
-        if (isThemeEnabled(context)) palette()?.primary?.let { return it }
+        effectivePalette(context)?.primary?.let { return it }
         return androidx.core.content.ContextCompat.getColor(context, R.color.primary)
     }
 
     fun surfaceColor(context: Context): Int {
-        if (isThemeEnabled(context)) palette()?.surface?.let { return it }
+        effectivePalette(context)?.surface?.let { return it }
         return androidx.core.content.ContextCompat.getColor(context, R.color.surface)
     }
 
@@ -156,8 +162,7 @@ object EventManager {
     }
 
     fun applyChrome(activity: Activity) {
-        val evOn = isThemeEnabled(activity)
-        val pal = if (evOn) palette() else null
+        val pal = effectivePalette(activity)
         val primary = pal?.primary ?: androidx.core.content.ContextCompat.getColor(activity, R.color.primary)
         val surface = pal?.surface ?: androidx.core.content.ContextCompat.getColor(activity, R.color.surface)
         val onPrimary = if (pal != null) Color.WHITE

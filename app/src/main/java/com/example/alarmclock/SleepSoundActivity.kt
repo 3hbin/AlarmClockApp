@@ -19,7 +19,7 @@ class SleepSoundActivity : AppCompatActivity() {
         Triple(R.raw.sleep_forest, "Rừng", "Forest")
     )
     private var raw = R.raw.sleep_ocean
-    private var title = "Tiếng sóng"
+    private var title = UiTranslate.tr("Tiếng sóng")
     private var minutes = 30
 
     override fun attachBaseContext(newBase: android.content.Context) {
@@ -66,7 +66,7 @@ class SleepSoundActivity : AppCompatActivity() {
             val opts = arrayOf("10 phút", "20 phút", "30 phút", "40 phút", "50 phút", "1 giờ", "Tự chọn")
             val values = intArrayOf(10, 20, 30, 40, 50, 60, -1)
             MaterialAlertDialogBuilder(this)
-                .setTitle("Dừng sau")
+                .setTitle(UiTranslate.tr("Dừng sau"))
                 .setSingleChoiceItems(opts, values.indexOf(minutes).coerceAtLeast(0)) { d, which ->
                     if (values[which] < 0) {
                         d.dismiss()
@@ -79,7 +79,7 @@ class SleepSoundActivity : AppCompatActivity() {
                     paint()
                     d.dismiss()
                 }
-                .setNegativeButton("Hủy", null)
+                .setNegativeButton(UiTranslate.tr("Hủy"), null)
                 .show()
         }
         findViewById<TextView>(R.id.btnPickOther).setOnClickListener {
@@ -115,16 +115,16 @@ class SleepSoundActivity : AppCompatActivity() {
             value = minutes.coerceIn(1, 180)
         }
         MaterialAlertDialogBuilder(this)
-            .setTitle("Dừng sau bao nhiêu phút")
+            .setTitle(UiTranslate.tr("Dừng sau bao nhiêu phút"))
             .setView(picker)
-            .setPositiveButton("Đặt") { _, _ ->
+            .setPositiveButton(UiTranslate.tr("Đặt")) { _, _ ->
                 minutes = picker.value
                 prefs.edit().putInt("sleep_minutes", minutes).apply()
                 if (SleepSoundService.playing) startSleep()
                 findViewById<MaterialButton>(R.id.btnSleepTimer).text =
                     if (minutes >= 60) "Dừng sau ${minutes / 60} giờ ${minutes % 60} phút" else "Dừng sau $minutes phút"
             }
-            .setNegativeButton("Hủy", null)
+            .setNegativeButton(UiTranslate.tr("Hủy"), null)
             .show()
     }
 }

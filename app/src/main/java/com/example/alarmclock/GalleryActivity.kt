@@ -37,7 +37,7 @@ class GalleryActivity : AppCompatActivity() {
         try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
         try { BottomNavHelper.bind(this, binding.curvedNav, 4) } catch (_: Exception) {}
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        title = "Bộ sưu tập"
+        title = UiTranslate.tr("Bộ sưu tập")
 
         if (!AppSettings.hasGalleryPassword(this)) {
             unlocked = true
@@ -65,7 +65,7 @@ class GalleryActivity : AppCompatActivity() {
                 unlocked = true
                 showGallery()
             } else {
-                Toast.makeText(this, "Sai mật khẩu", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Sai mật khẩu"), Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -98,7 +98,7 @@ class GalleryActivity : AppCompatActivity() {
             return
         }
         if (email.isBlank()) {
-            Toast.makeText(this, "Nhập email khôi phục đã lưu", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Nhập email khôi phục đã lưu"), Toast.LENGTH_SHORT).show()
             return
         }
         if (email.trim().lowercase() != recovery) {
@@ -114,7 +114,7 @@ class GalleryActivity : AppCompatActivity() {
                 if (sent) {
                     showGalleryOtpDialog(recovery, code)
                 } else {
-                    Toast.makeText(this, "Không gửi được OTP. Thử lại.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, UiTranslate.tr("Không gửi được OTP. Thử lại."), Toast.LENGTH_LONG).show()
                 }
             }
         }.start()
@@ -131,22 +131,22 @@ class GalleryActivity : AppCompatActivity() {
             view.findViewById<android.widget.EditText>(R.id.otp6)
         )
         val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Mã OTP từ Gmail")
+            .setTitle(UiTranslate.tr("Mã OTP từ Gmail"))
             .setMessage("Nhập mã 6 số đã gửi tới ${maskEmail(email)}")
             .setView(view)
             .setCancelable(false)
-            .setNegativeButton("Hủy", null)
+            .setNegativeButton(UiTranslate.tr("Hủy"), null)
             .create()
         view.findViewById<android.view.View>(R.id.btnConfirm)?.setOnClickListener {
             val entered = boxes.joinToString("") { it.text?.toString().orEmpty() }
             if (entered == expectedCode) {
                 AppSettings.clearGalleryPassword(this)
                 unlocked = true
-                Toast.makeText(this, "Đúng mã — mật khẩu đã xóa", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, UiTranslate.tr("Đúng mã — mật khẩu đã xóa"), Toast.LENGTH_LONG).show()
                 dialog.dismiss()
                 showGallery()
             } else {
-                Toast.makeText(this, "Sai mã", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Sai mã"), Toast.LENGTH_SHORT).show()
             }
         }
         dialog.show()
@@ -190,7 +190,7 @@ class GalleryActivity : AppCompatActivity() {
                             file.delete()
                             loadPhotos()
                         }
-                        .setNegativeButton("Đóng", null)
+                        .setNegativeButton(UiTranslate.tr("Đóng"), null)
                         .show()
                 }
             }
@@ -216,11 +216,25 @@ class GalleryActivity : AppCompatActivity() {
             return VH(v)
         }
         override fun getItemCount() = files.size
+
+        private var lastAnimated = -1
+
+        /** troll_1793019673906.jpg → "📸 26/10/2026 · 20:01" */
+        private fun prettyName(f: File): String {
+            val m = Regex("_(\\d{10,13})\\.").find(f.name)
+            val ts = m?.groupValues?.get(1)?.toLongOrNull() ?: return f.name
+            val ms = if (ts < 100_000_000_000L) ts * 1000 else ts
+            return "📸 " + java.text.SimpleDateFormat("dd/MM/yyyy · HH:mm", java.util.Locale.getDefault())
+                .format(java.util.Date(ms))
+        }
+
         override fun onBindViewHolder(holder: VH, position: Int) {
             val f = files[position]
-            holder.name.text = f.name
+            holder.name.text = prettyName(f)
             holder.img.setImageBitmap(decodeSampled(f.absolutePath, 360, 360))
             holder.itemView.setOnClickListener { onClick(f) }
+            Motion.pressable(holder.itemView)
+            lastAnimated = Motion.listItem(holder.itemView, position, lastAnimated)
         }
 
         private fun decodeSampled(path: String, reqW: Int, reqH: Int): Bitmap? {

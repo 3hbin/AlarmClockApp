@@ -62,7 +62,7 @@ class TimerActivity : AppCompatActivity() {
                     timeLeftInMillis = 0
                     isRunning = false
                     updateCountDownText()
-                    binding.btnStartPause.text = "Bắt đầu"
+                    binding.btnStartPause.text = UiTranslate.tr("Bắt đầu")
                     onTimerFinished()
                 }
             }
@@ -74,6 +74,7 @@ class TimerActivity : AppCompatActivity() {
         try {
             binding = ActivityTimerBinding.inflate(layoutInflater)
             setContentView(binding.root)
+            try { Motion.stagger(binding.btnCustom.parent as android.view.ViewGroup) } catch (_: Exception) {}
         try { EventManager.applyChrome(this) } catch (_: Exception) {}
         try { DynamicIconHelper.ensureMainEnabled(this) } catch (_: Exception) {}
         } catch (e: Exception) {
@@ -90,7 +91,7 @@ class TimerActivity : AppCompatActivity() {
         if (TimerService.isActive && TimerService.remainingMs > 0) {
             timeLeftInMillis = TimerService.remainingMs
             isRunning = true
-            binding.btnStartPause.text = "Tạm dừng"
+            binding.btnStartPause.text = UiTranslate.tr("Tạm dừng")
             binding.btnAddMinute.visibility = android.view.View.VISIBLE
             if (totalMillis < timeLeftInMillis) totalMillis = timeLeftInMillis
             updateCountDownText()
@@ -139,7 +140,7 @@ class TimerActivity : AppCompatActivity() {
 
         binding.btnCustom.setOnClickListener {
             if (isRunning) {
-                Toast.makeText(this, "Hãy tạm dừng trước", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Hãy tạm dừng trước"), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             showCustomTimeDialog()
@@ -206,17 +207,17 @@ class TimerActivity : AppCompatActivity() {
         layout.addView(col(secPicker, "Giây"))
 
         MaterialAlertDialogBuilder(this)
-            .setTitle("Chọn thời gian")
+            .setTitle(UiTranslate.tr("Chọn thời gian"))
             .setView(layout)
             .setPositiveButton("OK") { _, _ ->
                 val total = (hourPicker.value * 3600L + minPicker.value * 60L + secPicker.value) * 1000L
-                if (total <= 0) Toast.makeText(this, "Thời gian phải > 0", Toast.LENGTH_SHORT).show()
+                if (total <= 0) Toast.makeText(this, UiTranslate.tr("Thời gian phải > 0"), Toast.LENGTH_SHORT).show()
                 else {
                     timeLeftInMillis = total
                     updateCountDownText()
                 }
             }
-            .setNegativeButton("Hủy", null)
+            .setNegativeButton(UiTranslate.tr("Hủy"), null)
             .show()
     }
 
@@ -230,7 +231,7 @@ class TimerActivity : AppCompatActivity() {
 
     private fun startTimer() {
         if (timeLeftInMillis <= 0) {
-            Toast.makeText(this, "Chọn thời gian trước", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Chọn thời gian trước"), Toast.LENGTH_SHORT).show()
             return
         }
         val intent = Intent(this, TimerService::class.java).apply {
@@ -243,10 +244,10 @@ class TimerActivity : AppCompatActivity() {
         handler.removeCallbacks(overtimeTick)
         binding.ringLayout.visibility = android.view.View.GONE
         if (totalMillis < timeLeftInMillis) totalMillis = timeLeftInMillis
-        binding.btnStartPause.text = "Tạm dừng"
+        binding.btnStartPause.text = UiTranslate.tr("Tạm dừng")
         binding.btnAddMinute.visibility = android.view.View.VISIBLE
         saveLabel()
-        Toast.makeText(this, "Đếm ngược chạy nền — thoát app vẫn chạy (xem thông báo)", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, UiTranslate.tr("Đếm ngược chạy nền — thoát app vẫn chạy (xem thông báo)"), Toast.LENGTH_SHORT).show()
     }
 
     private fun pauseTimer() {
@@ -255,7 +256,7 @@ class TimerActivity : AppCompatActivity() {
         }
         startService(intent)
         isRunning = false
-        binding.btnStartPause.text = "Tiếp tục"
+        binding.btnStartPause.text = UiTranslate.tr("Tiếp tục")
     }
 
     private fun resetTimer() {
@@ -267,10 +268,10 @@ class TimerActivity : AppCompatActivity() {
         isRunning = false
         finished = false
         handler.removeCallbacks(overtimeTick)
-        binding.btnStartPause.text = "Bắt đầu"
+        binding.btnStartPause.text = UiTranslate.tr("Bắt đầu")
         binding.btnAddMinute.visibility = android.view.View.GONE
         binding.ringLayout.visibility = android.view.View.GONE
-        binding.tvStatus.text = "Sẵn sàng"
+        binding.tvStatus.text = UiTranslate.tr("Sẵn sàng")
         binding.progressRing.setProgressCompat(0, true)
         stopRinging()
         updateCountDownText()

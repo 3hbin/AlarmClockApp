@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.alarmclock.databinding.ActivityWorldClockBinding
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -412,6 +413,8 @@ class WorldClockActivity : AppCompatActivity() {
 class WorldClockAdapter(private var cities: MutableList<CityTime>) :
     RecyclerView.Adapter<WorldClockAdapter.VH>() {
 
+    private var lastAnimated = -1
+
     class VH(view: View) : RecyclerView.ViewHolder(view) {
         val tvCity: TextView = view.findViewById(R.id.tvCity)
         val tvDate: TextView = view.findViewById(R.id.tvDate)
@@ -421,6 +424,7 @@ class WorldClockAdapter(private var cities: MutableList<CityTime>) :
     fun update(newList: List<CityTime>) {
         cities.clear()
         cities.addAll(newList)
+        lastAnimated = -1
         notifyDataSetChanged()
     }
 
@@ -444,6 +448,7 @@ class WorldClockAdapter(private var cities: MutableList<CityTime>) :
         val item = cities[position]
         holder.tvCity.text = "${item.cityName} · ${item.country}"
         bindTime(holder, item)
+        lastAnimated = Motion.listItem(holder.itemView, position, lastAnimated)
     }
 
     private fun bindTime(holder: VH, item: CityTime) {
@@ -462,7 +467,24 @@ class WorldClockAdapter(private var cities: MutableList<CityTime>) :
         val offsetH = offsetMs / 3_600_000
         val offsetM = kotlin.math.abs((offsetMs / 60_000) % 60)
         val gmt = if (offsetM == 0) "GMT%+d".format(offsetH) else "GMT%+d:%02d".format(offsetH, offsetM)
-        holder.tvDate.text = "${dateFmt.format(now)} · $gmt"
+        // "Hôm nay / Ngày mai / Hôm qua" so với giờ trên máy bạn + chênh lệch giờ
+        val localCal = Calendar.getInstance()
+        val cityCal = Calendar.getInstance(tz)
+        val localKey = localCal.get(Calendar.YEAR) * 1000 + localCal.get(Calendar.DAY_OF_YEAR)
+        val cityKey = cityCal.get(Calendar.YEAR) * 1000 + cityCal.get(Calendar.DAY_OF_YEAR)
+        val en = try { Lang.isEn(holder.itemView.context) } catch (_: Exception) { false }
+        val rel = when {
+            cityKey == localKey -> if (en) "Today" else "Hôm nay"
+            cityKey > localKey -> if (en) "Tomorrow" else "Ngày mai"
+            else -> if (en) "Yesterday" else "Hôm qua"
+        }
+        val diffMin = (tz.getOffset(now.time) - TimeZone.getDefault().getOffset(now.time)) / 60_000
+        val diff = when {
+            diffMin == 0 -> if (en) "same time" else "cùng giờ"
+            diffMin % 60 == 0 -> "%+dh".format(diffMin / 60)
+            else -> "%+d:%02dh".format(diffMin / 60, kotlin.math.abs(diffMin % 60))
+        }
+        holder.tvDate.text = "$rel · ${dateFmt.format(now)} · $gmt ($diff)"
         holder.tvTime.text = timeFmt.format(now)
     }
 

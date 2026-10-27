@@ -36,7 +36,7 @@ object SpotifyHelper {
                 }
                 context.startActivity(web)
             } catch (e2: Exception) {
-                Toast.makeText(context, "Chưa cài Spotify", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, UiTranslate.tr("Chưa cài Spotify"), Toast.LENGTH_SHORT).show()
             }
         }
     }

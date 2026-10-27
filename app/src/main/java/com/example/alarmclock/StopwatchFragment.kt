@@ -67,7 +67,7 @@ class StopwatchFragment : Fragment() {
                 isRunning = false
                 stopTick()
                 updateDisplay(0L)
-                binding.btnStartPause.text = "Bắt đầu"
+                binding.btnStartPause.text = UiTranslate.tr("Bắt đầu")
             }
         } catch (_: Exception) {}
         updateDisplay(StopwatchService.currentElapsed())

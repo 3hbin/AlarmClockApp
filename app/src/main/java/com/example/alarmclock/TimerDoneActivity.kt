@@ -29,14 +29,14 @@ class TimerDoneActivity : AppCompatActivity() {
             setPadding(48, 80, 48, 80)
         }
         root.addView(TextView(this).apply {
-            text = "⏰  Hết giờ!"
+            text = UiTranslate.tr("⏰  Hết giờ!")
             setTextColor(0xFFFFFFFF.toInt())
             textSize = 32f
             gravity = Gravity.CENTER
             setPadding(0, 0, 0, 36)
         })
         root.addView(Button(this).apply {
-            text = "Tắt"
+            text = UiTranslate.tr("Tắt")
             textSize = 18f
             setBackgroundColor(0xFFE53935.toInt())
             setTextColor(0xFFFFFFFF.toInt())

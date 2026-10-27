@@ -20,9 +20,10 @@ class AlarmWidget2x2Provider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_alarm_2x2)
             val clock = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
             views.setTextViewText(R.id.tvWidget2x2Clock, clock)
+            views.setTextViewText(R.id.tvWidget2x2Title, Lang.t(context, "Báo tiếp theo", "Next alarm"))
             val next = WidgetUpdateHelper.nearestAlarm(context)
             if (next == null) {
-                views.setTextViewText(R.id.tvWidget2x2Next, "Chưa có")
+                views.setTextViewText(R.id.tvWidget2x2Next, Lang.t(context, "Chưa có", "None"))
                 views.setTextViewText(R.id.tvWidget2x2Count, "—")
             } else {
                 val a = next.first

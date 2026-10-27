@@ -18,7 +18,7 @@ class AlarmActionReceiver : BroadcastReceiver() {
                 try { AlarmRingService.stop(context) } catch (_: Exception) {}
                 // Gửi lệnh dừng cho activity nếu đang mở
                 context.sendBroadcast(Intent(ACTION_FORCE_STOP_RING).setPackage(context.packageName))
-                Toast.makeText(context, "Đã tắt báo thức từ thông báo", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, UiTranslate.tr("Đã tắt báo thức từ thông báo"), Toast.LENGTH_SHORT).show()
             }
             AlarmNotificationHelper.ACTION_SNOOZE -> {
                 // Có thể mở rộng sau

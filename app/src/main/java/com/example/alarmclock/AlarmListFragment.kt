@@ -48,9 +48,9 @@ class AlarmListFragment : Fragment() {
             },
             onDelete = { alarm ->
                 MaterialAlertDialogBuilder(ctx)
-                    .setTitle("Xóa báo thức?")
+                    .setTitle(UiTranslate.tr("Xóa báo thức?"))
                     .setMessage(alarm.label.ifBlank { "%02d:%02d".format(alarm.hour, alarm.minute) })
-                    .setPositiveButton("Xóa") { _, _ ->
+                    .setPositiveButton(UiTranslate.tr("Xóa")) { _, _ ->
                         AlarmScheduler.cancel(ctx, alarm.id)
                         alarms.removeAll { it.id == alarm.id }
                         repo.saveAlarms(alarms)
@@ -58,9 +58,9 @@ class AlarmListFragment : Fragment() {
                         updateNextAlarmBanner()
                         // Đẩy danh sách mới lên cloud để thiết bị khác không kêu
                         try { CloudSyncHelper.pushAlarms(ctx, alarms) } catch (_: Exception) {}
-                        Toast.makeText(ctx, "Đã xóa", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(ctx, UiTranslate.tr("Đã xóa"), Toast.LENGTH_SHORT).show()
                     }
-                    .setNegativeButton("Hủy", null)
+                    .setNegativeButton(UiTranslate.tr("Hủy"), null)
                     .show()
             },
             onEdit = { alarm ->
@@ -171,16 +171,16 @@ class AlarmListFragment : Fragment() {
         val lines = AlarmHistory.formatLines(ctx)
         val msg = if (lines.isEmpty()) "Chưa có lịch sử." else lines.take(30).joinToString("\n")
         MaterialAlertDialogBuilder(ctx)
-            .setTitle("Lịch sử báo thức")
+            .setTitle(UiTranslate.tr("Lịch sử báo thức"))
             .setMessage(msg)
-            .setPositiveButton("Đóng", null)
+            .setPositiveButton(UiTranslate.tr("Đóng"), null)
             .show()
     }
 
     private fun showFabMenu() {
         val ctx = context ?: return
         MaterialAlertDialogBuilder(ctx)
-            .setTitle("Bạn muốn làm gì?")
+            .setTitle(UiTranslate.tr("Bạn muốn làm gì?"))
             .setItems(arrayOf("➕ Thêm báo thức", "📷 Test quét mặt", "😊 Test 10 biểu cảm")) { _, which ->
                 when (which) {
                     0 -> startActivity(Intent(ctx, FeaturesActivity::class.java))

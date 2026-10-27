@@ -172,6 +172,15 @@
 <View android:layout_width="match_parent" android:layout_height="1dp"
     android:background="#1F808080"
     android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+<com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/swWallpaperTheme"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="Màu giao diện theo hình nền" android:textSize="16sp"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="App lấy màu chủ đạo từ hình nền điện thoại. Đổi hình nền thì màu app đổi theo."
+    android:textSize="12sp" android:textColor="?android:attr/textColorSecondary"/>
+<View android:layout_width="match_parent" android:layout_height="1dp"
+    android:background="#1F808080"
+    android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
 <TextView android:id="@+id/tvRingTheme"
     android:layout_width="match_parent" android:layout_height="wrap_content"
     android:text="Giao diện màn hình báo thức  ›" android:textSize="16sp"

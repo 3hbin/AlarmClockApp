@@ -98,10 +98,10 @@ class FaceChallengeActivity : AppCompatActivity() {
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) {
-                binding.tvFaceStatus.text = "Đang mở camera…"
+                binding.tvFaceStatus.text = UiTranslate.tr("Đang mở camera…")
                 mainHandler.postDelayed({ tryStartCamera() }, 200)
             } else {
-                Toast.makeText(this, "Cần quyền Camera để quét mặt", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, UiTranslate.tr("Cần quyền Camera để quét mặt"), Toast.LENGTH_LONG).show()
                 scheduleFallback(8000L)
             }
         }
@@ -164,18 +164,18 @@ class FaceChallengeActivity : AppCompatActivity() {
         when {
             ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 == PackageManager.PERMISSION_GRANTED -> {
-                binding.tvFaceStatus.text = "Đang mở camera…"
+                binding.tvFaceStatus.text = UiTranslate.tr("Đang mở camera…")
                 mainHandler.postDelayed({ tryStartCamera() }, 250)
             }
             else -> {
-                binding.tvFaceStatus.text = "Xin quyền Camera…"
+                binding.tvFaceStatus.text = UiTranslate.tr("Xin quyền Camera…")
                 permissionLauncher.launch(Manifest.permission.CAMERA)
             }
         }
 
         // Dự phòng chỉ sau 12s nếu camera không lên / không thấy mặt
         scheduleFallback(12_000L)
-        Toast.makeText(this, "Màn quét mặt đã mở — đưa mặt vào khung", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, UiTranslate.tr("Màn quét mặt đã mở — đưa mặt vào khung"), Toast.LENGTH_SHORT).show()
     }
 
     private fun scheduleFallback(delayMs: Long) {
@@ -224,13 +224,13 @@ class FaceChallengeActivity : AppCompatActivity() {
     private fun updateExprUi() {
         if (mode == MODE_EXPR) {
             val step = exprSteps.getOrNull(exprIndex)
-            binding.tvExprTitle.text = "10 biểu cảm — làm lần lượt"
+            binding.tvExprTitle.text = UiTranslate.tr("10 biểu cảm — làm lần lượt")
             binding.tvFaceStatus.text = "${step?.emoji ?: ""} ${step?.label ?: ""}"
             binding.tvExprProgress.text = "${exprIndex + 1} / ${exprSteps.size} — khung XANH = đạt"
         } else {
-            binding.tvExprTitle.text = "Quét mặt để tắt báo thức"
-            binding.tvFaceStatus.text = "Đưa mặt vào vòng tròn giữa màn hình"
-            binding.tvExprProgress.text = "Giữ mặt liên tục 2 giây"
+            binding.tvExprTitle.text = UiTranslate.tr("Quét mặt để tắt báo thức")
+            binding.tvFaceStatus.text = UiTranslate.tr("Đưa mặt vào vòng tròn giữa màn hình")
+            binding.tvExprProgress.text = UiTranslate.tr("Giữ mặt liên tục 2 giây")
         }
     }
 
@@ -288,16 +288,16 @@ class FaceChallengeActivity : AppCompatActivity() {
         usingFallback = true
         fallbackTaps = 0
         binding.tvFaceStatus.text = msg
-        binding.tvExprProgress.text = "Bấm «Xác nhận» 3 lần (cách nhau ≥1s) — không tắt 1 phát"
+        binding.tvExprProgress.text = UiTranslate.tr("Bấm «Xác nhận» 3 lần (cách nhau ≥1s) — không tắt 1 phát")
         binding.btnConfirmFace.isEnabled = true
         binding.btnConfirmFace.visibility = View.VISIBLE
-        binding.btnConfirmFace.text = "Xác nhận dự phòng (0/3)"
+        binding.btnConfirmFace.text = UiTranslate.tr("Xác nhận dự phòng (0/3)")
     }
 
     private fun onFallbackTap() {
         val now = System.currentTimeMillis()
         if (now - lastFallbackTap < 900) {
-            Toast.makeText(this, "Chờ 1 giây rồi bấm tiếp", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Chờ 1 giây rồi bấm tiếp"), Toast.LENGTH_SHORT).show()
             return
         }
         lastFallbackTap = now
@@ -306,7 +306,7 @@ class FaceChallengeActivity : AppCompatActivity() {
         binding.tvExprProgress.text = "Đã bấm $fallbackTaps/3"
         if (fallbackTaps >= 3) {
             facePassed = true
-            Toast.makeText(this, "Đủ 3 lần — tắt báo thức", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Đủ 3 lần — tắt báo thức"), Toast.LENGTH_SHORT).show()
             completeOk()
         } else {
             Toast.makeText(this, "Còn ${3 - fallbackTaps} lần", Toast.LENGTH_SHORT).show()
@@ -396,10 +396,10 @@ class FaceChallengeActivity : AppCompatActivity() {
             faceSeenStart = 0
             faceSeenMs = 0
             if (mode == MODE_FACE) {
-                binding.tvFaceStatus.text = "Không thấy mặt — đưa mặt vào vòng tròn"
+                binding.tvFaceStatus.text = UiTranslate.tr("Không thấy mặt — đưa mặt vào vòng tròn")
                 if (!usingFallback) {
                     binding.btnConfirmFace.isEnabled = false
-                    binding.btnConfirmFace.text = "Chưa nhận diện mặt"
+                    binding.btnConfirmFace.text = UiTranslate.tr("Chưa nhận diện mặt")
                 }
             }
             return
@@ -420,7 +420,7 @@ class FaceChallengeActivity : AppCompatActivity() {
             binding.tvExprProgress.text = "Còn ${((holdNeedMs - faceSeenMs).coerceAtLeast(0) / 100) / 10.0}s"
             if (faceSeenMs >= holdNeedMs) {
                 facePassed = true
-                binding.tvFaceStatus.text = "Nhận diện OK — đang tắt…"
+                binding.tvFaceStatus.text = UiTranslate.tr("Nhận diện OK — đang tắt…")
                 binding.btnConfirmFace.isEnabled = true
                 binding.btnConfirmFace.text = "Xong"
                 completeOk()
@@ -444,7 +444,7 @@ class FaceChallengeActivity : AppCompatActivity() {
                 lastMatchTs = 0
                 if (exprIndex >= exprSteps.size) {
                     facePassed = true
-                    binding.tvFaceStatus.text = "Đủ 10 biểu cảm!"
+                    binding.tvFaceStatus.text = UiTranslate.tr("Đủ 10 biểu cảm!")
                     completeOk()
                 } else {
                     updateExprUi()

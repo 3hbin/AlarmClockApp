@@ -264,7 +264,7 @@ object AccountSecurity {
 
     private fun askCode(activity: android.app.Activity, creating: Boolean) {
         val input = android.widget.EditText(activity).apply {
-            hint = "4 số"
+            hint = UiTranslate.tr("4 số")
             inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
         }
         androidx.appcompat.app.AlertDialog.Builder(activity)

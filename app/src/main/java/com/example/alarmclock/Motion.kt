@@ -122,13 +122,50 @@ object Motion {
             return
         }
         view.alpha = 0f
-        view.translationY = 28f * view.resources.displayMetrics.density
+        view.translationY = 22f * view.resources.displayMetrics.density
         view.animate()
             .alpha(1f).translationY(0f)
             .setStartDelay(delay)
-            .setDuration(160)
+            .setDuration(220)
             .setInterpolator(decel)
             .start()
+    }
+
+    /** Hiện lần lượt các con của một khung: trượt nhẹ từ dưới lên, cách nhau vài chục ms. */
+    fun stagger(container: android.view.ViewGroup, baseDelay: Long = 0, step: Long = 40, max: Int = 12) {
+        val n = minOf(container.childCount, max)
+        for (i in 0 until n) {
+            val c = container.getChildAt(i)
+            if (c.visibility == View.VISIBLE) slideFadeIn(c, baseDelay + i * step)
+        }
+    }
+
+    /** Dùng trong onBindViewHolder: item mới hiện lần đầu thì trượt vào, item cũ giữ nguyên. Trả về vị trí đã animate lớn nhất. */
+    fun listItem(view: View, position: Int, last: Int): Int {
+        view.animate().cancel()
+        if (!on(view) || position <= last) {
+            view.alpha = 1f
+            view.translationY = 0f
+            return last
+        }
+        slideFadeIn(view, (position % 8) * 35L)
+        return position
+    }
+
+    /** Nhấn vào thì thẻ lún nhẹ (0.97), thả ra thì bật lại. Không chặn sự kiện bấm. */
+    @android.annotation.SuppressLint("ClickableViewAccessibility")
+    fun pressable(view: View) {
+        view.setOnTouchListener { v, e ->
+            if (on(v)) {
+                when (e.actionMasked) {
+                    android.view.MotionEvent.ACTION_DOWN ->
+                        v.animate().scaleX(0.97f).scaleY(0.97f).setDuration(90).start()
+                    android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL ->
+                        v.animate().scaleX(1f).scaleY(1f).setDuration(140).start()
+                }
+            }
+            false
+        }
     }
 
     fun pulse(view: View) {

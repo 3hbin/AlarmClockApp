@@ -87,6 +87,13 @@ object UiTranslate {
         "Tắt" to "Off"
     )
 
+    /** Dịch chữ tĩnh viết trong code (Toast, hộp thoại, nhãn). Tiếng Việt thì giữ nguyên. */
+    fun tr(vi: String): String {
+        if (!Lang.isEn()) return vi
+        val key = vi.trim()
+        return map[key] ?: UiTranslateExtra.map[key] ?: vi
+    }
+
     fun apply(activity: Activity) {
         if (!Lang.isEn(activity)) return
         val root = activity.findViewById<View>(android.R.id.content) ?: return
@@ -112,6 +119,7 @@ object UiTranslate {
     private fun translate(raw: String): String {
         val key = raw.trim()
         map[key]?.let { return it }
+        UiTranslateExtra.map[key]?.let { return it }
         if (key.startsWith("THÁNG ")) return "MONTH " + key.removePrefix("THÁNG ")
         if (key.startsWith("Tháng ")) return "Month " + key.removePrefix("Tháng ")
         return raw

@@ -50,7 +50,7 @@ class RingThemeActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        title = "Giao diện báo thức"
+        title = UiTranslate.tr("Giao diện báo thức")
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         night = ThemeFix.isNight(this)
         cText = if (night) Color.WHITE else 0xFF202124.toInt()
@@ -83,12 +83,12 @@ class RingThemeActivity : AppCompatActivity() {
         col.addView(buildCustomSection(), sectionLp())
         col.addView(buildDimSection(), sectionLp())
         col.addView(TextView(this).apply {
-            text = "Thay đổi được lưu tự động và áp dụng từ lần báo thức tiếp theo."
+            text = UiTranslate.tr("Thay đổi được lưu tự động và áp dụng từ lần báo thức tiếp theo.")
             textSize = 12f
             setTextColor(cSub)
         }, sectionLp())
         col.addView(TextView(this).apply {
-            text = "Đặt lại mặc định"
+            text = UiTranslate.tr("Đặt lại mặc định")
             textSize = 15f
             setTextColor(0xFFD93025.toInt())
             setPadding(0, dp(10), 0, dp(10))
@@ -134,7 +134,7 @@ class RingThemeActivity : AppCompatActivity() {
             marginStart = -dp(25)
         })
         pvTitle = TextView(this).apply {
-            text = "BÁO THỨC"
+            text = UiTranslate.tr("BÁO THỨC")
             textSize = 10f
             letterSpacing = 0.18f
             gravity = Gravity.CENTER
@@ -155,7 +155,7 @@ class RingThemeActivity : AppCompatActivity() {
             typeface = Typeface.DEFAULT_BOLD
         }
         pvLabel = TextView(this).apply {
-            text = "Báo thức"
+            text = UiTranslate.tr("Báo thức")
             textSize = 13f
             gravity = Gravity.CENTER
         }
@@ -174,7 +174,7 @@ class RingThemeActivity : AppCompatActivity() {
             FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP
         ))
         val snooze = TextView(this).apply {
-            text = "Báo lại (5 phút)"
+            text = UiTranslate.tr("Báo lại (5 phút)")
             gravity = Gravity.CENTER
             textSize = 12f
             setTextColor(Color.WHITE)
@@ -184,7 +184,7 @@ class RingThemeActivity : AppCompatActivity() {
             }
         }
         val stop = TextView(this).apply {
-            text = "Tắt"
+            text = UiTranslate.tr("Tắt")
             gravity = Gravity.CENTER
             textSize = 13f
             typeface = Typeface.DEFAULT_BOLD
@@ -364,7 +364,7 @@ class RingThemeActivity : AppCompatActivity() {
             if (grantResults.isNotEmpty() && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 grabWallpaper()
             } else {
-                Toast.makeText(this, "Chưa cấp quyền đọc hình nền", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, UiTranslate.tr("Chưa cấp quyền đọc hình nền"), Toast.LENGTH_LONG).show()
                 refresh()
             }
         }
@@ -374,7 +374,7 @@ class RingThemeActivity : AppCompatActivity() {
     private fun buildImageSection(): View {
         val box = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val btn = TextView(this).apply {
-            text = "Chọn ảnh từ thư viện"
+            text = UiTranslate.tr("Chọn ảnh từ thư viện")
             textSize = 15f
             gravity = Gravity.CENTER
             setTextColor(Color.WHITE)
@@ -400,7 +400,7 @@ class RingThemeActivity : AppCompatActivity() {
         try {
             startActivityForResult(Intent(Intent.ACTION_GET_CONTENT).setType("image/*"), 81)
         } catch (_: Exception) {
-            Toast.makeText(this, "Không mở được thư viện ảnh", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Không mở được thư viện ảnh"), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -420,7 +420,7 @@ class RingThemeActivity : AppCompatActivity() {
                         RingTheme.save(this, cfg)
                         refresh()
                     } else {
-                        Toast.makeText(this, "Không đọc được ảnh này", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, UiTranslate.tr("Không đọc được ảnh này"), Toast.LENGTH_SHORT).show()
                     }
                 }
             }.start()
@@ -522,7 +522,7 @@ class RingThemeActivity : AppCompatActivity() {
         syncCustomBars()
         dimBar.progress = cfg.dim
         refresh()
-        Toast.makeText(this, "Đã đặt lại giao diện mặc định", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, UiTranslate.tr("Đã đặt lại giao diện mặc định"), Toast.LENGTH_SHORT).show()
     }
 
     private fun refresh() {

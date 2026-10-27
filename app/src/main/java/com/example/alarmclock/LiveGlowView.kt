@@ -101,6 +101,6 @@ class LiveGlowView(context: Context) : View(context) {
         // Mờ dần lên phía trên để vùng sáng "nhô" ra từ đáy
         c.drawRect(0f, 0f, w, h * 0.62f, fadePaint)
 
-        postInvalidateOnAnimation()
+        if (Fx.on(context)) postInvalidateOnAnimation()
     }
 }

@@ -66,6 +66,6 @@ class SleepWhiteFxView @JvmOverloads constructor(
             canvas.drawCircle(cx, cy, radius, paint)
             paint.style = Paint.Style.FILL
         }
-        postInvalidateOnAnimation()
+        if (Fx.on(context)) postInvalidateOnAnimation()
     }
 }

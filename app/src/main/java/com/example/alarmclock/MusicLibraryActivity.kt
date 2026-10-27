@@ -89,7 +89,7 @@ class MusicLibraryActivity : AppCompatActivity() {
         root.addView(head)
 
         val search = EditText(this).apply {
-            hint = "Tìm tên bài hoặc ca sĩ"
+            hint = UiTranslate.tr("Tìm tên bài hoặc ca sĩ")
             setSingleLine(true)
             imeOptions = EditorInfo.IME_ACTION_SEARCH
             setPadding((12 * d).toInt(), (10 * d).toInt(), (12 * d).toInt(), (10 * d).toInt())
@@ -143,7 +143,7 @@ class MusicLibraryActivity : AppCompatActivity() {
                 }
                 android.view.MotionEvent.ACTION_MOVE -> {
                     if (pulling && tab == TAB_SONGS && nsv.scrollY <= 4 && e.y - pullStartY > 160) {
-                        status.text = "Thả để lấy bài mới"
+                        status.text = UiTranslate.tr("Thả để lấy bài mới")
                     }
                 }
                 android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
@@ -213,7 +213,7 @@ class MusicLibraryActivity : AppCompatActivity() {
 
     private fun requestPage(reset: Boolean, randomPick: Boolean = false) {
         if (!online()) {
-            status.text = "Không có mạng. Bật mạng rồi bấm Tìm."
+            status.text = UiTranslate.tr("Không có mạng. Bật mạng rồi bấm Tìm.")
             loading.stop()
             loading.visibility = View.GONE
             if (reset) list.removeAllViews()
@@ -450,11 +450,11 @@ class MusicLibraryActivity : AppCompatActivity() {
 
     private fun playPreview(song: Song) {
         if (!online()) {
-            status.text = "Không có mạng nên không nghe thử được."
+            status.text = UiTranslate.tr("Không có mạng nên không nghe thử được.")
             return
         }
         if (song.preview.isBlank()) {
-            Toast.makeText(this, "Bài này không có đoạn nghe thử", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Bài này không có đoạn nghe thử"), Toast.LENGTH_SHORT).show()
             return
         }
         try { preview?.release() } catch (_: Exception) {}
@@ -469,8 +469,8 @@ class MusicLibraryActivity : AppCompatActivity() {
                     if (isFinishing) return@runOnUiThread
                     if (file == null) {
                         playingId = null
-                        status.text = "Zedge không phát được. Thử bài khác."
-                        Toast.makeText(this, "Không có tiếng. Thử bài khác.", Toast.LENGTH_SHORT).show()
+                        status.text = UiTranslate.tr("Zedge không phát được. Thử bài khác.")
+                        Toast.makeText(this, UiTranslate.tr("Không có tiếng. Thử bài khác."), Toast.LENGTH_SHORT).show()
                         return@runOnUiThread
                     }
                     startPlayer(file.absolutePath, true)
@@ -498,7 +498,7 @@ class MusicLibraryActivity : AppCompatActivity() {
             }
             setOnErrorListener { _, _, _ ->
                 playingId = null
-                Toast.makeText(this@MusicLibraryActivity, "Không có tiếng. Thử bài khác.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MusicLibraryActivity, UiTranslate.tr("Không có tiếng. Thử bài khác."), Toast.LENGTH_SHORT).show()
                 true
             }
             setOnCompletionListener {
@@ -543,10 +543,10 @@ class MusicLibraryActivity : AppCompatActivity() {
 
     private fun choose(song: Song) {
         if (song.preview.isBlank()) {
-            Toast.makeText(this, "Bài này không lưu được làm chuông", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Bài này không lưu được làm chuông"), Toast.LENGTH_SHORT).show()
             return
         }
-        status.text = "Đang lưu bài…"
+        status.text = UiTranslate.tr("Đang lưu bài…")
         loading.visibility = View.VISIBLE
         loading.start()
         io.execute {
@@ -578,7 +578,7 @@ class MusicLibraryActivity : AppCompatActivity() {
         try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$id"))) }
         catch (_: Exception) {
             try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$id"))) }
-            catch (_: Exception) { Toast.makeText(this, "Không mở được Google Play", Toast.LENGTH_SHORT).show() }
+            catch (_: Exception) { Toast.makeText(this, UiTranslate.tr("Không mở được Google Play"), Toast.LENGTH_SHORT).show() }
         }
     }
 

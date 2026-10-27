@@ -110,10 +110,10 @@ object TimerDoneController {
             if (act.isFinishing || act.isDestroyed) return@runOnUiThread
             try {
                 com.google.android.material.dialog.MaterialAlertDialogBuilder(act)
-                    .setTitle("⏰ Hết giờ!")
-                    .setMessage("Đếm ngược đã kết thúc. Bấm Tắt để dừng chuông.")
+                    .setTitle(UiTranslate.tr("⏰ Hết giờ!"))
+                    .setMessage(UiTranslate.tr("Đếm ngược đã kết thúc. Bấm Tắt để dừng chuông."))
                     .setCancelable(false)
-                    .setPositiveButton("Tắt") { _, _ -> dismiss(act) }
+                    .setPositiveButton(UiTranslate.tr("Tắt")) { _, _ -> dismiss(act) }
                     .show()
             } catch (_: Exception) {}
         }

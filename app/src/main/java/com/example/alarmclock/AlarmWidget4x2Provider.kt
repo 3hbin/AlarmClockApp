@@ -23,12 +23,15 @@ class AlarmWidget4x2Provider : AppWidgetProvider() {
         fun build(context: Context): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_alarm_4x2)
             val list = WidgetUpdateHelper.nextEnabledAlarms(context, 3)
+            views.setTextViewText(R.id.tvWidgetTitle, Lang.t(context, "Báo thức", "Alarms"))
+            views.setTextViewText(R.id.tvWidgetEmpty, Lang.t(context, "Chưa có báo thức", "No alarms yet"))
+            views.setTextViewText(R.id.btnWidgetAdd, Lang.t(context, "+ Thêm báo thức", "+ Add alarm"))
             views.setViewVisibility(R.id.tvWidgetEmpty, if (list.isEmpty()) View.VISIBLE else View.GONE)
             ROW_IDS.forEachIndexed { i, ids ->
                 if (i < list.size) {
                     val (alarm, _) = list[i]
                     views.setViewVisibility(ids.first, View.VISIBLE)
-                    val state = if (alarm.isEnabled) "Bật" else "Tắt"
+                    val state = if (alarm.isEnabled) Lang.t(context, "Bật", "On") else Lang.t(context, "Tắt", "Off")
                     views.setTextViewText(
                         ids.second,
                         "${WidgetUpdateHelper.formatHm(alarm)}  ${alarm.label}  · $state"

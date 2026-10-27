@@ -134,6 +134,6 @@ class LiveWaveView(context: Context) : View(context) {
                 }
             }
         }
-        postInvalidateOnAnimation()
+        if (Fx.on(context)) postInvalidateOnAnimation()
     }
 }

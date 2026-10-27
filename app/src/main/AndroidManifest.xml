@@ -273,7 +273,7 @@
         <receiver
             android:name=".AlarmWidget1x1Provider"
             android:exported="true"
-            android:label="Báo thức 1x1"
+            android:label="@string/widget_label_1x1"
             android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -285,7 +285,7 @@
         <receiver
             android:name=".AlarmWidget2x2Provider"
             android:exported="true"
-            android:label="Báo thức 2x2"
+            android:label="@string/widget_label_2x2"
             android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -297,7 +297,7 @@
         <receiver
             android:name=".AlarmWidget4x2Provider"
             android:exported="true"
-            android:label="Báo thức 4x2"
+            android:label="@string/widget_label_4x2"
             android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -309,7 +309,7 @@
         <receiver
             android:name=".AlarmWidgetClockAnalogProvider"
             android:exported="true"
-            android:label="Đồng hồ kim"
+            android:label="@string/widget_label_clock_analog"
             android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -321,7 +321,7 @@
         <receiver
             android:name=".AlarmWidgetClockDigitalProvider"
             android:exported="true"
-            android:label="Đồng hồ số"
+            android:label="@string/widget_label_clock_digital"
             android:directBootAware="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

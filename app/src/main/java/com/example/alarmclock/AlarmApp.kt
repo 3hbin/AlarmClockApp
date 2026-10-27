@@ -17,6 +17,7 @@ class AlarmApp : Application() {
     override fun onCreate() {
         super.onCreate()
         try { DynamicColors.applyToActivitiesIfAvailable(this) } catch (_: Exception) {}
+        try { Fx.applyGlobal(this) } catch (_: Throwable) {}
         // Chống sửa APK / hook — fail → process kill
         try { TamperGuard.verifyOrDie(this) } catch (_: Throwable) {
             try { android.os.Process.killProcess(android.os.Process.myPid()) } catch (_: Exception) {}
@@ -48,6 +49,15 @@ class AlarmApp : Application() {
         try { AlarmScheduler.rescheduleAll(this) } catch (_: Exception) {}
         try { ClockRecovery.run(this) } catch (_: Throwable) {}
         try { registerUnlockRecovery() } catch (_: Throwable) {}
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= 27) {
+                // Đổi hình nền → xóa bộ nhớ đệm màu để app lấy màu mới
+                android.app.WallpaperManager.getInstance(this).addOnColorsChangedListener(
+                    { _, _ -> WallpaperTheme.invalidate() },
+                    android.os.Handler(mainLooper)
+                )
+            }
+        } catch (_: Throwable) {}
         AppVisibility.install(this)
         try { AlarmWatchdogWorker.start(this) } catch (_: Exception) {}
         try {

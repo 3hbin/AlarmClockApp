@@ -68,7 +68,7 @@ class FeaturesActivity : AppCompatActivity() {
         binding.btnWeather.setOnClickListener { speakWeather() }
         binding.btnSpotify.setOnClickListener {
             SpotifyHelper.play(this)
-            Toast.makeText(this, "Đang mở Spotify…", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Đang mở Spotify…"), Toast.LENGTH_SHORT).show()
         }
         binding.btnYoutube.setOnClickListener {
             YouTubeMusicHelper.playSearch(this, "nhạc báo thức buổi sáng")
@@ -79,7 +79,7 @@ class FeaturesActivity : AppCompatActivity() {
         binding.btnCloudPull.setOnClickListener {
             CloudSyncHelper.pullAlarms(this) { list ->
                 if (list.isEmpty()) {
-                    Toast.makeText(this, "Cloud trống hoặc lỗi", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, UiTranslate.tr("Cloud trống hoặc lỗi"), Toast.LENGTH_SHORT).show()
                 } else {
                     repo.saveAlarms(list)
                     list.filter { it.isEnabled }.forEach { AlarmScheduler.schedule(this, it) }
@@ -96,17 +96,17 @@ class FeaturesActivity : AppCompatActivity() {
     private fun setupEmergency() {
         val input = EditText(this).apply {
             setText(EmergencySmsHelper.getPhone(this@FeaturesActivity))
-            hint = "Số điện thoại (vd: 0901234567)"
+            hint = UiTranslate.tr("Số điện thoại (vd: 0901234567)")
             setPadding(48, 32, 48, 32)
         }
         MaterialAlertDialogBuilder(this)
-            .setTitle("Số cứu viện (Emergency SMS)")
+            .setTitle(UiTranslate.tr("Số cứu viện (Emergency SMS)"))
             .setView(input)
-            .setPositiveButton("Lưu") { _, _ ->
+            .setPositiveButton(UiTranslate.tr("Lưu")) { _, _ ->
                 EmergencySmsHelper.setPhone(this, input.text.toString())
-                Toast.makeText(this, "Đã lưu số cứu viện", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Đã lưu số cứu viện"), Toast.LENGTH_SHORT).show()
             }
-            .setNegativeButton("Hủy", null)
+            .setNegativeButton(UiTranslate.tr("Hủy"), null)
             .show()
     }
 
@@ -143,7 +143,7 @@ class FeaturesActivity : AppCompatActivity() {
         requestLocation {
             val target = LocationHelper.getTarget(this)
             if (target == null) {
-                Toast.makeText(this, "Chưa lưu vị trí nhà. Bấm \"Lưu vị trí hiện tại\" trước.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, UiTranslate.tr("Chưa lưu vị trí nhà. Bấm \"Lưu vị trí hiện tại\" trước."), Toast.LENGTH_LONG).show()
                 return@requestLocation
             }
             LocationHelper.getLastLocation(this) { text ->
@@ -196,22 +196,22 @@ class FeaturesActivity : AppCompatActivity() {
         if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
             when (requestCode) {
                 201 -> sendEmergency()
-                202 -> { /* user can press button again */ Toast.makeText(this, "Đã cấp quyền vị trí, bấm lại nút", Toast.LENGTH_SHORT).show() }
+                202 -> { /* user can press button again */ Toast.makeText(this, UiTranslate.tr("Đã cấp quyền vị trí, bấm lại nút"), Toast.LENGTH_SHORT).show() }
             }
         } else {
-            Toast.makeText(this, "Cần cấp quyền để dùng tính năng này", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, UiTranslate.tr("Cần cấp quyền để dùng tính năng này"), Toast.LENGTH_LONG).show()
         }
     }
 
     private fun speakWeather() {
-        Toast.makeText(this, "Đang lấy thời tiết…", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, UiTranslate.tr("Đang lấy thời tiết…"), Toast.LENGTH_SHORT).show()
         thread {
             val text = WeatherHelper.fetchWeatherSummary("Hanoi")
             Handler(Looper.getMainLooper()).post {
                 val tts = TtsHelper(this)
                 tts.speak(text)
                 MaterialAlertDialogBuilder(this)
-                    .setTitle("Thời tiết")
+                    .setTitle(UiTranslate.tr("Thời tiết"))
                     .setMessage(text)
                     .setPositiveButton("OK") { _, _ -> tts.shutdown() }
                     .show()
@@ -246,7 +246,7 @@ class FeaturesActivity : AppCompatActivity() {
             if (file != null) {
                 isRecording = true
                 binding.btnDreamJournal.text = getString(R.string.stop_record)
-                Toast.makeText(this, "Đang ghi âm giấc mơ…", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, UiTranslate.tr("Đang ghi âm giấc mơ…"), Toast.LENGTH_SHORT).show()
             }
         } else {
             val file = dreamHelper?.stop()
@@ -259,12 +259,12 @@ class FeaturesActivity : AppCompatActivity() {
     private fun showSleepStats() {
         val logs = repo.getSleepLogs()
         if (logs.isEmpty()) {
-            Toast.makeText(this, "Chưa có dữ liệu ngủ", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, UiTranslate.tr("Chưa có dữ liệu ngủ"), Toast.LENGTH_SHORT).show()
             return
         }
         val msg = logs.takeLast(7).joinToString("\n") { (_, _, dur) -> "• $dur phút" }
         MaterialAlertDialogBuilder(this)
-            .setTitle("Thống kê ngủ (gần đây)")
+            .setTitle(UiTranslate.tr("Thống kê ngủ (gần đây)"))
             .setMessage(msg)
             .setPositiveButton("OK", null)
             .show()
