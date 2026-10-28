@@ -1,36 +1,33 @@
 package com.example.alarmclock
 
-import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
+import android.app.Activity
 import android.content.Context
-import android.content.pm.PackageManager
+import android.graphics.drawable.GradientDrawable
 import android.location.Geocoder
 import android.location.LocationManager
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.switchmaterial.SwitchMaterial
-import com.google.firebase.FirebaseApp
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
-import org.json.JSONArray
-import org.json.JSONObject
+import com.google.firebase.auth.FirebaseAuth
 import java.util.Locale
 
 /**
- * Bảo mật tài khoản — danh sách thiết bị đăng nhập, realtime Firestore.
- * Mỗi tài khoản có document users/{uid}/data/devices với field "list".
+ * Bảo mật tài khoản: danh sách thiết bị đăng nhập.
+ * Dữ liệu ở users/{uid}/data/devices gồm:
+ *  - "list": các thiết bị đang đăng nhập
+ *  - "revoked": id các thiết bị bị đăng xuất từ xa (máy đó tự đăng xuất khi thấy id của mình)
+ * Đọc/ghi qua REST (có thời gian chờ, báo lỗi rõ ràng).
  */
 object AccountSecurity {
     private const val PREF = "account_security"
-    private const val CHANNEL = "account_devices"
-    private var listener: ListenerRegistration? = null
+    private const val POLL_MS = 12_000L
 
     fun deviceId(context: Context): String {
         return Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID) ?: "unknown"
@@ -42,8 +39,8 @@ object AccountSecurity {
         return if (model.startsWith(maker, true)) model else "$maker $model"
     }
 
-    fun attach(activity: android.app.Activity, root: android.view.View) {
-        appCtx = activity.applicationContext
+    // ------------------------------------------------------------------ giao diện
+    fun attach(activity: Activity, root: android.view.View) {
         val host = findHost(root) ?: return
         if (host.findViewWithTag<android.view.View>("security_block") != null) return
         val d = activity.resources.displayMetrics.density
@@ -53,22 +50,23 @@ object AccountSecurity {
             setPadding(0, (18 * d).toInt(), 0, 0)
         }
         box.addView(title(activity, Lang.t(activity, "Bảo mật tài khoản", "Account security")))
-        box.addView(body(activity, Lang.t(activity, "Xem máy nào đang vào tài khoản. Có máy lạ thì đăng xuất ngay.", "See which phone is in your account. Sign it out right away.")))
+        box.addView(body(activity, Lang.t(activity,
+            "Xem máy nào đang vào tài khoản. Nhấn giữ một máy để đăng xuất máy đó.",
+            "See which phone is signed in. Long-press a phone to sign it out.")))
 
-        val list = TextView(activity).apply {
-            textSize = 14f
-            setPadding(0, (8 * d).toInt(), 0, (8 * d).toInt())
-            text = Lang.t(activity, "Đang kiểm tra thiết bị…", "Checking devices…")
+        val devBox = LinearLayout(activity).apply {
+            tag = "dev_list"
+            orientation = LinearLayout.VERTICAL
         }
-        box.addView(list)
+        box.addView(devBox)
 
         val btnSignOut = MaterialButton(activity).apply {
             text = Lang.t(activity, "Đăng xuất thiết bị này", "Sign out this device")
-            setOnClickListener {
-                signOutThisDevice(activity)
-            }
+            setOnClickListener { signOutThisDevice(activity) }
         }
-        box.addView(btnSignOut)
+        box.addView(btnSignOut, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+            topMargin = (10 * d).toInt()
+        })
 
         // Xác minh 2 bước
         val twoRow = LinearLayout(activity).apply {
@@ -93,19 +91,17 @@ object AccountSecurity {
         box.addView(body(activity, Lang.t(activity, "Bật xong, vào lại Cài đặt phải nhập mã 4 số.", "When on, opening Settings requires the 4-digit code.")))
 
         host.addView(box)
-
-        // Đăng ký máy này + lắng nghe realtime
-        registerAndWatch(activity, list)
+        registerAndWatch(activity, devBox)
     }
 
-    private fun title(activity: android.app.Activity, text: String) = TextView(activity).apply {
+    private fun title(activity: Activity, text: String) = TextView(activity).apply {
         this.text = text
         textSize = 18f
         setTextColor(0xFF1A1A1A.toInt())
         setPadding(0, 0, 0, (4 * activity.resources.displayMetrics.density).toInt())
     }
 
-    private fun body(activity: android.app.Activity, text: String) = TextView(activity).apply {
+    private fun body(activity: Activity, text: String) = TextView(activity).apply {
         this.text = text
         textSize = 13f
         setTextColor(0xFF666666.toInt())
@@ -113,7 +109,6 @@ object AccountSecurity {
     }
 
     private fun findHost(root: android.view.View): LinearLayout? {
-        // Ưu tiên LinearLayout nằm trong ScrollView (nội dung settings)
         fun walk(v: android.view.View): LinearLayout? {
             if (v is android.widget.ScrollView && v.childCount > 0) {
                 val c = v.getChildAt(0)
@@ -130,101 +125,251 @@ object AccountSecurity {
         return walk(root)
     }
 
-    private fun signOutThisDevice(activity: android.app.Activity) {
-        val id = deviceId(activity)
-        removeDevice(activity, id)
+    private fun showText(activity: Activity, box: LinearLayout, text: String) {
+        box.removeAllViews()
+        val d = activity.resources.displayMetrics.density
+        box.addView(TextView(activity).apply {
+            this.text = text
+            textSize = 14f
+            setPadding(0, (8 * d).toInt(), 0, (8 * d).toInt())
+        })
+    }
+
+    /** Vẽ danh sách thiết bị: mỗi máy một thẻ, nhấn giữ máy khác để đăng xuất từ xa. */
+    private fun renderDevices(activity: Activity, box: LinearLayout, devices: List<Map<String, Any?>>) {
+        box.removeAllViews()
+        if (devices.isEmpty()) {
+            showText(activity, box, Lang.t(activity, "Chưa có thiết bị.", "No devices yet."))
+            return
+        }
+        val d = activity.resources.displayMetrics.density
+        val me = deviceId(activity)
+        for (dev in devices) {
+            val id = dev["id"]?.toString().orEmpty()
+            val model = dev["model"]?.toString().orEmpty()
+            val place = dev["place"]?.toString().orEmpty()
+            val seen = (dev["seen"] as? Number)?.toLong() ?: 0L
+            val isMe = id == me
+            val whenText = if (seen > 0) android.text.format.DateFormat.format("dd/MM HH:mm", seen).toString() else ""
+            val lines = StringBuilder()
+            lines.append(model)
+            if (isMe) lines.append(Lang.t(activity, " · máy này", " · this phone"))
+            if (place.isNotBlank()) lines.append("\n").append(place)
+            if (whenText.isNotBlank()) lines.append("\n").append(whenText)
+            if (!isMe) lines.append("\n").append(Lang.t(activity, "Nhấn giữ để đăng xuất máy này", "Long-press to sign this phone out"))
+            val card = TextView(activity).apply {
+                text = lines.toString()
+                textSize = 14f
+                setTextColor(0xFF1A1A1A.toInt())
+                setPadding((14 * d).toInt(), (12 * d).toInt(), (14 * d).toInt(), (12 * d).toInt())
+                background = GradientDrawable().apply {
+                    cornerRadius = 16 * d
+                    setColor(if (isMe) 0xFFEEF2FF.toInt() else 0xFFFFFFFF.toInt())
+                    setStroke((1 * d).toInt(), 0xFFD6DCEB.toInt())
+                }
+                setOnLongClickListener {
+                    if (isMe) {
+                        Toast.makeText(activity, Lang.t(activity, "Dùng nút \"Đăng xuất thiết bị này\" bên dưới", "Use the \"Sign out this device\" button below"), Toast.LENGTH_SHORT).show()
+                    } else {
+                        confirmRemote(activity, id, model)
+                    }
+                    true
+                }
+            }
+            box.addView(card, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+                bottomMargin = (8 * d).toInt()
+            })
+        }
+    }
+
+    private fun confirmRemote(activity: Activity, id: String, model: String) {
+        androidx.appcompat.app.AlertDialog.Builder(activity)
+            .setTitle(Lang.t(activity, "Đăng xuất $model?", "Sign out $model?"))
+            .setMessage(Lang.t(activity,
+                "Máy này sẽ bị đăng xuất ngay khi mở app hoặc trong vài giây nếu đang mở. Máy bạn đang dùng không bị ảnh hưởng.",
+                "That phone will be signed out as soon as it opens the app, or within seconds if it is open. This phone is not affected."))
+            .setPositiveButton(Lang.t(activity, "Đăng xuất ngay", "Sign out now")) { _, _ -> revokeDevice(activity, id, model) }
+            .setNegativeButton(Lang.t(activity, "Hủy", "Cancel"), null)
+            .show()
+    }
+
+    // ------------------------------------------------------------------ đồng bộ
+    private fun signedInNow(): Boolean = try {
+        FirebaseAuth.getInstance().currentUser != null
+    } catch (_: Exception) { false }
+
+    private fun isNotFound(e: Exception?): Boolean {
+        val m = e?.message ?: return false
+        return m.contains("404") || m.contains("NOT_FOUND", true) || m.contains("not found", true)
+    }
+
+    private fun asDevices(v: Any?): List<Map<String, Any?>> {
+        val out = ArrayList<Map<String, Any?>>()
+        (v as? List<*>)?.forEach { item ->
+            (item as? Map<*, *>)?.let { m -> out.add(m.entries.associate { it.key.toString() to it.value }) }
+        }
+        return out
+    }
+
+    private fun asIds(v: Any?): MutableSet<String> =
+        (v as? List<*>)?.mapNotNull { it?.toString() }?.toMutableSet() ?: mutableSetOf()
+
+    /**
+     * Ghi máy này vào danh sách, đồng thời kiểm tra xem máy này có bị đăng xuất từ xa không.
+     * clearRevoked = true khi vừa đăng nhập lại: xóa dấu "bị đăng xuất" của máy này.
+     * then(devices, lỗi): devices = null khi có lỗi hoặc máy này vừa bị đăng xuất.
+     */
+    private fun sync(context: Context, acc: String, clearRevoked: Boolean,
+                     then: (List<Map<String, Any?>>?, String?) -> Unit) {
+        val path = "users/$acc/data/devices"
+        FirestoreRest.get(path) { data, err ->
+            if (data == null && err != null && !isNotFound(err)) {
+                then(null, err.message)
+                return@get
+            }
+            val devices = asDevices(data?.get("list"))
+            val revoked = asIds(data?.get("revoked"))
+            val me = deviceId(context)
+            if (clearRevoked) revoked.remove(me)
+
+            if (revoked.contains(me)) {
+                // Máy này đã bị đăng xuất từ máy khác: gỡ dấu rồi đăng xuất tại đây
+                revoked.remove(me)
+                FirestoreRest.set(path, mapOf("revoked" to revoked.toList())) { _ -> }
+                handleRevoked(context)
+                then(null, null)
+                return@get
+            }
+
+            val next = devices.toMutableList()
+            val idx = next.indexOfFirst { it["id"]?.toString() == me }
+            val mine = deviceMap(context)
+            if (idx >= 0) next[idx] = mine else next.add(mine)
+            val cleaned = next.filter { it["id"]?.toString() !in revoked }
+            FirestoreRest.set(path, mapOf(
+                "list" to cleaned,
+                "revoked" to revoked.toList(),
+                "updated" to System.currentTimeMillis()
+            )) { e -> then(if (e == null) cleaned else null, e?.message) }
+        }
+    }
+
+    private fun handleRevoked(context: Context) {
+        Handler(Looper.getMainLooper()).post {
+            Toast.makeText(context, "Thiết bị này đã được đăng xuất từ máy khác", Toast.LENGTH_LONG).show()
+        }
+        localSignOut(context)
+    }
+
+    private fun localSignOut(context: Context) {
         try {
             com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(
-                activity,
+                context,
                 com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN
             ).signOut()
         } catch (_: Exception) {}
-        try { com.google.firebase.auth.FirebaseAuth.getInstance().signOut() } catch (_: Exception) {}
-        Toast.makeText(activity, Lang.t(activity, "Đã đăng xuất thiết bị này", "Signed out this device"), Toast.LENGTH_SHORT).show()
-        activity.recreate()
+        try { FirebaseAuth.getInstance().signOut() } catch (_: Exception) {}
     }
 
-    /**
-     * Ghi máy này vào danh sách thiết bị trên cloud. Gọi khi mở app và ngay sau khi đăng nhập,
-     * để máy mới hiện trong danh sách mà không cần mở màn Bảo mật trước.
-     */
-    /** Bật để hiện dòng chẩn đoán trên màn Bảo mật. Xong lỗi thì đặt false (hoặc xóa). */
-    const val DEBUG_DEVICES = true
-    @Volatile private var lastWrite = "chưa ghi"
-    @Volatile private var lastRead = "chưa đọc"
-
+    /** Ghi/cập nhật máy này (gọi khi mở app). */
     fun registerThisDevice(context: Context) {
-        CloudSyncHelper.ensureSignedIn(context) { writeThisDevice(context) }
+        CloudSyncHelper.ensureSignedIn(context) { writeThisDevice(context, clearRevoked = false) }
     }
 
-    /** Ghi máy này ngay (gọi sau khi đã đăng nhập Firebase). */
-    fun writeThisDevice(context: Context) {
+    /** Gọi ngay sau khi đăng nhập Google/Firebase thành công: máy này được phép vào lại. */
+    fun signedIn(context: Context) = writeThisDevice(context, clearRevoked = true)
+
+    fun writeThisDevice(context: Context, clearRevoked: Boolean = false) {
         try {
-            val accountId = CloudSyncHelper.accountId(context)
-            if (accountId.isNullOrBlank()) { lastWrite = "không có mã tài khoản"; return }
-            writeThisDeviceRest(context, accountId) {}
-        } catch (e: Exception) { lastWrite = "lỗi: ${e.message}" }
+            if (!signedInNow()) return
+            val acc = CloudSyncHelper.accountId(context) ?: return
+            sync(context, acc, clearRevoked) { _, _ -> }
+        } catch (_: Exception) {}
     }
 
-    private fun registerAndWatch(activity: android.app.Activity, list: TextView) {
-        list.text = Lang.t(activity, "Đang kết nối…", "Connecting…")
-        CloudSyncHelper.ensureSignedIn(activity) { startWatch(activity, list) }
+    private fun registerAndWatch(activity: Activity, box: LinearLayout) {
+        showText(activity, box, Lang.t(activity, "Đang kết nối…", "Connecting…"))
+        CloudSyncHelper.ensureSignedIn(activity) { startWatch(activity, box) }
     }
 
-    private var pollTask: Runnable? = null
-
-    /** Ghi máy này rồi tải danh sách, lặp lại mỗi 8 giây khi màn đang mở. Dùng REST (có báo lỗi, không treo). */
-    private fun startWatch(activity: android.app.Activity, list: TextView) {
-        pollTask?.let { list.removeCallbacks(it) }
+    /** Tải lại danh sách mỗi vài giây khi màn đang mở. */
+    private fun startWatch(activity: Activity, box: LinearLayout) {
         val tick = object : Runnable {
             override fun run() {
-                if (!list.isAttachedToWindow) return
-                val acc = CloudSyncHelper.accountId(activity)
-                if (acc.isNullOrBlank()) {
-                    list.text = Lang.t(activity, "Chưa đăng nhập — không xem được thiết bị.", "Not signed in — cannot see devices.")
+                if (!box.isAttachedToWindow) return
+                if (!signedInNow()) {
+                    showText(activity, box, Lang.t(activity, "Chưa đăng nhập — không xem được thiết bị.", "Not signed in — cannot see devices."))
                 } else {
-                    writeThisDeviceRest(activity, acc) { loadDevicesRest(activity, list, acc) }
+                    val acc = CloudSyncHelper.accountId(activity)
+                    if (acc.isNullOrBlank()) {
+                        showText(activity, box, Lang.t(activity, "Chưa đăng nhập — không xem được thiết bị.", "Not signed in — cannot see devices."))
+                    } else {
+                        sync(activity, acc, clearRevoked = false) { devices, err ->
+                            activity.runOnUiThread {
+                                if (!box.isAttachedToWindow) return@runOnUiThread
+                                when {
+                                    devices != null -> renderDevices(activity, box, devices)
+                                    err != null -> showText(activity, box, Lang.t(activity, "Không tải được danh sách thiết bị.", "Could not load devices."))
+                                    else -> showText(activity, box, Lang.t(activity, "Thiết bị này đã đăng xuất.", "This phone has been signed out."))
+                                }
+                            }
+                        }
+                    }
                 }
-                list.postDelayed(this, 8000)
+                box.postDelayed(this, POLL_MS)
             }
         }
-        pollTask = tick
-        list.post(tick)
+        box.post(tick)
     }
 
-    /** Ghi (hoặc cập nhật) máy này vào danh sách bằng REST. */
-    private fun writeThisDeviceRest(context: Context, acc: String, then: () -> Unit) {
+    /** Gửi lệnh đăng xuất từ xa cho một máy khác. Máy đó tự đăng xuất khi nhận được. */
+    private fun revokeDevice(activity: Activity, id: String, model: String) {
+        val acc = CloudSyncHelper.accountId(activity) ?: return
         val path = "users/$acc/data/devices"
         FirestoreRest.get(path) { data, err ->
-            val current = (data?.get("list") as? List<*>)?.mapNotNull { it as? Map<*, *> }?.toMutableList()
-                ?: mutableListOf()
-            if (err != null && data == null && err.message?.contains("404") != true && err.message?.contains("NOT_FOUND") != true) {
-                lastRead = "lỗi đọc: ${err.message}"
+            if (data == null && err != null && !isNotFound(err)) {
+                activity.runOnUiThread {
+                    Toast.makeText(activity, Lang.t(activity, "Không gửi được lệnh: ${err.message}", "Could not send: ${err.message}"), Toast.LENGTH_LONG).show()
+                }
+                return@get
             }
-            val me = deviceMap(context)
-            val id = me["id"].toString()
-            val idx = current.indexOfFirst { it["id"]?.toString() == id }
-            if (idx >= 0) current[idx] = me else current.add(me)
-            FirestoreRest.set(path, mapOf("list" to current, "updated" to System.currentTimeMillis())) { e ->
-                lastWrite = if (e == null) "OK" else "lỗi ghi: ${e.message}"
-                then()
+            val devices = asDevices(data?.get("list")).filter { it["id"]?.toString() != id }
+            val revoked = asIds(data?.get("revoked"))
+            revoked.add(id)
+            FirestoreRest.set(path, mapOf(
+                "list" to devices,
+                "revoked" to revoked.toList(),
+                "updated" to System.currentTimeMillis()
+            )) { e ->
+                activity.runOnUiThread {
+                    val msg = if (e == null)
+                        Lang.t(activity, "Đã đăng xuất $model. Máy đó sẽ bị đăng xuất khi mở app.", "Signed out $model. That phone will sign out when it opens the app.")
+                    else Lang.t(activity, "Lỗi: ${e.message}", "Error: ${e.message}")
+                    Toast.makeText(activity, msg, Toast.LENGTH_LONG).show()
+                }
             }
         }
     }
 
-    private fun loadDevicesRest(activity: android.app.Activity, list: TextView, acc: String) {
-        FirestoreRest.get("users/$acc/data/devices") { data, err ->
-            activity.runOnUiThread {
-                if (!list.isAttachedToWindow) return@runOnUiThread
-                if (err != null && data == null) {
-                    lastRead = "lỗi đọc: ${err.message}"
-                    list.text = Lang.t(activity, "Không tải được danh sách thiết bị.", "Could not load devices.") + debugLine(err.message)
-                    return@runOnUiThread
+    private fun signOutThisDevice(activity: Activity) {
+        val acc = CloudSyncHelper.accountId(activity)
+        val me = deviceId(activity)
+        if (acc.isNullOrBlank() || !signedInNow()) {
+            localSignOut(activity)
+            activity.recreate()
+            return
+        }
+        val path = "users/$acc/data/devices"
+        // Gỡ máy này khỏi danh sách trước, rồi mới đăng xuất (cần token để ghi)
+        FirestoreRest.get(path) { data, _ ->
+            val devices = asDevices(data?.get("list")).filter { it["id"]?.toString() != me }
+            val revoked = asIds(data?.get("revoked"))
+            FirestoreRest.set(path, mapOf("list" to devices, "revoked" to revoked.toList())) { _ ->
+                activity.runOnUiThread {
+                    localSignOut(activity)
+                    Toast.makeText(activity, Lang.t(activity, "Đã đăng xuất thiết bị này", "Signed out this device"), Toast.LENGTH_SHORT).show()
+                    activity.recreate()
                 }
-                lastRead = "OK"
-                val devices = (data?.get("list") as? List<*>)?.mapNotNull { it as? Map<*, *> } ?: emptyList()
-                refreshList(activity, list, devices)
-                list.text = list.text.toString() + debugLine(null)
             }
         }
     }
@@ -238,50 +383,8 @@ object AccountSecurity {
         )
     }
 
-    /** Dòng chẩn đoán (chỉ khi DEBUG_DEVICES). */
-    private fun debugLine(err: String?): String {
-        if (!DEBUG_DEVICES) return ""
-        val acc = try { CloudSyncHelper.accountId(appCtx ?: return "") } catch (_: Exception) { null }
-        return "\n\n— chẩn đoán —\n" + CloudSyncHelper.authStatus() +
-            "\nMã tài khoản: " + (acc?.take(12) ?: "không có") +
-            "\nGhi thiết bị: " + lastWrite +
-            "\nĐọc danh sách: " + lastRead +
-            (if (err != null) "\nLỗi: $err" else "")
-    }
-
-    @Volatile private var appCtx: Context? = null
-
-    private fun refreshList(activity: android.app.Activity, list: TextView, devices: List<Map<*, *>>) {
-        if (devices.isEmpty()) {
-            list.text = Lang.t(activity, "Chưa có thiết bị.", "No devices yet.")
-            return
-        }
-        val me = deviceId(activity)
-        list.text = devices.joinToString("\n\n") { o ->
-            val id = o["id"]?.toString().orEmpty()
-            val model = o["model"]?.toString().orEmpty()
-            val place = o["place"]?.toString().orEmpty()
-            val seen = (o["seen"] as? Number)?.toLong() ?: 0L
-            val here = if (id == me) Lang.t(activity, " · máy này", " · this phone") else ""
-            val whenText = if (seen > 0) android.text.format.DateFormat.format("dd/MM HH:mm", seen) else ""
-            "$model$here\n$place\n$whenText"
-        }
-    }
-
-    fun removeDevice(context: Context, id: String) {
-        val accountId = CloudSyncHelper.accountId(context) ?: return
-        val ref = FirebaseFirestore.getInstance()
-            .collection("users").document(accountId)
-            .collection("data").document("devices")
-        ref.get().addOnSuccessListener { snap ->
-            val current = (snap.get("list") as? List<*>)?.mapNotNull { it as? Map<*, *> }?.toMutableList() ?: return@addOnSuccessListener
-            current.removeAll { it["id"]?.toString() == id }
-            ref.set(mapOf("list" to current, "updated" to System.currentTimeMillis()))
-        }
-    }
-
     private fun place(context: Context): String {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             return ""
         }
         return try {
@@ -297,6 +400,7 @@ object AccountSecurity {
         } catch (_: Exception) { "" }
     }
 
+    // ------------------------------------------------------------------ xác minh 2 bước
     private fun isTwoStepOn(context: Context) =
         context.getSharedPreferences(PREF, Context.MODE_PRIVATE).getBoolean("two", false)
 
@@ -307,7 +411,7 @@ object AccountSecurity {
             .apply()
     }
 
-    private fun askCode(activity: android.app.Activity, creating: Boolean) {
+    private fun askCode(activity: Activity, creating: Boolean) {
         val input = android.widget.EditText(activity).apply {
             hint = UiTranslate.tr("4 số")
             inputType = android.text.InputType.TYPE_CLASS_NUMBER or android.text.InputType.TYPE_NUMBER_VARIATION_PASSWORD
