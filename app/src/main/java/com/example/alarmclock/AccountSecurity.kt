@@ -43,6 +43,7 @@ object AccountSecurity {
     }
 
     fun attach(activity: android.app.Activity, root: android.view.View) {
+        appCtx = activity.applicationContext
         val host = findHost(root) ?: return
         if (host.findViewWithTag<android.view.View>("security_block") != null) return
         val d = activity.resources.displayMetrics.density
@@ -147,16 +148,30 @@ object AccountSecurity {
      * Ghi máy này vào danh sách thiết bị trên cloud. Gọi khi mở app và ngay sau khi đăng nhập,
      * để máy mới hiện trong danh sách mà không cần mở màn Bảo mật trước.
      */
+    /** Bật để hiện dòng chẩn đoán trên màn Bảo mật. Xong lỗi thì đặt false (hoặc xóa). */
+    const val DEBUG_DEVICES = true
+    @Volatile private var lastWrite = "chưa ghi"
+
     fun registerThisDevice(context: Context) {
+        CloudSyncHelper.ensureSignedIn(context) { writeThisDevice(context) }
+    }
+
+    /** Ghi máy này ngay (gọi sau khi đã đăng nhập Firebase). */
+    fun writeThisDevice(context: Context) {
         try {
             val accountId = CloudSyncHelper.accountId(context)
-            if (accountId.isNullOrBlank()) return
+            if (accountId.isNullOrBlank()) { lastWrite = "không có mã tài khoản"; return }
             if (FirebaseApp.getApps(context).isEmpty()) FirebaseApp.initializeApp(context)
             pushDevice(context, accountId, deviceMap(context))
-        } catch (_: Exception) {}
+        } catch (e: Exception) { lastWrite = "lỗi: ${e.message}" }
     }
 
     private fun registerAndWatch(activity: android.app.Activity, list: TextView) {
+        list.text = Lang.t(activity, "Đang kết nối…", "Connecting…")
+        CloudSyncHelper.ensureSignedIn(activity) { startWatch(activity, list) }
+    }
+
+    private fun startWatch(activity: android.app.Activity, list: TextView) {
         val accountId = CloudSyncHelper.accountId(activity)
         if (accountId.isNullOrBlank()) {
             list.text = Lang.t(activity, "Chưa đăng nhập — không xem được thiết bị.", "Not signed in — cannot see devices.")
@@ -178,14 +193,14 @@ object AccountSecurity {
             .addSnapshotListener { snap, err ->
                 if (err != null || snap == null) {
                     activity.runOnUiThread {
-                        list.text = Lang.t(activity, "Không tải được danh sách thiết bị.", "Could not load devices.")
+                        list.text = Lang.t(activity, "Không tải được danh sách thiết bị.", "Could not load devices.") + debugLine(err?.message)
                     }
                     return@addSnapshotListener
                 }
                 if (!snap.exists()) {
                     // Chưa có dữ liệu: đang ghi lần đầu, không báo lỗi
                     activity.runOnUiThread {
-                        list.text = Lang.t(activity, "Đang tải thiết bị…", "Loading devices…")
+                        list.text = Lang.t(activity, "Đang tải thiết bị…", "Loading devices…") + debugLine(null)
                     }
                     return@addSnapshotListener
                 }
@@ -197,7 +212,10 @@ object AccountSecurity {
                         else -> null
                     }
                 }
-                activity.runOnUiThread { refreshList(activity, list, devices) }
+                activity.runOnUiThread {
+                    refreshList(activity, list, devices)
+                    if (DEBUG_DEVICES) list.text = list.text.toString() + debugLine(null)
+                }
             }
     }
 
@@ -220,11 +238,27 @@ object AccountSecurity {
             val idx = current.indexOfFirst { it["id"]?.toString() == id }
             if (idx >= 0) current[idx] = me else current.add(me)
             ref.set(mapOf("list" to current, "updated" to System.currentTimeMillis()))
+                .addOnSuccessListener { lastWrite = "OK" }
+                .addOnFailureListener { e -> lastWrite = "lỗi ghi: ${e.message}" }
         }.addOnFailureListener {
             // Đọc lỗi (mạng/chưa có tài liệu): chỉ tạo mới khi ghi thử không có dữ liệu cũ để giữ
             ref.set(mapOf("list" to listOf(me), "updated" to System.currentTimeMillis()), com.google.firebase.firestore.SetOptions.merge())
+                .addOnSuccessListener { lastWrite = "OK (tạo mới)" }
+                .addOnFailureListener { e -> lastWrite = "lỗi ghi: ${e.message}" }
         }
     }
+
+    /** Dòng chẩn đoán (chỉ khi DEBUG_DEVICES). */
+    private fun debugLine(err: String?): String {
+        if (!DEBUG_DEVICES) return ""
+        val acc = try { CloudSyncHelper.accountId(appCtx ?: return "") } catch (_: Exception) { null }
+        return "\n\n— chẩn đoán —\n" + CloudSyncHelper.authStatus() +
+            "\nMã tài khoản: " + (acc?.take(12) ?: "không có") +
+            "\nGhi thiết bị: " + lastWrite +
+            (if (err != null) "\nĐọc danh sách: $err" else "")
+    }
+
+    @Volatile private var appCtx: Context? = null
 
     private fun refreshList(activity: android.app.Activity, list: TextView, devices: List<Map<*, *>>) {
         if (devices.isEmpty()) {

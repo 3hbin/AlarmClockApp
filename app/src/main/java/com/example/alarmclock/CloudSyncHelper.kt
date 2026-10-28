@@ -36,6 +36,15 @@ object CloudSyncHelper {
 
     fun accountId(context: Context): String? = uid(context)
 
+    /** Đăng nhập Firebase Auth (nếu có tài khoản Google) rồi mới chạy [then]. Dùng cho màn Bảo mật. */
+    fun ensureSignedIn(context: Context, then: () -> Unit) = ensureAuth(context, then)
+
+    /** Trạng thái đăng nhập Firebase, hiển thị để kiểm tra lỗi. */
+    fun authStatus(): String = try {
+        val u = FirebaseAuth.getInstance().currentUser
+        if (u != null) "Firebase Auth: đã đăng nhập (${u.uid.take(6)}…)" else "Firebase Auth: CHƯA đăng nhập"
+    } catch (e: Exception) { "Firebase Auth: lỗi ${e.message}" }
+
     /** Đảm bảo đã đăng nhập Firebase Auth rồi mới ghi/đọc Firestore. */
     private fun ensureAuth(context: Context, then: () -> Unit) {
         try {
@@ -50,7 +59,7 @@ object CloudSyncHelper {
             val cred = com.google.firebase.auth.GoogleAuthProvider.getCredential(token, null)
             FirebaseAuth.getInstance().signInWithCredential(cred).addOnCompleteListener { t ->
                 if (!t.isSuccessful) Log.e(TAG, "Firebase sign-in failed", t.exception)
-                else try { AccountSecurity.registerThisDevice(context) } catch (_: Exception) {}
+                else try { AccountSecurity.writeThisDevice(context) } catch (_: Exception) {}
                 then()
             }
         } catch (e: Exception) {
@@ -181,7 +190,7 @@ object CloudSyncHelper {
                 val cred = com.google.firebase.auth.GoogleAuthProvider.getCredential(acct!!.idToken!!, null)
                 FirebaseAuth.getInstance().signInWithCredential(cred).addOnCompleteListener { t ->
                     if (!t.isSuccessful) head.append("❌ Firebase Auth: ").append(t.exception?.message).append("\n")
-                    else try { AccountSecurity.registerThisDevice(context) } catch (_: Exception) {}
+                    else try { AccountSecurity.writeThisDevice(context) } catch (_: Exception) {}
                     run()
                 }
             }
@@ -318,7 +327,7 @@ object CloudSyncHelper {
                 val cred = com.google.firebase.auth.GoogleAuthProvider.getCredential(token, null)
                 FirebaseAuth.getInstance().signInWithCredential(cred).addOnCompleteListener { t ->
                     if (!t.isSuccessful) Log.e(TAG, "Firebase sign-in failed", t.exception)
-                    else try { AccountSecurity.registerThisDevice(context) } catch (_: Exception) {}
+                    else try { AccountSecurity.writeThisDevice(context) } catch (_: Exception) {}
                     onReady()
                 }
                 return
