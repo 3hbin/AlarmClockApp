@@ -1,7 +1,7 @@
 package com.example.alarmclock
 
 /**
- * Chỉ tiếng Anh (+ theo hệ thống).
+ * Các ngôn ngữ được hỗ trợ (+ theo hệ thống). Ngôn ngữ khác dùng tiếng Anh.
  */
 data class AppLanguage(
     val code: String,
@@ -17,7 +17,14 @@ object LanguageCatalog {
     const val SYSTEM = "system"
 
     val languages: List<AppLanguage> = listOf(
-        AppLanguage("en", "English", "English", "🇬🇧")
+        AppLanguage("vi", "Tiếng Việt", "Vietnamese", "🇻🇳"),
+        AppLanguage("en", "English", "English", "🇬🇧"),
+        AppLanguage("hi", "हिन्दी", "Hindi", "🇮🇳"),
+        AppLanguage("ru", "Русский", "Russian", "🇷🇺"),
+        AppLanguage("zh", "中文", "Chinese", "🇨🇳"),
+        AppLanguage("ko", "한국어", "Korean", "🇰🇷"),
+        AppLanguage("ja", "日本語", "Japanese", "🇯🇵"),
+        AppLanguage("fr", "Français", "French", "🇫🇷")
     )
 
     fun displayName(code: String): String {

@@ -261,6 +261,10 @@ object AccountSecurity {
         localSignOut(context)
     }
 
+    /**
+     * Đăng xuất đầy đủ như nút đăng xuất của app: Google, Firebase, và xóa tên / email khôi phục / ảnh
+     * đã lưu trong app. Thiếu bước xóa thông tin lưu trong app thì app vẫn coi là đang đăng nhập.
+     */
     private fun localSignOut(context: Context) {
         try {
             com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(
@@ -269,6 +273,9 @@ object AccountSecurity {
             ).signOut()
         } catch (_: Exception) {}
         try { FirebaseAuth.getInstance().signOut() } catch (_: Exception) {}
+        AppSettings.setGoogleDisplayName(context, "")
+        AppSettings.setGooglePhotoUrl(context, "")
+        AppSettings.setRecoveryEmail(context, "")
     }
 
     /** Ghi/cập nhật máy này (gọi khi mở app). */

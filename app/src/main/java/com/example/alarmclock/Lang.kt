@@ -7,23 +7,20 @@ object Lang {
     @Volatile private var cachedEn: Boolean? = null
 
     fun sync(context: Context) {
-        cachedEn = AppSettings.isEnglishUi(context)
+        LangPack.resolve(context)
     }
 
+    /** true = không phải tiếng Việt (dùng nhánh tiếng Anh / ngôn ngữ khác). */
     fun isEn(context: Context? = null): Boolean {
-        if (context != null) {
-            val v = AppSettings.isEnglishUi(context)
-            cachedEn = v
-            return v
-        }
-        cachedEn?.let { return it }
-        return Locale.getDefault().language.equals("en", true)
+        val code = if (context != null) LangPack.resolve(context) else LangPack.current()
+        return code != "vi"
     }
 
-    fun t(vi: String, en: String): String = if (isEn()) en else vi
+    fun t(vi: String, en: String): String = LangPack.text(LangPack.current(), vi, en)
 
     fun t(context: Context?, vi: String, en: String): String =
-        if (isEn(context)) en else vi
+        if (context != null) LangPack.text(LangPack.resolve(context), vi, en)
+        else LangPack.text(LangPack.current(), vi, en)
 
     fun groupName(raw: String): String {
         return when (raw.trim().lowercase()) {

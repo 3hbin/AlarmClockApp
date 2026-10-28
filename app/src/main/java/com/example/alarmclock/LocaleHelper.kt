@@ -35,8 +35,8 @@ object LocaleHelper {
             changed = true
         }
 
-        val code = AppSettings.getLanguage(context)
-        if (code != LanguageCatalog.SYSTEM && code.isNotBlank()) {
+        val code = LangPack.resolve(context)
+        run {
             val locale = localeFromCode(code)
             Locale.setDefault(locale)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {

@@ -673,7 +673,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         MaterialAlertDialogBuilder(this)
-            .setTitle(if (existing != null) "Sửa báo thức" else getString(R.string.add_alarm))
+            .setTitle(if (existing != null) UiTranslate.tr("Sửa báo thức") else getString(R.string.add_alarm))
             .setView(dialogView)
             .setPositiveButton(getString(R.string.choose_time)) { _, _ ->
                 val label = etLabel.text.toString().ifBlank { getString(R.string.app_name) }
@@ -960,7 +960,7 @@ class MainActivity : AppCompatActivity() {
                         adapter.notifyDataSetChanged()
                     }
                     1 -> {
-                        val et = EditText(this).apply { setText(alarm.note); hint = "Ghi chú ngắn" }
+                        val et = EditText(this).apply { setText(alarm.note); hint = UiTranslate.tr("Ghi chú ngắn") }
                         MaterialAlertDialogBuilder(this)
                             .setTitle(UiTranslate.tr("Ghi chú"))
                             .setView(et)
@@ -1623,7 +1623,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 .addOnFailureListener { e ->
                     try { loading.dismiss() } catch (_: Exception) {}
-                    Toast.makeText(this, e.message ?: "Đăng nhập thất bại", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, e.message ?: UiTranslate.tr("Đăng nhập thất bại"), Toast.LENGTH_LONG).show()
                 }
         }
         view.findViewById<View>(R.id.tvGoRegister).setOnClickListener {
@@ -1659,7 +1659,7 @@ class MainActivity : AppCompatActivity() {
                     showOtpDialog(email)
                 }
                 .addOnFailureListener { e ->
-                    Toast.makeText(this, e.message ?: "Đăng ký thất bại", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, e.message ?: UiTranslate.tr("Đăng ký thất bại"), Toast.LENGTH_LONG).show()
                 }
         }
         view.findViewById<View>(R.id.tvGoLogin).setOnClickListener {
@@ -1747,7 +1747,7 @@ class MainActivity : AppCompatActivity() {
             setPadding(48, 32, 48, 32)
         }
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
-            .setTitle("Email Google")
+            .setTitle(UiTranslate.tr("Email Google"))
             .setMessage(UiTranslate.tr("Lưu Gmail để khôi phục PIN và gửi nhật ký."))
             .setView(input)
             .setPositiveButton(UiTranslate.tr("Lưu")) { _, _ ->

@@ -59,7 +59,7 @@
                 android:paddingTop="4dp"
                 android:paddingEnd="10dp"
                 android:paddingBottom="4dp"
-                android:text="On/Off"
+                android:text="@string/widget_toggle_label"
                 android:textColor="#E8EEFF"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -88,7 +88,7 @@
                 android:paddingTop="4dp"
                 android:paddingEnd="10dp"
                 android:paddingBottom="4dp"
-                android:text="On/Off"
+                android:text="@string/widget_toggle_label"
                 android:textColor="#E8EEFF"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -117,7 +117,7 @@
                 android:paddingTop="4dp"
                 android:paddingEnd="10dp"
                 android:paddingBottom="4dp"
-                android:text="On/Off"
+                android:text="@string/widget_toggle_label"
                 android:textColor="#E8EEFF"
                 android:textStyle="bold" />
         </LinearLayout>

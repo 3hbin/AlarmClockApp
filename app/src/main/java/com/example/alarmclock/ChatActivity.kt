@@ -1757,7 +1757,7 @@ class ChatActivity : AppCompatActivity() {
             setOnClickListener {
                 webSearchOn = !webSearchOn
                 text = if (webSearchOn) "Tìm kiếm trang web: Bật (tự tìm khi cần)" else "Tìm kiếm trang web: Tắt"
-                Toast.makeText(this@ChatActivity, if (webSearchOn) "Đã bật tìm web" else "Đã tắt tìm web", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@ChatActivity, if (webSearchOn) UiTranslate.tr("Đã bật tìm web") else UiTranslate.tr("Đã tắt tìm web"), Toast.LENGTH_SHORT).show()
             }
         }
         box.addView(web)

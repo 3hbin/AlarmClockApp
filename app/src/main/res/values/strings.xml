@@ -174,4 +174,8 @@
     <string name="sec_alarm">Báo thức</string>
     <string name="sec_security">Bảo mật</string>
     <string name="sec_test">Thử nghiệm</string>
+    <string name="sign_in_google_btn">Đăng nhập bằng Google</string>
+    <string name="sign_in_facebook_btn">Đăng nhập bằng Facebook</string>
+    <string name="sign_in_email_btn">Đăng nhập bằng Email</string>
+    <string name="widget_toggle_label">Bật/Tắt</string>
 </resources>

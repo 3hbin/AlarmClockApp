@@ -150,4 +150,8 @@
     <string name="sec_alarm">Alarm</string>
     <string name="sec_security">Security</string>
     <string name="sec_test">Testing</string>
+    <string name="sign_in_google_btn">Sign in with Google</string>
+    <string name="sign_in_facebook_btn">Log in with Facebook</string>
+    <string name="sign_in_email_btn">Sign in with Email</string>
+    <string name="widget_toggle_label">On/Off</string>
 </resources>

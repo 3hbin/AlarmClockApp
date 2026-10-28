@@ -14,6 +14,10 @@ import java.util.Date
 import java.util.Locale
 
 class AlarmApp : Application() {
+    override fun attachBaseContext(base: android.content.Context) {
+        super.attachBaseContext(LocaleHelper.wrap(base))
+    }
+
     override fun onCreate() {
         super.onCreate()
         try { DynamicColors.applyToActivitiesIfAvailable(this) } catch (_: Exception) {}

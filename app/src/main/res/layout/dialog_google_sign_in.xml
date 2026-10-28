@@ -82,7 +82,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Sign in with Google"
+                android:text="@string/sign_in_google_btn"
                 android:textSize="15sp"
                 android:textStyle="bold"
                 android:textColor="#FF3C4043" />
@@ -108,7 +108,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Log in with Facebook"
+                android:text="@string/sign_in_facebook_btn"
                 android:textSize="15sp"
                 android:textStyle="bold"
                 android:textColor="#FF3C4043" />
@@ -134,7 +134,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Sign in with Email"
+                android:text="@string/sign_in_email_btn"
                 android:textSize="15sp"
                 android:textStyle="bold"
                 android:textColor="#FF3C4043" />

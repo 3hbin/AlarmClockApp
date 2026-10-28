@@ -89,13 +89,15 @@ object UiTranslate {
 
     /** Dịch chữ tĩnh viết trong code (Toast, hộp thoại, nhãn). Tiếng Việt thì giữ nguyên. */
     fun tr(vi: String): String {
-        if (!Lang.isEn()) return vi
+        val code = LangPack.current()
+        if (code == "vi") return vi
         val key = vi.trim()
+        LangPack.lookup(code, key)?.let { return it }
         return map[key] ?: UiTranslateExtra.map[key] ?: vi
     }
 
     fun apply(activity: Activity) {
-        if (!Lang.isEn(activity)) return
+        if (LangPack.resolve(activity) == "vi") return
         val root = activity.findViewById<View>(android.R.id.content) ?: return
         paint(root)
         root.postDelayed({ if (!activity.isFinishing) paint(root) }, 400)
@@ -118,6 +120,9 @@ object UiTranslate {
 
     private fun translate(raw: String): String {
         val key = raw.trim()
+        val code = LangPack.current()
+        if (code == "vi") return raw
+        LangPack.lookup(code, key)?.let { return it }
         map[key]?.let { return it }
         UiTranslateExtra.map[key]?.let { return it }
         if (key.startsWith("THÁNG ")) return "MONTH " + key.removePrefix("THÁNG ")
