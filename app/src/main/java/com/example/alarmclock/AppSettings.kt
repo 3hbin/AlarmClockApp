@@ -58,6 +58,10 @@ object AppSettings {
         prefs(context).edit().putBoolean("ui_animation", on).apply()
     fun isAnimationEnabled(context: Context) = prefs(context).getBoolean("ui_animation", true)
 
+    /** Cách tắt nhanh (không thử thách): QuickDismiss.NONE / SHAKE / DOUBLE_TAP / CHARGE / FINGERPRINT. */
+    fun getQuickDismiss(context: Context): Int = prefs(context).getInt("quick_dismiss", QuickDismiss.NONE)
+    fun setQuickDismiss(context: Context, mode: Int) = prefs(context).edit().putInt("quick_dismiss", mode).apply()
+
     /** Cỡ chữ: 0=bé (0.85), 1=vừa (1.0), 2=to (1.30) */
     fun setFontScaleMode(context: Context, mode: Int) =
         prefs(context).edit().putInt("font_scale_mode", mode.coerceIn(0, 2)).apply()

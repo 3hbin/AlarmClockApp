@@ -48,6 +48,7 @@ data class Alarm(
         const val CHALLENGE_ALL = 11         // tất cả thử thách (khó)
         const val CHALLENGE_ALL_EASY = 12    // tất cả — dễ, không mất ngủ
         const val CHALLENGE_QR = 13          // quét mã QR
+        // 14 và 15 từng là thử thách chạm 2 ngón / cắm sạc — đã gỡ, báo thức cũ dùng 14/15 sẽ coi như không có thử thách
 
         fun challengeLabel(type: Int): String = when (type) {
             CHALLENGE_MATH -> Lang.t(null, "Giải toán (1 bài)", "Math (1)")

@@ -188,6 +188,17 @@
 <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
     android:text="Chọn mẫu đẹp, hình nền điện thoại, ảnh của bạn hoặc đổi màu theme cho màn hình báo thức."
     android:textSize="12sp" android:textColor="?android:attr/textColorSecondary"/>
+<View android:layout_width="match_parent" android:layout_height="1dp"
+    android:background="#1F808080"
+    android:layout_marginTop="12dp" android:layout_marginBottom="12dp"/>
+<TextView android:id="@+id/tvQuickDismiss"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="Cách tắt báo thức nhanh  ›" android:textSize="16sp"
+    android:paddingTop="6dp" android:paddingBottom="6dp"/>
+<TextView android:id="@+id/tvQuickDismissValue"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:text="Nút tắt (mặc định)"
+    android:textSize="12sp" android:textColor="?android:attr/textColorSecondary"/>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>
 <TextView android:layout_width="match_parent" android:layout_height="wrap_content"

@@ -7,6 +7,8 @@ import android.content.IntentFilter
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
+import android.view.MotionEvent
+import androidx.core.content.ContextCompat
 import android.hardware.SensorManager
 import android.media.AudioAttributes
 import android.media.AudioManager
@@ -320,6 +322,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
         repeatMode = intent.getIntExtra("REPEAT_MODE", Alarm.REPEAT_DAILY)
         ringtoneUri = intent.getStringExtra("RINGTONE_URI")
         challengeType = intent.getIntExtra("CHALLENGE_TYPE", Alarm.CHALLENGE_NONE)
+        if (challengeType == 14 || challengeType == 15) challengeType = Alarm.CHALLENGE_NONE
         isStrictAntiSnooze = intent.getBooleanExtra("STRICT_ANTI_SNOOZE", false)
         voiceNote = intent.getStringExtra("VOICE_NOTE")
         try {
@@ -397,6 +400,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
         scheduleRingTimeout()
         enforceAntiTroll()
         setupChallengeUi()
+        setupQuickDismiss()
 
         val repo = AlarmRepository(this)
         if (repo.isFlashEnabled()) {
@@ -470,6 +474,72 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
      * Hiển thị đúng loại thử thách (Toán / Lắc máy / Không có) và ẩn nút Tắt
      * mặc định cho tới khi thử thách được hoàn thành.
      */
+    // ---- chạm 2 ngón & cắm sạc
+    private var chargeReceiver: BroadcastReceiver? = null
+
+    private var quickGesture: android.view.GestureDetector? = null
+
+    /** Cách tắt nhanh từ Cài đặt — chỉ áp dụng khi báo thức KHÔNG có thử thách. */
+    private fun setupQuickDismiss() {
+        if (challengeType != Alarm.CHALLENGE_NONE) return
+        val repo = AlarmRepository(this)
+        when (AppSettings.getQuickDismiss(this)) {
+            QuickDismiss.SHAKE -> {
+                quickShake = true
+                sensorManager = getSystemService(Context.SENSOR_SERVICE) as? SensorManager
+                accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)
+                    ?: sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+                accelerometer?.let { sensorManager?.registerListener(this, it, SensorManager.SENSOR_DELAY_FASTEST) }
+            }
+            QuickDismiss.DOUBLE_TAP -> {
+                quickGesture = android.view.GestureDetector(this, object : android.view.GestureDetector.SimpleOnGestureListener() {
+                    override fun onDoubleTap(e: MotionEvent): Boolean {
+                        requestDismiss(repo)
+                        return true
+                    }
+                })
+            }
+            QuickDismiss.CHARGE -> {
+                if (chargeReceiver == null) {
+                    val r = object : BroadcastReceiver() {
+                        override fun onReceive(context: Context?, intent: android.content.Intent?) {
+                            if (intent?.action == android.content.Intent.ACTION_POWER_CONNECTED) requestDismiss(repo)
+                        }
+                    }
+                    chargeReceiver = r
+                    try {
+                        ContextCompat.registerReceiver(this, r,
+                            IntentFilter(android.content.Intent.ACTION_POWER_CONNECTED),
+                            ContextCompat.RECEIVER_EXPORTED)
+                    } catch (_: Exception) {}
+                }
+            }
+            QuickDismiss.FINGERPRINT -> {
+                binding.root.postDelayed({
+                    if (isFinishing || !BiometricHelper.canAuthenticate(this)) return@postDelayed
+                    BiometricHelper.authenticate(
+                        this,
+                        title = Lang.t(this, "Vân tay để tắt báo thức", "Fingerprint to stop the alarm"),
+                        onSuccess = { requestDismiss(repo) },
+                        onError = { _, _ -> }
+                    )
+                }, 700)
+            }
+        }
+    }
+
+    private var quickShake = false
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        quickGesture?.onTouchEvent(ev)
+        return super.dispatchTouchEvent(ev)
+    }
+
+    private fun stopChargeChallenge() {
+        chargeReceiver?.let { try { unregisterReceiver(it) } catch (_: Exception) {} }
+        chargeReceiver = null
+    }
+
     private fun hideAllChallenges() {
         binding.layoutMathChallenge.visibility = View.GONE
         binding.layoutShakeChallenge.visibility = View.GONE
@@ -926,7 +996,7 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
     override fun onSensorChanged(event: SensorEvent?) {
         // CHALLENGE_SHAKE và CHALLENGE_SHAKE100 (chuỗi TẤT CẢ) đều cần đếm lắc
         val isShake = challengeType == Alarm.CHALLENGE_SHAKE ||
-            challengeType == Alarm.CHALLENGE_SHAKE100
+            challengeType == Alarm.CHALLENGE_SHAKE100 || quickShake
         if (!isShake || event == null) return
         val x = event.values[0]
         val y = event.values[1]
@@ -949,6 +1019,10 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
             runOnUiThread {
                 binding.tvShakeProgress.text =
                     getString(R.string.shake_progress, currentShakeCount, shakeTargetCount)
+            }
+            if (quickShake) {
+                runOnUiThread { requestDismiss(AlarmRepository(this)) }
+                return
             }
             if (currentShakeCount >= shakeTargetCount) {
                 runOnUiThread { onChallengeStepComplete() }
@@ -1510,6 +1584,8 @@ private fun launchFaceChallenge(mode: Int = FaceChallengeActivity.MODE_EXPR) {
     }
 
     override fun onDestroy() {
+        try { sensorManager?.unregisterListener(this) } catch (_: Exception) {}
+        try { stopChargeChallenge() } catch (_: Exception) {}
         try { restoreFocusMode() } catch (_: Exception) {}
         try { RippleRingsEffect.stop(this) } catch (_: Exception) {}
         stopReadTimer()

@@ -113,6 +113,8 @@ class SettingsActivity : AppCompatActivity() {
             }
         } catch (_: Exception) {}
         try {
+            findViewById<android.view.View>(R.id.tvQuickDismiss)?.setOnClickListener { showQuickDismissPicker() }
+            refreshQuickDismissValue()
             findViewById<android.view.View>(R.id.tvRingTheme)?.setOnClickListener {
                 startActivity(android.content.Intent(this, RingThemeActivity::class.java))
             }
@@ -855,5 +857,27 @@ binding.switchAntiTroll.setCheckedSilent(AppSettings.isAntiTroll(this))
         binding.cardStyleButton.setOnClickListener { pick(0, binding.cardStyleButton) }
         binding.cardStyleSwipe.setOnClickListener { pick(1, binding.cardStyleSwipe) }
         render()
+    }
+
+    private fun refreshQuickDismissValue() {
+        try {
+            findViewById<android.widget.TextView>(R.id.tvQuickDismissValue)?.text =
+                QuickDismiss.label(AppSettings.getQuickDismiss(this))
+        } catch (_: Exception) {}
+    }
+
+    private fun showQuickDismissPicker() {
+        val modes = QuickDismiss.all
+        val labels = modes.map { QuickDismiss.label(it) }.toTypedArray()
+        val cur = modes.indexOf(AppSettings.getQuickDismiss(this)).coerceAtLeast(0)
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(Lang.t(this, "Cách tắt báo thức nhanh", "Quick stop gesture"))
+            .setSingleChoiceItems(labels, cur) { d, which ->
+                AppSettings.setQuickDismiss(this, modes[which])
+                refreshQuickDismissValue()
+                d.dismiss()
+            }
+            .setNegativeButton(Lang.t(this, "Đóng", "Close"), null)
+            .show()
     }
 }
