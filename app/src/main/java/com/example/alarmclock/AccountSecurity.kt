@@ -151,6 +151,7 @@ object AccountSecurity {
     /** Bật để hiện dòng chẩn đoán trên màn Bảo mật. Xong lỗi thì đặt false (hoặc xóa). */
     const val DEBUG_DEVICES = true
     @Volatile private var lastWrite = "chưa ghi"
+    @Volatile private var lastRead = "chưa đọc"
 
     fun registerThisDevice(context: Context) {
         CloudSyncHelper.ensureSignedIn(context) { writeThisDevice(context) }
@@ -161,8 +162,7 @@ object AccountSecurity {
         try {
             val accountId = CloudSyncHelper.accountId(context)
             if (accountId.isNullOrBlank()) { lastWrite = "không có mã tài khoản"; return }
-            if (FirebaseApp.getApps(context).isEmpty()) FirebaseApp.initializeApp(context)
-            pushDevice(context, accountId, deviceMap(context))
+            writeThisDeviceRest(context, accountId) {}
         } catch (e: Exception) { lastWrite = "lỗi: ${e.message}" }
     }
 
@@ -171,52 +171,62 @@ object AccountSecurity {
         CloudSyncHelper.ensureSignedIn(activity) { startWatch(activity, list) }
     }
 
+    private var pollTask: Runnable? = null
+
+    /** Ghi máy này rồi tải danh sách, lặp lại mỗi 8 giây khi màn đang mở. Dùng REST (có báo lỗi, không treo). */
     private fun startWatch(activity: android.app.Activity, list: TextView) {
-        val accountId = CloudSyncHelper.accountId(activity)
-        if (accountId.isNullOrBlank()) {
-            list.text = Lang.t(activity, "Chưa đăng nhập — không xem được thiết bị.", "Not signed in — cannot see devices.")
-            return
-        }
-        try {
-            if (FirebaseApp.getApps(activity).isEmpty()) FirebaseApp.initializeApp(activity)
-        } catch (_: Exception) {}
-
-        val me = deviceMap(activity)
-        // Đẩy máy này lên trước
-        pushDevice(activity, accountId, me)
-
-        // Lắng nghe realtime
-        listener?.remove()
-        listener = FirebaseFirestore.getInstance()
-            .collection("users").document(accountId)
-            .collection("data").document("devices")
-            .addSnapshotListener { snap, err ->
-                if (err != null || snap == null) {
-                    activity.runOnUiThread {
-                        list.text = Lang.t(activity, "Không tải được danh sách thiết bị.", "Could not load devices.") + debugLine(err?.message)
-                    }
-                    return@addSnapshotListener
+        pollTask?.let { list.removeCallbacks(it) }
+        val tick = object : Runnable {
+            override fun run() {
+                if (!list.isAttachedToWindow) return
+                val acc = CloudSyncHelper.accountId(activity)
+                if (acc.isNullOrBlank()) {
+                    list.text = Lang.t(activity, "Chưa đăng nhập — không xem được thiết bị.", "Not signed in — cannot see devices.")
+                } else {
+                    writeThisDeviceRest(activity, acc) { loadDevicesRest(activity, list, acc) }
                 }
-                if (!snap.exists()) {
-                    // Chưa có dữ liệu: đang ghi lần đầu, không báo lỗi
-                    activity.runOnUiThread {
-                        list.text = Lang.t(activity, "Đang tải thiết bị…", "Loading devices…") + debugLine(null)
-                    }
-                    return@addSnapshotListener
-                }
-                val raw = snap.get("list") as? List<*> ?: emptyList<Any>()
-                val devices = raw.mapNotNull { item ->
-                    when (item) {
-                        is Map<*, *> -> item
-                        is String -> try { JSONObject(item).let { mapOf("id" to it.optString("id"), "model" to it.optString("model"), "place" to it.optString("place"), "seen" to it.optLong("seen")) } } catch (_: Exception) { null }
-                        else -> null
-                    }
-                }
-                activity.runOnUiThread {
-                    refreshList(activity, list, devices)
-                    if (DEBUG_DEVICES) list.text = list.text.toString() + debugLine(null)
-                }
+                list.postDelayed(this, 8000)
             }
+        }
+        pollTask = tick
+        list.post(tick)
+    }
+
+    /** Ghi (hoặc cập nhật) máy này vào danh sách bằng REST. */
+    private fun writeThisDeviceRest(context: Context, acc: String, then: () -> Unit) {
+        val path = "users/$acc/data/devices"
+        FirestoreRest.get(path) { data, err ->
+            val current = (data?.get("list") as? List<*>)?.mapNotNull { it as? Map<*, *> }?.toMutableList()
+                ?: mutableListOf()
+            if (err != null && data == null && err.message?.contains("404") != true && err.message?.contains("NOT_FOUND") != true) {
+                lastRead = "lỗi đọc: ${err.message}"
+            }
+            val me = deviceMap(context)
+            val id = me["id"].toString()
+            val idx = current.indexOfFirst { it["id"]?.toString() == id }
+            if (idx >= 0) current[idx] = me else current.add(me)
+            FirestoreRest.set(path, mapOf("list" to current, "updated" to System.currentTimeMillis())) { e ->
+                lastWrite = if (e == null) "OK" else "lỗi ghi: ${e.message}"
+                then()
+            }
+        }
+    }
+
+    private fun loadDevicesRest(activity: android.app.Activity, list: TextView, acc: String) {
+        FirestoreRest.get("users/$acc/data/devices") { data, err ->
+            activity.runOnUiThread {
+                if (!list.isAttachedToWindow) return@runOnUiThread
+                if (err != null && data == null) {
+                    lastRead = "lỗi đọc: ${err.message}"
+                    list.text = Lang.t(activity, "Không tải được danh sách thiết bị.", "Could not load devices.") + debugLine(err.message)
+                    return@runOnUiThread
+                }
+                lastRead = "OK"
+                val devices = (data?.get("list") as? List<*>)?.mapNotNull { it as? Map<*, *> } ?: emptyList()
+                refreshList(activity, list, devices)
+                list.text = list.text.toString() + debugLine(null)
+            }
+        }
     }
 
     private fun deviceMap(context: Context): Map<String, Any> {
@@ -228,26 +238,6 @@ object AccountSecurity {
         )
     }
 
-    private fun pushDevice(context: Context, accountId: String, me: Map<String, Any>) {
-        val ref = FirebaseFirestore.getInstance()
-            .collection("users").document(accountId)
-            .collection("data").document("devices")
-        ref.get().addOnSuccessListener { snap ->
-            val current = (snap.get("list") as? List<*>)?.mapNotNull { it as? Map<*, *> }?.toMutableList() ?: mutableListOf()
-            val id = me["id"].toString()
-            val idx = current.indexOfFirst { it["id"]?.toString() == id }
-            if (idx >= 0) current[idx] = me else current.add(me)
-            ref.set(mapOf("list" to current, "updated" to System.currentTimeMillis()))
-                .addOnSuccessListener { lastWrite = "OK" }
-                .addOnFailureListener { e -> lastWrite = "lỗi ghi: ${e.message}" }
-        }.addOnFailureListener {
-            // Đọc lỗi (mạng/chưa có tài liệu): chỉ tạo mới khi ghi thử không có dữ liệu cũ để giữ
-            ref.set(mapOf("list" to listOf(me), "updated" to System.currentTimeMillis()), com.google.firebase.firestore.SetOptions.merge())
-                .addOnSuccessListener { lastWrite = "OK (tạo mới)" }
-                .addOnFailureListener { e -> lastWrite = "lỗi ghi: ${e.message}" }
-        }
-    }
-
     /** Dòng chẩn đoán (chỉ khi DEBUG_DEVICES). */
     private fun debugLine(err: String?): String {
         if (!DEBUG_DEVICES) return ""
@@ -255,7 +245,8 @@ object AccountSecurity {
         return "\n\n— chẩn đoán —\n" + CloudSyncHelper.authStatus() +
             "\nMã tài khoản: " + (acc?.take(12) ?: "không có") +
             "\nGhi thiết bị: " + lastWrite +
-            (if (err != null) "\nĐọc danh sách: $err" else "")
+            "\nĐọc danh sách: " + lastRead +
+            (if (err != null) "\nLỗi: $err" else "")
     }
 
     @Volatile private var appCtx: Context? = null
