@@ -204,9 +204,13 @@ class AlarmRingService : Service() {
             afd.close()
             mp.isLooping = true
             mp.prepare()
+            // Âm lượng theo thanh "Âm lượng báo thức" trong Cài đặt (tối thiểu 10% để vẫn nghe được)
+            val target = (AppSettings.getAlarmVolume(this) / 100f).coerceIn(0.10f, 1f)
             if (useCrescendoNow) {
-                mp.setVolume(0.08f, 0.08f)
-                startCrescendo(mp)
+                mp.setVolume(0.08f.coerceAtMost(target), 0.08f.coerceAtMost(target))
+                startCrescendo(mp, target)
+            } else {
+                mp.setVolume(target, target)
             }
             mp.start()
             player = mp
@@ -240,7 +244,7 @@ class AlarmRingService : Service() {
         }, 700L)
     }
 
-    private fun startCrescendo(mp: MediaPlayer) {
+    private fun startCrescendo(mp: MediaPlayer, target: Float = 1f) {
         crescendoHandler?.removeCallbacksAndMessages(null)
         val h = android.os.Handler(mainLooper)
         crescendoHandler = h
@@ -248,10 +252,10 @@ class AlarmRingService : Service() {
         val run = object : Runnable {
             override fun run() {
                 try {
-                    val v = (0.08f + step * 0.08f).coerceAtMost(1f)
+                    val v = (0.08f + step * 0.08f).coerceAtMost(target)
                     mp.setVolume(v, v)
                     step++
-                    if (v < 1f && player === mp) h.postDelayed(this, 1500L)
+                    if (v < target && player === mp) h.postDelayed(this, 1500L)
                 } catch (_: Exception) {}
             }
         }

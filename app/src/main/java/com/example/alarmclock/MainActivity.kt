@@ -1813,7 +1813,9 @@ class MainActivity : AppCompatActivity() {
             packageManager.getPackageInfo(packageName, 0).versionName ?: "3.87"
         } catch (_: Exception) { "3.87" }
         val code = try {
-            packageManager.getPackageInfo(packageName, 0).longVersionCode
+            val pi = packageManager.getPackageInfo(packageName, 0)
+            // longVersionCode chỉ có từ Android 9; Android 8 dùng versionCode
+            if (android.os.Build.VERSION.SDK_INT >= 28) pi.longVersionCode else pi.versionCode.toLong()
         } catch (_: Exception) { 95L }
         com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
             .setTitle(UiTranslate.tr("ℹ️ Phiên bản"))
