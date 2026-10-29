@@ -12,6 +12,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationManagerCompat
 
 /**
@@ -236,6 +237,9 @@ object AlarmNotificationHelper {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_STATUS)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            if (Build.VERSION.SDK_INT >= 33 &&
+                ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) return
             NotificationManagerCompat.from(context).notify(id, builder.build())
         } catch (_: Exception) {
         }
