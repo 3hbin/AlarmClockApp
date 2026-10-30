@@ -204,8 +204,8 @@ class AlarmRingService : Service() {
             afd.close()
             mp.isLooping = true
             mp.prepare()
-            // Âm lượng theo thanh "Âm lượng báo thức" trong Cài đặt (tối thiểu 10% để vẫn nghe được)
-            val target = (AppSettings.getAlarmVolume(this) / 100f).coerceIn(0.10f, 1f)
+            // Âm lượng theo thanh "Âm lượng báo thức" trong Cài đặt. 0% = tắt tiếng hẳn.
+            val target = (AppSettings.getAlarmVolume(this) / 100f).coerceIn(0f, 1f)
             if (useCrescendoNow) {
                 mp.setVolume(0.08f.coerceAtMost(target), 0.08f.coerceAtMost(target))
                 startCrescendo(mp, target)

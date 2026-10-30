@@ -47,6 +47,8 @@ object RippleRingsEffect {
 
     fun startCallVibration(context: Context) {
         try {
+            // Chỉ rung khi công tắc "Chế độ rung" trong Cài đặt đang bật
+            if (!AppSettings.isVibrate(context)) return
             val vib = getVibrator(context) ?: return
             vibrator = vib
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
