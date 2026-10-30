@@ -22,6 +22,7 @@ class AlarmApp : Application() {
         super.onCreate()
         try { DynamicColors.applyToActivitiesIfAvailable(this) } catch (_: Exception) {}
         try { Fx.applyGlobal(this) } catch (_: Throwable) {}
+        try { CenteredColumn.install(this) } catch (_: Throwable) {}
         // Ghi máy này vào danh sách thiết bị (nếu đã đăng nhập) để máy mới hiện đúng lúc
         try {
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({

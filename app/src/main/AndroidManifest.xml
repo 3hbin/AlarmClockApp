@@ -190,7 +190,7 @@
             android:launchMode="singleTop"
             android:theme="@style/Theme.AlarmClock.FullScreen" />
         <receiver android:name=".TimerDoneReceiver" android:exported="false" />
-        <activity android:name=".ChatActivity" android:exported="false" android:screenOrientation="portrait" android:windowSoftInputMode="adjustResize" android:theme="@style/Theme.AlarmClock" />
+        <activity android:name=".ChatActivity" android:exported="false" android:windowSoftInputMode="adjustResize" android:theme="@style/Theme.AlarmClock" />
         <activity android:name=".GeminiLiveActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
         <receiver android:name=".WaterReceiver" android:exported="false" />
         <activity android:name=".SleepSoundActivity" android:exported="false" android:theme="@style/Theme.AlarmClock" />
