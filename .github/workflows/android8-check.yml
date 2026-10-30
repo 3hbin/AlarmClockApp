@@ -63,7 +63,6 @@ jobs:
             adb shell monkey -p com.alarmclock.dongho -c android.intent.category.LAUNCHER 1
             sleep 15
             adb shell pidof com.alarmclock.dongho || (echo "App is not running"; exit 1)
-            if adb logcat -d | grep -E "FATAL EXCEPTION|AndroidRuntime.*com.alarmclock"; then
-              echo "Crash found on Android 8"; exit 1
-            fi
+            adb logcat -d > logcat.txt || true
+            ! grep -qE "FATAL EXCEPTION|AndroidRuntime.*com.alarmclock" logcat.txt || { echo "Crash found on Android 8"; exit 1; }
             echo "App launched on Android 8 without crash"
