@@ -1,3 +1,4 @@
+<img width="216" height="216" alt="ic_launcher_night_fg" src="https://github.com/user-attachments/assets/53451331-e5ae-4886-946d-6ac75e8a48f6" />
 # Báo thức Challenge
 
 App đồng hồ báo thức cho điện thoại Android.
