@@ -237,7 +237,7 @@ class MusicLibraryActivity : AppCompatActivity() {
                 if (filled) break
                 var n = 0
                 while (n < tries && !filled) {
-                    val pickPage = if (randomPick) (0..2).random() else p + n
+                    val pickPage = if (randomPick) (0..6).random() else p + n
                     val batch = fetch(queryTry, pickPage).shuffled()
                     for (song in batch) {
                         if (pool.none { sameSong(it, song) }) pool.add(song)
@@ -261,10 +261,12 @@ class MusicLibraryActivity : AppCompatActivity() {
                 if (randomPick) {
                     shown.clear()
                     shown.addAll(pick)
+                    shown.sortByDescending { it.year }
                     showTracks(shown)
                 } else {
                     shown.addAll(pick)
-                    if (reset) showTracks(shown) else appendTracks(pick)
+                    shown.sortByDescending { it.year }
+                    showTracks(shown)
                 }
                 hasMore = true
                 status.text = "${titleOf()} · ${shown.size} bài · kéo xuống để lấy bài mới"
@@ -347,10 +349,9 @@ class MusicLibraryActivity : AppCompatActivity() {
                 val o = arr.getJSONObject(i)
                 val title = o.optString("trackName")
                 if (title.isBlank()) continue
-                val yr = o.optString("releaseDate").take(4).toIntOrNull()
-                if (yr != null && yr < 2025) continue
+                val yr = o.optString("releaseDate").take(4).toIntOrNull() ?: 0
                 add(Song(o.optLong("trackId").toString(), title, o.optString("artistName"),
-                    o.optString("artworkUrl100"), o.optString("previewUrl")))
+                    o.optString("artworkUrl100"), o.optString("previewUrl"), yr))
             }
         }
         } catch (_: Exception) { emptyList() }
@@ -699,7 +700,7 @@ class MusicLibraryActivity : AppCompatActivity() {
         return (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
     }
 
-    data class Song(val id: String, val title: String, val artist: String, val cover: String, val preview: String)
+    data class Song(val id: String, val title: String, val artist: String, val cover: String, val preview: String, val year: Int = 0)
 
     class WaveView(context: Context) : View(context) {
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFF5B6CFF.toInt() }
