@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:background="#FFFFFFFF">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Xác minh tài khoản Challenge"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="#FF202124"
+        android:gravity="center"
+        android:layout_marginBottom="16dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="12dp">
+        <EditText android:id="@+id/otp1" android:layout_width="40dp" android:layout_height="48dp" android:gravity="center" android:inputType="number" android:maxLength="1" android:background="@drawable/bg_google_sign_in" android:layout_margin="4dp" />
+        <EditText android:id="@+id/otp2" android:layout_width="40dp" android:layout_height="48dp" android:gravity="center" android:inputType="number" android:maxLength="1" android:background="@drawable/bg_google_sign_in" android:layout_margin="4dp" />
+        <EditText android:id="@+id/otp3" android:layout_width="40dp" android:layout_height="48dp" android:gravity="center" android:inputType="number" android:maxLength="1" android:background="@drawable/bg_google_sign_in" android:layout_margin="4dp" />
+        <EditText android:id="@+id/otp4" android:layout_width="40dp" android:layout_height="48dp" android:gravity="center" android:inputType="number" android:maxLength="1" android:background="@drawable/bg_google_sign_in" android:layout_margin="4dp" />
+        <EditText android:id="@+id/otp5" android:layout_width="40dp" android:layout_height="48dp" android:gravity="center" android:inputType="number" android:maxLength="1" android:background="@drawable/bg_google_sign_in" android:layout_margin="4dp" />
+        <EditText android:id="@+id/otp6" android:layout_width="40dp" android:layout_height="48dp" android:gravity="center" android:inputType="number" android:maxLength="1" android:background="@drawable/bg_google_sign_in" android:layout_margin="4dp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvResend"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Gửi lại mã sau 59s"
+        android:textColor="#FF5F6368"
+        android:gravity="center"
+        android:layout_marginBottom="12dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnConfirm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Xác nhận" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="8dp">
+        <TextView
+            android:id="@+id/tvEditEmail"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Sửa Email"
+            android:textColor="#FF1A73E8"
+            android:gravity="center"
+            android:padding="8dp"
+            android:clickable="true"
+            android:focusable="true" />
+        <TextView
+            android:id="@+id/tvBackLogin"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Quay lại Đăng nhập"
+            android:textColor="#FF1A73E8"
+            android:gravity="center"
+            android:padding="8dp"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+</LinearLayout>

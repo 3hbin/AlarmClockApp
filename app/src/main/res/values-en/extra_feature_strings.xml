@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="birthday_section">Birthday (Google account)</string>
+    <string name="birthday_empty">No birthday yet — sign in with Google or pick a date</string>
+    <string name="birthday_status">Birthday: %1$s (%2$s)</string>
+    <string name="birthday_source_google">from Google</string>
+    <string name="birthday_source_manual">manual</string>
+    <string name="birthday_sync_google">Get birthday from Google</string>
+    <string name="birthday_pick_manual">Pick birthday</string>
+    <string name="birthday_saved">Saved birthday %1$s — yearly alarm at 8:00</string>
+    <string name="birthday_from_google">Google birthday: %1$s</string>
+    <string name="birthday_google_fail">Google did not return a birthday. Pick a date instead.</string>
+    <string name="birthday_google_empty">This Google account has no public birthday. Pick a date instead.</string>
+    <string name="birthday_need_google">Sign in with Google first, or pick a date.</string>
+    <string name="birthday_need_permission">Allow the birthday permission on Google.</string>
+    <string name="birthday_alarm_label">Birthday: %1$s</string>
+    <string name="ringtone_soft_chime">Soft chime</string>
+    <string name="ringtone_soft_bell">Soft bell</string>
+</resources>

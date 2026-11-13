@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tvDayHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="2 tháng 9, 2026"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="#FF202124"
+        android:paddingBottom="12dp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerDay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+</LinearLayout>

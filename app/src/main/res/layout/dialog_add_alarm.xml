@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true"
+    android:padding="16dp"
+    android:scrollbars="vertical"
+    android:fadeScrollbars="false">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="8dp">
+
+        <EditText
+            android:id="@+id/etLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/alarm_label_hint"
+            android:inputType="text"
+            android:maxLines="1"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/repeat"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp" />
+
+        <RadioGroup
+            android:id="@+id/rgRepeat"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <RadioButton
+                android:id="@+id/rbOnce"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/once" />
+            <RadioButton
+                android:id="@+id/rbDaily"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/daily"
+                android:checked="true" />
+            <RadioButton
+                android:id="@+id/rbWeekdays"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/weekdays" />
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/snooze_duration"
+            android:textStyle="bold"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="4dp" />
+
+        <RadioGroup
+            android:id="@+id/rgSnooze"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <RadioButton
+                android:id="@+id/rbSnooze5"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/min_5"
+                android:checked="true" />
+            <RadioButton
+                android:id="@+id/rbSnooze10"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/min_10" />
+            <RadioButton
+                android:id="@+id/rbSnooze15"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/min_15" />
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/challenge_setting_title"
+            android:textStyle="bold"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="4dp" />
+
+        <RadioGroup
+            android:id="@+id/rgChallenge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <RadioButton
+                android:id="@+id/rbChallengeNone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/challenge_none"
+                android:checked="true" />
+            <RadioButton
+                android:id="@+id/rbChallengeMath"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Giải toán (1 bài)" />
+            <RadioButton
+                android:id="@+id/rbChallengeMath10"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Giải 10 bài toán liên tiếp" />
+            <RadioButton
+                android:id="@+id/rbChallengeRead"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Đọc chữ (câu không lặp)" />
+            <RadioButton
+                android:id="@+id/rbChallengeShake"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Lắc máy (nhẹ)" />
+            <RadioButton
+                android:id="@+id/rbChallengeShake100"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Lắc máy 100 lần" />
+            <RadioButton
+                android:id="@+id/rbChallengeTap200"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Bấm 200 lần (chống auto-click)" />
+            <RadioButton
+                android:id="@+id/rbChallengeFace"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Quét khuôn mặt" />
+            <RadioButton
+                android:id="@+id/rbChallengeFaceExpr"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="10 biểu cảm dễ (Cười / Nhắm mắt / Há nhẹ / …)" />
+            <RadioButton
+                android:id="@+id/rbChallengeBio"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Vân tay / khuôn mặt hệ thống" />
+            <RadioButton
+                android:id="@+id/rbChallengeAll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🔥 TẤT CẢ thử thách (khó)" />
+                <RadioButton
+                    android:id="@+id/rbChallengeAllEasy"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="😊 TẤT CẢ dễ — không mất ngủ (toán 3 · từ · lắc 20 · bấm 30 · 3 biểu cảm)"
+                    android:textSize="13sp" />
+        </RadioGroup>
+
+        <!-- Legacy empty group kept for older code paths -->
+        <RadioGroup
+            android:id="@+id/rgChallenge2"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/cbStrictAntiSnooze"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Chống báo lại (bắt buộc xong thử thách mới tắt)"
+            android:layout_marginTop="8dp" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/cbSkipHolidays"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Bỏ qua ngày lễ" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/cbCrescendo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Chuông tăng dần (crescendo)" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Nhóm"
+            android:textStyle="bold"
+            android:layout_marginTop="12dp" />
+        <RadioGroup
+            android:id="@+id/rgGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <RadioButton android:id="@+id/rbGroupChung" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Chung" android:checked="true" />
+            <RadioButton android:id="@+id/rbGroupHoc" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Học" />
+            <RadioButton android:id="@+id/rbGroupTap" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Tập" />
+            <RadioButton android:id="@+id/rbGroupWork" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Làm việc" />
+        </RadioGroup>
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/cbWeekend"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Giờ khác cho Thứ 7 / Chủ nhật" />
+        <LinearLayout
+            android:id="@+id/rowWeekendTime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Giờ cuối tuần" />
+            <TextView
+                android:id="@+id/tvWeekendTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="08:00" />
+        </LinearLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Ghi chú giọng nói (TTS khi reo)"
+            android:layout_marginTop="8dp"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etVoiceNote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine"
+                android:maxLines="3" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnChooseRingtone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Chọn nhạc chuông"
+            android:layout_marginTop="12dp"
+            style="@style/Widget.Material3.Button.OutlinedButton" />
+
+        <TextView
+            android:id="@+id/tvRingtoneStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Nhạc mặc định"
+            android:textSize="12sp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="8dp" />
+    </LinearLayout>
+</ScrollView>

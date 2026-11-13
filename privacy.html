@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Chính sách quyền riêng tư — Báo thức Challenge</title>
+<meta name="description" content="Chính sách quyền riêng tư của app Báo thức Challenge. Mã nguồn trên GitHub 3hbin/AlarmClockApp." />
+<meta name="theme-color" content="#4f5bff" />
+<style>
+:root{--bg:#f3f5fc;--card:#fff;--ink:#141830;--muted:#667085;--line:#e4e8f4;--b1:#4f5bff;--b2:#8b5cff;--b3:#22d3ee;--soft:#eef1ff;--glass:rgba(255,255,255,.72);--sh:0 10px 30px rgba(30,40,100,.08)}
+:root[data-theme=dark]{--bg:#0d0f1c;--card:#161a2d;--ink:#eef0ff;--muted:#9aa2c0;--line:#252a44;--soft:#1d2240;--glass:rgba(22,26,45,.72);--sh:0 10px 30px rgba(0,0,0,.4)}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:84px}
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.65;overflow-x:hidden;transition:background .4s,color .4s}
+a{color:var(--b1);text-decoration:none}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--b3),var(--b1),var(--b2));z-index:60}
+nav{position:sticky;top:0;z-index:50;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 10px;display:flex;justify-content:center;pointer-events:none}
+.navin{pointer-events:auto;display:flex;align-items:center;gap:4px;max-width:100%;overflow-x:auto;scrollbar-width:none;background:var(--glass);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--line);border-radius:999px;padding:5px;box-shadow:var(--sh)}
+.navin::-webkit-scrollbar{display:none}
+.navin a{color:var(--muted);font-size:13px;font-weight:600;padding:7px 13px;border-radius:999px;white-space:nowrap;transition:.25s}
+.navin a:hover{color:var(--ink)}.navin a.on{background:linear-gradient(135deg,var(--b1),var(--b2));color:#fff;box-shadow:0 6px 16px rgba(79,91,255,.4)}
+#tg{border:0;background:var(--soft);color:var(--ink);width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:15px;flex:none;transition:transform .5s}
+#tg:hover{transform:rotate(180deg)}
+.wrap{max-width:900px;margin:0 auto;padding:0 16px 64px}
+/* HERO */
+.hero{position:relative;overflow:hidden;margin-top:6px;border-radius:30px;color:#fff;padding:44px 26px 34px;background:linear-gradient(135deg,#3a46f0,#7a52ff 55%,#a855f7);box-shadow:0 30px 70px rgba(79,91,255,.35);isolation:isolate}
+.blob{position:absolute;border-radius:50%;filter:blur(44px);opacity:.55;z-index:-1;animation:float 12s ease-in-out infinite}
+.b1{width:260px;height:260px;background:#22d3ee;top:-80px;right:-60px}
+.b2{width:220px;height:220px;background:#ff6ad5;bottom:-90px;left:-40px;animation-delay:-4s}
+.b3{width:160px;height:160px;background:#ffd36a;top:40%;left:46%;animation-delay:-8s;opacity:.3}
+@keyframes float{50%{transform:translate(30px,-26px) scale(1.12)}}
+.grid-bg{position:absolute;inset:0;z-index:-1;opacity:.14;background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:34px 34px;mask-image:radial-gradient(circle at 70% 30%,#000,transparent 70%);-webkit-mask-image:radial-gradient(circle at 70% 30%,#000,transparent 70%)}
+.hero-row{display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+.hero-txt{flex:1 1 300px}
+.badge{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:6px 14px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;backdrop-filter:blur(8px)}
+.dot{width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 0 0 rgba(74,222,128,.7);animation:ping 1.8s infinite}
+@keyframes ping{70%{box-shadow:0 0 0 10px rgba(74,222,128,0)}100%{box-shadow:0 0 0 0 rgba(74,222,128,0)}}
+h1{margin:16px 0 10px;font-size:clamp(1.9rem,6vw,2.8rem);line-height:1.1;letter-spacing:-.02em}
+h1 span{background:linear-gradient(90deg,#fff,#c9d4ff,#fff);background-size:200%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 5s linear infinite}
+@keyframes shine{to{background-position:-200% 0}}
+.hero p{margin:0;max-width:540px;color:rgba(255,255,255,.92)}
+.links{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.links a{color:#fff;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:10px 16px;font-weight:700;font-size:14px;transition:.25s;backdrop-filter:blur(8px)}
+.links a:hover{background:#fff;color:var(--b1);transform:translateY(-3px);box-shadow:0 10px 24px rgba(0,0,0,.2)}
+/* clock */
+.clock{flex:0 0 auto;width:170px;height:170px;margin:0 auto;animation:bob 4s ease-in-out infinite;filter:drop-shadow(0 18px 24px rgba(20,20,80,.35))}
+@keyframes bob{50%{transform:translateY(-10px) rotate(2deg)}}
+.hand{transform-origin:60px 60px}
+#hs{animation:spin 60s linear infinite}#hm{animation:spin 3600s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.bell{transform-origin:60px 12px;animation:ring 3s ease-in-out infinite}
+@keyframes ring{0%,60%,100%{transform:rotate(0)}65%{transform:rotate(-9deg)}70%{transform:rotate(9deg)}75%{transform:rotate(-6deg)}80%{transform:rotate(6deg)}85%{transform:rotate(0)}}
+/* trust chips */
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 6px}
+.chip{flex:1 1 150px;display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 14px;font-weight:700;font-size:14px;box-shadow:var(--sh)}
+.chip i{font-style:normal;display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:var(--soft);font-size:17px}
+/* cards */
+.sec{display:grid;gap:14px;margin-top:14px}
+@media(min-width:760px){.sec.two{grid-template-columns:1fr 1fr}.sec .wide{grid-column:1/-1}}
+.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:22px;box-shadow:var(--sh);overflow:hidden;transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s,border-color .35s}
+.card::before{content:"";position:absolute;inset:0;background:radial-gradient(260px circle at var(--mx,50%) var(--my,0%),rgba(99,102,255,.16),transparent 70%);opacity:0;transition:opacity .3s;pointer-events:none}
+.card:hover{transform:translateY(-5px);border-color:rgba(99,102,255,.45);box-shadow:0 22px 44px rgba(79,91,255,.18)}
+.card:hover::before{opacity:1}
+.ic{display:grid;place-items:center;width:46px;height:46px;border-radius:15px;font-size:22px;margin-bottom:12px;background:linear-gradient(135deg,var(--soft),var(--card));border:1px solid var(--line);transition:transform .4s}
+.card:hover .ic{transform:rotate(-8deg) scale(1.12)}
+h2{margin:0 0 10px;font-size:1.15rem;letter-spacing:-.01em}
+.muted{color:var(--muted)}
+ul{margin:8px 0 0;padding:0;list-style:none}
+li{position:relative;margin:9px 0;padding-left:26px}
+li::before{content:"";position:absolute;left:0;top:.45em;width:16px;height:16px;border-radius:50%;background:linear-gradient(135deg,var(--b1),var(--b3));-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l3 3 5-6' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='8' r='7.5' fill='none' stroke='%23000'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l3 3 5-6' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='8' cy='8' r='7.5' fill='none' stroke='%23000'/%3E%3C/svg%3E") center/contain no-repeat}
+.no li::before{background:linear-gradient(135deg,#ff5d7a,#ff9a5d);-webkit-mask:none;mask:none;content:"✕";color:#fff;font-size:10px;font-weight:900;display:grid;place-items:center}
+.repo{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;background:var(--soft);border-radius:18px;padding:16px 18px}
+.repo strong{display:block}
+.pill{background:linear-gradient(135deg,var(--b1),var(--b2));color:#fff;border-radius:999px;padding:10px 16px;font-weight:700;white-space:nowrap;transition:.25s;box-shadow:0 8px 18px rgba(79,91,255,.35)}
+.pill:hover{transform:translateY(-2px) scale(1.04)}
+.mail{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--soft);border-radius:14px;padding:11px 14px;margin:8px 0;flex-wrap:wrap}
+.mail button{border:0;background:var(--card);color:var(--b1);font-weight:700;border-radius:999px;padding:7px 13px;cursor:pointer;border:1px solid var(--line);transition:.2s}
+.mail button:hover{background:var(--b1);color:#fff}
+.url{word-break:break-all;font-size:.92rem}
+footer{margin-top:26px;text-align:center;color:var(--muted);font-size:.92rem}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 24px);transform:translate(-50%,30px);background:#141830;color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.35s;z-index:80}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+/* reveal */
+.rv{opacity:0;transform:translateY(34px) scale(.97);filter:blur(6px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform .8s cubic-bezier(.2,.8,.2,1),filter .8s,box-shadow .35s,border-color .35s}
+.rv.in{opacity:1;transform:none;filter:none}
+.rv.in:hover{transform:translateY(-5px)}
+.hero,.chips{animation:rise 1s cubic-bezier(.2,.8,.2,1) both}.chips{animation-delay:.25s}
+@keyframes rise{from{opacity:0;transform:translateY(24px)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.rv{opacity:1;transform:none;filter:none}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="navin">
+  <a href="#luu" class="on">Lưu trữ</a><a href="#quyen">Quyền</a><a href="#google">Google</a><a href="#khong">Cam kết</a><a href="#lienhe">Liên hệ</a>
+  <button id="tg" aria-label="Đổi giao diện sáng/tối">🌓</button>
+</div></nav>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="grid-bg"></div>
+    <div class="hero-row">
+      <div class="hero-txt">
+        <div class="badge"><span class="dot"></span>Báo thức Challenge</div>
+        <h1><span>Chính sách quyền riêng tư</span></h1>
+        <p>App đặt giờ kêu trên Android. App chỉ lấy dữ liệu khi bạn bật tính năng cần dữ liệu đó. Không bán dữ liệu. Không bắt buộc đăng nhập mới dùng được báo thức.</p>
+        <div class="links">
+          <a href="https://github.com/3hbin/AlarmClockApp">⭐ Repo GitHub</a>
+          <a href="https://github.com/3hbin/AlarmClockApp/releases">⬇ Tải bản mới</a>
+          <a href="mailto:vn812013@gmail.com">✉ Gửi email</a>
+        </div>
+      </div>
+      <svg class="clock" viewBox="0 0 120 120" aria-hidden="true">
+        <g class="bell"><circle cx="24" cy="26" r="13" fill="#ffd36a"/><circle cx="96" cy="26" r="13" fill="#ffd36a"/><circle cx="24" cy="26" r="7" fill="#ffb938"/><circle cx="96" cy="26" r="7" fill="#ffb938"/></g>
+        <circle cx="60" cy="64" r="46" fill="#fff"/><circle cx="60" cy="64" r="40" fill="#eef1ff"/>
+        <g transform="translate(0 4)" stroke="#4f5bff" stroke-width="2.4" stroke-linecap="round"><path d="M60 26v6M60 88v6M26 60h6M88 60h6"/></g>
+        <g transform="translate(0 4)"><line class="hand" id="hm" x1="60" y1="60" x2="60" y2="36" stroke="#141830" stroke-width="3.6" stroke-linecap="round"/><line class="hand" id="hs" x1="60" y1="64" x2="60" y2="30" stroke="#ff5d7a" stroke-width="2" stroke-linecap="round"/><circle cx="60" cy="60" r="4" fill="#4f5bff"/></g>
+      </svg>
+    </div>
+  </header>
+
+  <div class="chips">
+    <div class="chip"><i>🚫</i>Không bán dữ liệu</div>
+    <div class="chip"><i>📵</i>Không quảng cáo</div>
+    <div class="chip"><i>📱</i>Lưu trên máy bạn</div>
+    <div class="chip"><i>🔓</i>Không bắt buộc đăng nhập</div>
+  </div>
+
+  <div class="sec"><section class="card rv">
+    <div class="repo"><div><strong>Mã nguồn của tôi</strong><span class="muted">3hbin / AlarmClockApp</span></div><a class="pill" href="https://github.com/3hbin/AlarmClockApp">Mở repo →</a></div>
+    <p class="muted" style="margin:12px 0 0">Cập nhật: 11/10/2026 · Package: com.alarmclock.dongho</p>
+  </section></div>
+
+  <div class="sec two">
+    <section class="card rv" id="luu"><div class="ic">💾</div>
+      <h2>App lưu gì trên máy</h2>
+      <ul>
+        <li>Giờ báo thức, tên, màu, lặp lại, báo lại và ghi chú.</li>
+        <li>Nhạc chuông và cài đặt trong app.</li>
+        <li>Lịch sử chat AI, nếu bạn dùng tab Chat.</li>
+        <li>Dữ liệu này nằm trên điện thoại của bạn.</li>
+      </ul>
+    </section>
+    <section class="card rv" id="quyen"><div class="ic">🔑</div>
+      <h2>App xin quyền để làm gì</h2>
+      <ul>
+        <li>Thông báo: kêu đúng giờ và hiện báo thức.</li>
+        <li>Camera: chỉ khi dùng thử thách quét mặt hoặc tính năng cần ảnh.</li>
+        <li>Micro: chỉ khi bạn tự ghi lời chào.</li>
+        <li>Vị trí: chỉ khi bạn bật thời tiết hoặc xem vị trí thiết bị.</li>
+        <li>Internet: đăng nhập Google, thời tiết hoặc dịch vụ bạn tự bật.</li>
+      </ul>
+    </section>
+    <section class="card rv" id="google"><div class="ic">☁️</div>
+      <h2>Đăng nhập Google</h2>
+      <p style="margin:0">Nếu bạn tự đăng nhập Google, bản sao báo thức có thể được lưu theo tài khoản đó để mở lại trên máy khác. Bạn có thể không dùng tính năng này. Đăng xuất sẽ gỡ thiết bị hiện tại khỏi danh sách máy của tài khoản.</p>
+    </section>
+    <section class="card rv no" id="khong"><div class="ic">🛡️</div>
+      <h2>App không làm gì</h2>
+      <ul>
+        <li>Không bán dữ liệu.</li>
+        <li>Không đưa dữ liệu cho quảng cáo.</li>
+        <li>Không xin camera hoặc vị trí lúc vừa mở app.</li>
+        <li>Không bắt buộc đăng nhập mới đặt được báo thức.</li>
+      </ul>
+    </section>
+  </div>
+
+  <div class="sec"><section class="card rv" id="lienhe"><div class="ic">💌</div>
+    <h2>Liên hệ</h2>
+    <p style="margin:0 0 6px">Nếu muốn hỏi hoặc yêu cầu xóa dữ liệu, gửi email cho một trong hai địa chỉ:</p>
+    <div class="mail"><a href="mailto:vn812013@gmail.com">vn812013@gmail.com</a><button data-c="vn812013@gmail.com">Sao chép</button></div>
+    <div class="mail"><a href="mailto:vn797077@gmail.com">vn797077@gmail.com</a><button data-c="vn797077@gmail.com">Sao chép</button></div>
+    <p class="url">Repo: <a href="https://github.com/3hbin/AlarmClockApp">https://github.com/3hbin/AlarmClockApp</a></p>
+    <p class="url" style="margin:0">Trang này: <a href="https://3hbin.github.io/AlarmClockApp/privacy.html">https://3hbin.github.io/AlarmClockApp/privacy.html</a></p>
+  </section></div>
+
+  <footer>© 2026 3hbin · Báo thức Challenge</footer>
+</div>
+<div id="toast"></div>
+
+<script>
+(function(){
+var d=document,r=d.documentElement;
+try{var t=localStorage.getItem('theme');if(t)r.dataset.theme=t;else if(matchMedia('(prefers-color-scheme: dark)').matches)r.dataset.theme='dark'}catch(e){}
+d.getElementById('tg').onclick=function(){var n=r.dataset.theme==='dark'?'light':'dark';r.dataset.theme=n;try{localStorage.setItem('theme',n)}catch(e){}};
+// reveal + stagger
+var cards=[].slice.call(d.querySelectorAll('.rv'));
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){var i=cards.indexOf(e.target)%2;setTimeout(function(){e.target.classList.add('in')},i*120);io.unobserve(e.target)}})},{threshold:.12});
+cards.forEach(function(c){io.observe(c)});
+// spotlight
+d.querySelectorAll('.card').forEach(function(c){c.addEventListener('pointermove',function(e){var b=c.getBoundingClientRect();c.style.setProperty('--mx',(e.clientX-b.left)+'px');c.style.setProperty('--my',(e.clientY-b.top)+'px')})});
+// progress + active nav
+var bar=d.getElementById('bar'),links=[].slice.call(d.querySelectorAll('.navin a')),secs=links.map(function(a){return d.querySelector(a.getAttribute('href'))});
+function on(){var h=r.scrollHeight-innerHeight;bar.style.width=(h>0?scrollY/h*100:0)+'%';var cur=0;secs.forEach(function(s,i){if(s&&s.getBoundingClientRect().top<innerHeight*.45)cur=i});links.forEach(function(a,i){a.classList.toggle('on',i===cur)})}
+addEventListener('scroll',on,{passive:true});on();
+// parallax blobs
+var bl=[].slice.call(d.querySelectorAll('.blob'));
+addEventListener('pointermove',function(e){var x=e.clientX/innerWidth-.5,y=e.clientY/innerHeight-.5;bl.forEach(function(b,i){b.style.translate=(x*(i+1)*24)+'px '+(y*(i+1)*24)+'px'})});
+// real time hands
+var n=new Date(),s=n.getSeconds(),m=n.getMinutes()*60+s;
+d.getElementById('hs').style.animationDelay='-'+s+'s';d.getElementById('hm').style.animationDelay='-'+m+'s';
+// copy
+var to=d.getElementById('toast'),tm;
+d.querySelectorAll('[data-c]').forEach(function(b){b.onclick=function(){var v=b.dataset.c;(navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).catch(function(){}).then(function(){to.textContent='Đã sao chép '+v;to.classList.add('show');clearTimeout(tm);tm=setTimeout(function(){to.classList.remove('show')},1800)})}});
+})();
+</script>
+</body>
+</html>

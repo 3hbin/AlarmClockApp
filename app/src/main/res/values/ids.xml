@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Khóa setTag/getTag của bong bóng chat (phải là id của app, không dùng android.R.id) -->
+    <item name="chat_full_text" type="id" />
+</resources>
