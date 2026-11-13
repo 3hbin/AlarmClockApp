@@ -46,6 +46,7 @@ class MusicLibraryActivity : AppCompatActivity() {
     private var tab = TAB_SONGS
     private var page = 0
     private var loadingMore = false
+    private var lastDownloadError: String = ""
     private var hasMore = true
     private var currentQuery = ""
     private val shown = ArrayList<Song>()
@@ -474,7 +475,7 @@ class MusicLibraryActivity : AppCompatActivity() {
                     if (isFinishing) return@runOnUiThread
                     if (file == null) {
                         playingId = null
-                        status.text = UiTranslate.tr("Zedge không phát được. Thử bài khác.")
+                        status.text = UiTranslate.tr("Zedge không phát được. Thử bài khác.") + " (" + lastDownloadError + ")"
                         Toast.makeText(this, UiTranslate.tr("Không có tiếng. Thử bài khác."), Toast.LENGTH_SHORT).show()
                         return@runOnUiThread
                     }
@@ -502,9 +503,9 @@ class MusicLibraryActivity : AppCompatActivity() {
                 it.start()
                 try { wave.attach(it.audioSessionId); wave.visibility = View.VISIBLE } catch (_: Exception) {}
             }
-            setOnErrorListener { _, _, _ ->
+            setOnErrorListener { _, what, extra ->
                 playingId = null
-                Toast.makeText(this@MusicLibraryActivity, UiTranslate.tr("Không có tiếng. Thử bài khác."), Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MusicLibraryActivity, UiTranslate.tr("Không có tiếng. Thử bài khác.") + " (mã $what/$extra)", Toast.LENGTH_LONG).show()
                 true
             }
             setOnCompletionListener {
@@ -518,6 +519,7 @@ class MusicLibraryActivity : AppCompatActivity() {
     }
 
     private fun downloadAudio(url: String, name: String): File? {
+        lastDownloadError = ""
         return try {
             val dir = File(cacheDir, "tone_preview").apply { mkdirs() }
             val out = File(dir, name.filter { it.isLetterOrDigit() || it == '_' } + ".mp3")
@@ -530,21 +532,27 @@ class MusicLibraryActivity : AppCompatActivity() {
             conn.setRequestProperty("Accept", "*/*")
             conn.connect()
             if (conn.responseCode !in 200..299) {
+                lastDownloadError = "HTTP ${conn.responseCode}"
                 conn.disconnect()
                 return null
             }
             val type = conn.contentType.orEmpty()
             if (type.contains("text/html")) {
+                lastDownloadError = "máy chủ trả về trang HTML (bị chặn)"
                 conn.disconnect()
                 return null
             }
             conn.inputStream.use { input -> FileOutputStream(out).use { input.copyTo(it) } }
             conn.disconnect()
             if (out.length() < 800) {
+                lastDownloadError = "file quá nhỏ (${out.length()} byte, kiểu $type)"
                 out.delete()
                 null
             } else out
-        } catch (_: Exception) { null }
+        } catch (e: Exception) {
+            lastDownloadError = "${e.javaClass.simpleName}: ${e.message ?: ""}"
+            null
+        }
     }
 
     private fun choose(song: Song) {
