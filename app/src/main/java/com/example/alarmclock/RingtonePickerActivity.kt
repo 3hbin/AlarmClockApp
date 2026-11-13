@@ -113,18 +113,27 @@ class RingtonePickerActivity : AppCompatActivity() {
         }
         rows += ToneRow.Header("Âm thanh trên thiết bị")
         rows += ToneRow.Tone("silent:", "Im lặng", false)
-        try {
-            val rm = RingtoneManager(this)
-            rm.setType(RingtoneManager.TYPE_ALARM)
-            val c = rm.cursor
-            var n = 0
-            while (c.moveToNext() && n < 40) {
-                val title = c.getString(RingtoneManager.TITLE_COLUMN_INDEX) ?: "Chuông hệ thống"
-                val uri = rm.getRingtoneUri(c.position)?.toString() ?: continue
-                rows += ToneRow.Tone(uri, title, false)
-                n++
-            }
-        } catch (_: Exception) {}
+        val seen = HashSet<String>()
+        // Chuông báo thức của hệ thống + nhạc chuông điện thoại, gộp chung, không trùng
+        listOf(
+            RingtoneManager.TYPE_ALARM to "Chuông báo thức hệ thống",
+            RingtoneManager.TYPE_RINGTONE to "Nhạc chuông điện thoại"
+        ).forEach { (type, group) ->
+            val before = rows.size
+            try {
+                val rm = RingtoneManager(this)
+                rm.setType(type)
+                val c = rm.cursor
+                var n = 0
+                while (c.moveToNext() && n < 40) {
+                    val title = c.getString(RingtoneManager.TITLE_COLUMN_INDEX) ?: group
+                    val uri = rm.getRingtoneUri(c.position)?.toString() ?: continue
+                    if (seen.add(uri)) rows += ToneRow.Tone(uri, title, false)
+                    n++
+                }
+            } catch (_: Exception) {}
+            if (rows.size > before) rows.add(before, ToneRow.Header(group))
+        }
         adapter.submit(rows, selectedUri)
     }
 

@@ -73,6 +73,19 @@ object TonePlayer {
         }
 
         val parsed = try { Uri.parse(uri) } catch (_: Exception) { null }
+        if (parsed != null && loop && !preview) {
+            // Chuông báo thức: MediaPlayer lặp đáng tin cậy hơn Ringtone (Ringtone có máy bỏ qua isLooping → phát 1 lần rồi cắt)
+            try {
+                val mp = MediaPlayer()
+                mp.setAudioAttributes(attrs)
+                mp.setDataSource(app, parsed)
+                mp.isLooping = true
+                mp.prepare()
+                mp.start()
+                player = mp
+                return
+            } catch (_: Exception) {}
+        }
         if (parsed != null) {
             // Ưu tiên Ringtone API cho chuông hệ thống — MediaPlayer hay fail trên Huawei.
             try {

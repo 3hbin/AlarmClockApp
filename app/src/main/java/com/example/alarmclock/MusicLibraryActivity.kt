@@ -41,7 +41,8 @@ class MusicLibraryActivity : AppCompatActivity() {
     private lateinit var source: String
     private lateinit var list: LinearLayout
     private lateinit var status: TextView
-    private lateinit var loading: WaveView
+    private lateinit var loading: com.google.android.material.loadingindicator.LoadingIndicator
+    private lateinit var wave: WaveView
     private var tab = TAB_SONGS
     private var page = 0
     private var loadingMore = false
@@ -120,11 +121,16 @@ class MusicLibraryActivity : AppCompatActivity() {
         tabs.addView(chip("Gần đây") { tab = TAB_RECENT; showSaved(MusicAccounts.recent(this, source), "Chưa nghe bài nào gần đây.") })
         root.addView(tabs)
 
-        loading = WaveView(this).apply {
-            layoutParams = LinearLayout.LayoutParams((72 * d).toInt(), (36 * d).toInt()).apply { gravity = Gravity.CENTER_HORIZONTAL }
+        loading = com.google.android.material.loadingindicator.LoadingIndicator(this).apply {
+            layoutParams = LinearLayout.LayoutParams((56 * d).toInt(), (56 * d).toInt()).apply { gravity = Gravity.CENTER_HORIZONTAL }
             visibility = View.GONE
         }
         root.addView(loading)
+        wave = WaveView(this).apply {
+            layoutParams = LinearLayout.LayoutParams((72 * d).toInt(), (36 * d).toInt()).apply { gravity = Gravity.CENTER_HORIZONTAL }
+            visibility = View.GONE
+        }
+        root.addView(wave)
         list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val scroll = NestedScrollView(this)
         scroll.addView(list)
@@ -167,15 +173,14 @@ class MusicLibraryActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        try { wave.detach() } catch (_: Exception) {}
         try { preview?.release() } catch (_: Exception) {}
-        loading.stop()
         io.shutdownNow()
         super.onDestroy()
     }
 
 
     private fun showEmpty() {
-        loading.stop()
         loading.visibility = View.GONE
         list.removeAllViews()
     }
@@ -214,7 +219,6 @@ class MusicLibraryActivity : AppCompatActivity() {
     private fun requestPage(reset: Boolean, randomPick: Boolean = false) {
         if (!online()) {
             status.text = UiTranslate.tr("Không có mạng. Bật mạng rồi bấm Tìm.")
-            loading.stop()
             loading.visibility = View.GONE
             if (reset) list.removeAllViews()
             return
@@ -222,7 +226,6 @@ class MusicLibraryActivity : AppCompatActivity() {
         loadingMore = true
         status.text = if (randomPick) "Đang lấy bài mới…" else if (reset) "Đang tải bài…" else "Đang tải thêm…"
         loading.visibility = View.VISIBLE
-        loading.start()
         val q = currentQuery
         val p = page
         io.execute {
@@ -234,7 +237,7 @@ class MusicLibraryActivity : AppCompatActivity() {
                 if (filled) break
                 var n = 0
                 while (n < tries && !filled) {
-                    val pickPage = if (randomPick) (0..24).random() else p + n
+                    val pickPage = if (randomPick) (0..2).random() else p + n
                     val batch = fetch(queryTry, pickPage).shuffled()
                     for (song in batch) {
                         if (pool.none { sameSong(it, song) }) pool.add(song)
@@ -246,7 +249,6 @@ class MusicLibraryActivity : AppCompatActivity() {
             runOnUiThread {
                 if (isDestroyed) return@runOnUiThread
                 loadingMore = false
-                loading.stop()
                 loading.visibility = View.GONE
                 val blocked = if (randomPick) shown else shown
                 val fresh = pool.filter { song -> blocked.none { sameSong(it, song) } && (randomPick || song.id !in seen) }
@@ -288,7 +290,6 @@ class MusicLibraryActivity : AppCompatActivity() {
     }
 
     private fun showSaved(songs: List<Song>, empty: String) {
-        loading.stop()
         loading.visibility = View.GONE
         if (songs.isEmpty()) {
             status.text = empty
@@ -346,6 +347,8 @@ class MusicLibraryActivity : AppCompatActivity() {
                 val o = arr.getJSONObject(i)
                 val title = o.optString("trackName")
                 if (title.isBlank()) continue
+                val yr = o.optString("releaseDate").take(4).toIntOrNull()
+                if (yr != null && yr < 2025) continue
                 add(Song(o.optLong("trackId").toString(), title, o.optString("artistName"),
                     o.optString("artworkUrl100"), o.optString("previewUrl")))
             }
@@ -457,6 +460,7 @@ class MusicLibraryActivity : AppCompatActivity() {
             Toast.makeText(this, UiTranslate.tr("Bài này không có đoạn nghe thử"), Toast.LENGTH_SHORT).show()
             return
         }
+        try { wave.detach() } catch (_: Exception) {}
         try { preview?.release() } catch (_: Exception) {}
         preview = null
         playingId = song.id
@@ -495,6 +499,7 @@ class MusicLibraryActivity : AppCompatActivity() {
                 it.setVolume(1f, 1f)
                 it.isLooping = true
                 it.start()
+                try { wave.attach(it.audioSessionId); wave.visibility = View.VISIBLE } catch (_: Exception) {}
             }
             setOnErrorListener { _, _, _ ->
                 playingId = null
@@ -548,7 +553,6 @@ class MusicLibraryActivity : AppCompatActivity() {
         }
         status.text = UiTranslate.tr("Đang lưu bài…")
         loading.visibility = View.VISIBLE
-        loading.start()
         io.execute {
             val file = try {
                 val saved = downloadAudio(song.preview, "save_" + song.id.hashCode())
@@ -560,7 +564,6 @@ class MusicLibraryActivity : AppCompatActivity() {
                 }
             } catch (_: Exception) { null }
             runOnUiThread {
-                loading.stop()
                 loading.visibility = View.GONE
                 if (file == null) { status.text = "Không lưu được. Kiểm tra mạng."; return@runOnUiThread }
                 MusicAccounts.addRecent(this, source, song)
@@ -702,6 +705,10 @@ class MusicLibraryActivity : AppCompatActivity() {
         private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = 0xFF5B6CFF.toInt() }
         private var phase = 0f
         private var anim: ValueAnimator? = null
+        private val levels = FloatArray(BANDS)
+        private var viz: android.media.audiofx.Visualizer? = null
+        private var live = false
+
         fun start() {
             if (anim != null) return
             anim = ValueAnimator.ofFloat(0f, 1f).apply {
@@ -712,17 +719,70 @@ class MusicLibraryActivity : AppCompatActivity() {
                 start()
             }
         }
+
         fun stop() { anim?.cancel(); anim = null }
+
+        /** Gắn vào phiên âm thanh đang phát: các cột nhảy theo tần số thật của bản nhạc. */
+        fun attach(sessionId: Int) {
+            detach()
+            try {
+                val v = android.media.audiofx.Visualizer(sessionId)
+                v.captureSize = android.media.audiofx.Visualizer.getCaptureSizeRange()[1]
+                v.setDataCaptureListener(object : android.media.audiofx.Visualizer.OnDataCaptureListener {
+                    override fun onWaveFormDataCapture(vz: android.media.audiofx.Visualizer?, waveform: ByteArray?, samplingRate: Int) {}
+                    override fun onFftDataCapture(vz: android.media.audiofx.Visualizer?, fft: ByteArray?, samplingRate: Int) {
+                        if (fft == null || fft.size < 4) return
+                        val bins = fft.size / 2
+                        val per = maxOf(1, (bins - 1) / BANDS)
+                        for (bd in 0 until BANDS) {
+                            var sum = 0.0
+                            for (k in 0 until per) {
+                                val idx = 1 + bd * per + k
+                                if (2 * idx + 1 >= fft.size) break
+                                val re = fft[2 * idx].toDouble()
+                                val im = fft[2 * idx + 1].toDouble()
+                                sum += Math.sqrt(re * re + im * im)
+                            }
+                            val lvl = (sum / per / 96.0).toFloat().coerceIn(0f, 1f)
+                            levels[bd] = levels[bd] * 0.45f + lvl * 0.55f
+                        }
+                        live = true
+                        post { invalidate() }
+                    }
+                }, android.media.audiofx.Visualizer.getMaxCaptureRate() / 2, false, true)
+                v.enabled = true
+                viz = v
+            } catch (_: Exception) {
+                viz = null
+                live = false
+            }
+        }
+
+        fun detach() {
+            try { viz?.enabled = false } catch (_: Exception) {}
+            try { viz?.release() } catch (_: Exception) {}
+            viz = null
+            live = false
+        }
+
+        override fun onDetachedFromWindow() {
+            detach()
+            super.onDetachedFromWindow()
+        }
+
         override fun onDraw(canvas: Canvas) {
-            val n = 4
             val gap = width / 12f
-            val bw = (width - gap * (n + 1)) / n
-            for (i in 0 until n) {
-                val h = height * (0.3f + 0.7f * kotlin.math.abs(kotlin.math.sin((phase + i * 0.2f) * Math.PI * 2)).toFloat())
+            val bw = (width - gap * (BANDS + 1)) / BANDS
+            for (i in 0 until BANDS) {
+                val frac = if (live) 0.12f + 0.88f * levels[i]
+                else 0.3f + 0.7f * kotlin.math.abs(kotlin.math.sin((phase + i * 0.2f) * Math.PI * 2)).toFloat()
+                val h = height * frac
                 val left = gap + i * (bw + gap)
                 canvas.drawRoundRect(left, height - h, left + bw, height.toFloat(), 6f, 6f, paint)
             }
         }
+
+        companion object { const val BANDS = 4 }
     }
 
     companion object {

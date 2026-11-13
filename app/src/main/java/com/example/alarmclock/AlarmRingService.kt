@@ -172,7 +172,24 @@ class AlarmRingService : Service() {
         }, cap)
     }
 
+    private var lastSoundUri: String? = null
+    private val soundWatchHandler by lazy { android.os.Handler(mainLooper) }
+    private val soundWatch = object : Runnable {
+        override fun run() {
+            if (RingGuard.isDismissed(this@AlarmRingService, -1)) return
+            val playing = TonePlayer.isPlaying() || player?.isPlaying == true
+            if (!playing) {
+                // Chuông bị dừng giữa chừng: phát lại đúng chuông đã chọn (lặp), không đổi sang chuông khác
+                lastSoundUri?.let { u -> if (u != "silent:") TonePlayer.playUri(this@AlarmRingService, u, loop = true, preview = false) }
+            }
+            soundWatchHandler.postDelayed(this, 2000L)
+        }
+    }
+
     private fun startSound(ringtoneUri: String?) {
+        lastSoundUri = ringtoneUri
+        soundWatchHandler.removeCallbacks(soundWatch)
+        soundWatchHandler.postDelayed(soundWatch, 2000L)
         try { player?.release() } catch (_: Exception) {}
         player = null
         TonePlayer.stop()
@@ -281,6 +298,7 @@ class AlarmRingService : Service() {
         ringingAlarmId = Int.MIN_VALUE
         crescendoHandler?.removeCallbacksAndMessages(null)
         autoStopHandler?.removeCallbacksAndMessages(null)
+        soundWatchHandler.removeCallbacks(soundWatch)
         TonePlayer.stop()
         try { player?.stop() } catch (_: Exception) {}
         try { player?.release() } catch (_: Exception) {}
